@@ -43,10 +43,7 @@ def test_single_paragraph_conversion(
     )
     app.build()
 
-    build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob(pattern="*.json"))
-    assert len(json_files) > 0, "No JSON files created"
-    output_file = json_files[0]
+    output_file = app.outdir / "index.json"
 
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
@@ -91,10 +88,7 @@ def test_multiple_paragraphs_conversion(
     )
     app.build()
 
-    build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob(pattern="*.json"))
-    assert len(json_files) > 0, "No JSON files created"
-    output_file = json_files[0]
+    output_file = app.outdir / "index.json"
 
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
