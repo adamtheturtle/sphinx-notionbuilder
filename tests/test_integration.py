@@ -16,12 +16,8 @@ def test_single_paragraph_conversion(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that a single paragraph RST file is correctly converted to Notion
-    JSON.
-
-    This test creates a simple RST file with one paragraph, builds it
-    using the Notion builder, and verifies that the output JSON matches
-    what would be expected from Ultimate Notion Paragraph objects.
+    """
+    Single paragraph converts to Notion JSON.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -71,21 +67,14 @@ def test_single_paragraph_conversion(
     ]
 
     assert generated_json == expected_json
-    assert len(generated_json) == 1
-    assert generated_json[0]["type"] == "paragraph"
-    paragraph_str = json.dumps(obj=generated_json[0])
-    assert "This is a simple paragraph for testing." in paragraph_str
 
 
 def test_multiple_paragraphs_conversion(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that multiple paragraphs in an RST file are correctly converted.
-
-    This test creates an RST file with multiple paragraphs and verifies
-    that each paragraph is converted to a separate Notion Paragraph
-    block.
+    """
+    Multiple paragraphs in convert to separate Notion blocks.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -142,16 +131,3 @@ def test_multiple_paragraphs_conversion(
         expected_json.append(dumped_block)
 
     assert generated_json == expected_json
-    expected_paragraph_count = 3
-    assert len(generated_json) == expected_paragraph_count
-
-    expected_texts = [
-        "First paragraph with some text.",
-        "Second paragraph with different content.",
-        "Third paragraph to test multiple blocks.",
-    ]
-    for i, block in enumerate(iterable=generated_json):
-        assert block["type"] == "paragraph"
-        expected_text = expected_texts[i]
-        block_str = json.dumps(obj=block)
-        assert expected_text in block_str
