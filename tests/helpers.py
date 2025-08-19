@@ -10,26 +10,17 @@ from typing import Any
 
 import pydantic
 from sphinx.testing.util import SphinxTestApp
-from ultimate_notion.blocks import Paragraph as UnoParagraph
+from ultimate_notion.blocks import Paragraph
 
 
-def assert_rst_converts_to_paragraphs(
+def assert_rst_converts_to_notion_objects(
     rst_content: str,
-    expected_paragraphs: list[UnoParagraph],
+    expected_objects: list[Paragraph],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Complete RST to Notion JSON conversion test.
-
-    Takes RST content and expected paragraphs, builds the documentation
-    using the Notion builder, and asserts the output matches the expected
-    Ultimate Notion Paragraph objects.
-
-    Args:
-        rst_content: RST document content to build
-        expected_paragraphs: List of Ultimate Notion Paragraph objects expected
-        make_app: Sphinx test app factory function
-        tmp_path: Temporary directory for test files
+    """
+    The given rST content is converted to the given expected objects.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -51,8 +42,7 @@ def assert_rst_converts_to_paragraphs(
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     expected_json: list[dict[str, Any]] = []
-    for paragraph in expected_paragraphs:
-        # Convert blocks to JSON using Pydantic model_dump from obj_ref
+    for paragraph in expected_objects:
         obj_ref = paragraph.obj_ref
         assert isinstance(obj_ref, pydantic.BaseModel)
         dumped_block: dict[str, Any] = obj_ref.model_dump(

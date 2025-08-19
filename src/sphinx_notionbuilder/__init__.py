@@ -36,26 +36,24 @@ class NotionTranslator(TextTranslator):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        # Extract text content from the paragraph node
         assert isinstance(node, nodes.paragraph)
-        # Create a Notion Paragraph block
         block = UnoParagraph(text=node.astext())
         self._blocks.append(block)
 
-        # Skip default text processing
         raise nodes.SkipNode
 
-    def visit_document(self, node: nodes.Element) -> None:  # noqa: ARG002
+    def visit_document(self, node: nodes.Element) -> None:
         """
         Initialize block collection at document start.
         """
+        del node
         self._blocks = []
 
-    def depart_document(self, node: nodes.Element) -> None:  # noqa: ARG002
+    def depart_document(self, node: nodes.Element) -> None:
         """
         Output collected blocks as JSON at document end.
         """
-        # Convert blocks to JSON using Pydantic model_dump from obj_ref
+        del node
         dumped_blocks: list[dict[str, Any]] = []
         for block in self._blocks:
             obj_ref = block.obj_ref

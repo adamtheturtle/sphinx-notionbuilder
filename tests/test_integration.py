@@ -2,13 +2,15 @@
 Integration tests for the Sphinx Notion Builder functionality.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Any
 
 from sphinx.testing.util import SphinxTestApp
+from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 
-from .helpers import assert_rst_converts_to_paragraphs
+from .helpers import assert_rst_converts_to_notion_objects
 
 
 def test_single_paragraph_conversion(
@@ -25,13 +27,13 @@ def test_single_paragraph_conversion(
         This is a simple paragraph for testing.
     """
 
-    expected_paragraphs = [
+    expected_paragraphs: Sequence[Block[Any]] = [
         UnoParagraph(text="This is a simple paragraph for testing.")
     ]
 
-    assert_rst_converts_to_paragraphs(
+    assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_paragraphs=expected_paragraphs,
+        expected_objects=expected_paragraphs,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -61,9 +63,9 @@ def test_multiple_paragraphs_conversion(
         UnoParagraph(text="Third paragraph to test multiple blocks."),
     ]
 
-    assert_rst_converts_to_paragraphs(
+    assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_paragraphs=expected_paragraphs,
+        expected_objects=expected_paragraphs,
         make_app=make_app,
         tmp_path=tmp_path,
     )
