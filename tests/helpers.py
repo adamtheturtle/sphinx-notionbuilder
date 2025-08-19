@@ -42,8 +42,8 @@ def assert_rst_converts_to_notion_objects(
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     expected_json: list[dict[str, Any]] = []
-    for paragraph in expected_objects:
-        obj_ref = paragraph.obj_ref
+    for notion_object in expected_objects:
+        obj_ref = notion_object.obj_ref
         assert isinstance(obj_ref, pydantic.BaseModel)
         dumped_block: dict[str, Any] = obj_ref.model_dump(
             mode="json",
