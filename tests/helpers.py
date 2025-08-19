@@ -10,12 +10,12 @@ from typing import Any
 
 import pydantic
 from sphinx.testing.util import SphinxTestApp
-from ultimate_notion.blocks import Paragraph
+from ultimate_notion.core import NotionObject
 
 
 def assert_rst_converts_to_notion_objects(
     rst_content: str,
-    expected_objects: list[Paragraph],
+    expected_objects: list[NotionObject[Any]],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
