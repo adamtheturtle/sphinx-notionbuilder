@@ -31,6 +31,8 @@ dynamic = [
     "version",
 ]
 dependencies = [
+    "beartype>=0.21.0",
+    "sphinx>=8.2.3",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
@@ -62,7 +64,6 @@ optional-dependencies.dev = [
     # use it to lint shell commands in GitHub workflow files.
     "shellcheck-py==0.10.0.1",
     "shfmt-py==3.11.0.2",
-    "sphinx==8.2.3",
     "sphinx-lint==1.0.0",
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2025.6.6",
