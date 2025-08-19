@@ -5,12 +5,13 @@ Tests for the Sphinx builder.
 from collections.abc import Callable
 from pathlib import Path
 
+import docutils.utils
 from sphinx.testing.util import SphinxTestApp
 
 import sphinx_notionbuilder
 
 
-def test_builder_meta(
+def test_meta(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -31,3 +32,11 @@ def test_builder_meta(
     app = make_app(srcdir=srcdir)
     setup_result = sphinx_notionbuilder.setup(app=app)
     assert setup_result == {"parallel_read_safe": True}
+
+    builder = builder_cls(app=app, env=app.env)
+    document = docutils.utils.new_document(source_path=".")
+    translator = sphinx_notionbuilder.NotionTranslator(
+        document=document, builder=builder
+    )
+    translator.depart_document(node=document)
+    assert translator.body == "[]"
