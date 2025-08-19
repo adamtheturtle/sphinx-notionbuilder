@@ -24,7 +24,7 @@ class NotionBuilder(TextBuilder):
 
     name = "notion"
     out_suffix = ".json"
-    default_translator_class = NotionTranslator
+    default_translator_class: type[NotionTranslator] = NotionTranslator
 
 
 @beartype
