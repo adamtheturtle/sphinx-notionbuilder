@@ -22,7 +22,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
@@ -32,13 +31,16 @@ dynamic = [
 ]
 dependencies = [
     "beartype>=0.21.0",
+    "docutils>=0.21",
+    "pydantic",
     "sphinx>=8.2.3",
+    "ultimate-notion>=0.8",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
     "check-manifest==0.50",
     "deptry==0.23.1",
-    "doc8==1.1.2",
+    "doc8==2.0.0",
     "doccmd==2025.4.8",
     "docformatter==1.7.7",
     "freezegun==1.5.5",
@@ -68,6 +70,7 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
+    "types-docutils==0.22.0.20250814",
     "vulture==2.14",
     "yamlfix==1.17.0",
 ]
@@ -117,6 +120,8 @@ lint.ignore = [
     # Ignore "too-many-*" errors as they seem to get in the way more than
     # helping.
     "PLR0913",
+    # We use asserts for type narrowing.
+    "S101",
 ]
 
 lint.per-file-ignores."doccmd_*.py" = [
@@ -269,6 +274,8 @@ make-summary-multi-line = true
 
 ignore = [
     ".checkmake-config.ini",
+    ".vscode",
+    ".vscode/**",
     ".yamlfmt",
     "*.enc",
     ".pre-commit-config.yaml",
@@ -384,6 +391,9 @@ ignore_names = [
     "spelling_word_list_filename",
     "templates_path",
     "warning_is_error",
+    # Docutils translator
+    "depart_*",
+    "visit_*",
 ]
 
 # Duplicate some of .gitignore

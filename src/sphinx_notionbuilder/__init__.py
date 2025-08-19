@@ -2,11 +2,20 @@
 Sphinx Notion Builder.
 """
 
+import json
+from typing import TYPE_CHECKING, Any
+
+import pydantic
 from beartype import beartype
+from docutils import nodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx.writers.text import TextTranslator
+from ultimate_notion.blocks import Paragraph as UnoParagraph
+
+if TYPE_CHECKING:
+    from ultimate_notion.core import NotionObject
 
 
 @beartype
@@ -14,6 +23,54 @@ class NotionTranslator(TextTranslator):
     """
     Translate docutils nodes to Notion JSON.
     """
+
+    def __init__(self, document: nodes.document, builder: TextBuilder) -> None:
+        """
+        Initialize the translator with storage for blocks.
+        """
+        super().__init__(document=document, builder=builder)
+        self._blocks: list[NotionObject[Any]] = []
+        self.body: str
+
+    def visit_paragraph(self, node: nodes.Element) -> None:
+        """
+        Handle paragraph nodes by creating Notion Paragraph blocks.
+        """
+        assert isinstance(node, nodes.paragraph)
+        block = UnoParagraph(text=node.astext())
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_document(self, node: nodes.Element) -> None:
+        """
+        Initialize block collection at document start.
+        """
+        del node
+        self._blocks = []
+
+    def depart_document(self, node: nodes.Element) -> None:
+        """
+        Output collected blocks as JSON at document end.
+        """
+        del node
+        dumped_blocks: list[dict[str, Any]] = []
+        for block in self._blocks:
+            obj_ref = block.obj_ref
+            assert isinstance(obj_ref, pydantic.BaseModel)
+            dumped_block: dict[str, Any] = obj_ref.model_dump(
+                mode="json",
+                by_alias=True,
+                exclude_none=True,
+            )
+            dumped_blocks.append(dumped_block)
+
+        json_output = json.dumps(
+            obj=dumped_blocks,
+            indent=2,
+            ensure_ascii=False,
+        )
+        self.body = json_output
 
 
 @beartype
