@@ -276,6 +276,8 @@ ignore = [
     ".checkmake-config.ini",
     ".vscode",
     ".vscode/**",
+    "sample/",
+    "sample/**",
     ".yamlfmt",
     "*.enc",
     ".pre-commit-config.yaml",
