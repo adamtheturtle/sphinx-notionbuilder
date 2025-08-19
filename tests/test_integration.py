@@ -3,6 +3,7 @@ Integration tests for the Sphinx Notion Builder functionality.
 """
 
 import json
+import textwrap
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -25,16 +26,17 @@ def test_single_paragraph_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = """
-extensions = ["sphinx_notionbuilder"]
-"""
+    conf_py_content = textwrap.dedent("""
+        extensions = ["sphinx_notionbuilder"]
+    """).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = """Test Document
-=============
+    rst_content = textwrap.dedent("""
+        Test Document
+        =============
 
-This is a simple paragraph for testing.
-"""
+        This is a simple paragraph for testing.
+    """).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
@@ -84,20 +86,21 @@ def test_multiple_paragraphs_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = """
-extensions = ["sphinx_notionbuilder"]
-"""
+    conf_py_content = textwrap.dedent("""
+        extensions = ["sphinx_notionbuilder"]
+    """).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = """Multi-Paragraph Document
-========================
+    rst_content = textwrap.dedent("""
+        Multi-Paragraph Document
+        ========================
 
-First paragraph with some text.
+        First paragraph with some text.
 
-Second paragraph with different content.
+        Second paragraph with different content.
 
-Third paragraph to test multiple blocks.
-"""
+        Third paragraph to test multiple blocks.
+    """).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
@@ -158,14 +161,15 @@ def test_empty_document_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = """
-extensions = ["sphinx_notionbuilder"]
-"""
+    conf_py_content = textwrap.dedent("""
+        extensions = ["sphinx_notionbuilder"]
+    """).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = """Empty Document
-==============
-"""
+    rst_content = textwrap.dedent("""
+        Empty Document
+        ==============
+    """).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
@@ -199,16 +203,17 @@ def test_paragraph_with_inline_formatting(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = """
-extensions = ["sphinx_notionbuilder"]
-"""
+    conf_py_content = textwrap.dedent("""
+        extensions = ["sphinx_notionbuilder"]
+    """).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = """Formatted Document
-==================
+    rst_content = textwrap.dedent("""
+        Formatted Document
+        ==================
 
-This paragraph has **bold text** and *italic text* in it.
-"""
+        This paragraph has **bold text** and *italic text* in it.
+    """).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
