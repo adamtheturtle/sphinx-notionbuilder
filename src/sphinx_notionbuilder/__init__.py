@@ -2,20 +2,16 @@
 Sphinx Notion Builder.
 """
 
-from __future__ import annotations
-
 import json
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from beartype import beartype
 from docutils import nodes
+from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.util.typing import ExtensionMetadata
 from sphinx.writers.text import TextTranslator
 from ultimate_notion.blocks import Paragraph as UnoParagraph
-
-if TYPE_CHECKING:
-    from sphinx.application import Sphinx
-    from sphinx.util.typing import ExtensionMetadata
 
 
 @beartype
