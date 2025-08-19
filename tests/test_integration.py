@@ -22,12 +22,8 @@ def test_single_paragraph_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = textwrap.dedent(
-        text="""
-        extensions = ["sphinx_notionbuilder"]
-    """
-    ).strip()
-    (srcdir / "conf.py").write_text(data=conf_py_content)
+    # Create minimal conf.py - confoverrides will add the extensions
+    (srcdir / "conf.py").write_text(data="")
 
     rst_content = textwrap.dedent(
         text="""
@@ -43,6 +39,7 @@ def test_single_paragraph_conversion(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
+        confoverrides={"extensions": ["sphinx_notionbuilder"]},
     )
     app.build()
 
@@ -79,12 +76,8 @@ def test_multiple_paragraphs_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = textwrap.dedent(
-        text="""
-        extensions = ["sphinx_notionbuilder"]
-    """
-    ).strip()
-    (srcdir / "conf.py").write_text(data=conf_py_content)
+    # Create minimal conf.py - confoverrides will add the extensions
+    (srcdir / "conf.py").write_text(data="")
 
     rst_content = textwrap.dedent(
         text="""
@@ -104,6 +97,7 @@ def test_multiple_paragraphs_conversion(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
+        confoverrides={"extensions": ["sphinx_notionbuilder"]},
     )
     app.build()
 
