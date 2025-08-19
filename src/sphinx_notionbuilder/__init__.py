@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, Any
 import pydantic
 from beartype import beartype
 from docutils import nodes
+from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
-from sphinx.writers.text import TextTranslator
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 @beartype
-class NotionTranslator(TextTranslator):
+class NotionTranslator(NodeVisitor):
     """
     Translate docutils nodes to Notion JSON.
     """
@@ -28,7 +28,8 @@ class NotionTranslator(TextTranslator):
         """
         Initialize the translator with storage for blocks.
         """
-        super().__init__(document=document, builder=builder)
+        del builder
+        super().__init__(document=document)
         self._blocks: list[NotionObject[Any]] = []
         self.body: str
 
