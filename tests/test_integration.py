@@ -52,7 +52,10 @@ def test_single_paragraph_conversion(
         UnoParagraph(text="This is a simple paragraph for testing.")
     ]
 
-    assert_paragraphs_match_json(expected_paragraphs, generated_json)
+    assert_paragraphs_match_json(
+        expected_paragraphs=expected_paragraphs,
+        generated_json=generated_json,
+    )
 
 
 def test_multiple_paragraphs_conversion(
@@ -99,4 +102,7 @@ def test_multiple_paragraphs_conversion(
         UnoParagraph(text="Third paragraph to test multiple blocks."),
     ]
 
-    assert_paragraphs_match_json(expected_paragraphs, generated_json)
+    assert_paragraphs_match_json(
+        expected_paragraphs=expected_paragraphs,
+        generated_json=generated_json,
+    )
