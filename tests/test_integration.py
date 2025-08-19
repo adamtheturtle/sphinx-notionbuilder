@@ -29,7 +29,7 @@ def test_single_paragraph_conversion(
     conf_py_content = """
 extensions = ["sphinx_notionbuilder"]
 """
-    (srcdir / "conf.py").write_text(conf_py_content)
+    (srcdir / "conf.py").write_text(data=conf_py_content)
 
     # Create a simple RST file with one paragraph
     rst_content = """Test Document
@@ -37,7 +37,7 @@ extensions = ["sphinx_notionbuilder"]
 
 This is a simple paragraph for testing.
 """
-    (srcdir / "index.rst").write_text(rst_content)
+    (srcdir / "index.rst").write_text(data=rst_content)
 
     # Build the documentation
     app = make_app(
@@ -49,12 +49,12 @@ This is a simple paragraph for testing.
 
     # Find the generated JSON file
     build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob("*.json"))
+    json_files = list(build_dir.rglob(pattern="*.json"))
     assert len(json_files) > 0, "No JSON files created"
     output_file = json_files[0]
 
     with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(f)
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     # Create expected Ultimate Notion objects
     expected_paragraph = UnoParagraph(
@@ -74,7 +74,7 @@ This is a simple paragraph for testing.
     assert generated_json == expected_json
     assert len(generated_json) == 1
     assert generated_json[0]["type"] == "paragraph"
-    paragraph_str = json.dumps(generated_json[0])
+    paragraph_str = json.dumps(obj=generated_json[0])
     assert "This is a simple paragraph for testing." in paragraph_str
 
 
@@ -95,7 +95,7 @@ def test_multiple_paragraphs_conversion(
     conf_py_content = """
 extensions = ["sphinx_notionbuilder"]
 """
-    (srcdir / "conf.py").write_text(conf_py_content)
+    (srcdir / "conf.py").write_text(data=conf_py_content)
 
     # Create RST file with multiple paragraphs
     rst_content = """Multi-Paragraph Document
@@ -107,7 +107,7 @@ Second paragraph with different content.
 
 Third paragraph to test multiple blocks.
 """
-    (srcdir / "index.rst").write_text(rst_content)
+    (srcdir / "index.rst").write_text(data=rst_content)
 
     # Build the documentation
     app = make_app(
@@ -119,12 +119,12 @@ Third paragraph to test multiple blocks.
 
     # Find the generated JSON file
     build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob("*.json"))
+    json_files = list(build_dir.rglob(pattern="*.json"))
     assert len(json_files) > 0, "No JSON files created"
     output_file = json_files[0]
 
     with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(f)
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     # Create expected Ultimate Notion objects
     expected_paragraphs = [
@@ -154,10 +154,10 @@ Third paragraph to test multiple blocks.
         "Second paragraph with different content.",
         "Third paragraph to test multiple blocks.",
     ]
-    for i, block in enumerate(generated_json):
+    for i, block in enumerate(iterable=generated_json):
         assert block["type"] == "paragraph"
         expected_text = expected_texts[i]
-        block_str = json.dumps(block)
+        block_str = json.dumps(obj=block)
         assert expected_text in block_str
 
 
@@ -177,13 +177,13 @@ def test_empty_document_conversion(
     conf_py_content = """
 extensions = ["sphinx_notionbuilder"]
 """
-    (srcdir / "conf.py").write_text(conf_py_content)
+    (srcdir / "conf.py").write_text(data=conf_py_content)
 
     # Create RST file with only a title, no content paragraphs
     rst_content = """Empty Document
 ==============
 """
-    (srcdir / "index.rst").write_text(rst_content)
+    (srcdir / "index.rst").write_text(data=rst_content)
 
     # Build the documentation
     app = make_app(
@@ -195,12 +195,12 @@ extensions = ["sphinx_notionbuilder"]
 
     # Find the generated JSON file
     build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob("*.json"))
+    json_files = list(build_dir.rglob(pattern="*.json"))
     assert len(json_files) > 0, "No JSON files created"
     output_file = json_files[0]
 
     with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(f)
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     # Should be an empty list since there are no paragraphs
     assert generated_json == []
@@ -223,7 +223,7 @@ def test_paragraph_with_inline_formatting(
     conf_py_content = """
 extensions = ["sphinx_notionbuilder"]
 """
-    (srcdir / "conf.py").write_text(conf_py_content)
+    (srcdir / "conf.py").write_text(data=conf_py_content)
 
     # Create RST file with inline formatting
     rst_content = """Formatted Document
@@ -231,7 +231,7 @@ extensions = ["sphinx_notionbuilder"]
 
 This paragraph has **bold text** and *italic text* in it.
 """
-    (srcdir / "index.rst").write_text(rst_content)
+    (srcdir / "index.rst").write_text(data=rst_content)
 
     # Build the documentation
     app = make_app(
@@ -243,12 +243,12 @@ This paragraph has **bold text** and *italic text* in it.
 
     # Find the generated JSON file
     build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob("*.json"))
+    json_files = list(build_dir.rglob(pattern="*.json"))
     assert len(json_files) > 0, "No JSON files created"
     output_file = json_files[0]
 
     with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(f)
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     # Create expected Ultimate Notion object
     # The astext() method should flatten formatting to plain text
@@ -270,6 +270,6 @@ This paragraph has **bold text** and *italic text* in it.
     assert generated_json[0]["type"] == "paragraph"
 
     # Verify the text content (formatting should be flattened)
-    generated_text_content = json.dumps(generated_json[0])
+    generated_text_content = json.dumps(obj=generated_json[0])
     assert "bold text" in generated_text_content
     assert "italic text" in generated_text_content
