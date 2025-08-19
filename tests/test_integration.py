@@ -11,6 +11,8 @@ from typing import Any
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 
+from .helpers import assert_paragraphs_match_json
+
 
 def test_single_paragraph_conversion(
     make_app: Callable[..., SphinxTestApp],
@@ -49,19 +51,11 @@ def test_single_paragraph_conversion(
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
-    expected_paragraph = UnoParagraph(
-        text="This is a simple paragraph for testing."
-    )
-
-    expected_json = [
-        expected_paragraph.obj_ref.model_dump(
-            mode="json",
-            by_alias=True,
-            exclude_none=True,
-        )
+    expected_paragraphs = [
+        UnoParagraph(text="This is a simple paragraph for testing.")
     ]
 
-    assert generated_json == expected_json
+    assert_paragraphs_match_json(expected_paragraphs, generated_json)
 
 
 def test_multiple_paragraphs_conversion(
@@ -111,13 +105,4 @@ def test_multiple_paragraphs_conversion(
         UnoParagraph(text="Third paragraph to test multiple blocks."),
     ]
 
-    expected_json = []
-    for paragraph in expected_paragraphs:
-        dumped_block = paragraph.obj_ref.model_dump(
-            mode="json",
-            by_alias=True,
-            exclude_none=True,
-        )
-        expected_json.append(dumped_block)
-
-    assert generated_json == expected_json
+    assert_paragraphs_match_json(expected_paragraphs, generated_json)
