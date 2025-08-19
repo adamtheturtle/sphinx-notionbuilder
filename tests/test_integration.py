@@ -21,8 +21,6 @@ def test_single_paragraph_conversion(
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-
-    # Create minimal conf.py - confoverrides will add the extensions
     (srcdir / "conf.py").write_text(data="")
 
     rst_content = textwrap.dedent(
@@ -75,8 +73,6 @@ def test_multiple_paragraphs_conversion(
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-
-    # Create minimal conf.py - confoverrides will add the extensions
     (srcdir / "conf.py").write_text(data="")
 
     rst_content = textwrap.dedent(
