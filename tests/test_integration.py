@@ -2,16 +2,13 @@
 Integration tests for the Sphinx Notion Builder functionality.
 """
 
-import json
-import textwrap
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 
-from .helpers import assert_paragraphs_match_json
+from .helpers import assert_rst_converts_to_paragraphs
 
 
 def test_single_paragraph_conversion(
@@ -21,40 +18,22 @@ def test_single_paragraph_conversion(
     """
     Single paragraph converts to Notion JSON.
     """
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="")
-
-    rst_content = textwrap.dedent(
-        text="""
+    rst_content = """
         Test Document
         =============
 
         This is a simple paragraph for testing.
     """
-    ).strip()
-    (srcdir / "index.rst").write_text(data=rst_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-        confoverrides={"extensions": ["sphinx_notionbuilder"]},
-    )
-    app.build()
-
-    output_file = app.outdir / "index.json"
-
-    with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     expected_paragraphs = [
         UnoParagraph(text="This is a simple paragraph for testing.")
     ]
 
-    assert_paragraphs_match_json(
+    assert_rst_converts_to_paragraphs(
+        rst_content=rst_content,
         expected_paragraphs=expected_paragraphs,
-        generated_json=generated_json,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
 
 
@@ -65,12 +44,7 @@ def test_multiple_paragraphs_conversion(
     """
     Multiple paragraphs in convert to separate Notion blocks.
     """
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="")
-
-    rst_content = textwrap.dedent(
-        text="""
+    rst_content = """
         Multi-Paragraph Document
         ========================
 
@@ -80,21 +54,6 @@ def test_multiple_paragraphs_conversion(
 
         Third paragraph to test multiple blocks.
     """
-    ).strip()
-    (srcdir / "index.rst").write_text(data=rst_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-        confoverrides={"extensions": ["sphinx_notionbuilder"]},
-    )
-    app.build()
-
-    output_file = app.outdir / "index.json"
-
-    with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     expected_paragraphs = [
         UnoParagraph(text="First paragraph with some text."),
@@ -102,7 +61,9 @@ def test_multiple_paragraphs_conversion(
         UnoParagraph(text="Third paragraph to test multiple blocks."),
     ]
 
-    assert_paragraphs_match_json(
+    assert_rst_converts_to_paragraphs(
+        rst_content=rst_content,
         expected_paragraphs=expected_paragraphs,
-        generated_json=generated_json,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
