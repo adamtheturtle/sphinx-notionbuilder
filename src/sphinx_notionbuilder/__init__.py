@@ -26,6 +26,7 @@ class NotionTranslator(TextTranslator):
         """
         super().__init__(document=document, builder=builder)
         self._blocks: list[UnoParagraph] = []
+        self.body: str
 
     def visit_paragraph(self, node: nodes.Element) -> None:
         """
