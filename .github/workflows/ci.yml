@@ -31,6 +31,10 @@ jobs:
           enable-cache: true
           cache-dependency-glob: '**/pyproject.toml'
 
+      - name: Build sample
+        run: |
+          uv run --extra=dev --python=${{ matrix.python-version }} sphinx-build -b notion sample/ build-sample/
+
       - name: Run tests
         run: |
           # We run tests against "." and not the tests directory as we test the README
