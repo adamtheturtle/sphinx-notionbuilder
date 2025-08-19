@@ -3,8 +3,9 @@ Sphinx Notion Builder.
 """
 
 import json
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any
 
+import pydantic
 from beartype import beartype
 from docutils import nodes
 from sphinx.application import Sphinx
@@ -12,6 +13,9 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx.writers.text import TextTranslator
 from ultimate_notion.blocks import Paragraph as UnoParagraph
+
+if TYPE_CHECKING:
+    from ultimate_notion.core import NotionObject
 
 
 @beartype
@@ -25,7 +29,7 @@ class NotionTranslator(TextTranslator):
         Initialize the translator with storage for blocks.
         """
         super().__init__(document=document, builder=builder)
-        self._blocks: list[UnoParagraph] = []
+        self._blocks: list[NotionObject[Any]] = []
         self.body: str
 
     def visit_paragraph(self, node: nodes.Element) -> None:
@@ -52,16 +56,21 @@ class NotionTranslator(TextTranslator):
         Output collected blocks as JSON at document end.
         """
         # Convert blocks to JSON using Pydantic model_dump from obj_ref
-        dumped_blocks = [
-            cast("Any", block).obj_ref.model_dump(
-                mode="json", by_alias=True, exclude_none=True
+        dumped_blocks: list[dict[str, Any]] = []
+        for block in self._blocks:
+            obj_ref = block.obj_ref
+            assert isinstance(obj_ref, pydantic.BaseModel)
+            dumped_block: dict[str, Any] = obj_ref.model_dump(
+                mode="json",
+                by_alias=True,
+                exclude_none=True,
             )
-            for block in self._blocks
-        ]
+            dumped_blocks.append(dumped_block)
 
-        # Output as formatted JSON
         json_output = json.dumps(
-            obj=dumped_blocks, indent=2, ensure_ascii=False
+            obj=dumped_blocks,
+            indent=2,
+            ensure_ascii=False,
         )
         self.body = json_output
 
