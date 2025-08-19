@@ -120,6 +120,8 @@ lint.ignore = [
     # Ignore "too-many-*" errors as they seem to get in the way more than
     # helping.
     "PLR0913",
+    # We use asserts for type narrowing.
+    "S101",
 ]
 
 lint.per-file-ignores."doccmd_*.py" = [

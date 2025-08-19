@@ -33,10 +33,9 @@ class NotionTranslator(TextTranslator):
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
         # Extract text content from the paragraph node
-        text = cast("Any", node).astext()
-
+        assert isinstance(node, nodes.paragraph)
         # Create a Notion Paragraph block
-        block = UnoParagraph(text=text)
+        block = UnoParagraph(text=node.astext())
         self._blocks.append(block)
 
         # Skip default text processing
