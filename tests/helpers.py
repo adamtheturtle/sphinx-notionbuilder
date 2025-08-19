@@ -8,6 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import pydantic
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 
@@ -49,9 +50,12 @@ def assert_rst_converts_to_paragraphs(
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
-    expected_json = []
+    expected_json: list[dict[str, Any]] = []
     for paragraph in expected_paragraphs:
-        dumped_block = paragraph.obj_ref.model_dump(
+        # Convert blocks to JSON using Pydantic model_dump from obj_ref
+        obj_ref = paragraph.obj_ref
+        assert isinstance(obj_ref, pydantic.BaseModel)
+        dumped_block: dict[str, Any] = obj_ref.model_dump(
             mode="json",
             by_alias=True,
             exclude_none=True,
