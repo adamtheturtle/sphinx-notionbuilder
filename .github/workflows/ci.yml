@@ -1,0 +1,56 @@
+---
+
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # Run at 1:00 every day
+    - cron: 0 1 * * *
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        python-version: ['3.13']
+        platform: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: '**/pyproject.toml'
+
+      - name: Run tests
+        run: |
+          # We run tests against "." and not the tests directory as we test the README
+          # and documentation.
+          uv run --extra=dev --python=${{ matrix.python-version }} pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests/ . --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  completion-ci:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()  # Run even if one matrix job fails
+    steps:
+      - name: Check matrix job status
+        run: |-
+          if ! ${{ needs.build.result == 'success' }}; then
+            echo "One or more matrix jobs failed"
+            exit 1
+          fi

@@ -1,0 +1,3 @@
+"""
+Sphinx Notion Builder.
+"""
