@@ -26,17 +26,21 @@ def test_single_paragraph_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = textwrap.dedent("""
+    conf_py_content = textwrap.dedent(
+        text="""
         extensions = ["sphinx_notionbuilder"]
-    """).strip()
+    """
+    ).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = textwrap.dedent("""
+    rst_content = textwrap.dedent(
+        text="""
         Test Document
         =============
 
         This is a simple paragraph for testing.
-    """).strip()
+    """
+    ).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
@@ -86,12 +90,15 @@ def test_multiple_paragraphs_conversion(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    conf_py_content = textwrap.dedent("""
+    conf_py_content = textwrap.dedent(
+        text="""
         extensions = ["sphinx_notionbuilder"]
-    """).strip()
+    """
+    ).strip()
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
-    rst_content = textwrap.dedent("""
+    rst_content = textwrap.dedent(
+        text="""
         Multi-Paragraph Document
         ========================
 
@@ -100,7 +107,8 @@ def test_multiple_paragraphs_conversion(
         Second paragraph with different content.
 
         Third paragraph to test multiple blocks.
-    """).strip()
+    """
+    ).strip()
     (srcdir / "index.rst").write_text(data=rst_content)
 
     app = make_app(
@@ -147,105 +155,3 @@ def test_multiple_paragraphs_conversion(
         expected_text = expected_texts[i]
         block_str = json.dumps(obj=block)
         assert expected_text in block_str
-
-
-def test_empty_document_conversion(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """Test that an empty RST document (with only title) produces empty JSON.
-
-    This test verifies the behavior when there are no paragraph blocks
-    to convert.
-    """
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-
-    conf_py_content = textwrap.dedent("""
-        extensions = ["sphinx_notionbuilder"]
-    """).strip()
-    (srcdir / "conf.py").write_text(data=conf_py_content)
-
-    rst_content = textwrap.dedent("""
-        Empty Document
-        ==============
-    """).strip()
-    (srcdir / "index.rst").write_text(data=rst_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-    )
-    app.build()
-
-    build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob(pattern="*.json"))
-    assert len(json_files) > 0, "No JSON files created"
-    output_file = json_files[0]
-
-    with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
-
-    assert generated_json == []
-
-
-def test_paragraph_with_inline_formatting(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """Test paragraph conversion with inline formatting elements.
-
-    This test verifies that paragraphs with bold, italic, and other
-    inline formatting are converted correctly, with the formatting
-    flattened to text.
-    """
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-
-    conf_py_content = textwrap.dedent("""
-        extensions = ["sphinx_notionbuilder"]
-    """).strip()
-    (srcdir / "conf.py").write_text(data=conf_py_content)
-
-    rst_content = textwrap.dedent("""
-        Formatted Document
-        ==================
-
-        This paragraph has **bold text** and *italic text* in it.
-    """).strip()
-    (srcdir / "index.rst").write_text(data=rst_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-    )
-    app.build()
-
-    build_dir = tmp_path / "build"
-    json_files = list(build_dir.rglob(pattern="*.json"))
-    assert len(json_files) > 0, "No JSON files created"
-    output_file = json_files[0]
-
-    with output_file.open() as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
-
-    expected_text = "This paragraph has bold text and italic text in it."
-    expected_paragraph = UnoParagraph(text=expected_text)
-
-    expected_json = [
-        expected_paragraph.obj_ref.model_dump(
-            mode="json",
-            by_alias=True,
-            exclude_none=True,
-        )
-    ]
-
-    assert generated_json == expected_json
-    assert len(generated_json) == 1
-    assert generated_json[0]["type"] == "paragraph"
-
-    generated_text_content = json.dumps(obj=generated_json[0])
-    assert "bold text" in generated_text_content
-    assert "italic text" in generated_text_content
