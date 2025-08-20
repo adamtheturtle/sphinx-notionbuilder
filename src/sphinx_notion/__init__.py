@@ -3,7 +3,7 @@ Sphinx Notion Builder.
 """
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pydantic
 from beartype import beartype
@@ -28,11 +28,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.blocks import Block, BulletedListItem
 from ultimate_notion.rich_text import Text, text
-
-if TYPE_CHECKING:
-    from ultimate_notion.core import NotionObject
 
 
 def dump_notion_object(*, obj_ref: pydantic.BaseModel) -> dict[str, Any]:
@@ -48,7 +46,7 @@ def dump_notion_object(*, obj_ref: pydantic.BaseModel) -> dict[str, Any]:
 
 
 def get_bulleted_list_item_obj_ref(
-    bulleted_item: UnoBulletedItem,
+    bulleted_item: NotionObject[Any],
 ) -> BulletedListItem:
     """Get the obj_ref from a BulletedItem with proper typing.
 

@@ -4,7 +4,7 @@ Integration tests for the Sphinx Notion Builder functionality.
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
@@ -22,6 +22,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.blocks import Block, BulletedListItem
 from ultimate_notion.rich_text import text
 
@@ -29,7 +30,7 @@ from .helpers import assert_rst_converts_to_notion_objects
 
 
 def _get_bulleted_list_item_obj_ref(
-    bulleted_item: UnoBulletedItem,
+    bulleted_item: NotionObject[Any],
 ) -> BulletedListItem:
     """Get the obj_ref from a BulletedItem with proper typing.
 
@@ -61,10 +62,6 @@ def _add_bullet_children(
     parent_obj_ref = _get_bulleted_list_item_obj_ref(parent)
     parent_obj_ref.bulleted_list_item.children.extend(block_objects)
     parent_obj_ref.has_children = True
-
-
-if TYPE_CHECKING:
-    from ultimate_notion.core import NotionObject
 
 
 def test_single_paragraph_conversion(
