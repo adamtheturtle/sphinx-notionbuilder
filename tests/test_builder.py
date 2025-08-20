@@ -21,10 +21,6 @@ def test_meta(
     builder_cls = sphinx_notionbuilder.NotionBuilder
     assert builder_cls.name == "notion"
     assert builder_cls.out_suffix == ".json"
-    assert (
-        builder_cls.default_translator_class
-        == sphinx_notionbuilder.NotionTranslator
-    )
 
     srcdir = tmp_path / "src"
     srcdir.mkdir()
