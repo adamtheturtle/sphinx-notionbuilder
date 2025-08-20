@@ -147,9 +147,11 @@ class NotionTranslator(NodeVisitor):
         """
         Handle topic nodes, specifically for table of contents.
         """
-        if "contents" in node["classes"]:
-            block = UnoTableOfContents()
-            self._blocks.append(block)
+        # Later, we can support `.. topic::` directives, likely as
+        # a callout with no icon.
+        assert "contents" in node["classes"]
+        block = UnoTableOfContents()
+        self._blocks.append(block)
 
         raise nodes.SkipNode
 
