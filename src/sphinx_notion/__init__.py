@@ -144,10 +144,9 @@ class NotionTranslator(NodeVisitor):
         """
         Handle bullet list nodes by processing list items.
         """
-        # Process each list item in the bullet list
         for list_item in node.children:
-            if isinstance(list_item, nodes.list_item):
-                self._process_list_item(list_item)
+            assert isinstance(list_item, nodes.list_item)
+            self._process_list_item(list_item=list_item)
 
         raise nodes.SkipNode
 
