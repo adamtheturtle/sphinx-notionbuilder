@@ -156,12 +156,11 @@ class NotionTranslator(NodeVisitor):
         Handle nested bullet lists as children.
         """
         block = self._create_bullet_item(list_item=list_item)
-        if block is not None:
-            self._blocks.append(block)
+        self._blocks.append(block)
 
     def _create_bullet_item(
         self, list_item: nodes.list_item
-    ) -> UnoBulletedItem | None:
+    ) -> UnoBulletedItem:
         """Create a BulletedItem from a list item.
 
         Handles recursive nesting for multiple levels.
@@ -188,15 +187,13 @@ class NotionTranslator(NodeVisitor):
         for nested_list in nested_bullet_lists:
             for nested_item in nested_list.children:
                 if isinstance(nested_item, nodes.list_item):
-                    # Recursively process nested list items
                     nested_child_block = self._create_bullet_item(
                         list_item=nested_item
                     )
-                    if nested_child_block:
-                        child_json = dump_notion_object(
-                            obj_ref=nested_child_block.obj_ref
-                        )
-                        children_data.append(child_json)
+                    child_json = dump_notion_object(
+                        obj_ref=nested_child_block.obj_ref
+                    )
+                    children_data.append(child_json)
 
         if children_data:
             block.obj_ref.bulleted_list_item.children = children_data
