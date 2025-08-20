@@ -39,20 +39,17 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
     for child in node.children:
         if isinstance(child, nodes.reference):
-            # Handle links using the refuri attribute
-            link_url = child.attributes.get("refuri")
-            # Use 'name' attribute if available, else fall back to astext()
-            link_text = child.attributes.get("name", child.astext())
+            link_url = child.attributes["refuri"]
+            link_text = child.attributes.get("name", link_url)
 
             new_text = text(
                 text=link_text,
                 href=link_url,
-                bold=False,  # Links can't have other formatting applied
+                bold=False,
                 italic=False,
                 code=False,
             )
         elif isinstance(child, nodes.target):
-            # Skip target nodes as they don't contribute to display text
             continue
         else:
             new_text = text(
