@@ -31,6 +31,24 @@ if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
 
+def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
+    """
+    Create Notion rich text from docutils node children.
+    """
+    rich_text = Text.from_plain_text(text="")
+
+    for child in node.children:
+        new_text = text(
+            text=child.astext(),
+            bold=isinstance(child, nodes.strong),
+            italic=isinstance(child, nodes.emphasis),
+            code=isinstance(child, nodes.literal),
+        )
+        rich_text += new_text
+
+    return rich_text
+
+
 @beartype
 class NotionTranslator(NodeVisitor):
     """
@@ -47,29 +65,12 @@ class NotionTranslator(NodeVisitor):
         self.body: str
         self._section_level = 0
 
-    def _create_rich_text_from_children(self, *, node: nodes.Element) -> Text:
-        """
-        Create Notion rich text from docutils node children.
-        """
-        rich_text = Text.from_plain_text(text="")
-
-        for child in node.children:
-            new_text = text(
-                text=child.astext(),
-                bold=isinstance(child, nodes.strong),
-                italic=isinstance(child, nodes.emphasis),
-                code=isinstance(child, nodes.literal),
-            )
-            rich_text += new_text
-
-        return rich_text
-
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
         """
         heading_level = self._section_level
-        rich_text = self._create_rich_text_from_children(node=node)
+        rich_text = _create_rich_text_from_children(node=node)
 
         heading_levels: dict[int, type[UnoHeading[Any]]] = {
             1: UnoHeading1,
@@ -102,7 +103,7 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        rich_text = self._create_rich_text_from_children(node=node)
+        rich_text = _create_rich_text_from_children(node=node)
 
         block = UnoParagraph(text="")
         block.rich_text = rich_text
