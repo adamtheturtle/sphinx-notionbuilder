@@ -503,10 +503,8 @@ def test_nested_bulleted_list_conversion(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Nested bulleted lists convert to BulletedItem blocks with children.
-
-    For now, we'll accept flattened output until full nesting is
-    implemented.
+    """
+    Nested bulleted lists convert to BulletedItem blocks with children.
     """
     rst_content = """
         * First item
@@ -519,14 +517,33 @@ def test_nested_bulleted_list_conversion(
           * Another nested item
     """
 
-    # For now, expect flattened output (all items at top level)
-    # Full nesting support will be implemented in a future iteration
+    # Create nested items for first item
+    nested_item_1 = UnoBulletedItem(text="Nested item 1")
+    nested_item_2 = UnoBulletedItem(text="Nested item 2")
+
+    # Create first item with children
+    first_item = UnoBulletedItem(text="First item")
+    type_data_class = type(first_item.obj_ref.bulleted_list_item)
+    first_item.obj_ref.bulleted_list_item = type_data_class(
+        rich_text=first_item.obj_ref.bulleted_list_item.rich_text,
+        color=first_item.obj_ref.bulleted_list_item.color,
+        children=[nested_item_1.obj_ref, nested_item_2.obj_ref],
+    )
+
+    # Create nested item for second item
+    another_nested_item = UnoBulletedItem(text="Another nested item")
+
+    # Create second item with children
+    second_item = UnoBulletedItem(text="Second item")
+    second_item.obj_ref.bulleted_list_item = type_data_class(
+        rich_text=second_item.obj_ref.bulleted_list_item.rich_text,
+        color=second_item.obj_ref.bulleted_list_item.color,
+        children=[another_nested_item.obj_ref],
+    )
+
     expected_objects: list[NotionObject[Any]] = [
-        UnoBulletedItem(text="First item"),
-        UnoBulletedItem(text="Nested item 1"),
-        UnoBulletedItem(text="Nested item 2"),
-        UnoBulletedItem(text="Second item"),
-        UnoBulletedItem(text="Another nested item"),
+        first_item,
+        second_item,
     ]
 
     assert_rst_converts_to_notion_objects(
