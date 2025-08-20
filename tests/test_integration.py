@@ -22,6 +22,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Quote as UnoQuote,
 )
+from ultimate_notion.blocks import (
+    TableOfContents as UnoTableOfContents,
+)
 from ultimate_notion.rich_text import text
 
 from .helpers import assert_rst_converts_to_notion_objects
@@ -30,7 +33,7 @@ if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
 
-def test_single_paragraph_conversion(
+def test_single_paragraph(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -53,7 +56,7 @@ def test_single_paragraph_conversion(
     )
 
 
-def test_multiple_paragraphs_conversion(
+def test_multiple_paragraphs(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -82,7 +85,7 @@ def test_multiple_paragraphs_conversion(
     )
 
 
-def test_inline_formatting_conversion(
+def test_inline_formatting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -124,7 +127,7 @@ def test_inline_formatting_conversion(
     )
 
 
-def test_single_heading_conversion(
+def test_single_heading(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -151,7 +154,7 @@ def test_single_heading_conversion(
     )
 
 
-def test_multiple_heading_levels_conversion(
+def test_multiple_heading_levels(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -192,7 +195,7 @@ def test_multiple_heading_levels_conversion(
     )
 
 
-def test_heading_with_formatting_conversion(
+def test_heading_with_formatting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -229,7 +232,7 @@ def test_heading_with_formatting_conversion(
     )
 
 
-def test_simple_link_conversion(
+def test_simple_link(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -259,7 +262,7 @@ def test_simple_link_conversion(
     )
 
 
-def test_multiple_links_conversion(
+def test_multiple_links(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -298,7 +301,7 @@ def test_multiple_links_conversion(
     )
 
 
-def test_link_in_heading_conversion(
+def test_link_in_heading(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -333,7 +336,7 @@ def test_link_in_heading_conversion(
     )
 
 
-def test_mixed_formatting_with_links_conversion(
+def test_mixed_formatting_with_links(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -375,7 +378,7 @@ def test_mixed_formatting_with_links_conversion(
     )
 
 
-def test_unnamed_link_with_backticks_conversion(
+def test_unnamed_link_with_backticks(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -406,7 +409,7 @@ def test_unnamed_link_with_backticks_conversion(
     )
 
 
-def test_simple_quote_conversion(
+def test_simple_quote(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -433,7 +436,7 @@ def test_simple_quote_conversion(
     )
 
 
-def test_multiline_quote_conversion(
+def test_multiline_quote(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -455,6 +458,45 @@ def test_multiline_quote_conversion(
             text="This is a multiline\nblock quote with\nmultiple lines."
         ),
         UnoParagraph(text="Another paragraph."),
+    ]
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_table_of_contents(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that contents directive converts to Notion TableOfContents blocks.
+    """
+    rst_content = """
+        Introduction
+        ============
+
+        .. contents::
+
+        First Section
+        -------------
+
+        Content here.
+
+        Second Section
+        --------------
+
+        More content.
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoHeading1(text="Introduction"),
+        UnoTableOfContents(),
+        UnoHeading2(text="First Section"),
+        UnoParagraph(text="Content here."),
+        UnoHeading2(text="Second Section"),
+        UnoParagraph(text="More content."),
     ]
     assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
