@@ -47,6 +47,21 @@ def dump_notion_object(*, obj_ref: pydantic.BaseModel) -> dict[str, Any]:
     )
 
 
+def get_bulleted_list_item_obj_ref(
+    bulleted_item: UnoBulletedItem,
+) -> BulletedListItem:
+    """Get the obj_ref from a BulletedItem with proper typing.
+
+    This helper function provides type information that pyright can
+    understand.
+    """
+    obj_ref = bulleted_item.obj_ref
+    if not isinstance(obj_ref, BulletedListItem):
+        msg = "Expected BulletedListItem"
+        raise TypeError(msg)
+    return obj_ref
+
+
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """
     Create Notion rich text from docutils node children.
@@ -186,17 +201,16 @@ class NotionTranslator(NodeVisitor):
             # Convert to Block objects that the API expects
             block_objects: list[Block] = []
             for nested_child_block in nested_child_blocks:
-                nested_obj_ref: BulletedListItem = nested_child_block.obj_ref
-                assert isinstance(nested_obj_ref, BulletedListItem)
+                nested_obj_ref = get_bulleted_list_item_obj_ref(
+                    nested_child_block
+                )
                 child_json = dump_notion_object(obj_ref=nested_obj_ref)
                 # Create a proper Block object from the JSON
                 block_obj = Block.model_validate(child_json)
                 block_objects.append(block_obj)
 
-            obj_ref: BulletedListItem = block.obj_ref
-            assert isinstance(obj_ref, BulletedListItem)
+            obj_ref = get_bulleted_list_item_obj_ref(block)
             obj_ref.bulleted_list_item.children.extend(block_objects)
-            obj_ref.has_children = True
             obj_ref.has_children = True
 
         return block

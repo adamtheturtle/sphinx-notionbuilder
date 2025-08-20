@@ -28,6 +28,19 @@ from ultimate_notion.rich_text import text
 from .helpers import assert_rst_converts_to_notion_objects
 
 
+def _get_bulleted_list_item_obj_ref(
+    bulleted_item: UnoBulletedItem,
+) -> BulletedListItem:
+    """Get the obj_ref from a BulletedItem with proper typing.
+
+    This helper function provides type information that pyright can
+    understand.
+    """
+    obj_ref = bulleted_item.obj_ref
+    assert isinstance(obj_ref, BulletedListItem)
+    return obj_ref
+
+
 def _add_bullet_children(
     parent: UnoBulletedItem, *children: UnoBulletedItem
 ) -> None:
@@ -36,8 +49,7 @@ def _add_bullet_children(
     """
     block_objects: list[Block] = []
     for child in children:
-        child_obj_ref: BulletedListItem = child.obj_ref
-        assert isinstance(child_obj_ref, BulletedListItem)
+        child_obj_ref = _get_bulleted_list_item_obj_ref(child)
         child_json = child_obj_ref.model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
@@ -46,8 +58,7 @@ def _add_bullet_children(
         block_objects.append(block_obj)
 
     assert children
-    parent_obj_ref: BulletedListItem = parent.obj_ref
-    assert isinstance(parent_obj_ref, BulletedListItem)
+    parent_obj_ref = _get_bulleted_list_item_obj_ref(parent)
     parent_obj_ref.bulleted_list_item.children.extend(block_objects)
     parent_obj_ref.has_children = True
 
