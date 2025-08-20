@@ -165,18 +165,13 @@ class NotionTranslator(NodeVisitor):
 
         Handles recursive nesting for multiple levels.
         """
-        # Find the paragraph content and any nested bullet lists
-        paragraph_content = None
+        paragraph_content = list_item.children[0]
+        assert isinstance(paragraph_content, nodes.paragraph)
         nested_bullet_lists: list[nodes.bullet_list] = []
 
-        for child in list_item.children:
-            if isinstance(child, nodes.paragraph):
-                paragraph_content = child
-            elif isinstance(child, nodes.bullet_list):
-                nested_bullet_lists.append(child)
-
-        if paragraph_content is None:
-            return None
+        for child in list_item.children[1:]:
+            assert isinstance(child, nodes.bullet_list)
+            nested_bullet_lists.append(child)
 
         rich_text = _create_rich_text_from_children(node=paragraph_content)
 
@@ -186,14 +181,14 @@ class NotionTranslator(NodeVisitor):
         children_data: list[dict[str, Any]] = []
         for nested_list in nested_bullet_lists:
             for nested_item in nested_list.children:
-                if isinstance(nested_item, nodes.list_item):
-                    nested_child_block = self._create_bullet_item(
-                        list_item=nested_item
-                    )
-                    child_json = dump_notion_object(
-                        obj_ref=nested_child_block.obj_ref
-                    )
-                    children_data.append(child_json)
+                assert isinstance(nested_item, nodes.list_item)
+                nested_child_block = self._create_bullet_item(
+                    list_item=nested_item
+                )
+                child_json = dump_notion_object(
+                    obj_ref=nested_child_block.obj_ref
+                )
+                children_data.append(child_json)
 
         if children_data:
             block.obj_ref.bulleted_list_item.children = children_data

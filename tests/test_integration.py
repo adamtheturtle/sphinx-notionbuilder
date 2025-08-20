@@ -38,8 +38,9 @@ def _add_bullet_children(
             mode="json", by_alias=True, exclude_none=True
         )
         parent.obj_ref.bulleted_list_item.children.append(child_json)
-    if children:
-        parent.obj_ref.has_children = True
+
+    assert children
+    parent.obj_ref.has_children = True
 
 
 if TYPE_CHECKING:
