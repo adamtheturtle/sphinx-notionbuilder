@@ -404,3 +404,6 @@ exclude = [ ".venv" ]
 [tool.yamlfix]
 section_whitelines = 1
 whitelines = 1
+
+[tool.uv.sources]
+ultimate_notion = { git = "https://github.com/ultimate-notion/ultimate-notion", branch = "main" }
