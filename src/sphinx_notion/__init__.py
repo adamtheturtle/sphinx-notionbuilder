@@ -156,17 +156,6 @@ class NotionTranslator(NodeVisitor):
 
         Handle nested bullet lists as children.
         """
-        block = self._create_bullet_item(list_item)
-        if block is not None:
-            self._blocks.append(block)
-
-    def _create_bullet_item(
-        self, list_item: nodes.list_item
-    ) -> UnoBulletedItem | None:
-        """Create a BulletedItem from a list item.
-
-        Handles recursive nesting for multiple levels.
-        """
         # Find the paragraph content and any nested bullet lists
         paragraph_content = None
         nested_bullet_lists = []
@@ -183,15 +172,15 @@ class NotionTranslator(NodeVisitor):
             block = UnoBulletedItem(text="")
             block.rich_text = rich_text
 
-            # Process nested bullet lists recursively
+            # Process nested bullet lists and add them as children
             if nested_bullet_lists:
                 children_data = []
                 for nested_list in nested_bullet_lists:
                     for nested_item in nested_list.children:
                         if isinstance(nested_item, nodes.list_item):
                             # Recursively process nested list items
-                            nested_child_block = self._create_bullet_item(
-                                nested_item
+                            nested_child_block = (
+                                self._create_nested_bullet_item(nested_item)
                             )
                             if nested_child_block:
                                 child_json = dump_notion_object(
@@ -203,9 +192,49 @@ class NotionTranslator(NodeVisitor):
                     block.obj_ref.bulleted_list_item.children = children_data
                     block.obj_ref.has_children = True
 
-            return block
+            self._blocks.append(block)
 
-        return None
+    def _create_nested_bullet_item(
+        self, list_item: nodes.list_item
+    ) -> UnoBulletedItem | None:
+        """Create a BulletedItem from a nested list item.
+
+        Handles recursive nesting for multiple levels.
+        """
+        # Find the paragraph content and any nested bullet lists
+        paragraph_content = None
+        nested_bullet_lists = []
+
+        for child in list_item.children:
+            if isinstance(child, nodes.paragraph):
+                paragraph_content = child
+            elif isinstance(child, nodes.bullet_list):
+                nested_bullet_lists.append(child)
+
+        rich_text = _create_rich_text_from_children(node=paragraph_content)
+
+        block = UnoBulletedItem(text="")
+        block.rich_text = rich_text
+
+        children_data = []
+        for nested_list in nested_bullet_lists:
+            for nested_item in nested_list.children:
+                if isinstance(nested_item, nodes.list_item):
+                    # Recursively process nested list items
+                    nested_child_block = self._create_nested_bullet_item(
+                        nested_item
+                    )
+                    if nested_child_block:
+                        child_json = dump_notion_object(
+                            obj_ref=nested_child_block.obj_ref
+                        )
+                        children_data.append(child_json)
+
+        if children_data:
+            block.obj_ref.bulleted_list_item.children = children_data
+            block.obj_ref.has_children = True
+
+        return block
 
     def visit_document(self, node: nodes.Element) -> None:
         """
