@@ -3,20 +3,27 @@ Sphinx Notion Builder.
 """
 
 import json
+from collections.abc import Iterator, Set as AbstractSet
 from typing import TYPE_CHECKING, Any
 
 import pydantic
 from beartype import beartype
 from docutils import nodes
+from docutils.io import StringOutput
 from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
-from sphinx.builders.text import TextBuilder
+from sphinx.builders import Builder
+from sphinx.locale import __
+from sphinx.util import logging
+from sphinx.util.osutil import _last_modified_time
 from sphinx.util.typing import ExtensionMetadata
 from ultimate_notion.blocks import Paragraph as UnoParagraph
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
+
+logger = logging.getLogger(__name__)
 
 
 @beartype
@@ -25,7 +32,9 @@ class NotionTranslator(NodeVisitor):
     Translate docutils nodes to Notion JSON.
     """
 
-    def __init__(self, document: nodes.document, builder: TextBuilder) -> None:
+    def __init__(
+        self, document: nodes.document, builder: "NotionBuilder"
+    ) -> None:
         """
         Initialize the translator with storage for blocks.
         """
@@ -118,14 +127,112 @@ class NotionTranslator(NodeVisitor):
 
 
 @beartype
-class NotionBuilder(TextBuilder):
+class NotionBuilder(Builder):
     """
     Build Notion-compatible documents.
     """
 
     name = "notion"
+    format = "notion"
+    epilog = __("The Notion JSON files are in %(outdir)s.")
     out_suffix = ".json"
-    default_translator_class: type[NotionTranslator] = NotionTranslator
+    allow_parallel = True
+    # Override the default translator class
+    default_translator_class = NotionTranslator  # type: ignore[assignment]
+
+    current_docname: str | None = None
+
+    def init(self) -> None:
+        """
+        Initialize the builder.
+        """
+        # section numbers for headings in the currently visited document
+        self.secnumbers: dict[str, tuple[int, ...]] = {}
+        # Writer will be initialized in prepare_writing
+        self.writer: NotionWriter
+
+    def get_outdated_docs(self) -> Iterator[str]:
+        """
+        Return an iterable of output files that are outdated.
+        """
+        for docname in self.env.found_docs:
+            if docname not in self.env.all_docs:
+                yield docname
+                continue
+            targetname = self.outdir / (docname + self.out_suffix)
+            try:
+                targetmtime = _last_modified_time(targetname)
+            except (OSError, FileNotFoundError):
+                targetmtime = 0
+            try:
+                srcmtime = _last_modified_time(self.env.doc2path(docname))
+                if srcmtime > targetmtime:
+                    yield docname
+            except OSError:
+                # source doesn't exist anymore
+                pass
+
+    def get_target_uri(self, docname: str, typ: str | None = None) -> str:
+        """
+        Return the target URI for a document name.
+        """
+        del docname, typ  # Not used in this implementation
+        return ""
+
+    def prepare_writing(self, docnames: AbstractSet[str]) -> None:
+        """
+        Prepare for writing documents.
+        """
+        del docnames  # Not used in this implementation
+        # Create a writer for this builder
+        self.writer = NotionWriter(self)
+
+    def write_doc(self, docname: str, doctree: nodes.document) -> None:
+        """
+        Write the output file for a document.
+        """
+        self.current_docname = docname
+        self.secnumbers = self.env.toc_secnumbers.get(docname, {})
+        destination = StringOutput(encoding="utf-8")
+        self.writer.write(doctree, destination)
+        out_file_name = self.outdir / (docname + self.out_suffix)
+        out_file_name.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with out_file_name.open("w", encoding="utf-8") as f:
+                f.write(self.writer.output)
+        except OSError as err:
+            logger.warning(__("error writing file %s: %s"), out_file_name, err)
+
+    def finish(self) -> None:
+        """
+        Finish the building process.
+        """
+
+
+@beartype
+class NotionWriter:
+    """
+    Writer that uses NotionTranslator to generate Notion JSON.
+    """
+
+    def __init__(self, builder: NotionBuilder) -> None:
+        """
+        Initialize the writer with a builder.
+        """
+        self.builder = builder
+        self.output: str = ""
+
+    def write(
+        self, document: nodes.document, destination: StringOutput
+    ) -> None:
+        """
+        Write a document using the NotionTranslator.
+        """
+        del destination  # Not used in this implementation
+        visitor = self.builder.create_translator(document, self.builder)
+        assert isinstance(visitor, NotionTranslator)
+        document.walkabout(visitor)
+        self.output = visitor.body
 
 
 @beartype
