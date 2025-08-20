@@ -28,6 +28,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Quote as UnoQuote,
 )
+from ultimate_notion.blocks import (
+    TableOfContents as UnoTableOfContents,
+)
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
@@ -136,6 +139,18 @@ class NotionTranslator(NodeVisitor):
 
         block = UnoQuote(text="")
         block.rich_text = rich_text
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_topic(self, node: nodes.Element) -> None:
+        """
+        Handle topic nodes, specifically for table of contents.
+        """
+        # Later, we can support `.. topic::` directives, likely as
+        # a callout with no icon.
+        assert "contents" in node["classes"]
+        block = UnoTableOfContents()
         self._blocks.append(block)
 
         raise nodes.SkipNode
