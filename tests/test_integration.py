@@ -6,7 +6,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import pydantic
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
     BulletedItem as UnoBulletedItem,
@@ -23,7 +22,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
-from ultimate_notion.obj_api.blocks import BulletedListItem
+from ultimate_notion.obj_api.blocks import Block, BulletedListItem
 from ultimate_notion.rich_text import text
 
 from .helpers import assert_rst_converts_to_notion_objects
@@ -35,16 +34,22 @@ def _add_bullet_children(
     """
     Helper to add children to a BulletedItem.
     """
+    block_objects: list[Block] = []
     for child in children:
-        assert isinstance(child.obj_ref, pydantic.BaseModel)
-        child_json = child.obj_ref.model_dump(
+        child_obj_ref: BulletedListItem = child.obj_ref
+        assert isinstance(child_obj_ref, BulletedListItem)
+        child_json = child_obj_ref.model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
-        assert isinstance(parent.obj_ref, BulletedListItem)
-        parent.obj_ref.bulleted_list_item.children.append(child_json)
+        # Create proper Block objects that the API expects
+        block_obj = Block.model_validate(child_json)
+        block_objects.append(block_obj)
 
     assert children
-    parent.obj_ref.has_children = True
+    parent_obj_ref: BulletedListItem = parent.obj_ref
+    assert isinstance(parent_obj_ref, BulletedListItem)
+    parent_obj_ref.bulleted_list_item.children.extend(block_objects)
+    parent_obj_ref.has_children = True
 
 
 if TYPE_CHECKING:

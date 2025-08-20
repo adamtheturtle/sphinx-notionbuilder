@@ -28,6 +28,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.obj_api.blocks import Block, BulletedListItem
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
@@ -171,21 +172,32 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="")
         block.rich_text = rich_text
 
-        children_data: list[dict[str, Any]] = []
+        # Store nested items as Block objects first
+        nested_child_blocks: list[UnoBulletedItem] = []
         for nested_list in nested_bullet_lists:
             for nested_item in nested_list.children:
                 assert isinstance(nested_item, nodes.list_item)
                 nested_child_block = self._create_bullet_item(
                     list_item=nested_item
                 )
-                child_json = dump_notion_object(
-                    obj_ref=nested_child_block.obj_ref
-                )
-                children_data.append(child_json)
+                nested_child_blocks.append(nested_child_block)
 
-        if children_data:
-            block.obj_ref.bulleted_list_item.children = children_data
-            block.obj_ref.has_children = True
+        if nested_child_blocks:
+            # Convert to Block objects that the API expects
+            block_objects: list[Block] = []
+            for nested_child_block in nested_child_blocks:
+                nested_obj_ref: BulletedListItem = nested_child_block.obj_ref
+                assert isinstance(nested_obj_ref, BulletedListItem)
+                child_json = dump_notion_object(obj_ref=nested_obj_ref)
+                # Create a proper Block object from the JSON
+                block_obj = Block.model_validate(child_json)
+                block_objects.append(block_obj)
+
+            obj_ref: BulletedListItem = block.obj_ref
+            assert isinstance(obj_ref, BulletedListItem)
+            obj_ref.bulleted_list_item.children.extend(block_objects)
+            obj_ref.has_children = True
+            obj_ref.has_children = True
 
         return block
 
