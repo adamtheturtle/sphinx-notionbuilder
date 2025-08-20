@@ -82,7 +82,6 @@ class NotionBuilder(TextBuilder):
 
     name = "notion"
     out_suffix = ".json"
-    default_translator_class: type[NotionTranslator] = NotionTranslator
 
 
 @beartype
@@ -91,4 +90,5 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     Add the builder to Sphinx.
     """
     app.add_builder(builder=NotionBuilder)
+    app.set_translator(name="notion", translator_class=NotionTranslator)
     return {"parallel_read_safe": True}

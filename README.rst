@@ -22,7 +22,7 @@ Add the following to ``conf.py`` to enable the extension:
 
    """Configuration for Sphinx."""
 
-   extensions = ["sphinx_notionbuilder"]
+   extensions = ["sphinx_notion"]
 
 Supported features
 ------------------
