@@ -269,7 +269,7 @@ def test_multiple_links_conversion(
         "Visit `Google <https://google.com>`_ and "
         "`GitHub <https://github.com>`_\ntoday."
     )
-    rst_file.write_text(content)
+    rst_file.write_text(data=content)
     rst_content = rst_file.read_text()
 
     normal_text1 = text(text="Visit ")
