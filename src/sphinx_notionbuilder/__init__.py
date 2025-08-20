@@ -40,32 +40,32 @@ class NotionTranslator(NodeVisitor):
         Returns a Text object that can be used with ultimate-notion.
         """
         # Start with empty text
-        result_text = Text.from_plain_text("")
+        result_text = Text.from_plain_text(text="")
 
         for child in node.children:
             if isinstance(child, nodes.Text):
                 # Plain text node
-                plain_text = text(str(child))
+                plain_text = text(text=str(object=child))
                 result_text += plain_text
             elif isinstance(child, nodes.strong):
                 # Bold text
                 bold_content = child.astext()
-                bold_text = text(bold_content, bold=True)
+                bold_text = text(text=bold_content, bold=True)
                 result_text += bold_text
             elif isinstance(child, nodes.emphasis):
                 # Italic text
                 italic_content = child.astext()
-                italic_text = text(italic_content, italic=True)
+                italic_text = text(text=italic_content, italic=True)
                 result_text += italic_text
             elif isinstance(child, nodes.literal):
                 # Inline code
                 code_content = child.astext()
-                code_text = text(code_content, code=True)
+                code_text = text(text=code_content, code=True)
                 result_text += code_text
             else:
                 # For other node types, just extract text
                 plain_content = child.astext()
-                plain_text = text(plain_content)
+                plain_text = text(text=plain_content)
                 result_text += plain_text
 
         return result_text
@@ -77,7 +77,7 @@ class NotionTranslator(NodeVisitor):
         assert isinstance(node, nodes.paragraph)
 
         # Process inline formatting
-        rich_text = self._process_inline_nodes(node)
+        rich_text = self._process_inline_nodes(node=node)
 
         # Create paragraph with rich text
         block = UnoParagraph(text="dummy")  # temporary text

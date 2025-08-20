@@ -80,13 +80,13 @@ def test_inline_formatting_conversion(
     """
 
     # Create expected rich text with formatting
-    normal_text = text("This is ")
-    bold_text = text("bold", bold=True)
-    normal_text2 = text(" and ")
-    italic_text = text("italic", italic=True)
-    normal_text3 = text(" and ")
-    code_text = text("inline code", code=True)
-    normal_text4 = text(".")
+    normal_text = text(text="This is ")
+    bold_text = text(text="bold", bold=True)
+    normal_text2 = text(text=" and ")
+    italic_text = text(text="italic", italic=True)
+    normal_text3 = text(text=" and ")
+    code_text = text(text="inline code", code=True)
+    normal_text4 = text(text=".")
 
     combined_text = (
         normal_text
