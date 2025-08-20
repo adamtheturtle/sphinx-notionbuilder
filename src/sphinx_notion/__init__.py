@@ -201,9 +201,7 @@ class NotionTranslator(NodeVisitor):
                 nested_obj_ref = get_bulleted_list_item_obj_ref(
                     bulleted_item=nested_child_block
                 )
-                child_json = dump_notion_object(obj_ref=nested_obj_ref)
-                block_obj = Block.model_validate(obj=child_json)
-                block_objects.append(block_obj)
+                block_objects.append(nested_obj_ref)
 
             obj_ref = get_bulleted_list_item_obj_ref(bulleted_item=block)
             obj_ref.bulleted_list_item.children.extend(block_objects)
