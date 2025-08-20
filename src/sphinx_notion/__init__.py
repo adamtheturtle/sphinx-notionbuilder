@@ -13,6 +13,7 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from ultimate_notion.blocks import Paragraph as UnoParagraph
+from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
@@ -37,8 +38,19 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        assert isinstance(node, nodes.paragraph)
-        block = UnoParagraph(text=node.astext())
+        rich_text = Text.from_plain_text(text="")
+
+        for child in node.children:
+            new_text = text(
+                text=child.astext(),
+                bold=isinstance(child, nodes.strong),
+                italic=isinstance(child, nodes.emphasis),
+                code=isinstance(child, nodes.literal),
+            )
+            rich_text += new_text
+
+        block = UnoParagraph(text="")
+        block.rich_text = rich_text
         self._blocks.append(block)
 
         raise nodes.SkipNode
