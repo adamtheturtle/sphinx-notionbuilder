@@ -158,7 +158,7 @@ class NotionTranslator(NodeVisitor):
         """
         # Find the paragraph content and any nested bullet lists
         paragraph_content = None
-        nested_bullet_lists = []
+        nested_bullet_lists: list[nodes.bullet_list] = []
 
         for child in list_item.children:
             if isinstance(child, nodes.paragraph):
@@ -174,13 +174,15 @@ class NotionTranslator(NodeVisitor):
 
             # Process nested bullet lists and add them as children
             if nested_bullet_lists:
-                children_data = []
+                children_data: list[dict[str, Any]] = []
                 for nested_list in nested_bullet_lists:
                     for nested_item in nested_list.children:
                         if isinstance(nested_item, nodes.list_item):
                             # Recursively process nested list items
                             nested_child_block = (
-                                self._create_nested_bullet_item(nested_item)
+                                self._create_nested_bullet_item(
+                                    list_item=nested_item
+                                )
                             )
                             if nested_child_block:
                                 child_json = dump_notion_object(
@@ -203,7 +205,7 @@ class NotionTranslator(NodeVisitor):
         """
         # Find the paragraph content and any nested bullet lists
         paragraph_content = None
-        nested_bullet_lists = []
+        nested_bullet_lists: list[nodes.bullet_list] = []
 
         for child in list_item.children:
             if isinstance(child, nodes.paragraph):
@@ -216,13 +218,13 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="")
         block.rich_text = rich_text
 
-        children_data = []
+        children_data: list[dict[str, Any]] = []
         for nested_list in nested_bullet_lists:
             for nested_item in nested_list.children:
                 if isinstance(nested_item, nodes.list_item):
                     # Recursively process nested list items
                     nested_child_block = self._create_nested_bullet_item(
-                        nested_item
+                        list_item=nested_item
                     )
                     if nested_child_block:
                         child_json = dump_notion_object(
