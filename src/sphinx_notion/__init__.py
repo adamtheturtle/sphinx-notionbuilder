@@ -52,14 +52,11 @@ class NotionTranslator(NodeVisitor):
                 italic_content = child.astext()
                 italic_text = text(text=italic_content, italic=True)
                 result_text += italic_text
-            elif isinstance(child, nodes.literal):
+            else:
+                assert isinstance(child, nodes.literal)
                 code_content = child.astext()
                 code_text = text(text=code_content, code=True)
                 result_text += code_text
-            else:
-                plain_content = child.astext()
-                plain_text = text(text=plain_content)
-                result_text += plain_text
 
         return result_text
 
