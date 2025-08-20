@@ -150,6 +150,13 @@ class NotionTranslator(NodeVisitor):
         if "contents" in node["classes"]:
             block = UnoTableOfContents()
             self._blocks.append(block)
+        else:
+            # Handle generic topics (e.g., from `.. topic::` directive)
+            # We can model this as a quote block.
+            rich_text = _create_rich_text_from_children(node=node)
+            block = UnoQuote(text="")
+            block.rich_text = rich_text
+            self._blocks.append(block)
 
         raise nodes.SkipNode
 
