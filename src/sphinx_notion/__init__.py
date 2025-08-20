@@ -25,6 +25,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.blocks import (
+    Quote as UnoQuote,
+)
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
@@ -120,6 +123,18 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
 
         block = UnoParagraph(text="")
+        block.rich_text = rich_text
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_block_quote(self, node: nodes.Element) -> None:
+        """
+        Handle block quote nodes by creating Notion Quote blocks.
+        """
+        rich_text = _create_rich_text_from_children(node=node)
+
+        block = UnoQuote(text="")
         block.rich_text = rich_text
         self._blocks.append(block)
 

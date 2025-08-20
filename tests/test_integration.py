@@ -19,6 +19,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.blocks import (
+    Quote as UnoQuote,
+)
 from ultimate_notion.rich_text import text
 
 from .helpers import assert_rst_converts_to_notion_objects
@@ -395,6 +398,64 @@ def test_unnamed_link_with_backticks_conversion(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_simple_quote_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that block quotes convert to Notion Quote blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+            This is a block quote.
+
+        Another paragraph.
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        UnoQuote(text="This is a block quote."),
+        UnoParagraph(text="Another paragraph."),
+    ]
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_multiline_quote_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that multiline block quotes convert to Notion Quote blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+            This is a multiline
+            block quote with
+            multiple lines.
+
+        Another paragraph.
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        UnoQuote(
+            text="This is a multiline\nblock quote with\nmultiple lines."
+        ),
+        UnoParagraph(text="Another paragraph."),
+    ]
     assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
