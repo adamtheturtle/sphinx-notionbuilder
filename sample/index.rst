@@ -1,6 +1,7 @@
-
 Heading 1 with *bold*
 =====================
+
+.. contents::
 
 Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
 
