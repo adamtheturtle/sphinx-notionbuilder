@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import pydantic
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
     BulletedItem as UnoBulletedItem,
@@ -34,6 +35,7 @@ def _add_bullet_children(
     Helper to add children to a BulletedItem.
     """
     for child in children:
+        assert isinstance(child.obj_ref, pydantic.BaseModel)
         child_json = child.obj_ref.model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
