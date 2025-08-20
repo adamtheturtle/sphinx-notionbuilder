@@ -153,23 +153,109 @@ class NotionTranslator(NodeVisitor):
         """
         del node
 
+    def _process_list_item_recursive(
+        self, node: nodes.list_item
+    ) -> UnoBulletedItem:
+        """
+        Recursively process a list_item node and return a BulletedItem block.
+        """
+        # Extract text from the first paragraph child
+        paragraph_text = ""
+        nested_lists: list[nodes.bullet_list] = []
+
+        for child in node.children:
+            if isinstance(child, nodes.paragraph):
+                # Mark this paragraph as processed to avoid double processing
+                self._processed_paragraphs.add(child)
+                paragraph_text = child.astext()
+            elif isinstance(child, nodes.bullet_list):
+                # Collect nested bullet lists for processing
+                nested_lists.append(child)
+
+        # Create the bulleted item
+        block = UnoBulletedItem(text="")
+        if paragraph_text:
+            paragraph_node = next(
+                c for c in node.children if isinstance(c, nodes.paragraph)
+            )
+            rich_text = _create_rich_text_from_children(node=paragraph_node)
+            block.rich_text = rich_text
+
+        # Process nested lists and add as children
+        if nested_lists:
+            children_blocks = []
+            for nested_list in nested_lists:
+                for nested_item in nested_list.children:
+                    if isinstance(nested_item, nodes.list_item):
+                        # Recursively process nested list items
+                        nested_block = self._process_list_item_recursive(
+                            nested_item
+                        )
+                        children_blocks.append(nested_block)
+
+            # Set children on the block
+            if children_blocks:
+                type_data_class = type(block.obj_ref.bulleted_list_item)
+                block.obj_ref.bulleted_list_item = type_data_class(
+                    rich_text=block.obj_ref.bulleted_list_item.rich_text,
+                    color=block.obj_ref.bulleted_list_item.color,
+                    children=[child.obj_ref for child in children_blocks],
+                )
+
+        return block
+
     def visit_list_item(self, node: nodes.Element) -> None:
         """
         Handle list_item nodes by creating BulletedItem blocks.
         """
         # Extract text from the first paragraph child
-        # Skip nested handling for now
+        paragraph_text = ""
+        nested_lists: list[nodes.bullet_list] = []
+
         for child in node.children:
             if isinstance(child, nodes.paragraph):
                 # Mark this paragraph as processed to avoid double processing
                 self._processed_paragraphs.add(child)
                 rich_text = _create_rich_text_from_children(node=child)
-                block = UnoBulletedItem(text="")
-                block.rich_text = rich_text
-                self._blocks.append(block)
-                break  # Only process the first paragraph
+                paragraph_text = child.astext()
+            elif isinstance(child, nodes.bullet_list):
+                # Collect nested bullet lists for processing
+                nested_lists.append(child)
 
-        # Don't skip children - allow nested lists to be processed
+        # Create the main bulleted item
+        block = UnoBulletedItem(text="")
+        if paragraph_text:
+            paragraph_node = next(
+                c for c in node.children if isinstance(c, nodes.paragraph)
+            )
+            rich_text = _create_rich_text_from_children(node=paragraph_node)
+            block.rich_text = rich_text
+
+        # Process nested lists and add as children
+        if nested_lists:
+            children_blocks = []
+            for nested_list in nested_lists:
+                for nested_item in nested_list.children:
+                    if isinstance(nested_item, nodes.list_item):
+                        # Recursively process nested list items
+                        nested_block = self._process_list_item_recursive(
+                            nested_item
+                        )
+                        children_blocks.append(nested_block)
+
+            # Set children on the block
+            if children_blocks:
+                type_data_class = type(block.obj_ref.bulleted_list_item)
+                block.obj_ref.bulleted_list_item = type_data_class(
+                    rich_text=block.obj_ref.bulleted_list_item.rich_text,
+                    color=block.obj_ref.bulleted_list_item.color,
+                    children=[child.obj_ref for child in children_blocks],
+                )
+
+        self._blocks.append(block)
+
+        # Skip children since we've processed them manually
+        raise nodes.SkipNode
 
     def depart_list_item(self, node: nodes.Element) -> None:
         """
