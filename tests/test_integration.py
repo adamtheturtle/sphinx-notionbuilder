@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Any
 
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
+    BulletedItem as UnoBulletedItem,
+)
+from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
 from ultimate_notion.blocks import (
@@ -394,6 +397,123 @@ def test_unnamed_link_with_backticks_conversion(
     expected_paragraph.rich_text = combined_text
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_bulleted_list_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Nested bulleted lists convert to bulleted list items with children, not
+    flattened.
+    """
+    rst_content = """
+        * First item
+
+          * Nested item 1
+          * Nested item 2
+
+        * Second item
+    """
+
+    # Create the expected structure with children
+    # The first item should contain nested items as children
+    first_item = UnoBulletedItem(text="First item")
+    nested_item_1 = UnoBulletedItem(text="Nested item 1")
+    nested_item_2 = UnoBulletedItem(text="Nested item 2")
+
+    # Manually set the children in the obj_ref to create the expected structure
+    first_item.obj_ref.bulleted_list_item.children = [
+        nested_item_1.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+        nested_item_2.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+    ]
+    first_item.obj_ref.has_children = True
+
+    second_item = UnoBulletedItem(text="Second item")
+
+    expected_objects: list[NotionObject[Any]] = [
+        first_item,
+        second_item,
+    ]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_multiple_level_nested_bulleted_list_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Multiple level nested bulleted lists convert correctly with children.
+    """
+    rst_content = """
+        * First item
+
+          * Nested item 1
+
+            * Deep nested item 1
+            * Deep nested item 2
+
+          * Nested item 2
+
+        * Second item
+    """
+
+    # Create the expected structure with multiple levels
+    first_item = UnoBulletedItem(text="First item")
+
+    # Level 2 nested items
+    nested_item_1 = UnoBulletedItem(text="Nested item 1")
+    nested_item_2 = UnoBulletedItem(text="Nested item 2")
+
+    # Level 3 deep nested items
+    deep_nested_1 = UnoBulletedItem(text="Deep nested item 1")
+    deep_nested_2 = UnoBulletedItem(text="Deep nested item 2")
+
+    # Set up deep nested structure
+    nested_item_1.obj_ref.bulleted_list_item.children = [
+        deep_nested_1.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+        deep_nested_2.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+    ]
+    nested_item_1.obj_ref.has_children = True
+
+    # Set up first level nested structure
+    first_item.obj_ref.bulleted_list_item.children = [
+        nested_item_1.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+        nested_item_2.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        ),
+    ]
+    first_item.obj_ref.has_children = True
+
+    second_item = UnoBulletedItem(text="Second item")
+
+    expected_objects: list[NotionObject[Any]] = [
+        first_item,
+        second_item,
+    ]
 
     assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
