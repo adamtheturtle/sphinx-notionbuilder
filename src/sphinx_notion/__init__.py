@@ -35,35 +35,28 @@ class NotionTranslator(NodeVisitor):
         self.body: str
 
     def _process_inline_nodes(self, node: nodes.Element) -> Text:
-        """Process inline nodes to create rich text with formatting.
-
-        Returns a Text object that can be used with ultimate-notion.
         """
-        # Start with empty text
+        Process inline nodes to create rich text with formatting.
+        """
         result_text = Text.from_plain_text(text="")
 
         for child in node.children:
             if isinstance(child, nodes.Text):
-                # Plain text node
                 plain_text = text(text=str(object=child))
                 result_text += plain_text
             elif isinstance(child, nodes.strong):
-                # Bold text
                 bold_content = child.astext()
                 bold_text = text(text=bold_content, bold=True)
                 result_text += bold_text
             elif isinstance(child, nodes.emphasis):
-                # Italic text
                 italic_content = child.astext()
                 italic_text = text(text=italic_content, italic=True)
                 result_text += italic_text
             elif isinstance(child, nodes.literal):
-                # Inline code
                 code_content = child.astext()
                 code_text = text(text=code_content, code=True)
                 result_text += code_text
             else:
-                # For other node types, just extract text
                 plain_content = child.astext()
                 plain_text = text(text=plain_content)
                 result_text += plain_text
@@ -76,12 +69,10 @@ class NotionTranslator(NodeVisitor):
         """
         assert isinstance(node, nodes.paragraph)
 
-        # Process inline formatting
         rich_text = self._process_inline_nodes(node=node)
 
-        # Create paragraph with rich text
-        block = UnoParagraph(text="dummy")  # temporary text
-        block.rich_text = rich_text  # set the actual rich text
+        block = UnoParagraph(text="")
+        block.rich_text = rich_text
         self._blocks.append(block)
 
         raise nodes.SkipNode
