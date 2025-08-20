@@ -41,21 +41,19 @@ class NotionTranslator(NodeVisitor):
         result_text = Text.from_plain_text(text="")
 
         for child in node.children:
+            content = child.astext()
             if isinstance(child, nodes.Text):
-                plain_text = text(text=str(object=child))
+                plain_text = text(text=content)
                 result_text += plain_text
             elif isinstance(child, nodes.strong):
-                bold_content = child.astext()
-                bold_text = text(text=bold_content, bold=True)
+                bold_text = text(text=content, bold=True)
                 result_text += bold_text
             elif isinstance(child, nodes.emphasis):
-                italic_content = child.astext()
-                italic_text = text(text=italic_content, italic=True)
+                italic_text = text(text=content, italic=True)
                 result_text += italic_text
             else:
                 assert isinstance(child, nodes.literal)
-                code_content = child.astext()
-                code_text = text(text=code_content, code=True)
+                code_text = text(text=content, code=True)
                 result_text += code_text
 
         return result_text
