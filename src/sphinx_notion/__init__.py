@@ -38,12 +38,26 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     rich_text = Text.from_plain_text(text="")
 
     for child in node.children:
-        new_text = text(
-            text=child.astext(),
-            bold=isinstance(child, nodes.strong),
-            italic=isinstance(child, nodes.emphasis),
-            code=isinstance(child, nodes.literal),
-        )
+        if isinstance(child, nodes.reference):
+            link_url = child.attributes["refuri"]
+            link_text = child.attributes.get("name", link_url)
+
+            new_text = text(
+                text=link_text,
+                href=link_url,
+                bold=False,
+                italic=False,
+                code=False,
+            )
+        elif isinstance(child, nodes.target):
+            continue
+        else:
+            new_text = text(
+                text=child.astext(),
+                bold=isinstance(child, nodes.strong),
+                italic=isinstance(child, nodes.emphasis),
+                code=isinstance(child, nodes.literal),
+            )
         rich_text += new_text
 
     return rich_text
