@@ -23,9 +23,6 @@ def test_single_paragraph_conversion(
     Single paragraph converts to Notion JSON.
     """
     rst_content = """
-        Test Document
-        =============
-
         This is a simple paragraph for testing.
     """
 
@@ -49,9 +46,6 @@ def test_multiple_paragraphs_conversion(
     Multiple paragraphs in convert to separate Notion blocks.
     """
     rst_content = """
-        Multi-Paragraph Document
-        ========================
-
         First paragraph with some text.
 
         Second paragraph with different content.
