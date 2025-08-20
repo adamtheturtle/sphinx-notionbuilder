@@ -146,17 +146,10 @@ class NotionTranslator(NodeVisitor):
         """
         for list_item in node.children:
             assert isinstance(list_item, nodes.list_item)
-            self._process_list_item(list_item=list_item)
+            block = self._create_bullet_item(list_item=list_item)
+            self._blocks.append(block)
 
         raise nodes.SkipNode
-
-    def _process_list_item(self, list_item: nodes.list_item) -> None:
-        """Process a single list item, creating a BulletedItem block.
-
-        Handle nested bullet lists as children.
-        """
-        block = self._create_bullet_item(list_item=list_item)
-        self._blocks.append(block)
 
     def _create_bullet_item(
         self, list_item: nodes.list_item
