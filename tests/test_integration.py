@@ -567,3 +567,53 @@ def test_nested_bulleted_list_conversion(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_edge_case_empty_list_item(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Edge case: List item with no text content.
+    """
+    # Create a custom RST file that forces an empty list item
+    rst_file = tmp_path / "test_content.rst"
+    content = "* \n"  # Empty bullet point
+    rst_file.write_text(data=content)
+    rst_content = rst_file.read_text()
+
+    # Should create a BulletedItem with empty text
+    expected_objects: list[NotionObject[Any]] = [UnoBulletedItem(text="")]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_edge_case_flat_list_only(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Edge case: List items with no nested lists (flat list).
+    """
+    rst_content = """
+        * First flat item
+        * Second flat item
+    """
+
+    # These should have no children
+    expected_objects: list[NotionObject[Any]] = [
+        UnoBulletedItem(text="First flat item"),
+        UnoBulletedItem(text="Second flat item"),
+    ]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
