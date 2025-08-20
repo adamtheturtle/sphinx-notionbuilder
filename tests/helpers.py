@@ -33,7 +33,7 @@ def assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": ["sphinx_notionbuilder"]},
+        confoverrides={"extensions": ["sphinx_notion"]},
     )
     app.build()
 

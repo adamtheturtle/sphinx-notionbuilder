@@ -22,7 +22,7 @@ Add the following to ``conf.py`` to enable the extension:
 
    """Configuration for Sphinx."""
 
-   extensions = ["sphinx_notionbuilder"]
+   extensions = ["sphinx_notion"]
 
 Supported features
 ------------------
@@ -33,4 +33,4 @@ Supported features
    :target: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
    :target: https://badge.fury.io/py/Sphinx-Notion-Builder
-.. |minimum-python-version| replace:: 3.13
+.. |minimum-python-version| replace:: 3.11

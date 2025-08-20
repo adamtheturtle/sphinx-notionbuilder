@@ -129,8 +129,7 @@ repos:
       - id: mypy-docs
         name: mypy-docs
         stages: [pre-push]
-        entry: uv run --extra=dev doccmd --language=python --command="uv run --extra=dev
-          python -m mypy"
+        entry: uv run --extra=dev doccmd --language=python --command="mypy"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.6.3]
@@ -293,7 +292,7 @@ repos:
       - id: pyright-verifytypes
         name: pyright-verifytypes
         stages: [pre-push]
-        entry: uv run --extra=dev -m pyright --ignoreexternal --verifytypes sphinx_notionbuilder
+        entry: uv run --extra=dev -m pyright --ignoreexternal --verifytypes sphinx_notion
         language: python
         pass_filenames: false
         types_or: [python]
