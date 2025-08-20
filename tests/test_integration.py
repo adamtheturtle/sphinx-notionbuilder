@@ -90,7 +90,6 @@ def test_inline_formatting_conversion(
         This is **bold** and *italic* and ``inline code``.
     """
 
-    # Create expected rich text with formatting
     normal_text = text(text="This is ")
     bold_text = text(text="bold", bold=True)
     normal_text2 = text(text=" and ")
@@ -204,7 +203,6 @@ def test_heading_with_formatting_conversion(
         Content follows.
     """
 
-    # Create expected rich text with formatting
     bold_text = text(text="Bold", bold=True)
     normal_text = text(text=" and ")
     italic_text = text(text="Italic", italic=True)
