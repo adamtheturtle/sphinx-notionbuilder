@@ -88,7 +88,7 @@ where = [
 ]
 
 [tool.setuptools.package-data]
-sphinx_notionbuilder = [
+sphinx_notion = [
     "py.typed",
 ]
 
