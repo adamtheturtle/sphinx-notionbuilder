@@ -23,6 +23,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.obj_api.blocks import BulletedListItem
 from ultimate_notion.rich_text import text
 
 from .helpers import assert_rst_converts_to_notion_objects
@@ -39,6 +40,7 @@ def _add_bullet_children(
         child_json = child.obj_ref.model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
+        assert isinstance(parent.obj_ref, BulletedListItem)
         parent.obj_ref.bulleted_list_item.children.append(child_json)
 
     assert children
