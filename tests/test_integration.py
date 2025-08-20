@@ -26,6 +26,22 @@ from ultimate_notion.rich_text import text
 
 from .helpers import assert_rst_converts_to_notion_objects
 
+
+def _add_bullet_children(
+    parent: UnoBulletedItem, *children: UnoBulletedItem
+) -> None:
+    """
+    Helper to add children to a BulletedItem.
+    """
+    for child in children:
+        child_json = child.obj_ref.model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        )
+        parent.obj_ref.bulleted_list_item.children.append(child_json)
+    if children:
+        parent.obj_ref.has_children = True
+
+
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
@@ -424,21 +440,12 @@ def test_nested_bulleted_list_conversion(
     """
 
     # Create the expected structure with children
-    # The first item should contain nested items as children
     first_item = UnoBulletedItem(text="First item")
     nested_item_1 = UnoBulletedItem(text="Nested item 1")
     nested_item_2 = UnoBulletedItem(text="Nested item 2")
 
-    # Manually set the children in the obj_ref to create the expected structure
-    first_item.obj_ref.bulleted_list_item.children = [
-        nested_item_1.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-        nested_item_2.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-    ]
-    first_item.obj_ref.has_children = True
+    # Add children to the first item
+    _add_bullet_children(first_item, nested_item_1, nested_item_2)
 
     second_item = UnoBulletedItem(text="Second item")
 
@@ -487,26 +494,10 @@ def test_multiple_level_nested_bulleted_list_conversion(
     deep_nested_2 = UnoBulletedItem(text="Deep nested item 2")
 
     # Set up deep nested structure
-    nested_item_1.obj_ref.bulleted_list_item.children = [
-        deep_nested_1.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-        deep_nested_2.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-    ]
-    nested_item_1.obj_ref.has_children = True
+    _add_bullet_children(nested_item_1, deep_nested_1, deep_nested_2)
 
     # Set up first level nested structure
-    first_item.obj_ref.bulleted_list_item.children = [
-        nested_item_1.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-        nested_item_2.obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
-        ),
-    ]
-    first_item.obj_ref.has_children = True
+    _add_bullet_children(first_item, nested_item_1, nested_item_2)
 
     second_item = UnoBulletedItem(text="Second item")
 
