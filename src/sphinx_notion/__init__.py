@@ -166,7 +166,8 @@ class NotionTranslator(NodeVisitor):
         raise nodes.SkipNode
 
     def _create_bullet_item(
-        self, list_item: nodes.list_item
+        self,
+        list_item: nodes.list_item,
     ) -> UnoBulletedItem:
         """Create a BulletedItem from a list item.
 
@@ -185,7 +186,6 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="")
         block.rich_text = rich_text
 
-        # Store nested items as Block objects first
         nested_child_blocks: list[UnoBulletedItem] = []
         for nested_list in nested_bullet_lists:
             for nested_item in nested_list.children:
@@ -196,14 +196,12 @@ class NotionTranslator(NodeVisitor):
                 nested_child_blocks.append(nested_child_block)
 
         if nested_child_blocks:
-            # Convert to Block objects that the API expects
             block_objects: list[Block] = []
             for nested_child_block in nested_child_blocks:
                 nested_obj_ref = get_bulleted_list_item_obj_ref(
                     bulleted_item=nested_child_block
                 )
                 child_json = dump_notion_object(obj_ref=nested_obj_ref)
-                # Create a proper Block object from the JSON
                 block_obj = Block.model_validate(obj=child_json)
                 block_objects.append(block_obj)
 

@@ -32,10 +32,8 @@ from .helpers import assert_rst_converts_to_notion_objects
 def _get_bulleted_list_item_obj_ref(
     bulleted_item: NotionObject[Any],
 ) -> BulletedListItem:
-    """Get the obj_ref from a BulletedItem with proper typing.
-
-    This helper function provides type information that pyright can
-    understand.
+    """
+    Get the obj_ref from a BulletedItem with proper typing.
     """
     obj_ref = bulleted_item.obj_ref
     assert isinstance(obj_ref, BulletedListItem)
@@ -52,9 +50,10 @@ def _add_bullet_children(
     for child in children:
         child_obj_ref = _get_bulleted_list_item_obj_ref(bulleted_item=child)
         child_json = child_obj_ref.model_dump(
-            mode="json", by_alias=True, exclude_none=True
+            mode="json",
+            by_alias=True,
+            exclude_none=True,
         )
-        # Create proper Block objects that the API expects
         block_obj = Block.model_validate(obj=child_json)
         block_objects.append(block_obj)
 

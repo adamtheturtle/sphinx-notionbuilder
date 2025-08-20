@@ -11,3 +11,14 @@ Heading 2 with *italic*
 
 Heading 3 with ``inline code``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* First item
+
+    * Nested item 1
+
+        * Deep nested item 1
+        * Deep nested item 2
+
+    * Nested item 2
+
+* Second item
