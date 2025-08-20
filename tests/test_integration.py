@@ -50,16 +50,16 @@ def _add_bullet_children(
     """
     block_objects: list[Block] = []
     for child in children:
-        child_obj_ref = _get_bulleted_list_item_obj_ref(child)
+        child_obj_ref = _get_bulleted_list_item_obj_ref(bulleted_item=child)
         child_json = child_obj_ref.model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
         # Create proper Block objects that the API expects
-        block_obj = Block.model_validate(child_json)
+        block_obj = Block.model_validate(obj=child_json)
         block_objects.append(block_obj)
 
     assert children
-    parent_obj_ref = _get_bulleted_list_item_obj_ref(parent)
+    parent_obj_ref = _get_bulleted_list_item_obj_ref(bulleted_item=parent)
     parent_obj_ref.bulleted_list_item.children.extend(block_objects)
     parent_obj_ref.has_children = True
 
