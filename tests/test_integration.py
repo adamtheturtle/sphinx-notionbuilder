@@ -49,13 +49,7 @@ def _add_bullet_children(
     block_objects: list[Block] = []
     for child in children:
         child_obj_ref = _get_bulleted_list_item_obj_ref(bulleted_item=child)
-        child_json = child_obj_ref.model_dump(
-            mode="json",
-            by_alias=True,
-            exclude_none=True,
-        )
-        block_obj = Block.model_validate(obj=child_json)
-        block_objects.append(block_obj)
+        block_objects.append(child_obj_ref)
 
     assert children
     parent_obj_ref = _get_bulleted_list_item_obj_ref(bulleted_item=parent)
