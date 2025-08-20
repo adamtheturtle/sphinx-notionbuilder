@@ -12,6 +12,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -29,10 +30,6 @@ from ultimate_notion.rich_text import Text, text
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
-# Constants for heading levels
-MAX_HEADING_LEVEL = 3
-HEADING_LEVEL_2 = 2
-
 
 @beartype
 class NotionTranslator(NodeVisitor):
@@ -48,27 +45,13 @@ class NotionTranslator(NodeVisitor):
         super().__init__(document=document)
         self._blocks: list[NotionObject[Any]] = []
         self.body: str
-        self._section_level = 0  # Track section nesting depth
+        self._section_level = 0
 
     def visit_title(self, node: nodes.Element) -> None:
-        """Handle title nodes by creating appropriate Notion heading blocks.
-
-        Document titles become Heading 1, section titles become Heading
-        2-3 based on nesting depth, with error for deeper levels.
         """
-        # In Sphinx, all content is wrapped in sections, unlike pure docutils
-        # The heading level should be based on the section nesting level
-        # with the first level being Heading 1
+        Handle title nodes by creating appropriate Notion heading blocks.
+        """
         heading_level = self._section_level
-
-        if heading_level > MAX_HEADING_LEVEL:
-            msg = (
-                f"Heading level {heading_level} not supported "
-                f"(max is {MAX_HEADING_LEVEL})"
-            )
-            raise ValueError(msg)
-
-        # Create rich text from the title content
         rich_text = Text.from_plain_text(text="")
 
         for child in node.children:
@@ -80,13 +63,13 @@ class NotionTranslator(NodeVisitor):
             )
             rich_text += new_text
 
-        # Create the appropriate heading block
-        if heading_level == 1:
-            block = UnoHeading1(text="")
-        elif heading_level == HEADING_LEVEL_2:
-            block = UnoHeading2(text="")
-        else:  # heading_level == 3
-            block = UnoHeading3(text="")
+        heading_levels: dict[int, type[UnoHeading[Any]]] = {
+            1: UnoHeading1,
+            2: UnoHeading2,
+            3: UnoHeading3,
+        }
+        heading_cls = heading_levels[heading_level]
+        block = heading_cls(text="")
 
         block.rich_text = rich_text
         self._blocks.append(block)
