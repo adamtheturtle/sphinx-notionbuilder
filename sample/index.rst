@@ -1,4 +1,5 @@
 Some text.
 
 Some other text.
-2
+
+This is **bold** and *italic* and ``inline code``.

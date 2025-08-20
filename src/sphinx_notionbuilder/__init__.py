@@ -13,6 +13,7 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from ultimate_notion.blocks import Paragraph as UnoParagraph
+from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
@@ -33,12 +34,54 @@ class NotionTranslator(NodeVisitor):
         self._blocks: list[NotionObject[Any]] = []
         self.body: str
 
+    def _process_inline_nodes(self, node: nodes.Element) -> Text:
+        """Process inline nodes to create rich text with formatting.
+
+        Returns a Text object that can be used with ultimate-notion.
+        """
+        # Start with empty text
+        result_text = Text.from_plain_text("")
+
+        for child in node.children:
+            if isinstance(child, nodes.Text):
+                # Plain text node
+                plain_text = text(str(child))
+                result_text += plain_text
+            elif isinstance(child, nodes.strong):
+                # Bold text
+                bold_content = child.astext()
+                bold_text = text(bold_content, bold=True)
+                result_text += bold_text
+            elif isinstance(child, nodes.emphasis):
+                # Italic text
+                italic_content = child.astext()
+                italic_text = text(italic_content, italic=True)
+                result_text += italic_text
+            elif isinstance(child, nodes.literal):
+                # Inline code
+                code_content = child.astext()
+                code_text = text(code_content, code=True)
+                result_text += code_text
+            else:
+                # For other node types, just extract text
+                plain_content = child.astext()
+                plain_text = text(plain_content)
+                result_text += plain_text
+
+        return result_text
+
     def visit_paragraph(self, node: nodes.Element) -> None:
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
         assert isinstance(node, nodes.paragraph)
-        block = UnoParagraph(text=node.astext())
+
+        # Process inline formatting
+        rich_text = self._process_inline_nodes(node)
+
+        # Create paragraph with rich text
+        block = UnoParagraph(text="dummy")  # temporary text
+        block.rich_text = rich_text  # set the actual rich text
         self._blocks.append(block)
 
         raise nodes.SkipNode
