@@ -81,7 +81,6 @@ class NotionTranslator(NodeVisitor):
         self._blocks: list[NotionObject[Any]] = []
         self.body: str
         self._section_level = 0
-        self._processed_paragraphs: set[nodes.paragraph] = set()
 
     def visit_title(self, node: nodes.Element) -> None:
         """
@@ -122,9 +121,6 @@ class NotionTranslator(NodeVisitor):
 
         Only process if not already processed as part of a list item.
         """
-        if node in self._processed_paragraphs:
-            raise nodes.SkipNode
-
         rich_text = _create_rich_text_from_children(node=node)
 
         block = UnoParagraph(text="")
@@ -165,8 +161,6 @@ class NotionTranslator(NodeVisitor):
 
         for child in node.children:
             if isinstance(child, nodes.paragraph):
-                # Mark this paragraph as processed to avoid double processing
-                self._processed_paragraphs.add(child)
                 paragraph_text = child.astext()
             elif isinstance(child, nodes.bullet_list):
                 # Collect nested bullet lists for processing
@@ -214,8 +208,6 @@ class NotionTranslator(NodeVisitor):
 
         for child in node.children:
             if isinstance(child, nodes.paragraph):
-                # Mark this paragraph as processed to avoid double processing
-                self._processed_paragraphs.add(child)
                 rich_text = _create_rich_text_from_children(node=child)
                 paragraph_text = child.astext()
             elif isinstance(child, nodes.bullet_list):
@@ -254,14 +246,7 @@ class NotionTranslator(NodeVisitor):
 
         self._blocks.append(block)
 
-        # Skip children since we've processed them manually
         raise nodes.SkipNode
-
-    def depart_list_item(self, node: nodes.Element) -> None:
-        """
-        Handle leaving list_item nodes.
-        """
-        del node
 
     def depart_document(self, node: nodes.Element) -> None:
         """
