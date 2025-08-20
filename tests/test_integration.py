@@ -598,9 +598,7 @@ def test_nested_list_with_non_list_item_children(
     tmp_path: Path,
 ) -> None:
     """
-    Edge case: Nested structure that would have non-list-item children.
-
-    This tests the false branch for isinstance(nested_item, nodes.list_item).
+    Nested list items can have non-list item children.
     """
     # Complex RST that might create edge case structures
     rst_content = """
@@ -608,7 +606,9 @@ def test_nested_list_with_non_list_item_children(
 
           .. note:: This is a note within a list
 
-        * Item 2
+          * Item 2
+
+        * Item 3
     """
 
     expected_objects: list[NotionObject[Any]] = []
