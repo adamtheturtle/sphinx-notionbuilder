@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Any
 
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
+    BulletedItem as UnoBulletedItem,
+)
+from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
 from ultimate_notion.blocks import (
@@ -394,6 +397,137 @@ def test_unnamed_link_with_backticks_conversion(
     expected_paragraph.rich_text = combined_text
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_simple_bulleted_list_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Simple bulleted list converts to BulletedItem blocks.
+    """
+    rst_content = """
+        * First item
+        * Second item
+        * Third item
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoBulletedItem(text="First item"),
+        UnoBulletedItem(text="Second item"),
+        UnoBulletedItem(text="Third item"),
+    ]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_bulleted_list_with_formatting_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Bulleted list items with formatting (bold, italic, code) convert correctly.
+    """
+    rst_content = """
+        * **Bold** item
+        * *Italic* item
+        * ``Code`` item
+        * Mixed **bold** and *italic* item
+    """
+
+    # First item: **Bold** item
+    bold_text1 = text(text="Bold", bold=True)
+    normal_text1 = text(text=" item")
+    combined_text1 = bold_text1 + normal_text1
+    expected_item1 = UnoBulletedItem(text="dummy")
+    expected_item1.rich_text = combined_text1
+
+    # Second item: *Italic* item
+    italic_text2 = text(text="Italic", italic=True)
+    normal_text2 = text(text=" item")
+    combined_text2 = italic_text2 + normal_text2
+    expected_item2 = UnoBulletedItem(text="dummy")
+    expected_item2.rich_text = combined_text2
+
+    # Third item: ``Code`` item
+    code_text3 = text(text="Code", code=True)
+    normal_text3 = text(text=" item")
+    combined_text3 = code_text3 + normal_text3
+    expected_item3 = UnoBulletedItem(text="dummy")
+    expected_item3.rich_text = combined_text3
+
+    # Fourth item: Mixed **bold** and *italic* item
+    normal_text4a = text(text="Mixed ")
+    bold_text4 = text(text="bold", bold=True)
+    normal_text4b = text(text=" and ")
+    italic_text4 = text(text="italic", italic=True)
+    normal_text4c = text(text=" item")
+    combined_text4 = (
+        normal_text4a
+        + bold_text4
+        + normal_text4b
+        + italic_text4
+        + normal_text4c
+    )
+    expected_item4 = UnoBulletedItem(text="dummy")
+    expected_item4.rich_text = combined_text4
+
+    expected_objects: list[NotionObject[Any]] = [
+        expected_item1,
+        expected_item2,
+        expected_item3,
+        expected_item4,
+    ]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_bulleted_list_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Nested bulleted lists convert to BulletedItem blocks with children.
+
+    For now, we'll accept flattened output until full nesting is
+    implemented.
+    """
+    rst_content = """
+        * First item
+
+          * Nested item 1
+          * Nested item 2
+
+        * Second item
+
+          * Another nested item
+    """
+
+    # For now, expect flattened output (all items at top level)
+    # Full nesting support will be implemented in a future iteration
+    expected_objects: list[NotionObject[Any]] = [
+        UnoBulletedItem(text="First item"),
+        UnoBulletedItem(text="Nested item 1"),
+        UnoBulletedItem(text="Nested item 2"),
+        UnoBulletedItem(text="Second item"),
+        UnoBulletedItem(text="Another nested item"),
+    ]
 
     assert_rst_converts_to_notion_objects(
         rst_content=rst_content,

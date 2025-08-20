@@ -12,6 +12,9 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from ultimate_notion.blocks import (
+    BulletedItem as UnoBulletedItem,
+)
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -78,6 +81,7 @@ class NotionTranslator(NodeVisitor):
         self._blocks: list[NotionObject[Any]] = []
         self.body: str
         self._section_level = 0
+        self._processed_paragraphs: set[nodes.paragraph] = set()
 
     def visit_title(self, node: nodes.Element) -> None:
         """
@@ -114,9 +118,13 @@ class NotionTranslator(NodeVisitor):
         self._section_level -= 1
 
     def visit_paragraph(self, node: nodes.Element) -> None:
+        """Handle paragraph nodes by creating Notion Paragraph blocks.
+
+        Only process if not already processed as part of a list item.
         """
-        Handle paragraph nodes by creating Notion Paragraph blocks.
-        """
+        if node in self._processed_paragraphs:
+            raise nodes.SkipNode
+
         rich_text = _create_rich_text_from_children(node=node)
 
         block = UnoParagraph(text="")
@@ -131,6 +139,43 @@ class NotionTranslator(NodeVisitor):
         """
         del node
         self._blocks = []
+
+    def visit_bullet_list(self, node: nodes.Element) -> None:
+        """
+        Handle bullet_list nodes by processing their list_item children.
+        """
+        # We don't create a block for the list itself, just process children
+        del node
+
+    def depart_bullet_list(self, node: nodes.Element) -> None:
+        """
+        Handle leaving bullet_list nodes.
+        """
+        del node
+
+    def visit_list_item(self, node: nodes.Element) -> None:
+        """
+        Handle list_item nodes by creating BulletedItem blocks.
+        """
+        # Extract text from the first paragraph child
+        # Skip nested handling for now
+        for child in node.children:
+            if isinstance(child, nodes.paragraph):
+                # Mark this paragraph as processed to avoid double processing
+                self._processed_paragraphs.add(child)
+                rich_text = _create_rich_text_from_children(node=child)
+                block = UnoBulletedItem(text="")
+                block.rich_text = rich_text
+                self._blocks.append(block)
+                break  # Only process the first paragraph
+
+        # Don't skip children - allow nested lists to be processed
+
+    def depart_list_item(self, node: nodes.Element) -> None:
+        """
+        Handle leaving list_item nodes.
+        """
+        del node
 
     def depart_document(self, node: nodes.Element) -> None:
         """
