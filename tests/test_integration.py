@@ -370,3 +370,34 @@ def test_mixed_formatting_with_links_conversion(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_unnamed_link_with_backticks_conversion(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Unnamed links with backticks convert to rich text with href.
+
+    The text should be just the URL without angle brackets.
+    """
+    rst_content = """
+        Visit `<https://example.com>`_ for more information.
+    """
+
+    normal_text1 = text(text="Visit ")
+    link_text = text(text="https://example.com", href="https://example.com")
+    normal_text2 = text(text=" for more information.")
+
+    combined_text = normal_text1 + link_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text="dummy")
+    expected_paragraph.rich_text = combined_text
+
+    expected_objects: list[NotionObject[Any]] = [expected_paragraph]
+
+    assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
