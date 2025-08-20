@@ -183,13 +183,13 @@ class NotionTranslator(NodeVisitor):
 
         # Process nested lists and add as children
         if nested_lists:
-            children_blocks = []
+            children_blocks: list[UnoBulletedItem] = []
             for nested_list in nested_lists:
                 for nested_item in nested_list.children:
                     if isinstance(nested_item, nodes.list_item):
                         # Recursively process nested list items
                         nested_block = self._process_list_item_recursive(
-                            nested_item
+                            node=nested_item,
                         )
                         children_blocks.append(nested_block)
 
@@ -233,13 +233,13 @@ class NotionTranslator(NodeVisitor):
 
         # Process nested lists and add as children
         if nested_lists:
-            children_blocks = []
+            children_blocks: list[UnoBulletedItem] = []
             for nested_list in nested_lists:
                 for nested_item in nested_list.children:
                     if isinstance(nested_item, nodes.list_item):
                         # Recursively process nested list items
                         nested_block = self._process_list_item_recursive(
-                            nested_item
+                            node=nested_item,
                         )
                         children_blocks.append(nested_block)
 
