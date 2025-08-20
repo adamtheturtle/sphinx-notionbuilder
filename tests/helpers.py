@@ -52,4 +52,4 @@ def assert_rst_converts_to_notion_objects(
         )
         expected_json.append(dumped_block)
 
-    assert generated_json == expected_json, (generated_json, expected_json)
+    assert generated_json == expected_json
