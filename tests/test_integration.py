@@ -569,7 +569,7 @@ def test_nested_bulleted_list_conversion(
     )
 
 
-def test_edge_case_empty_list_item(
+def test_empty_list_item(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -593,23 +593,25 @@ def test_edge_case_empty_list_item(
     )
 
 
-def test_edge_case_flat_list_only(
+def test_nested_list_with_non_list_item_children(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Edge case: List items with no nested lists (flat list).
+    Edge case: Nested structure that would have non-list-item children.
+
+    This tests the false branch for isinstance(nested_item, nodes.list_item).
     """
+    # Complex RST that might create edge case structures
     rst_content = """
-        * First flat item
-        * Second flat item
+        * Item 1
+
+          .. note:: This is a note within a list
+
+        * Item 2
     """
 
-    # These should have no children
-    expected_objects: list[NotionObject[Any]] = [
-        UnoBulletedItem(text="First flat item"),
-        UnoBulletedItem(text="Second flat item"),
-    ]
+    expected_objects: list[NotionObject[Any]] = []
 
     assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
