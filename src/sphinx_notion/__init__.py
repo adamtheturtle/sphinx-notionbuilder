@@ -34,18 +34,6 @@ if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
 
-def dump_notion_object(*, obj_ref: pydantic.BaseModel) -> dict[str, Any]:
-    """Dump a Notion object to JSON format.
-
-    All parameters are keyword-only to ensure explicit usage.
-    """
-    return obj_ref.model_dump(
-        mode="json",
-        by_alias=True,
-        exclude_none=True,
-    )
-
-
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """
     Create Notion rich text from docutils node children.
@@ -183,8 +171,12 @@ class NotionTranslator(NodeVisitor):
                                 self._create_nested_bullet_item(nested_item)
                             )
                             if nested_child_block:
-                                child_json = dump_notion_object(
-                                    obj_ref=nested_child_block.obj_ref
+                                child_json = (
+                                    nested_child_block.obj_ref.model_dump(
+                                        mode="json",
+                                        by_alias=True,
+                                        exclude_none=True,
+                                    )
                                 )
                                 children_data.append(child_json)
 
@@ -228,8 +220,12 @@ class NotionTranslator(NodeVisitor):
                                 self._create_nested_bullet_item(nested_item)
                             )
                             if nested_child_block:
-                                child_json = dump_notion_object(
-                                    obj_ref=nested_child_block.obj_ref
+                                child_json = (
+                                    nested_child_block.obj_ref.model_dump(
+                                        mode="json",
+                                        by_alias=True,
+                                        exclude_none=True,
+                                    )
                                 )
                                 children_data.append(child_json)
 
@@ -257,7 +253,11 @@ class NotionTranslator(NodeVisitor):
         for block in self._blocks:
             obj_ref = block.obj_ref
             assert isinstance(obj_ref, pydantic.BaseModel)
-            dumped_block: dict[str, Any] = dump_notion_object(obj_ref=obj_ref)
+            dumped_block: dict[str, Any] = obj_ref.model_dump(
+                mode="json",
+                by_alias=True,
+                exclude_none=True,
+            )
             dumped_blocks.append(dumped_block)
 
         json_output = json.dumps(
