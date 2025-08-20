@@ -510,6 +510,10 @@ def test_nested_bulleted_list_conversion(
         * First item
 
           * Nested item 1
+
+            * Deep nested item 1
+            * Deep nested item 2
+
           * Nested item 2
 
         * Second item
@@ -517,13 +521,24 @@ def test_nested_bulleted_list_conversion(
           * Another nested item
     """
 
-    # Create nested items for first item
+    # Create deep nested items for nested item 1
+    deep_nested_item_1 = UnoBulletedItem(text="Deep nested item 1")
+    deep_nested_item_2 = UnoBulletedItem(text="Deep nested item 2")
+
+    # Create nested item 1 with deep children
     nested_item_1 = UnoBulletedItem(text="Nested item 1")
+    type_data_class = type(nested_item_1.obj_ref.bulleted_list_item)
+    nested_item_1.obj_ref.bulleted_list_item = type_data_class(
+        rich_text=nested_item_1.obj_ref.bulleted_list_item.rich_text,
+        color=nested_item_1.obj_ref.bulleted_list_item.color,
+        children=[deep_nested_item_1.obj_ref, deep_nested_item_2.obj_ref],
+    )
+
+    # Create nested item 2 (no children)
     nested_item_2 = UnoBulletedItem(text="Nested item 2")
 
     # Create first item with children
     first_item = UnoBulletedItem(text="First item")
-    type_data_class = type(first_item.obj_ref.bulleted_list_item)
     first_item.obj_ref.bulleted_list_item = type_data_class(
         rich_text=first_item.obj_ref.bulleted_list_item.rich_text,
         color=first_item.obj_ref.bulleted_list_item.color,
