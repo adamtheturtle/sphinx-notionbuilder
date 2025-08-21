@@ -12,6 +12,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
@@ -260,6 +261,29 @@ class NotionTranslator(NodeVisitor):
         )
 
         block = UnoCode(text=code_text, language=language)
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_bullet_list(self, node: nodes.Element) -> None:
+        """
+        Handle bullet list nodes by processing each list item.
+        """
+        # We don't create a block for the list itself,
+        # just process the children (list items)
+
+    def depart_bullet_list(self, node: nodes.Element) -> None:
+        """
+        Handle leaving bullet list nodes.
+        """
+        del node
+
+    def visit_list_item(self, node: nodes.Element) -> None:
+        """
+        Handle list item nodes by creating Notion BulletedItem blocks.
+        """
+        item_text = node.astext()
+        block = UnoBulletedItem(text=item_text)
         self._blocks.append(block)
 
         raise nodes.SkipNode

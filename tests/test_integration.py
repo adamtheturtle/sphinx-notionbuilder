@@ -10,6 +10,7 @@ from typing import Any
 
 import pydantic
 from sphinx.testing.util import SphinxTestApp
+from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -616,6 +617,31 @@ def test_code_block_language_mapping(
         UnoCode(text='echo "test"', language=CodeLang.BASH),
         UnoCode(text="Some plain text", language=CodeLang.PLAIN_TEXT),
         UnoCode(text="Code with no language", language=CodeLang.PLAIN_TEXT),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_flat_bullet_list(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that flat bullet lists convert correctly to Notion BulletedItem.
+    """
+    rst_content = """
+        * First bullet point
+        * Second bullet point
+        * Third bullet point with longer text
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoBulletedItem(text="First bullet point"),
+        UnoBulletedItem(text="Second bullet point"),
+        UnoBulletedItem(text="Third bullet point with longer text"),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
