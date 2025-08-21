@@ -35,6 +35,25 @@ from ultimate_notion.obj_api.enums import CodeLang
 from ultimate_notion.rich_text import text
 
 
+def _create_code_block_without_annotations(
+    content: str, language: CodeLang
+) -> UnoCode:
+    """Create a code block without annotations to match the fixed behavior.
+
+    This matches the fix in visit_literal_block where annotations are
+    removed to prevent white text color in code blocks.
+    """
+    # Create rich text and remove annotations to match the fix
+    code_text = text(text=content)
+    # Remove annotations to prevent white text in code blocks
+    del code_text.rich_texts[0].obj_ref.annotations
+
+    # Create code block and set the rich text
+    code_block = UnoCode(text="dummy", language=language)
+    code_block.rich_text = code_text
+    return code_block
+
+
 def _assert_rst_converts_to_notion_objects(
     rst_content: str,
     expected_objects: list[NotionObject[Any]],
@@ -569,8 +588,8 @@ def test_simple_code_block(
     """
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
-        UnoCode(
-            text='def hello():\n    print("Hello, world!")',
+        _create_code_block_without_annotations(
+            content='def hello():\n    print("Hello, world!")',
             language=CodeLang.PYTHON,
         ),
         UnoParagraph(text="Another paragraph."),
@@ -612,11 +631,21 @@ def test_code_block_language_mapping(
            Code with no language
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoCode(text="$ pip install example", language=CodeLang.SHELL),
-        UnoCode(text='console.log("hello");', language=CodeLang.JAVASCRIPT),
-        UnoCode(text='echo "test"', language=CodeLang.BASH),
-        UnoCode(text="Some plain text", language=CodeLang.PLAIN_TEXT),
-        UnoCode(text="Code with no language", language=CodeLang.PLAIN_TEXT),
+        _create_code_block_without_annotations(
+            content="$ pip install example", language=CodeLang.SHELL
+        ),
+        _create_code_block_without_annotations(
+            content='console.log("hello");', language=CodeLang.JAVASCRIPT
+        ),
+        _create_code_block_without_annotations(
+            content='echo "test"', language=CodeLang.BASH
+        ),
+        _create_code_block_without_annotations(
+            content="Some plain text", language=CodeLang.PLAIN_TEXT
+        ),
+        _create_code_block_without_annotations(
+            content="Code with no language", language=CodeLang.PLAIN_TEXT
+        ),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
