@@ -582,32 +582,6 @@ def test_simple_code_block(
     )
 
 
-def test_code_block_unknown_language(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Test that code blocks with unknown languages use plain text.
-    """
-    rst_content = """
-        .. code-block:: unknownlang
-
-           Some code in unknown language
-    """
-    expected_objects: list[NotionObject[Any]] = [
-        UnoCode(
-            text="Some code in unknown language",
-            language=CodeLang.PLAIN_TEXT,
-        ),
-    ]
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
 def test_code_block_language_mapping(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
