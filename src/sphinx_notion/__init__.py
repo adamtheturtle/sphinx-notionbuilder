@@ -282,8 +282,20 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        item_text = node.astext()
-        block = UnoBulletedItem(text=item_text)
+        # List items in RST always contain a paragraph with formatted content
+        # as the first (and typically only) child
+        assert len(node.children) >= 1, "List item should have children"
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph), (
+            "First child must be para"
+        )
+
+        # Create rich text from paragraph children to preserve formatting
+        rich_text = _create_rich_text_from_children(node=paragraph)
+
+        # Create the bullet item with placeholder text, then set rich_text
+        block = UnoBulletedItem(text="placeholder")
+        block.rich_text = rich_text
         self._blocks.append(block)
 
         raise nodes.SkipNode
