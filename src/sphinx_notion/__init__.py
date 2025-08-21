@@ -12,6 +12,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -31,6 +32,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.obj_api.enums import CodeLang
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
@@ -67,6 +69,109 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         rich_text += new_text
 
     return rich_text
+
+
+def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
+    """
+    Map Pygments language names to Notion CodeLang enum values.
+    """
+    language_mapping: dict[str, CodeLang] = {
+        "abap": CodeLang.ABAP,
+        "arduino": CodeLang.ARDUINO,
+        "bash": CodeLang.BASH,
+        "basic": CodeLang.BASIC,
+        "c": CodeLang.C,
+        "clojure": CodeLang.CLOJURE,
+        "coffeescript": CodeLang.COFFEESCRIPT,
+        "console": CodeLang.SHELL,
+        "cpp": CodeLang.CPP,
+        "c++": CodeLang.CPP,
+        "csharp": CodeLang.CSHARP,
+        "c#": CodeLang.CSHARP,
+        "css": CodeLang.CSS,
+        "dart": CodeLang.DART,
+        "default": CodeLang.PLAIN_TEXT,
+        "diff": CodeLang.DIFF,
+        "docker": CodeLang.DOCKER,
+        "dockerfile": CodeLang.DOCKER,
+        "elixir": CodeLang.ELIXIR,
+        "elm": CodeLang.ELM,
+        "erlang": CodeLang.ERLANG,
+        "flow": CodeLang.FLOW,
+        "fortran": CodeLang.FORTRAN,
+        "fsharp": CodeLang.FSHARP,
+        "f#": CodeLang.FSHARP,
+        "gherkin": CodeLang.GHERKIN,
+        "glsl": CodeLang.GLSL,
+        "go": CodeLang.GO,
+        "graphql": CodeLang.GRAPHQL,
+        "groovy": CodeLang.GROOVY,
+        "haskell": CodeLang.HASKELL,
+        "html": CodeLang.HTML,
+        "java": CodeLang.JAVA,
+        "javascript": CodeLang.JAVASCRIPT,
+        "js": CodeLang.JAVASCRIPT,
+        "json": CodeLang.JSON,
+        "julia": CodeLang.JULIA,
+        "kotlin": CodeLang.KOTLIN,
+        "latex": CodeLang.LATEX,
+        "tex": CodeLang.LATEX,
+        "less": CodeLang.LESS,
+        "lisp": CodeLang.LISP,
+        "livescript": CodeLang.LIVESCRIPT,
+        "lua": CodeLang.LUA,
+        "makefile": CodeLang.MAKEFILE,
+        "make": CodeLang.MAKEFILE,
+        "markdown": CodeLang.MARKDOWN,
+        "md": CodeLang.MARKDOWN,
+        "markup": CodeLang.MARKUP,
+        "matlab": CodeLang.MATLAB,
+        "mermaid": CodeLang.MERMAID,
+        "nix": CodeLang.NIX,
+        "objective-c": CodeLang.OBJECTIVE_C,
+        "objc": CodeLang.OBJECTIVE_C,
+        "ocaml": CodeLang.OCAML,
+        "pascal": CodeLang.PASCAL,
+        "perl": CodeLang.PERL,
+        "php": CodeLang.PHP,
+        "powershell": CodeLang.POWERSHELL,
+        "ps1": CodeLang.POWERSHELL,
+        "prolog": CodeLang.PROLOG,
+        "protobuf": CodeLang.PROTOBUF,
+        "python": CodeLang.PYTHON,
+        "py": CodeLang.PYTHON,
+        "r": CodeLang.R,
+        "reason": CodeLang.REASON,
+        "ruby": CodeLang.RUBY,
+        "rb": CodeLang.RUBY,
+        "rust": CodeLang.RUST,
+        "rs": CodeLang.RUST,
+        "sass": CodeLang.SASS,
+        "scala": CodeLang.SCALA,
+        "scheme": CodeLang.SCHEME,
+        "scss": CodeLang.SCSS,
+        "shell": CodeLang.SHELL,
+        "sh": CodeLang.SHELL,
+        "sql": CodeLang.SQL,
+        "swift": CodeLang.SWIFT,
+        "text": CodeLang.PLAIN_TEXT,
+        "toml": CodeLang.TOML,
+        "typescript": CodeLang.TYPESCRIPT,
+        "ts": CodeLang.TYPESCRIPT,
+        "vb.net": CodeLang.VB_NET,
+        "vbnet": CodeLang.VB_NET,
+        "verilog": CodeLang.VERILOG,
+        "vhdl": CodeLang.VHDL,
+        "visual basic": CodeLang.VISUAL_BASIC,
+        "vb": CodeLang.VISUAL_BASIC,
+        "webassembly": CodeLang.WEBASSEMBLY,
+        "wasm": CodeLang.WEBASSEMBLY,
+        "xml": CodeLang.XML,
+        "yaml": CodeLang.YAML,
+        "yml": CodeLang.YAML,
+    }
+
+    return language_mapping[pygments_lang.lower()]
 
 
 @beartype
@@ -139,6 +244,22 @@ class NotionTranslator(NodeVisitor):
 
         block = UnoQuote(text="")
         block.rich_text = rich_text
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_literal_block(self, node: nodes.Element) -> None:
+        """
+        Handle literal block nodes by creating Notion Code blocks.
+        """
+        code_text = node.astext()
+
+        pygments_lang = node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
+        )
+
+        block = UnoCode(text=code_text, language=language)
         self._blocks.append(block)
 
         raise nodes.SkipNode

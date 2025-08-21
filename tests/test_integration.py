@@ -10,6 +10,7 @@ from typing import Any
 
 import pydantic
 from sphinx.testing.util import SphinxTestApp
+from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -29,6 +30,7 @@ from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
 from ultimate_notion.core import NotionObject
+from ultimate_notion.obj_api.enums import CodeLang
 from ultimate_notion.rich_text import text
 
 
@@ -538,6 +540,82 @@ def test_table_of_contents(
         UnoParagraph(text="Content here."),
         UnoHeading2(text="Second Section"),
         UnoParagraph(text="More content."),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_simple_code_block(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Code blocks convert to Notion Code blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. code-block:: python
+
+           def hello():
+               print("Hello, world!")
+
+        Another paragraph.
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        UnoCode(
+            text='def hello():\n    print("Hello, world!")',
+            language=CodeLang.PYTHON,
+        ),
+        UnoParagraph(text="Another paragraph."),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_code_block_language_mapping(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that various languages map correctly.
+    """
+    rst_content = """
+        .. code-block:: console
+
+           $ pip install example
+
+        .. code-block:: javascript
+
+           console.log("hello");
+
+        .. code-block:: bash
+
+           echo "test"
+
+        .. code-block:: text
+
+           Some plain text
+
+        .. code-block::
+
+           Code with no language
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoCode(text="$ pip install example", language=CodeLang.SHELL),
+        UnoCode(text='console.log("hello");', language=CodeLang.JAVASCRIPT),
+        UnoCode(text='echo "test"', language=CodeLang.BASH),
+        UnoCode(text="Some plain text", language=CodeLang.PLAIN_TEXT),
+        UnoCode(text="Code with no language", language=CodeLang.PLAIN_TEXT),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
