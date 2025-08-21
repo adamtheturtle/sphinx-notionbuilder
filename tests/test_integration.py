@@ -2,10 +2,13 @@
 Integration tests for the Sphinx Notion Builder functionality.
 """
 
+import json
+import textwrap
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+import pydantic
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -25,12 +28,50 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.core import NotionObject
 from ultimate_notion.rich_text import text
 
-from .helpers import assert_rst_converts_to_notion_objects
 
-if TYPE_CHECKING:
-    from ultimate_notion.core import NotionObject
+def _assert_rst_converts_to_notion_objects(
+    rst_content: str,
+    expected_objects: list[NotionObject[Any]],
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    The given rST content is converted to the given expected objects.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").write_text(data="")
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+
+    output_file = app.outdir / "index.json"
+    with output_file.open() as f:
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
+
+    expected_json: list[dict[str, Any]] = []
+    for notion_object in expected_objects:
+        obj_ref = notion_object.obj_ref
+        assert isinstance(obj_ref, pydantic.BaseModel)
+        dumped_block: dict[str, Any] = obj_ref.model_dump(
+            mode="json",
+            by_alias=True,
+            exclude_none=True,
+        )
+        expected_json.append(dumped_block)
+
+    assert generated_json == expected_json, (generated_json, expected_json)
 
 
 def test_single_paragraph(
@@ -48,7 +89,7 @@ def test_single_paragraph(
         UnoParagraph(text="This is a simple paragraph for testing.")
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -77,7 +118,7 @@ def test_multiple_paragraphs(
         UnoParagraph(text="Third paragraph to test multiple blocks."),
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -119,7 +160,7 @@ def test_inline_formatting(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -146,7 +187,7 @@ def test_single_heading(
         UnoParagraph(text="This is content under the title."),
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -187,7 +228,7 @@ def test_multiple_heading_levels(
         UnoParagraph(text="Content under subsection."),
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -224,7 +265,7 @@ def test_heading_with_formatting(
         UnoParagraph(text="Content follows."),
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -254,7 +295,7 @@ def test_simple_link(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -293,7 +334,7 @@ def test_multiple_links(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -328,7 +369,7 @@ def test_link_in_heading(
         UnoParagraph(text="Content follows."),
     ]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -370,7 +411,7 @@ def test_mixed_formatting_with_links(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -401,7 +442,7 @@ def test_unnamed_link_with_backticks(
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -428,7 +469,7 @@ def test_simple_quote(
         UnoQuote(text="This is a block quote."),
         UnoParagraph(text="Another paragraph."),
     ]
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -459,7 +500,7 @@ def test_multiline_quote(
         ),
         UnoParagraph(text="Another paragraph."),
     ]
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
@@ -498,7 +539,7 @@ def test_table_of_contents(
         UnoHeading2(text="Second Section"),
         UnoParagraph(text="More content."),
     ]
-    assert_rst_converts_to_notion_objects(
+    _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
