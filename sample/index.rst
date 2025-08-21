@@ -26,6 +26,14 @@ This is **bold** and *italic* and ``inline code``.
 Some key features:
 
 * Easy integration with **Sphinx**
+
+  * Nested 1
+
+     * Nested 1.1
+     * Nested 1.2
+
+  * Nested 2
+
 * Converts RST to Notion-compatible format
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting
