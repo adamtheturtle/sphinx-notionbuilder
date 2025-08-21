@@ -354,12 +354,6 @@ class NotionTranslator(NodeVisitor):
 
         return block
 
-    def depart_list_item(self, node: nodes.Element) -> None:
-        """
-        Handle leaving list item nodes.
-        """
-        del node
-
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
