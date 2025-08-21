@@ -175,6 +175,23 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
+def append_blocks_to_bullet(
+    parent_bullet: UnoBulletedItem, child_blocks: list[UnoBulletedItem]
+) -> None:
+    """Helper function to append child blocks to a bullet item using obj_ref.
+
+    This works around the limitation that `.append()` can only be used
+    on blocks that are already in Notion. For blocks that haven't been
+    uploaded yet, we need to manually set the parent-child relationship
+    using object references.
+    """
+    # Update the parent block's children list
+    # The children are stored in the bulleted_list_item.children field
+    parent_bullet.obj_ref.bulleted_list_item.children.extend(
+        child_block.obj_ref for child_block in child_blocks
+    )
+
+
 @beartype
 class NotionTranslator(NodeVisitor):
     """
@@ -265,7 +282,8 @@ class NotionTranslator(NodeVisitor):
         # By default, the code block has a color set (DEFAULT) which means
         # that there is no syntax highlighting.
         # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-        del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+        # Remove annotations so it appears as normal text in Notion
+        del code_text.rich_texts[0].obj_ref.annotations
         block.rich_text = code_text
         self._blocks.append(block)
 
@@ -273,10 +291,11 @@ class NotionTranslator(NodeVisitor):
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
         """
-        Handle bullet list nodes by processing each list item.
+        Handle bullet list nodes by tracking nesting level.
         """
-        # We don't create a block for the list itself,
-        # just process the children (list items)
+        # Track that we're entering a nested context
+        # The list items will be processed by visit_list_item
+        del node
 
     def depart_bullet_list(self, node: nodes.Element) -> None:
         """
@@ -285,17 +304,84 @@ class NotionTranslator(NodeVisitor):
         del node
 
     def visit_list_item(self, node: nodes.Element) -> None:
+        """Handle list item nodes by creating Notion BulletedItem blocks.
+
+        This processes both the paragraph text and any nested bullet
+        lists within the list item, creating the appropriate nested
+        structure.
         """
-        Handle list item nodes by creating Notion BulletedItem blocks.
-        """
+        # Find the paragraph (first child) containing the text
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
+
+        # Create the bullet item for this list item
         block = UnoBulletedItem(text="placeholder")
         block.rich_text = rich_text
+
+        # Look for nested bullet lists in the remaining children
+        nested_bullets: list[UnoBulletedItem] = []
+        for child in node.children[1:]:
+            if isinstance(child, nodes.bullet_list):
+                # Process each nested list item
+                for nested_item in child.children:
+                    if isinstance(nested_item, nodes.list_item):
+                        nested_block = self._process_list_item_recursive(
+                            nested_item
+                        )
+                        nested_bullets.append(nested_block)
+
+        # If there are nested bullets, append them to this bullet item
+        if nested_bullets:
+            append_blocks_to_bullet(block, nested_bullets)
+
+        # Add to blocks (either as top-level or the parent will handle it)
         self._blocks.append(block)
 
+        # Skip processing children since we handled them manually
         raise nodes.SkipNode
+
+    def _process_list_item_recursive(
+        self, node: nodes.list_item
+    ) -> UnoBulletedItem:
+        """Recursively process a list item and its nested children.
+
+        This is used when processing nested bullet lists to create the
+        full hierarchy without adding intermediate items to the main
+        blocks list.
+        """
+        # Find the paragraph (first child) containing the text
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+
+        # Create the bullet item for this list item
+        block = UnoBulletedItem(text="placeholder")
+        block.rich_text = rich_text
+
+        # Look for nested bullet lists in the remaining children
+        nested_bullets: list[UnoBulletedItem] = []
+        for child in node.children[1:]:
+            if isinstance(child, nodes.bullet_list):
+                # Process each nested list item
+                for nested_item in child.children:
+                    if isinstance(nested_item, nodes.list_item):
+                        nested_block = self._process_list_item_recursive(
+                            nested_item
+                        )
+                        nested_bullets.append(nested_block)
+
+        # If there are nested bullets, append them to this bullet item
+        if nested_bullets:
+            append_blocks_to_bullet(block, nested_bullets)
+
+        return block
+
+    def depart_list_item(self, node: nodes.Element) -> None:
+        """
+        Handle leaving list item nodes.
+        """
+        del node
 
     def visit_topic(self, node: nodes.Element) -> None:
         """

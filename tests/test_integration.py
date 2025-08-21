@@ -34,6 +34,8 @@ from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.enums import CodeLang
 from ultimate_notion.rich_text import text
 
+from sphinx_notion import append_blocks_to_bullet
+
 
 def _create_code_block_without_annotations(
     content: str, language: CodeLang
@@ -734,8 +736,9 @@ def test_nested_bullet_list(
     third_bullet = UnoBulletedItem(text="Third level item")
     fourth_bullet = UnoBulletedItem(text="Another first level item")
 
-    first_bullet.append(blocks=[second_bullet_1, second_bullet_2])
-    second_bullet_2.append(blocks=[third_bullet])
+    # Use helper function to append blocks instead of .append()
+    append_blocks_to_bullet(first_bullet, [second_bullet_1, second_bullet_2])
+    append_blocks_to_bullet(second_bullet_2, [third_bullet])
 
     expected_objects: list[NotionObject[Any]] = [
         first_bullet,
