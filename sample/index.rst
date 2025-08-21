@@ -29,8 +29,8 @@ Some key features:
 
   * Nested 1
 
-     * Nested 1.1
-     * Nested 1.2
+    * Nested 1.1
+    * Nested 1.2
 
   * Nested 2
 
