@@ -311,7 +311,7 @@ class NotionTranslator(NodeVisitor):
         structure.
         """
         assert isinstance(node, nodes.list_item)
-        block = self._create_bullet_item_with_children(node)
+        block = self._create_bullet_item_with_children(node=node)
 
         # Add to blocks (top-level items are added to main blocks list)
         self._blocks.append(block)
@@ -344,13 +344,16 @@ class NotionTranslator(NodeVisitor):
                 for nested_item in child.children:
                     if isinstance(nested_item, nodes.list_item):
                         nested_block = self._create_bullet_item_with_children(
-                            nested_item
+                            node=nested_item,
                         )
                         nested_bullets.append(nested_block)
 
         # If there are nested bullets, append them to this bullet item
         if nested_bullets:
-            append_blocks_to_bullet(block, nested_bullets)
+            append_blocks_to_bullet(
+                parent_bullet=block,
+                child_blocks=nested_bullets,
+            )
 
         return block
 
