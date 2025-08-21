@@ -627,11 +627,21 @@ def test_code_block_language_mapping(
         .. code-block:: bash
 
            echo "test"
+
+        .. code-block:: text
+
+           Some plain text
+
+        .. code-block::
+
+           Code with no language
     """
     expected_objects: list[NotionObject[Any]] = [
         UnoCode(text="$ pip install example", language=CodeLang.SHELL),
         UnoCode(text='console.log("hello");', language=CodeLang.JAVASCRIPT),
         UnoCode(text='echo "test"', language=CodeLang.BASH),
+        UnoCode(text="Some plain text", language=CodeLang.PLAIN_TEXT),
+        UnoCode(text="Code with no language", language=CodeLang.PLAIN_TEXT),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
