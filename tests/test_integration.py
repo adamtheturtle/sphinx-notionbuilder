@@ -46,7 +46,7 @@ def _create_code_block_without_annotations(
     # Create rich text and remove annotations to match the fix
     code_text = text(text=content)
     # Remove annotations to prevent white text in code blocks
-    del code_text.rich_texts[0].obj_ref.annotations
+    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
 
     # Create code block and set the rich text
     code_block = UnoCode(text="dummy", language=language)

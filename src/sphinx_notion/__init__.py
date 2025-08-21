@@ -265,7 +265,7 @@ class NotionTranslator(NodeVisitor):
         # By default, the code block has a color set (DEFAULT) which means
         # that there is no syntax highlighting.
         # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-        del code_text.rich_texts[0].obj_ref.annotations
+        del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
         block.rich_text = code_text
         self._blocks.append(block)
 
