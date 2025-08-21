@@ -253,7 +253,7 @@ class NotionTranslator(NodeVisitor):
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        code_text = node.astext()
+        code_text = _create_rich_text_from_children(node=node)
 
         pygments_lang = node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
@@ -261,6 +261,12 @@ class NotionTranslator(NodeVisitor):
         )
 
         block = UnoCode(text=code_text, language=language)
+
+        # By default, the code block has a color set (DEFAULT) which means
+        # that there is no syntax highlighting.
+        # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
+        del code_text.rich_texts[0].obj_ref.annotations
+        block.rich_text = code_text
         self._blocks.append(block)
 
         raise nodes.SkipNode
