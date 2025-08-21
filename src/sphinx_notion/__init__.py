@@ -310,45 +310,22 @@ class NotionTranslator(NodeVisitor):
         lists within the list item, creating the appropriate nested
         structure.
         """
-        # Find the paragraph (first child) containing the text
-        paragraph = node.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
+        assert isinstance(node, nodes.list_item)
+        block = self._create_bullet_item_with_children(node)
 
-        # Create the bullet item for this list item
-        block = UnoBulletedItem(text="placeholder")
-        block.rich_text = rich_text
-
-        # Look for nested bullet lists in the remaining children
-        nested_bullets: list[UnoBulletedItem] = []
-        for child in node.children[1:]:
-            if isinstance(child, nodes.bullet_list):
-                # Process each nested list item
-                for nested_item in child.children:
-                    if isinstance(nested_item, nodes.list_item):
-                        nested_block = self._process_list_item_recursive(
-                            nested_item
-                        )
-                        nested_bullets.append(nested_block)
-
-        # If there are nested bullets, append them to this bullet item
-        if nested_bullets:
-            append_blocks_to_bullet(block, nested_bullets)
-
-        # Add to blocks (either as top-level or the parent will handle it)
+        # Add to blocks (top-level items are added to main blocks list)
         self._blocks.append(block)
 
         # Skip processing children since we handled them manually
         raise nodes.SkipNode
 
-    def _process_list_item_recursive(
+    def _create_bullet_item_with_children(
         self, node: nodes.list_item
     ) -> UnoBulletedItem:
-        """Recursively process a list item and its nested children.
+        """Create a bullet item and process any nested children.
 
-        This is used when processing nested bullet lists to create the
-        full hierarchy without adding intermediate items to the main
-        blocks list.
+        This shared method handles the common logic for processing list
+        items, whether they're top-level or nested.
         """
         # Find the paragraph (first child) containing the text
         paragraph = node.children[0]
@@ -366,7 +343,7 @@ class NotionTranslator(NodeVisitor):
                 # Process each nested list item
                 for nested_item in child.children:
                     if isinstance(nested_item, nodes.list_item):
-                        nested_block = self._process_list_item_recursive(
+                        nested_block = self._create_bullet_item_with_children(
                             nested_item
                         )
                         nested_bullets.append(nested_block)
