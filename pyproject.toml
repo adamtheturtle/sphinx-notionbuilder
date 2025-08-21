@@ -275,6 +275,7 @@ make-summary-multi-line = true
 [tool.check-manifest]
 
 ignore = [
+    "CLAUDE.md",
     ".checkmake-config.ini",
     ".vscode",
     ".vscode/**",
