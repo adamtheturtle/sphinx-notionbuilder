@@ -23,6 +23,14 @@ This is **bold** and *italic* and ``inline code``.
 
    $ pip install sphinx-notionbuilder
 
+Some key features:
+
+* Easy integration with Sphinx
+* Converts RST to Notion-compatible format
+* Supports code blocks with syntax highlighting
+* Handles headings, links, and formatting
+* Works with bullet points like this one
+
 Heading 2 with *italic*
 -----------------------
 
