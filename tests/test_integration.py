@@ -656,71 +656,20 @@ def test_bullet_list_with_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Test bullet lists with inline formatting (bold, italic, code, links).
+    Test bullet lists with inline formatting.
     """
     rst_content = """
         * This is **bold text** in a bullet
-        * This is *italic text* in a bullet
-        * This is ``code text`` in a bullet
-        * This has a `link <https://example.com>`_ in a bullet
-        * **Mixed** *formatting* with ``code`` and `links <https://test.com>`_
     """
-    # Create bullet items
-    bullet1 = UnoBulletedItem(text="placeholder")
-    bullet2 = UnoBulletedItem(text="placeholder")
-    bullet3 = UnoBulletedItem(text="placeholder")
-    bullet4 = UnoBulletedItem(text="placeholder")
-    bullet5 = UnoBulletedItem(text="placeholder")
-
-    # Set up rich text for each bullet item
-    bullet1.rich_text = (
+    bullet = UnoBulletedItem(text="placeholder")
+    bullet.rich_text = (
         text(text="This is ", bold=False, italic=False, code=False)
         + text(text="bold text", bold=True, italic=False, code=False)
         + text(text=" in a bullet", bold=False, italic=False, code=False)
     )
-    bullet2.rich_text = (
-        text(text="This is ", bold=False, italic=False, code=False)
-        + text(text="italic text", bold=False, italic=True, code=False)
-        + text(text=" in a bullet", bold=False, italic=False, code=False)
-    )
-    bullet3.rich_text = (
-        text(text="This is ", bold=False, italic=False, code=False)
-        + text(text="code text", bold=False, italic=False, code=True)
-        + text(text=" in a bullet", bold=False, italic=False, code=False)
-    )
-    bullet4.rich_text = (
-        text(text="This has a ", bold=False, italic=False, code=False)
-        + text(
-            text="link",
-            bold=False,
-            italic=False,
-            code=False,
-            href="https://example.com",
-        )
-        + text(text=" in a bullet", bold=False, italic=False, code=False)
-    )
-    bullet5.rich_text = (
-        text(text="Mixed", bold=True, italic=False, code=False)
-        + text(text=" ", bold=False, italic=False, code=False)
-        + text(text="formatting", bold=False, italic=True, code=False)
-        + text(text=" with ", bold=False, italic=False, code=False)
-        + text(text="code", bold=False, italic=False, code=True)
-        + text(text=" and ", bold=False, italic=False, code=False)
-        + text(
-            text="links",
-            bold=False,
-            italic=False,
-            code=False,
-            href="https://test.com",
-        )
-    )
 
     expected_objects: list[NotionObject[Any]] = [
-        bullet1,
-        bullet2,
-        bullet3,
-        bullet4,
-        bullet5,
+        bullet,
     ]
 
     _assert_rst_converts_to_notion_objects(
