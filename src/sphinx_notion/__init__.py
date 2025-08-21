@@ -282,8 +282,11 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        item_text = node.astext()
-        block = UnoBulletedItem(text=item_text)
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text="placeholder")
+        block.rich_text = rich_text
         self._blocks.append(block)
 
         raise nodes.SkipNode

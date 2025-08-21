@@ -25,7 +25,7 @@ This is **bold** and *italic* and ``inline code``.
 
 Some key features:
 
-* Easy integration with Sphinx
+* Easy integration with **Sphinx**
 * Converts RST to Notion-compatible format
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting

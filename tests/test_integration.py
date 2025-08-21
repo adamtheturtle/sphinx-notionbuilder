@@ -649,3 +649,32 @@ def test_flat_bullet_list(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_bullet_list_with_inline_formatting(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test bullet lists with inline formatting.
+    """
+    rst_content = """
+        * This is **bold text** in a bullet
+    """
+    bullet = UnoBulletedItem(text="placeholder")
+    bullet.rich_text = (
+        text(text="This is ", bold=False, italic=False, code=False)
+        + text(text="bold text", bold=True, italic=False, code=False)
+        + text(text=" in a bullet", bold=False, italic=False, code=False)
+    )
+
+    expected_objects: list[NotionObject[Any]] = [
+        bullet,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
