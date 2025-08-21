@@ -678,3 +678,44 @@ def test_bullet_list_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_nested_bullet_list(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test nested bullet lists convert to Notion BulletedItem with children.
+    """
+    rst_content = """
+        * First level item
+
+          * Second level item 1
+          * Second level item 2
+
+            * Third level item
+
+        * Another first level item
+    """
+
+    # Create the expected nested structure manually using obj_ref manipulation
+    first_bullet = UnoBulletedItem(text="First level item")
+    second_bullet_1 = UnoBulletedItem(text="Second level item 1")
+    second_bullet_2 = UnoBulletedItem(text="Second level item 2")
+    third_bullet = UnoBulletedItem(text="Third level item")
+    fourth_bullet = UnoBulletedItem(text="Another first level item")
+
+    first_bullet.append(blocks=[second_bullet_1, second_bullet_2])
+    second_bullet_2.append(blocks=[third_bullet])
+
+    expected_objects: list[NotionObject[Any]] = [
+        first_bullet,
+        fourth_bullet,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
