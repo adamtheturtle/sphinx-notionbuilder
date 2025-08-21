@@ -90,6 +90,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "c#": CodeLang.CSHARP,
         "css": CodeLang.CSS,
         "dart": CodeLang.DART,
+        "default": CodeLang.PLAIN_TEXT,
         "diff": CodeLang.DIFF,
         "docker": CodeLang.DOCKER,
         "dockerfile": CodeLang.DOCKER,
@@ -153,6 +154,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "sh": CodeLang.SHELL,
         "sql": CodeLang.SQL,
         "swift": CodeLang.SWIFT,
+        "text": CodeLang.PLAIN_TEXT,
         "toml": CodeLang.TOML,
         "typescript": CodeLang.TYPESCRIPT,
         "ts": CodeLang.TYPESCRIPT,
@@ -169,7 +171,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "yml": CodeLang.YAML,
     }
 
-    return language_mapping.get(pygments_lang.lower(), CodeLang.PLAIN_TEXT)
+    return language_mapping[pygments_lang.lower()]
 
 
 @beartype
