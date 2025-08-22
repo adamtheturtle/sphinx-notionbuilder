@@ -149,36 +149,70 @@ def _has_block_level_children(*, node: nodes.Element) -> bool:
     return paragraph_count > 1 or has_lists
 
 
-def _process_admonition_children(
+def _process_node_to_blocks(
     *,
     node: nodes.Element,
 ) -> list["NotionObject[Any]"]:
-    """Process admonition children as separate Notion blocks.
+    """Process a docutils node and return corresponding Notion blocks.
 
-    Returns a list of Notion blocks that should be added as children to
-    the admonition callout.
+    This helper function handles the conversion of various docutils node
+    types to their corresponding Notion block representations. For
+    container nodes, it processes their children recursively.
     """
-    child_blocks: list[NotionObject[Any]] = []
+    blocks: list[NotionObject[Any]] = []
 
-    for child in node.children:
-        if isinstance(child, nodes.paragraph):
-            rich_text = _create_rich_text_from_children(node=child)
-            paragraph_block = UnoParagraph(text="placeholder")
-            paragraph_block.rich_text = rich_text
-            child_blocks.append(paragraph_block)
-        elif isinstance(child, nodes.bullet_list):
-            # Process bullet list items - each item becomes a block
-            for list_item in child.children:
-                if isinstance(list_item, nodes.list_item):
-                    bullet_block = _process_list_item_recursively(
-                        node=list_item,
-                        depth=0,
-                    )
-                    child_blocks.append(bullet_block)
-        # Note: Add support for other block types as needed in the future
-        # (enumerated_list, block_quote, literal_block, etc.)
+    if isinstance(node, nodes.paragraph):
+        rich_text = _create_rich_text_from_children(node=node)
+        paragraph_block = UnoParagraph(text="")
+        paragraph_block.rich_text = rich_text
+        blocks.append(paragraph_block)
 
-    return child_blocks
+    elif isinstance(node, nodes.block_quote):
+        rich_text = _create_rich_text_from_children(node=node)
+        quote_block = UnoQuote(text="")
+        quote_block.rich_text = rich_text
+        blocks.append(quote_block)
+
+    elif isinstance(node, nodes.literal_block):
+        code_text = _create_rich_text_from_children(node=node)
+        pygments_lang = node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
+        )
+        code_block = UnoCode(text=code_text, language=language)
+        # Remove syntax highlighting color
+        # pyright: ignore[reportUnknownMemberType]
+        del code_text.rich_texts[0].obj_ref.annotations
+        code_block.rich_text = code_text
+        blocks.append(code_block)
+
+    elif isinstance(node, nodes.bullet_list):
+        # Process bullet list items - each item becomes a block
+        for list_item in node.children:
+            if isinstance(list_item, nodes.list_item):
+                bullet_block = _process_list_item_recursively(
+                    node=list_item,
+                    depth=0,
+                )
+                blocks.append(bullet_block)
+
+    elif isinstance(node, nodes.list_item):
+        bullet_block = _process_list_item_recursively(node=node, depth=0)
+        blocks.append(bullet_block)
+
+    elif isinstance(node, nodes.topic):
+        # Handle table of contents topics
+        if "contents" in node.get("classes", []):
+            toc_block = UnoTableOfContents()
+            blocks.append(toc_block)
+
+    else:
+        # For container nodes or unhandled node types, process children
+        for child in node.children:
+            child_blocks = _process_node_to_blocks(node=child)
+            blocks.extend(child_blocks)
+
+    return blocks
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
@@ -338,46 +372,24 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoParagraph(text="")
-        block.rich_text = rich_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node=node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoQuote(text="")
-        block.rich_text = rich_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node=node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_literal_block(self, node: nodes.Element) -> None:
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        code_text = _create_rich_text_from_children(node=node)
-
-        pygments_lang = node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-        )
-
-        block = UnoCode(text=code_text, language=language)
-
-        # By default, the code block has a color set (DEFAULT) which means
-        # that there is no syntax highlighting.
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-        del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-        block.rich_text = code_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node=node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
@@ -397,21 +409,16 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        assert isinstance(node, nodes.list_item)
-        block = _process_list_item_recursively(node=node, depth=0)
-        self._blocks.append(block)
+        blocks = _process_node_to_blocks(node=node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        # Later, we can support `.. topic::` directives, likely as
-        # a callout with no icon.
-        assert "contents" in node["classes"]
-        block = UnoTableOfContents()
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node=node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
@@ -422,12 +429,10 @@ class NotionTranslator(NodeVisitor):
 
         if _has_block_level_children(node=node):
             # Process children as separate blocks
-            child_blocks = _process_admonition_children(
-                node=node,
-            )
+            child_blocks = _process_node_to_blocks(node=node)
             for child_block in child_blocks:
                 # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+                block.obj_ref.value.children.append(child_block.obj_ref)
         else:
             # Use existing behavior for simple text content
             rich_text = _create_rich_text_from_children(node=node)
@@ -444,10 +449,10 @@ class NotionTranslator(NodeVisitor):
 
         if _has_block_level_children(node=node):
             # Process children as separate blocks
-            child_blocks = _process_admonition_children(node=node)
+            child_blocks = _process_node_to_blocks(node=node)
             for child_block in child_blocks:
                 # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+                block.obj_ref.value.children.append(child_block.obj_ref)
         else:
             # Use existing behavior for simple text content
             rich_text = _create_rich_text_from_children(node=node)
@@ -464,10 +469,10 @@ class NotionTranslator(NodeVisitor):
 
         if _has_block_level_children(node=node):
             # Process children as separate blocks
-            child_blocks = _process_admonition_children(node=node)
+            child_blocks = _process_node_to_blocks(node=node)
             for child_block in child_blocks:
                 # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+                block.obj_ref.value.children.append(child_block.obj_ref)
         else:
             # Use existing behavior for simple text content
             rich_text = _create_rich_text_from_children(node=node)
