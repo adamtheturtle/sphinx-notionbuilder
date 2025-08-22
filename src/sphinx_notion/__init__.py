@@ -5,7 +5,6 @@ Sphinx Notion Builder.
 import json
 from typing import TYPE_CHECKING, Any
 
-import pydantic
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
@@ -35,6 +34,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
 
@@ -287,7 +287,9 @@ class NotionTranslator(NodeVisitor):
         del node
 
     def visit_list_item(self, node: nodes.Element) -> None:
-        """Handle list item nodes by creating Notion BulletedItem blocks."""
+        """
+        Handle list item nodes by creating Notion BulletedItem blocks.
+        """
         assert isinstance(node, nodes.list_item)
         block = self._process_list_item_recursively(node=node, depth=0)
         self._blocks.append(block)
@@ -408,12 +410,8 @@ class NotionTranslator(NodeVisitor):
         dumped_blocks: list[dict[str, Any]] = []
         for block in self._blocks:
             obj_ref = block.obj_ref
-            assert isinstance(obj_ref, pydantic.BaseModel)
-            dumped_block: dict[str, Any] = obj_ref.model_dump(
-                mode="json",
-                by_alias=True,
-                exclude_none=True,
-            )
+            assert isinstance(obj_ref, GenericObject)
+            dumped_block = obj_ref.serialize_for_api()
             dumped_blocks.append(dumped_block)
 
         json_output = json.dumps(
