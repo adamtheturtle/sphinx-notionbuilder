@@ -19,6 +19,16 @@ This is **bold** and *italic* and ``inline code``.
    This is a helpful tip that demonstrates the tip admonition support.
    It will be converted to a Notion callout block with a lightbulb emoji and green background.
 
+.. note:: **This is a complex note with multiple paragraphs and lists.**
+
+   Here's what this note contains:
+
+   * Multiple paragraphs of ``content``
+   * Bullet lists (like this one)
+   * Structured information
+
+   All of these elements will now be rendered as separate child blocks within the note callout, rather than being combined into a single text block.
+
 .. code-block:: python
 
    """Python code."""

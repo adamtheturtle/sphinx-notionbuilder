@@ -126,6 +126,61 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
+def _has_block_level_children(*, node: nodes.Element) -> bool:
+    """Check if a node has block-level children that should be rendered as
+    separate Notion blocks rather than combined into rich text.
+
+    Returns True if the node has multiple paragraphs, lists, or other
+    block-level elements that should be rendered as children.
+    """
+    paragraph_count = 0
+    has_lists = False
+
+    for child in node.children:
+        if isinstance(child, nodes.paragraph):
+            paragraph_count += 1
+        elif isinstance(child, (nodes.bullet_list, nodes.enumerated_list)):
+            has_lists = True
+        elif isinstance(child, (nodes.block_quote, nodes.literal_block)):
+            # Other block-level elements
+            return True
+
+    # If we have multiple paragraphs or any lists, treat as block-level
+    return paragraph_count > 1 or has_lists
+
+
+def _process_admonition_children(
+    *,
+    node: nodes.Element,
+) -> list["NotionObject[Any]"]:
+    """Process admonition children as separate Notion blocks.
+
+    Returns a list of Notion blocks that should be added as children to
+    the admonition callout.
+    """
+    child_blocks: list[NotionObject[Any]] = []
+
+    for child in node.children:
+        if isinstance(child, nodes.paragraph):
+            rich_text = _create_rich_text_from_children(node=child)
+            paragraph_block = UnoParagraph(text="placeholder")
+            paragraph_block.rich_text = rich_text
+            child_blocks.append(paragraph_block)
+        elif isinstance(child, nodes.bullet_list):
+            # Process bullet list items - each item becomes a block
+            for list_item in child.children:
+                if isinstance(list_item, nodes.list_item):
+                    bullet_block = _process_list_item_recursively(
+                        node=list_item,
+                        depth=0,
+                    )
+                    child_blocks.append(bullet_block)
+        # Note: Add support for other block types as needed in the future
+        # (enumerated_list, block_quote, literal_block, etc.)
+
+    return child_blocks
+
+
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     """
     Map Pygments language names to Notion CodeLang enum values.
@@ -363,36 +418,62 @@ class NotionTranslator(NodeVisitor):
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
         block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
-        block.rich_text = rich_text
-        self._blocks.append(block)
 
+        if _has_block_level_children(node=node):
+            # Process children as separate blocks
+            child_blocks = _process_admonition_children(
+                node=node,
+            )
+            for child_block in child_blocks:
+                # Add each child block to the callout
+                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+        else:
+            # Use existing behavior for simple text content
+            rich_text = _create_rich_text_from_children(node=node)
+            block.rich_text = rich_text
+
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_warning(self, node: nodes.Element) -> None:
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
         block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-        block.rich_text = rich_text
-        self._blocks.append(block)
 
+        if _has_block_level_children(node=node):
+            # Process children as separate blocks
+            child_blocks = _process_admonition_children(node=node)
+            for child_block in child_blocks:
+                # Add each child block to the callout
+                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+        else:
+            # Use existing behavior for simple text content
+            rich_text = _create_rich_text_from_children(node=node)
+            block.rich_text = rich_text
+
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
         block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
-        block.rich_text = rich_text
-        self._blocks.append(block)
 
+        if _has_block_level_children(node=node):
+            # Process children as separate blocks
+            child_blocks = _process_admonition_children(node=node)
+            for child_block in child_blocks:
+                # Add each child block to the callout
+                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+        else:
+            # Use existing behavior for simple text content
+            rich_text = _create_rich_text_from_children(node=node)
+            block.rich_text = rich_text
+
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_document(self, node: nodes.Element) -> None:

@@ -770,9 +770,10 @@ def test_admonition_multiline(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that admonitions with multiple paragraphs work.
+    """Test that admonitions with multiple paragraphs work with children.
 
-    For now, we ignore children and just combine all text content.
+    Admonitions with multiple paragraphs now create separate paragraph
+    blocks as children of the callout.
     """
     rst_content = f"""
         .. {admonition_type}::
@@ -780,15 +781,86 @@ def test_admonition_multiline(
 
            This is the second paragraph that should be combined.
     """
-    # Create the callout with expected rich text structure
+    # Create the callout with children blocks instead of combined rich text
     callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
-    callout.rich_text = text(
+
+    # Create child paragraph blocks
+    child1 = UnoParagraph(
         text=f"This is the first paragraph of the {admonition_type}."
-    ) + text(text="This is the second paragraph that should be combined.")
+    )
+    child2 = UnoParagraph(
+        text="This is the second paragraph that should be combined."
+    )
+
+    # Add children to callout
+    # Remove pyright ignore once we have
+    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+    callout.obj_ref.value.children.append(child1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(child2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
     ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("admonition_type", "emoji", "color"),
+    argvalues=[
+        ("note", "📝", Color.BLUE),
+        ("warning", "⚠️", Color.YELLOW),
+        ("tip", "💡", Color.GREEN),
+    ],
+)
+def test_admonition_with_bullet_list(
+    admonition_type: str,
+    emoji: str,
+    color: Color,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that admonitions with bullet lists work correctly.
+    """
+    rst_content = f"""
+        .. {admonition_type}::
+           This is the first paragraph.
+
+           * First bullet point
+           * Second bullet point
+
+           Final paragraph after the list.
+
+        Regular content after the admonition.
+    """
+
+    # Create the expected structure
+    callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
+
+    # Children should be separate blocks
+    child1 = UnoParagraph(text="This is the first paragraph.")
+    child2_bullet1 = UnoBulletedItem(text="First bullet point")
+    child2_bullet2 = UnoBulletedItem(text="Second bullet point")
+    child3 = UnoParagraph(text="Final paragraph after the list.")
+
+    # Add children to callout
+    # Remove pyright ignore once we have
+    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+    callout.obj_ref.value.children.append(child1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(child2_bullet1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(child2_bullet2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(child3.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [
+        callout,
+        UnoParagraph(text="Regular content after the admonition."),
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
