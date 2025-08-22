@@ -125,6 +125,52 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
+def _process_admonition_with_multiple_paragraphs(
+    node: nodes.Element, emoji: str, color: Color
+) -> UnoCallout:
+    """Process an admonition node that has multiple paragraph children.
+
+    Creates a callout with child paragraph blocks instead of rich text.
+    """
+    callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
+
+    # Process all children, not just paragraphs
+    for child in node.children:
+        if isinstance(child, (nodes.paragraph, nodes.bullet_list)):
+            if isinstance(child, nodes.bullet_list):
+                # Process each list item in the bullet list
+                for list_item in child.children:
+                    if isinstance(list_item, nodes.list_item):
+                        list_item_block = _process_node_to_blocks(list_item)
+                        # Remove pyright ignore once we have
+                        # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+                        callout.obj_ref.value.children.append(
+                            list_item_block.obj_ref
+                        )  # pyright: ignore[reportUnknownMemberType]
+            else:
+                # Handle paragraph
+                paragraph_block = _process_node_to_blocks(child)
+                # Remove pyright ignore once we have
+                # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+                callout.obj_ref.value.children.append(paragraph_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    return callout
+
+
+def _has_multiple_blocks(node: nodes.Element) -> bool:
+    """Check if an admonition node should have child blocks.
+
+    Returns True if it has multiple paragraphs or contains bullet lists.
+    """
+    paragraph_count = sum(
+        1 for child in node.children if isinstance(child, nodes.paragraph)
+    )
+    has_bullet_list = any(
+        isinstance(child, nodes.bullet_list) for child in node.children
+    )
+    return paragraph_count > 1 or has_bullet_list
+
+
 @singledispatch
 def _process_node_to_blocks(
     _: nodes.Element,
@@ -405,36 +451,54 @@ class NotionTranslator(NodeVisitor):
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
+        if _has_multiple_blocks(node):
+            block = _process_admonition_with_multiple_paragraphs(
+                node, "📝", Color.BLUE
+            )
+        else:
+            rich_text = _create_rich_text_from_children(node=node)
+            block = UnoCallout(
+                text="", icon=Emoji(emoji="📝"), color=Color.BLUE
+            )
+            block.rich_text = rich_text
 
-        block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
-        block.rich_text = rich_text
         self._blocks.append(block)
-
         raise nodes.SkipNode
 
     def visit_warning(self, node: nodes.Element) -> None:
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
+        if _has_multiple_blocks(node):
+            block = _process_admonition_with_multiple_paragraphs(
+                node, "⚠️", Color.YELLOW
+            )
+        else:
+            rich_text = _create_rich_text_from_children(node=node)
+            block = UnoCallout(
+                text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW
+            )
+            block.rich_text = rich_text
 
-        block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-        block.rich_text = rich_text
         self._blocks.append(block)
-
         raise nodes.SkipNode
 
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
+        if _has_multiple_blocks(node):
+            block = _process_admonition_with_multiple_paragraphs(
+                node, "💡", Color.GREEN
+            )
+        else:
+            rich_text = _create_rich_text_from_children(node=node)
+            block = UnoCallout(
+                text="", icon=Emoji(emoji="💡"), color=Color.GREEN
+            )
+            block.rich_text = rich_text
 
-        block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
-        block.rich_text = rich_text
         self._blocks.append(block)
-
         raise nodes.SkipNode
 
     def visit_document(self, node: nodes.Element) -> None:
