@@ -323,6 +323,7 @@ log_cli = true
 [tool.coverage.run]
 
 branch = true
+omit = [ "src/_notion_scripts/upload.py" ]
 
 [tool.coverage.report]
 exclude_also = [
