@@ -293,25 +293,8 @@ class NotionTranslator(NodeVisitor):
         any nested bullet_list children. Nesting is limited to 2 levels
         due to Notion API constraints.
         """
-        paragraph = node.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoBulletedItem(text="placeholder")
-        block.rich_text = rich_text
-
-        # Check for nested bullet lists and process them (depth 0 -> 1)
-        for child in node.children[1:]:
-            if isinstance(child, nodes.bullet_list):
-                # Process nested list items
-                for nested_list_item in child.children:
-                    if isinstance(nested_list_item, nodes.list_item):
-                        nested_block = self._process_list_item_recursively(
-                            node=nested_list_item, depth=1
-                        )
-                        block.obj_ref.value.children.append(
-                            nested_block.obj_ref
-                        )
-
+        assert isinstance(node, nodes.list_item)
+        block = self._process_list_item_recursively(node=node, depth=0)
         self._blocks.append(block)
         raise nodes.SkipNode
 
