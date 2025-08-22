@@ -100,7 +100,10 @@ def _find_existing_page_by_title(
     return None
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Main entry point for the upload command.
+    """
     parser = argparse.ArgumentParser(description="Upload to Notion")
     parser.add_argument(
         "-f",
@@ -170,3 +173,7 @@ if __name__ == "__main__":
         )
         page_id = new_page.get("id", "unknown")
         sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
+
+
+if __name__ == "__main__":
+    main()

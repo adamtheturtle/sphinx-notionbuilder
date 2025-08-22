@@ -34,6 +34,7 @@ dynamic = [
 dependencies = [
     "beartype>=0.21.0",
     "docutils>=0.21",
+    "notion-client>=2.0.0",
     "pydantic",
     "sphinx>=8.2.3",
     "ultimate-notion>=0.8",
@@ -78,6 +79,8 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
+
+scripts.notion-upload = "sphinx_notion.upload:main"
 
 [tool.setuptools]
 zip-safe = false
