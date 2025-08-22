@@ -402,6 +402,8 @@ ignore_names = [
     # Docutils translator
     "depart_*",
     "visit_*",
+    # Singledispatch functions
+    "_",
 ]
 
 # Duplicate some of .gitignore
