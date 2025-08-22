@@ -4,7 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from beartype import beartype
 from docutils import nodes
@@ -35,12 +35,10 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
-
-if TYPE_CHECKING:
-    from ultimate_notion.core import NotionObject
 
 
 def _process_list_item_recursively(
@@ -127,68 +125,40 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
-def _has_block_level_children(*, node: nodes.Element) -> bool:
-    """Check if a node has block-level children that should be rendered as
-    separate Notion blocks rather than combined into rich text.
-
-    Returns True if the node has multiple paragraphs, lists, or other
-    block-level elements that should be rendered as children.
-    """
-    paragraph_count = 0
-    has_lists = False
-
-    for child in node.children:
-        if isinstance(child, nodes.paragraph):
-            paragraph_count += 1
-        elif isinstance(child, (nodes.bullet_list, nodes.enumerated_list)):
-            has_lists = True
-        elif isinstance(child, (nodes.block_quote, nodes.literal_block)):
-            # Other block-level elements
-            return True
-
-    # If we have multiple paragraphs or any lists, treat as block-level
-    return paragraph_count > 1 or has_lists
-
-
 @singledispatch
-def _process_node_to_blocks(node: nodes.Element) -> list["NotionObject[Any]"]:
-    """Process a docutils node and return corresponding Notion blocks.
-
-    This is the default handler for unhandled node types. For container
-    nodes or unhandled node types, process children recursively.
+def _process_node_to_blocks(
+    _: nodes.Element,
+) -> NotionObject[Any]:  # pragma: no cover
     """
-    blocks: list[NotionObject[Any]] = []
-    for child in node.children:
-        if isinstance(child, nodes.Element):
-            child_blocks = _process_node_to_blocks(child)
-            blocks.extend(child_blocks)
-    return blocks
+    Required function for singledispatch.
+    """
+    raise NotImplementedError
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.paragraph) -> list["NotionObject[Any]"]:
+def _(node: nodes.paragraph) -> NotionObject[Any]:
     """
     Process paragraph nodes by creating Notion Paragraph blocks.
     """
     rich_text = _create_rich_text_from_children(node=node)
     paragraph_block = UnoParagraph(text="")
     paragraph_block.rich_text = rich_text
-    return [paragraph_block]
+    return paragraph_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.block_quote) -> list["NotionObject[Any]"]:
+def _(node: nodes.block_quote) -> NotionObject[Any]:
     """
     Process block quote nodes by creating Notion Quote blocks.
     """
     rich_text = _create_rich_text_from_children(node=node)
     quote_block = UnoQuote(text="")
     quote_block.rich_text = rich_text
-    return [quote_block]
+    return quote_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.literal_block) -> list["NotionObject[Any]"]:
+def _(node: nodes.literal_block) -> NotionObject[Any]:
     """
     Process literal block nodes by creating Notion Code blocks.
     """
@@ -198,48 +168,31 @@ def _(node: nodes.literal_block) -> list["NotionObject[Any]"]:
         pygments_lang=pygments_lang,
     )
     code_block = UnoCode(text=code_text, language=language)
-    # Remove syntax highlighting color
-    # pyright: ignore[reportUnknownMemberType]
-    del code_text.rich_texts[0].obj_ref.annotations
+    # By default, the code block has a color set (DEFAULT) which means
+    # that there is no syntax highlighting.
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
+    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
     code_block.rich_text = code_text
-    return [code_block]
+    return code_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.bullet_list) -> list["NotionObject[Any]"]:
-    """
-    Process bullet list nodes by creating BulletedItem blocks.
-    """
-    blocks: list[NotionObject[Any]] = []
-    for list_item in node.children:
-        if isinstance(list_item, nodes.list_item):
-            bullet_block = _process_list_item_recursively(
-                node=list_item,
-                depth=0,
-            )
-            blocks.append(bullet_block)
-    return blocks
-
-
-@_process_node_to_blocks.register
-def _(node: nodes.list_item) -> list["NotionObject[Any]"]:
+def _(node: nodes.list_item) -> NotionObject[Any]:
     """
     Process list item nodes by creating BulletedItem blocks.
     """
-    bullet_block = _process_list_item_recursively(node=node, depth=0)
-    return [bullet_block]
+    return _process_list_item_recursively(node=node, depth=0)
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.topic) -> list["NotionObject[Any]"]:
+def _(node: nodes.topic) -> NotionObject[Any]:
     """
     Process topic nodes, specifically for table of contents.
     """
-    if "contents" in node.get("classes", []):
-        toc_block = UnoTableOfContents()
-        return [toc_block]
-    # For other topics, process children
-    return _process_node_to_blocks.registry[object](node)
+    # Later, we can support `.. topic::` directives, likely as
+    # a callout with no icon.
+    assert "contents" in node["classes"]
+    return UnoTableOfContents()
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
@@ -399,24 +352,24 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_literal_block(self, node: nodes.Element) -> None:
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
@@ -436,76 +389,52 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
+        rich_text = _create_rich_text_from_children(node=node)
+
         block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
-
-        if _has_block_level_children(node=node):
-            # Process children as separate blocks
-            child_blocks = _process_node_to_blocks(node)
-            for child_block in child_blocks:
-                # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)
-        else:
-            # Use existing behavior for simple text content
-            rich_text = _create_rich_text_from_children(node=node)
-            block.rich_text = rich_text
-
+        block.rich_text = rich_text
         self._blocks.append(block)
+
         raise nodes.SkipNode
 
     def visit_warning(self, node: nodes.Element) -> None:
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
+        rich_text = _create_rich_text_from_children(node=node)
+
         block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-
-        if _has_block_level_children(node=node):
-            # Process children as separate blocks
-            child_blocks = _process_node_to_blocks(node)
-            for child_block in child_blocks:
-                # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)
-        else:
-            # Use existing behavior for simple text content
-            rich_text = _create_rich_text_from_children(node=node)
-            block.rich_text = rich_text
-
+        block.rich_text = rich_text
         self._blocks.append(block)
+
         raise nodes.SkipNode
 
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
+        rich_text = _create_rich_text_from_children(node=node)
+
         block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
-
-        if _has_block_level_children(node=node):
-            # Process children as separate blocks
-            child_blocks = _process_node_to_blocks(node)
-            for child_block in child_blocks:
-                # Add each child block to the callout
-                block.obj_ref.value.children.append(child_block.obj_ref)
-        else:
-            # Use existing behavior for simple text content
-            rich_text = _create_rich_text_from_children(node=node)
-            block.rich_text = rich_text
-
+        block.rich_text = rich_text
         self._blocks.append(block)
+
         raise nodes.SkipNode
 
     def visit_document(self, node: nodes.Element) -> None:
