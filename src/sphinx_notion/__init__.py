@@ -88,7 +88,7 @@ def _process_list_item_recursively(
             )
             # Remove pyright ignore once we have
             # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-            block.obj_ref.value.children.append(nested_block.obj_ref)
+            block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     return block
 
@@ -166,9 +166,10 @@ def _(node: nodes.literal_block) -> list[NotionObject[Any]]:
         pygments_lang=pygments_lang,
     )
     code_block = UnoCode(text=code_text, language=language)
-    # Remove syntax highlighting color
-    # pyright: ignore[reportUnknownMemberType]
-    del code_text.rich_texts[0].obj_ref.annotations
+    # By default, the code block has a color set (DEFAULT) which means
+    # that there is no syntax highlighting.
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
+    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
     code_block.rich_text = code_text
     return [code_block]
 
