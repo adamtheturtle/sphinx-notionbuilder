@@ -312,18 +312,22 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="placeholder")
         block.rich_text = rich_text
 
+        bullet_only_msg = (
+            "The only thing Notion supports within a bullet list "
+            "is a bullet list"
+        )
         max_notion_depth = 1
         if depth < max_notion_depth:
             for child in node.children[1:]:
-                if isinstance(child, nodes.bullet_list):
-                    for nested_list_item in child.children:
-                        if isinstance(nested_list_item, nodes.list_item):
-                            nested_block = self._process_list_item_recursively(
-                                node=nested_list_item, depth=depth + 1
-                            )
-                            block.obj_ref.value.children.append(
-                                nested_block.obj_ref
-                            )
+                assert isinstance(child, nodes.bullet_list), bullet_only_msg
+                for nested_list_item in child.children:
+                    assert isinstance(nested_list_item, nodes.list_item), (
+                        bullet_only_msg
+                    )
+                    nested_block = self._process_list_item_recursively(
+                        node=nested_list_item, depth=depth + 1
+                    )
+                    block.obj_ref.value.children.append(nested_block.obj_ref)
         else:
             # This limit is described in https://developers.notion.com/reference/patch-block-children
             #
@@ -334,15 +338,13 @@ class NotionTranslator(NodeVisitor):
             # so there is really only one level of nesting in the Notion API
             # in one request.
             for child in node.children[1:]:
-                if isinstance(child, nodes.bullet_list):
-                    max_levels = max_notion_depth + 1
-                    msg = (
-                        f"Nested bullet point at depth {max_levels + 1} "
-                        f"exceeds Notion API limit of {max_levels} levels."
-                    )
-                    # Ignore the ruff error as TypeError is not right here -
-                    # the user has done nothing wrong with Python types.
-                    raise ValueError(msg)  # noqa: TRY004
+                assert isinstance(child, nodes.bullet_list), bullet_only_msg
+                max_levels = max_notion_depth + 1
+                msg = (
+                    f"Nested bullet point at depth {max_levels + 1} "
+                    f"exceeds Notion API limit of {max_levels} levels."
+                )
+                raise ValueError(msg)
 
         return block
 
