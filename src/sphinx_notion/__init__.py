@@ -305,7 +305,7 @@ class NotionTranslator(NodeVisitor):
                 for nested_list_item in child.children:
                     if isinstance(nested_list_item, nodes.list_item):
                         nested_block = self._process_list_item_recursively(
-                            nested_list_item
+                            node=nested_list_item
                         )
                         block.obj_ref.value.children.append(
                             nested_block.obj_ref
@@ -334,7 +334,7 @@ class NotionTranslator(NodeVisitor):
                 for nested_list_item in child.children:
                     if isinstance(nested_list_item, nodes.list_item):
                         nested_block = self._process_list_item_recursively(
-                            nested_list_item
+                            node=nested_list_item
                         )
                         block.obj_ref.value.children.append(
                             nested_block.obj_ref
