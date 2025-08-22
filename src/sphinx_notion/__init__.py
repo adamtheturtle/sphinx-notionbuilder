@@ -299,16 +299,12 @@ class NotionTranslator(NodeVisitor):
         raise nodes.SkipNode
 
     def _process_list_item_recursively(
-        self, node: nodes.list_item, depth: int = 0
+        self,
+        node: nodes.list_item,
+        depth: int = 0,
     ) -> UnoBulletedItem:
-        """Recursively process a list item node and return a BulletedItem.
-
-        This method handles nested bullet points by creating
-        BulletedItem blocks with properly nested children.
-
-        Args:
-            node: The list item node to process
-            depth: Current nesting depth (0=top level, max 2 for Notion)
+        """
+        Recursively process a list item node and return a BulletedItem.
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
@@ -316,8 +312,6 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="placeholder")
         block.rich_text = rich_text
 
-        # Check for nested bullet lists and process them recursively
-        # Notion API allows up to 2 levels of nesting (depth 0, 1)
         max_notion_depth = 1
         if depth < max_notion_depth:
             for child in node.children[1:]:
@@ -331,16 +325,24 @@ class NotionTranslator(NodeVisitor):
                                 nested_block.obj_ref
                             )
         else:
-            # Check if there are nested bullet lists that would be ignored
+            # This limit is described in https://developers.notion.com/reference/patch-block-children
+            #
+            # "For blocks that allow children, we allow up to two levels of
+            # nesting in a single request."
+            #
+            # Note that the top level bullet-list is the "child" of the "body"
+            # so there is really only one level of nesting in the Notion API
+            # in one request.
             for child in node.children[1:]:
                 if isinstance(child, nodes.bullet_list):
                     max_levels = max_notion_depth + 1
                     msg = (
-                        f"Nested bullet point at depth {depth + 1} exceeds "
-                        f"Notion API limit of {max_levels} levels. "
-                        "Please reduce nesting depth."
+                        f"Nested bullet point at depth {max_levels + 1} "
+                        f"exceeds Notion API limit of {max_levels} levels."
                     )
-                    raise RuntimeError(msg)
+                    # Ignore the ruff error as TypeError is not right here -
+                    # the user has done nothing wrong with Python types.
+                    raise ValueError(msg)  # noqa: TRY004
 
         return block
 

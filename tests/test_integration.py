@@ -911,11 +911,13 @@ def test_nested_bullet_list_error_on_excessive_depth(
         * Another top level item
     """
 
-    # This should raise a RuntimeError due to excessive nesting
-    with pytest.raises(RuntimeError, match="exceeds Notion API limit"):
+    expected_message = (
+        "Nested bullet point at depth 3 exceeds Notion API limit of 2 levels."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
-            expected_objects=[],  # Expect error, not objects
+            expected_objects=[],
             make_app=make_app,
             tmp_path=tmp_path,
         )
