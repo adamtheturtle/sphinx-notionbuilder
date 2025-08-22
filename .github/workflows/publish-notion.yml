@@ -1,0 +1,28 @@
+---
+name: Publish documentation to Notion
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build documentation
+        run: make clean notion
+
+      - name: Publish to Notion
+        run: |
+          uv run --all-extras notion-upload \
+            --parent_page_id "${{ vars.NOTION_SAMPLE_PAGE_ID }}" \
+            --file "./build-sample/index.json" \
+            --title "Sphinx-Notionbuilder Sample"
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
