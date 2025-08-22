@@ -8,7 +8,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import pydantic
 import pytest
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
@@ -34,6 +33,7 @@ from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
 from ultimate_notion.core import NotionObject
+from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import text
 
@@ -88,12 +88,8 @@ def _assert_rst_converts_to_notion_objects(
     expected_json: list[dict[str, Any]] = []
     for notion_object in expected_objects:
         obj_ref = notion_object.obj_ref
-        assert isinstance(obj_ref, pydantic.BaseModel)
-        dumped_block: dict[str, Any] = obj_ref.model_dump(
-            mode="json",
-            by_alias=True,
-            exclude_none=True,
-        )
+        assert isinstance(obj_ref, GenericObject)
+        dumped_block = obj_ref.serialize_for_api()
         expected_json.append(dumped_block)
 
     assert generated_json == expected_json, (generated_json, expected_json)
