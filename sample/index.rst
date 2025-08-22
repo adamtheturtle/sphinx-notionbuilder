@@ -41,12 +41,7 @@ Some key features:
 * Converts RST to Notion-compatible format
 
   * Supports nested bullet points (new!)
-  * Deep nesting works too
-
-    * Level 3 nesting
-    * Another level 3 item
-
-      * Even level 4 nesting
+  * Deep nesting works too (limited to 2 levels)
 
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting

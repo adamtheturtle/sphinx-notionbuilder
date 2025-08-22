@@ -41,6 +41,9 @@ from ultimate_notion.rich_text import Text, text
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
+# Notion API allows up to 2 levels of nesting (depth 0, 1)
+MAX_NOTION_NESTING_DEPTH = 1
+
 
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """
@@ -290,7 +293,8 @@ class NotionTranslator(NodeVisitor):
         """Handle list item nodes by creating Notion BulletedItem blocks.
 
         This handles both flat and nested bullet points by processing
-        any nested bullet_list children.
+        any nested bullet_list children. Nesting is limited to 2 levels
+        due to Notion API constraints.
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
@@ -298,14 +302,14 @@ class NotionTranslator(NodeVisitor):
         block = UnoBulletedItem(text="placeholder")
         block.rich_text = rich_text
 
-        # Check for nested bullet lists and process them
+        # Check for nested bullet lists and process them (depth 0 -> 1)
         for child in node.children[1:]:
             if isinstance(child, nodes.bullet_list):
                 # Process nested list items
                 for nested_list_item in child.children:
                     if isinstance(nested_list_item, nodes.list_item):
                         nested_block = self._process_list_item_recursively(
-                            node=nested_list_item
+                            node=nested_list_item, depth=1
                         )
                         block.obj_ref.value.children.append(
                             nested_block.obj_ref
@@ -315,12 +319,16 @@ class NotionTranslator(NodeVisitor):
         raise nodes.SkipNode
 
     def _process_list_item_recursively(
-        self, node: nodes.list_item
+        self, node: nodes.list_item, depth: int = 0
     ) -> UnoBulletedItem:
         """Recursively process a list item node and return a BulletedItem.
 
         This method handles nested bullet points by creating
         BulletedItem blocks with properly nested children.
+
+        Args:
+            node: The list item node to process
+            depth: Current nesting depth (0=top level, max 2 for Notion)
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
@@ -329,16 +337,18 @@ class NotionTranslator(NodeVisitor):
         block.rich_text = rich_text
 
         # Check for nested bullet lists and process them recursively
-        for child in node.children[1:]:
-            if isinstance(child, nodes.bullet_list):
-                for nested_list_item in child.children:
-                    if isinstance(nested_list_item, nodes.list_item):
-                        nested_block = self._process_list_item_recursively(
-                            node=nested_list_item
-                        )
-                        block.obj_ref.value.children.append(
-                            nested_block.obj_ref
-                        )
+        # Notion API allows up to 2 levels of nesting (depth 0, 1)
+        if depth < MAX_NOTION_NESTING_DEPTH:
+            for child in node.children[1:]:
+                if isinstance(child, nodes.bullet_list):
+                    for nested_list_item in child.children:
+                        if isinstance(nested_list_item, nodes.list_item):
+                            nested_block = self._process_list_item_recursively(
+                                node=nested_list_item, depth=depth + 1
+                            )
+                            block.obj_ref.value.children.append(
+                                nested_block.obj_ref
+                            )
 
         return block
 

@@ -712,57 +712,6 @@ def test_bullet_list_with_inline_formatting(
     )
 
 
-def test_nested_bullet_list(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Test that nested bullet lists convert correctly to Notion BulletedItem with
-    children.
-    """
-    rst_content = """
-        * First top-level bullet
-        * Second top-level with nested items
-
-          * Nested item 1
-          * Nested item 2
-
-            * Deep nested item
-
-        * Third top-level bullet
-    """
-
-    # Create the nested structure
-    deep_nested_bullet = UnoBulletedItem(text="Deep nested item")
-
-    nested_bullet_1 = UnoBulletedItem(text="Nested item 1")
-    nested_bullet_2 = UnoBulletedItem(text="Nested item 2")
-    nested_bullet_2.obj_ref.value.children.append(deep_nested_bullet.obj_ref)
-
-    top_level_bullet_2 = UnoBulletedItem(
-        text="Second top-level with nested items"
-    )
-    top_level_bullet_2.obj_ref.value.children.extend(
-        [
-            nested_bullet_1.obj_ref,
-            nested_bullet_2.obj_ref,
-        ]
-    )
-
-    expected_objects: list[NotionObject[Any]] = [
-        UnoBulletedItem(text="First top-level bullet"),
-        top_level_bullet_2,
-        UnoBulletedItem(text="Third top-level bullet"),
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
 @pytest.mark.parametrize(
     argnames=("admonition_type", "emoji", "color", "message"),
     argvalues=[
@@ -844,6 +793,105 @@ def test_admonition_multiline(
     expected_objects: list[NotionObject[Any]] = [
         callout,
     ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_bullet_list(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that nested bullet lists are converted to Notion BulletedItem blocks
+    with proper nesting structure (limited to 2 levels).
+    """
+    rst_content = """
+        * Top level item 1
+        * Top level item 2 with children
+
+          * Second level item 1
+          * Second level item 2
+
+        * Top level item 3
+    """
+
+    # Create nested bullet structure with only 2 levels
+    # Second level items (no children allowed at this level)
+    second_level_1 = UnoBulletedItem(text="Second level item 1")
+    second_level_2 = UnoBulletedItem(text="Second level item 2")
+
+    # Top level items
+    top_level_1 = UnoBulletedItem(text="Top level item 1")
+    top_level_2 = UnoBulletedItem(text="Top level item 2 with children")
+    # Add second level children to top level item 2
+    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)
+    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)
+
+    top_level_3 = UnoBulletedItem(text="Top level item 3")
+
+    expected_objects: list[NotionObject[Any]] = [
+        top_level_1,
+        top_level_2,
+        top_level_3,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_bullet_list_depth_limit(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Test that nested bullet lists are limited to 2 levels.
+
+    Third level items should be ignored due to Notion API constraints.
+    """
+    rst_content = """
+        * Top level item
+        * Top level with children
+
+          * Second level item
+          * Second level with children
+
+            * Third level item (should be ignored)
+            * Another third level item (should be ignored)
+
+          * Another second level item
+
+        * Another top level item
+    """
+
+    # Create expected structure with only 2 levels
+    # Third level items should be ignored completely
+    second_level_1 = UnoBulletedItem(text="Second level item")
+    second_level_2 = UnoBulletedItem(text="Second level with children")
+    # Note: No children should be added to second_level_2 because
+    # third level nesting is not allowed
+    second_level_3 = UnoBulletedItem(text="Another second level item")
+
+    top_level_1 = UnoBulletedItem(text="Top level item")
+    top_level_2 = UnoBulletedItem(text="Top level with children")
+    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)
+    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)
+    top_level_2.obj_ref.value.children.append(second_level_3.obj_ref)
+
+    top_level_3 = UnoBulletedItem(text="Another top level item")
+
+    expected_objects: list[NotionObject[Any]] = [
+        top_level_1,
+        top_level_2,
+        top_level_3,
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
