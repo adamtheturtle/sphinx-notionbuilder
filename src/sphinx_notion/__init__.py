@@ -35,7 +35,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
-from ultimate_notion.obj_api.enums import CodeLang
+from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
 
 if TYPE_CHECKING:
@@ -318,6 +318,18 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
 
         block = UnoCallout(text="", icon=Emoji(emoji="📝"))
+        block.rich_text = rich_text
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_warning(self, node: nodes.Element) -> None:
+        """
+        Handle warning admonition nodes by creating Notion Callout blocks.
+        """
+        rich_text = _create_rich_text_from_children(node=node)
+
+        block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
         block.rich_text = rich_text
         self._blocks.append(block)
 

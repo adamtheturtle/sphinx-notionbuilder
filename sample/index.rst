@@ -11,6 +11,10 @@ This is **bold** and *italic* and ``inline code``.
    This is an important note that demonstrates the note admonition support.
    It will be converted to a Notion callout block with a note emoji.
 
+.. warning::
+   This is a warning that demonstrates the warning admonition support.
+   It will be converted to a Notion callout block with a warning emoji and yellow background.
+
 .. code-block:: python
 
    """Python code."""
@@ -34,7 +38,7 @@ Some key features:
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting
 * Works with bullet points like this one
-* Now supports note admonitions!
+* Now supports note and warning admonitions!
 
 Heading 2 with *italic*
 -----------------------
