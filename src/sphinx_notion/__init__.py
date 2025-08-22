@@ -41,9 +41,6 @@ from ultimate_notion.rich_text import Text, text
 if TYPE_CHECKING:
     from ultimate_notion.core import NotionObject
 
-# Notion API allows up to 2 levels of nesting (depth 0, 1)
-MAX_NOTION_NESTING_DEPTH = 1
-
 
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """
@@ -338,7 +335,8 @@ class NotionTranslator(NodeVisitor):
 
         # Check for nested bullet lists and process them recursively
         # Notion API allows up to 2 levels of nesting (depth 0, 1)
-        if depth < MAX_NOTION_NESTING_DEPTH:
+        max_notion_depth = 1
+        if depth < max_notion_depth:
             for child in node.children[1:]:
                 if isinstance(child, nodes.bullet_list):
                     for nested_list_item in child.children:
@@ -353,7 +351,7 @@ class NotionTranslator(NodeVisitor):
             # Check if there are nested bullet lists that would be ignored
             for child in node.children[1:]:
                 if isinstance(child, nodes.bullet_list):
-                    max_levels = MAX_NOTION_NESTING_DEPTH + 1
+                    max_levels = max_notion_depth + 1
                     msg = (
                         f"Nested bullet point at depth {depth + 1} exceeds "
                         f"Notion API limit of {max_levels} levels. "
