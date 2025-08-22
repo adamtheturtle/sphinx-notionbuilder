@@ -128,7 +128,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 @singledispatch
 def _process_node_to_blocks(
     _: nodes.Element,
-) -> list[NotionObject[Any]]:  # pragma: no cover
+) -> NotionObject[Any]:  # pragma: no cover
     """
     Required function for singledispatch.
     """
@@ -136,29 +136,29 @@ def _process_node_to_blocks(
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.paragraph) -> list[NotionObject[Any]]:
+def _(node: nodes.paragraph) -> NotionObject[Any]:
     """
     Process paragraph nodes by creating Notion Paragraph blocks.
     """
     rich_text = _create_rich_text_from_children(node=node)
     paragraph_block = UnoParagraph(text="")
     paragraph_block.rich_text = rich_text
-    return [paragraph_block]
+    return paragraph_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.block_quote) -> list[NotionObject[Any]]:
+def _(node: nodes.block_quote) -> NotionObject[Any]:
     """
     Process block quote nodes by creating Notion Quote blocks.
     """
     rich_text = _create_rich_text_from_children(node=node)
     quote_block = UnoQuote(text="")
     quote_block.rich_text = rich_text
-    return [quote_block]
+    return quote_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.literal_block) -> list[NotionObject[Any]]:
+def _(node: nodes.literal_block) -> NotionObject[Any]:
     """
     Process literal block nodes by creating Notion Code blocks.
     """
@@ -173,28 +173,26 @@ def _(node: nodes.literal_block) -> list[NotionObject[Any]]:
     # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
     del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
     code_block.rich_text = code_text
-    return [code_block]
+    return code_block
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.list_item) -> list[NotionObject[Any]]:
+def _(node: nodes.list_item) -> NotionObject[Any]:
     """
     Process list item nodes by creating BulletedItem blocks.
     """
-    bullet_block = _process_list_item_recursively(node=node, depth=0)
-    return [bullet_block]
+    return _process_list_item_recursively(node=node, depth=0)
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.topic) -> list[NotionObject[Any]]:
+def _(node: nodes.topic) -> NotionObject[Any]:
     """
     Process topic nodes, specifically for table of contents.
     """
     # Later, we can support `.. topic::` directives, likely as
     # a callout with no icon.
     assert "contents" in node["classes"]
-    block = UnoTableOfContents()
-    return [block]
+    return UnoTableOfContents()
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
@@ -354,24 +352,24 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_literal_block(self, node: nodes.Element) -> None:
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
@@ -391,16 +389,16 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        blocks = _process_node_to_blocks(node)
-        self._blocks.extend(blocks)
+        block = _process_node_to_blocks(node)
+        self._blocks.append(block)
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
