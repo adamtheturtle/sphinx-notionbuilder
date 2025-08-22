@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pydantic
+import pytest
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -711,24 +712,42 @@ def test_bullet_list_with_inline_formatting(
     )
 
 
-def test_note_admonition(
+@pytest.mark.parametrize(
+    argnames=("admonition_type", "emoji", "color", "message"),
+    argvalues=[
+        ("note", "📝", Color.BLUE, "This is an important note."),
+        ("warning", "⚠️", Color.YELLOW, "This is a warning message."),
+    ],
+)
+def test_admonition_single_line(
+    admonition_type: str,
+    emoji: str,
+    color: Color,
+    message: str,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Test that note admonitions convert to Notion Callout blocks.
+    Test that admonitions convert to Notion Callout blocks.
     """
-    rst_content = """
+    rst_content = f"""
         Regular paragraph.
 
-        .. note::
-           This is an important note.
+        .. {admonition_type}::
+           {message}
 
         Another paragraph.
     """
+
+    callout = UnoCallout(
+        text=message,
+        icon=Emoji(emoji=emoji),
+        color=color,
+    )
+
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
-        UnoCallout(text="This is an important note.", icon=Emoji(emoji="📝")),
+        callout,
         UnoParagraph(text="Another paragraph."),
     ]
     _assert_rst_converts_to_notion_objects(
@@ -739,81 +758,34 @@ def test_note_admonition(
     )
 
 
-def test_note_admonition_multiline(
+@pytest.mark.parametrize(
+    argnames=("admonition_type", "emoji", "color"),
+    argvalues=[
+        ("note", "📝", Color.BLUE),
+        ("warning", "⚠️", Color.YELLOW),
+    ],
+)
+def test_admonition_multiline(
+    admonition_type: str,
+    emoji: str,
+    color: Color,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that note admonitions with multiple paragraphs work.
+    """Test that admonitions with multiple paragraphs work.
 
     For now, we ignore children and just combine all text content.
     """
-    rst_content = """
-        .. note::
-           This is the first paragraph of the note.
+    rst_content = f"""
+        .. {admonition_type}::
+           This is the first paragraph of the {admonition_type}.
 
            This is the second paragraph that should be combined.
     """
     # Create the callout with expected rich text structure
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"))
+    callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
     callout.rich_text = text(
-        text="This is the first paragraph of the note."
-    ) + text(text="This is the second paragraph that should be combined.")
-
-    expected_objects: list[NotionObject[Any]] = [
-        callout,
-    ]
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_warning_admonition(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Test that warning admonitions convert to Notion callout blocks.
-    """
-    rst_content = """
-        .. warning::
-           This is a warning message.
-    """
-    # Create the callout with yellow color and warning emoji
-    callout = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-    callout.rich_text = text(text="This is a warning message.")
-
-    expected_objects: list[NotionObject[Any]] = [
-        callout,
-    ]
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_warning_admonition_multiline(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """Test that warning admonitions with multiple paragraphs work.
-
-    For now, we ignore children and just combine all text content.
-    """
-    rst_content = """
-        .. warning::
-           This is the first paragraph of the warning.
-
-           This is the second paragraph that should be combined.
-    """
-    # Create the callout with expected rich text structure
-    callout = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-    callout.rich_text = text(
-        text="This is the first paragraph of the warning."
+        text=f"This is the first paragraph of the {admonition_type}."
     ) + text(text="This is the second paragraph that should be combined.")
 
     expected_objects: list[NotionObject[Any]] = [
