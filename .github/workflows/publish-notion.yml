@@ -16,7 +16,9 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Build documentation
-        run: make clean notion
+        run: |
+          rm -rf ./build-sample
+          uv run sphinx-build -b notion sample ./build-sample
 
       - name: Publish to Notion
         run: |
