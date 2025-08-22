@@ -10,7 +10,9 @@ from typing import Any
 
 import pydantic
 from sphinx.testing.util import SphinxTestApp
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
+from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -701,6 +703,65 @@ def test_bullet_list_with_inline_formatting(
         bullet,
     ]
 
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_note_admonition(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that note admonitions convert to Notion Callout blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. note::
+           This is an important note.
+
+        Another paragraph.
+    """
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        UnoCallout(text="This is an important note.", icon=Emoji("📝")),
+        UnoParagraph(text="Another paragraph."),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_note_admonition_multiline(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Test that note admonitions with multiple paragraphs work.
+
+    For now, we ignore children and just combine all text content.
+    """
+    rst_content = """
+        .. note::
+           This is the first paragraph of the note.
+
+           This is the second paragraph that should be combined.
+    """
+    # Create the callout with expected rich text structure
+    callout = UnoCallout(text="", icon=Emoji("📝"))
+    callout.rich_text = text(
+        text="This is the first paragraph of the note."
+    ) + text(text="This is the second paragraph that should be combined.")
+
+    expected_objects: list[NotionObject[Any]] = [
+        callout,
+    ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,

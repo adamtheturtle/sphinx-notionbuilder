@@ -7,6 +7,10 @@ Some text with a link to `Google <https://google.com>`_ and `<https://example.co
 
 This is **bold** and *italic* and ``inline code``.
 
+.. note::
+   This is an important note that demonstrates the note admonition support.
+   It will be converted to a Notion callout block with a note emoji.
+
 .. code-block:: python
 
    """Python code."""
@@ -30,6 +34,7 @@ Some key features:
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting
 * Works with bullet points like this one
+* Now supports note admonitions!
 
 Heading 2 with *italic*
 -----------------------

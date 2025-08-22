@@ -12,7 +12,9 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
+from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
@@ -305,6 +307,18 @@ class NotionTranslator(NodeVisitor):
         # a callout with no icon.
         assert "contents" in node["classes"]
         block = UnoTableOfContents()
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
+    def visit_note(self, node: nodes.Element) -> None:
+        """
+        Handle note admonition nodes by creating Notion Callout blocks.
+        """
+        rich_text = _create_rich_text_from_children(node=node)
+
+        block = UnoCallout(text="", icon=Emoji("📝"))
+        block.rich_text = rich_text
         self._blocks.append(block)
 
         raise nodes.SkipNode
