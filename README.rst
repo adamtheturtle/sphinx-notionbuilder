@@ -34,7 +34,7 @@ The following syntax is supported:
 - Code blocks
 - Table of contents
 - Block quotes
-- Note and warning admonitions
+- Note, warning, and tip admonitions
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 

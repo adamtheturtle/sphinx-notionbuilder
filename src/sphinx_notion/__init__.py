@@ -335,6 +335,18 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
+    def visit_tip(self, node: nodes.Element) -> None:
+        """
+        Handle tip admonition nodes by creating Notion Callout blocks.
+        """
+        rich_text = _create_rich_text_from_children(node=node)
+
+        block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
+        block.rich_text = rich_text
+        self._blocks.append(block)
+
+        raise nodes.SkipNode
+
     def visit_document(self, node: nodes.Element) -> None:
         """
         Initialize block collection at document start.
