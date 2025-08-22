@@ -728,7 +728,7 @@ def test_note_admonition(
     """
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
-        UnoCallout(text="This is an important note.", icon=Emoji("📝")),
+        UnoCallout(text="This is an important note.", icon=Emoji(emoji="📝")),
         UnoParagraph(text="Another paragraph."),
     ]
     _assert_rst_converts_to_notion_objects(
@@ -754,7 +754,7 @@ def test_note_admonition_multiline(
            This is the second paragraph that should be combined.
     """
     # Create the callout with expected rich text structure
-    callout = UnoCallout(text="", icon=Emoji("📝"))
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"))
     callout.rich_text = text(
         text="This is the first paragraph of the note."
     ) + text(text="This is the second paragraph that should be combined.")

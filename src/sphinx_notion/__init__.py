@@ -317,7 +317,7 @@ class NotionTranslator(NodeVisitor):
         """
         rich_text = _create_rich_text_from_children(node=node)
 
-        block = UnoCallout(text="", icon=Emoji("📝"))
+        block = UnoCallout(text="", icon=Emoji(emoji="📝"))
         block.rich_text = rich_text
         self._blocks.append(block)
 
