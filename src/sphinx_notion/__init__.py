@@ -2,11 +2,9 @@
 Sphinx Notion Builder.
 """
 
-from __future__ import annotations
-
 import json
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from beartype import beartype
 from docutils import nodes
