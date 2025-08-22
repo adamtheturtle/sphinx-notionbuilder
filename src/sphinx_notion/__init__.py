@@ -2,7 +2,10 @@
 Sphinx Notion Builder.
 """
 
+from __future__ import annotations
+
 import json
+from functools import singledispatch
 from typing import TYPE_CHECKING, Any
 
 from beartype import beartype
@@ -34,12 +37,10 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
-
-if TYPE_CHECKING:
-    from ultimate_notion.core import NotionObject
 
 
 def _process_list_item_recursively(
@@ -124,6 +125,75 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         rich_text += new_text
 
     return rich_text
+
+
+@singledispatch
+def _process_node_to_blocks(_: nodes.Element) -> list[NotionObject[Any]]:
+    """
+    Required function for singledispatch.
+    """
+    raise NotImplementedError
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.paragraph) -> list[NotionObject[Any]]:
+    """
+    Process paragraph nodes by creating Notion Paragraph blocks.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+    paragraph_block = UnoParagraph(text="")
+    paragraph_block.rich_text = rich_text
+    return [paragraph_block]
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.block_quote) -> list[NotionObject[Any]]:
+    """
+    Process block quote nodes by creating Notion Quote blocks.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+    quote_block = UnoQuote(text="")
+    quote_block.rich_text = rich_text
+    return [quote_block]
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.literal_block) -> list[NotionObject[Any]]:
+    """
+    Process literal block nodes by creating Notion Code blocks.
+    """
+    code_text = _create_rich_text_from_children(node=node)
+    pygments_lang = node.get(key="language", failobj="")
+    language = _map_pygments_to_notion_language(
+        pygments_lang=pygments_lang,
+    )
+    code_block = UnoCode(text=code_text, language=language)
+    # Remove syntax highlighting color
+    # pyright: ignore[reportUnknownMemberType]
+    del code_text.rich_texts[0].obj_ref.annotations
+    code_block.rich_text = code_text
+    return [code_block]
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.list_item) -> list[NotionObject[Any]]:
+    """
+    Process list item nodes by creating BulletedItem blocks.
+    """
+    bullet_block = _process_list_item_recursively(node=node, depth=0)
+    return [bullet_block]
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.topic) -> list[NotionObject[Any]]:
+    """
+    Process topic nodes, specifically for table of contents.
+    """
+    if "contents" in node.get(key="classes", failobj=[]):
+        toc_block = UnoTableOfContents()
+        return [toc_block]
+    # For other topics, process children
+    return _process_node_to_blocks.registry[object](node)
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
@@ -283,46 +353,24 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoParagraph(text="")
-        block.rich_text = rich_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoQuote(text="")
-        block.rich_text = rich_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_literal_block(self, node: nodes.Element) -> None:
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        code_text = _create_rich_text_from_children(node=node)
-
-        pygments_lang = node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-        )
-
-        block = UnoCode(text=code_text, language=language)
-
-        # By default, the code block has a color set (DEFAULT) which means
-        # that there is no syntax highlighting.
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-        del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-        block.rich_text = code_text
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
@@ -342,21 +390,16 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        assert isinstance(node, nodes.list_item)
-        block = _process_list_item_recursively(node=node, depth=0)
-        self._blocks.append(block)
+        blocks = _process_node_to_blocks(node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        # Later, we can support `.. topic::` directives, likely as
-        # a callout with no icon.
-        assert "contents" in node["classes"]
-        block = UnoTableOfContents()
-        self._blocks.append(block)
-
+        blocks = _process_node_to_blocks(node)
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
