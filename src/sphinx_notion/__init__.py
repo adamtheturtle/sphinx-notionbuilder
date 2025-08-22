@@ -339,7 +339,9 @@ class NotionTranslator(NodeVisitor):
                 nested_block = self._process_list_item_recursively(
                     node=nested_list_item, depth=depth + 1
                 )
-                block.obj_ref.value.children.append(nested_block.obj_ref)
+                # Remove pyright ignore once we have
+                # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+                block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
         return block
 

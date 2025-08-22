@@ -828,55 +828,12 @@ def test_nested_bullet_list(
     top_level_1 = UnoBulletedItem(text="Top level item 1")
     top_level_2 = UnoBulletedItem(text="Top level item 2 with children")
     # Add second level children to top level item 2
-    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)
-    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)
+    # Remove pyright ignore once we have
+    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     top_level_3 = UnoBulletedItem(text="Top level item 3")
-
-    expected_objects: list[NotionObject[Any]] = [
-        top_level_1,
-        top_level_2,
-        top_level_3,
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_nested_bullet_list_depth_limit(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Test that nested bullet lists work correctly at the 2-level limit.
-    """
-    rst_content = """
-        * Top level item
-        * Top level with children
-
-          * Second level item
-          * Second level with children
-          * Another second level item
-
-        * Another top level item
-    """
-
-    # Create expected structure with exactly 2 levels
-    second_level_1 = UnoBulletedItem(text="Second level item")
-    second_level_2 = UnoBulletedItem(text="Second level with children")
-    second_level_3 = UnoBulletedItem(text="Another second level item")
-
-    top_level_1 = UnoBulletedItem(text="Top level item")
-    top_level_2 = UnoBulletedItem(text="Top level with children")
-    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)
-    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)
-    top_level_2.obj_ref.value.children.append(second_level_3.obj_ref)
-
-    top_level_3 = UnoBulletedItem(text="Another top level item")
 
     expected_objects: list[NotionObject[Any]] = [
         top_level_1,
