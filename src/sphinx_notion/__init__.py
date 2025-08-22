@@ -349,6 +349,17 @@ class NotionTranslator(NodeVisitor):
                             block.obj_ref.value.children.append(
                                 nested_block.obj_ref
                             )
+        else:
+            # Check if there are nested bullet lists that would be ignored
+            for child in node.children[1:]:
+                if isinstance(child, nodes.bullet_list):
+                    max_levels = MAX_NOTION_NESTING_DEPTH + 1
+                    msg = (
+                        f"Nested bullet point at depth {depth + 1} exceeds "
+                        f"Notion API limit of {max_levels} levels. "
+                        "Please reduce nesting depth."
+                    )
+                    raise RuntimeError(msg)
 
         return block
 

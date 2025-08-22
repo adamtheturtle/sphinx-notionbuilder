@@ -851,9 +851,8 @@ def test_nested_bullet_list_depth_limit(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that nested bullet lists are limited to 2 levels.
-
-    Third level items should be ignored due to Notion API constraints.
+    """
+    Test that nested bullet lists work correctly at the 2-level limit.
     """
     rst_content = """
         * Top level item
@@ -861,21 +860,14 @@ def test_nested_bullet_list_depth_limit(
 
           * Second level item
           * Second level with children
-
-            * Third level item (should be ignored)
-            * Another third level item (should be ignored)
-
           * Another second level item
 
         * Another top level item
     """
 
-    # Create expected structure with only 2 levels
-    # Third level items should be ignored completely
+    # Create expected structure with exactly 2 levels
     second_level_1 = UnoBulletedItem(text="Second level item")
     second_level_2 = UnoBulletedItem(text="Second level with children")
-    # Note: No children should be added to second_level_2 because
-    # third level nesting is not allowed
     second_level_3 = UnoBulletedItem(text="Another second level item")
 
     top_level_1 = UnoBulletedItem(text="Top level item")
@@ -898,3 +890,32 @@ def test_nested_bullet_list_depth_limit(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_nested_bullet_list_error_on_excessive_depth(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that an error is raised when bullet lists exceed the 2-level limit.
+    """
+    rst_content = """
+        * Top level item
+        * Top level with children
+
+          * Second level item
+          * Second level with children
+
+            * Third level item (should cause error)
+
+        * Another top level item
+    """
+
+    # This should raise a RuntimeError due to excessive nesting
+    with pytest.raises(RuntimeError, match="exceeds Notion API limit"):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],  # Expect error, not objects
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
