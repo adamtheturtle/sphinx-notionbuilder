@@ -39,6 +39,15 @@ Some key features:
 
 * Easy integration with **Sphinx**
 * Converts RST to Notion-compatible format
+
+  * Supports nested bullet points (new!)
+  * Deep nesting works too
+
+    * Level 3 nesting
+    * Another level 3 item
+
+      * Even level 4 nesting
+
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting
 * Works with bullet points like this one

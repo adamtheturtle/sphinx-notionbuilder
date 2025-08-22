@@ -287,17 +287,60 @@ class NotionTranslator(NodeVisitor):
         del node
 
     def visit_list_item(self, node: nodes.Element) -> None:
-        """
-        Handle list item nodes by creating Notion BulletedItem blocks.
+        """Handle list item nodes by creating Notion BulletedItem blocks.
+
+        This handles both flat and nested bullet points by processing
+        any nested bullet_list children.
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
         block = UnoBulletedItem(text="placeholder")
         block.rich_text = rich_text
-        self._blocks.append(block)
 
+        # Check for nested bullet lists and process them
+        for child in node.children[1:]:
+            if isinstance(child, nodes.bullet_list):
+                # Process nested list items
+                for nested_list_item in child.children:
+                    if isinstance(nested_list_item, nodes.list_item):
+                        nested_block = self._process_list_item_recursively(
+                            nested_list_item
+                        )
+                        block.obj_ref.value.children.append(
+                            nested_block.obj_ref
+                        )
+
+        self._blocks.append(block)
         raise nodes.SkipNode
+
+    def _process_list_item_recursively(
+        self, node: nodes.list_item
+    ) -> UnoBulletedItem:
+        """Recursively process a list item node and return a BulletedItem.
+
+        This method handles nested bullet points by creating
+        BulletedItem blocks with properly nested children.
+        """
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text="placeholder")
+        block.rich_text = rich_text
+
+        # Check for nested bullet lists and process them recursively
+        for child in node.children[1:]:
+            if isinstance(child, nodes.bullet_list):
+                for nested_list_item in child.children:
+                    if isinstance(nested_list_item, nodes.list_item):
+                        nested_block = self._process_list_item_recursively(
+                            nested_list_item
+                        )
+                        block.obj_ref.value.children.append(
+                            nested_block.obj_ref
+                        )
+
+        return block
 
     def visit_topic(self, node: nodes.Element) -> None:
         """

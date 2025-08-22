@@ -712,6 +712,57 @@ def test_bullet_list_with_inline_formatting(
     )
 
 
+def test_nested_bullet_list(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that nested bullet lists convert correctly to Notion BulletedItem with
+    children.
+    """
+    rst_content = """
+        * First top-level bullet
+        * Second top-level with nested items
+
+          * Nested item 1
+          * Nested item 2
+
+            * Deep nested item
+
+        * Third top-level bullet
+    """
+
+    # Create the nested structure
+    deep_nested_bullet = UnoBulletedItem(text="Deep nested item")
+
+    nested_bullet_1 = UnoBulletedItem(text="Nested item 1")
+    nested_bullet_2 = UnoBulletedItem(text="Nested item 2")
+    nested_bullet_2.obj_ref.value.children.append(deep_nested_bullet.obj_ref)
+
+    top_level_bullet_2 = UnoBulletedItem(
+        text="Second top-level with nested items"
+    )
+    top_level_bullet_2.obj_ref.value.children.extend(
+        [
+            nested_bullet_1.obj_ref,
+            nested_bullet_2.obj_ref,
+        ]
+    )
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoBulletedItem(text="First top-level bullet"),
+        top_level_bullet_2,
+        UnoBulletedItem(text="Third top-level bullet"),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 @pytest.mark.parametrize(
     argnames=("admonition_type", "emoji", "color", "message"),
     argvalues=[
