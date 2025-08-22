@@ -799,3 +799,82 @@ def test_admonition_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_nested_bullet_list(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that nested bullet lists are converted to Notion BulletedItem blocks
+    with proper nesting structure (limited to 2 levels).
+    """
+    rst_content = """
+        * Top level item 1
+        * Top level item 2 with children
+
+          * Second level item 1
+          * Second level item 2
+
+        * Top level item 3
+    """
+
+    # Create nested bullet structure with only 2 levels
+    # Second level items (no children allowed at this level)
+    second_level_1 = UnoBulletedItem(text="Second level item 1")
+    second_level_2 = UnoBulletedItem(text="Second level item 2")
+
+    # Top level items
+    top_level_1 = UnoBulletedItem(text="Top level item 1")
+    top_level_2 = UnoBulletedItem(text="Top level item 2 with children")
+    # Add second level children to top level item 2
+    # Remove pyright ignore once we have
+    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    top_level_3 = UnoBulletedItem(text="Top level item 3")
+
+    expected_objects: list[NotionObject[Any]] = [
+        top_level_1,
+        top_level_2,
+        top_level_3,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_bullet_list_error_on_excessive_depth(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that an error is raised when bullet lists exceed the 2-level limit.
+    """
+    rst_content = """
+        * Top level item
+        * Top level with children
+
+          * Second level item
+          * Second level with children
+
+            * Third level item (should cause error)
+
+        * Another top level item
+    """
+
+    expected_message = (
+        "Nested bullet point at depth 3 exceeds Notion API limit of 2 levels."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )

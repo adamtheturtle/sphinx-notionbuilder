@@ -39,6 +39,12 @@ Some key features:
 
 * Easy integration with **Sphinx**
 * Converts RST to Notion-compatible format
+
+  * Supports nested bullet points (new!)
+  * Deep nesting works too (limited to 2 levels)
+  * This limit is described in https://developers.notion.com/reference/patch-block-children "For blocks that allow children, we allow up to two levels of nesting in a single request."
+  * Note that the top level bullet-list is the "child" of the "body" so there is really only one level of nesting in the Notion API in one request.
+
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting
 * Works with bullet points like this one
