@@ -126,7 +126,9 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
 
 @singledispatch
-def _process_node_to_blocks(_: nodes.Element) -> list[NotionObject[Any]]:
+def _process_node_to_blocks(
+    _: nodes.Element,
+) -> list[NotionObject[Any]]:  # pragma: no cover
     """
     Required function for singledispatch.
     """
@@ -188,11 +190,11 @@ def _(node: nodes.topic) -> list[NotionObject[Any]]:
     """
     Process topic nodes, specifically for table of contents.
     """
-    if "contents" in node.get(key="classes", failobj=[]):
-        toc_block = UnoTableOfContents()
-        return [toc_block]
-    # For other topics, process children
-    return _process_node_to_blocks.registry[object](node)
+    # Later, we can support `.. topic::` directives, likely as
+    # a callout with no icon.
+    assert "contents" in node["classes"]
+    block = UnoTableOfContents()
+    return [block]
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
