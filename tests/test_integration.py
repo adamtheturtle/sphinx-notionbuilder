@@ -717,6 +717,7 @@ def test_bullet_list_with_inline_formatting(
     argvalues=[
         ("note", "📝", Color.BLUE, "This is an important note."),
         ("warning", "⚠️", Color.YELLOW, "This is a warning message."),
+        ("tip", "💡", Color.GREEN, "This is a helpful tip."),
     ],
 )
 def test_admonition_single_line(
@@ -763,6 +764,7 @@ def test_admonition_single_line(
     argvalues=[
         ("note", "📝", Color.BLUE),
         ("warning", "⚠️", Color.YELLOW),
+        ("tip", "💡", Color.GREEN),
     ],
 )
 def test_admonition_multiline(
