@@ -46,7 +46,7 @@ def _split_rich_text(rich_text: list[_RichTextBlock]) -> list[_RichTextBlock]:
 def _process_block(block: _Block) -> _Block:
     """
     Recursively process a Notion block dict, splitting any rich_text >2000
-    chars and removing empty children arrays from bulleted_list_item blocks.
+    chars.
     """
     block = dict(block)  # shallow copy
     for key, value in block.items():
