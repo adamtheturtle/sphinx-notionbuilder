@@ -317,18 +317,7 @@ class NotionTranslator(NodeVisitor):
             "is a bullet list"
         )
         max_notion_depth = 1
-        if depth < max_notion_depth:
-            for child in node.children[1:]:
-                assert isinstance(child, nodes.bullet_list), bullet_only_msg
-                for nested_list_item in child.children:
-                    assert isinstance(nested_list_item, nodes.list_item), (
-                        bullet_only_msg
-                    )
-                    nested_block = self._process_list_item_recursively(
-                        node=nested_list_item, depth=depth + 1
-                    )
-                    block.obj_ref.value.children.append(nested_block.obj_ref)
-        else:
+        if depth >= max_notion_depth:
             # This limit is described in https://developers.notion.com/reference/patch-block-children
             #
             # "For blocks that allow children, we allow up to two levels of
@@ -345,6 +334,17 @@ class NotionTranslator(NodeVisitor):
                     f"exceeds Notion API limit of {max_levels} levels."
                 )
                 raise ValueError(msg)
+
+        for child in node.children[1:]:
+            assert isinstance(child, nodes.bullet_list), bullet_only_msg
+            for nested_list_item in child.children:
+                assert isinstance(nested_list_item, nodes.list_item), (
+                    bullet_only_msg
+                )
+                nested_block = self._process_list_item_recursively(
+                    node=nested_list_item, depth=depth + 1
+                )
+                block.obj_ref.value.children.append(nested_block.obj_ref)
 
         return block
 
