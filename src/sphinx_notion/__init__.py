@@ -287,12 +287,7 @@ class NotionTranslator(NodeVisitor):
         del node
 
     def visit_list_item(self, node: nodes.Element) -> None:
-        """Handle list item nodes by creating Notion BulletedItem blocks.
-
-        This handles both flat and nested bullet points by processing
-        any nested bullet_list children. Nesting is limited to 2 levels
-        due to Notion API constraints.
-        """
+        """Handle list item nodes by creating Notion BulletedItem blocks."""
         assert isinstance(node, nodes.list_item)
         block = self._process_list_item_recursively(node=node, depth=0)
         self._blocks.append(block)
