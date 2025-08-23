@@ -215,8 +215,8 @@ def _extract_deep_children(
         - List of blocks with children limited to max_depth
         - List of (parent_block, deep_children) pairs for uploading later
     """
-    processed_blocks = []
-    deep_upload_tasks = []
+    processed_blocks: list[dict[str, Any]] = []
+    deep_upload_tasks: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
 
     def _process_block(block: _Block, current_depth: int = 0) -> _Block:
         """
@@ -227,7 +227,7 @@ def _extract_deep_children(
             return block
 
         block_copy = dict(block)
-        processed_children = []
+        processed_children: list[dict[str, Any]] = []
 
         for child in children:
             child_children = _get_block_children(block=child)
@@ -278,7 +278,7 @@ def _get_all_uploaded_blocks_recursively(
     """
     Recursively fetch all uploaded blocks and their children.
     """
-    all_blocks = []
+    all_blocks: list[Any] = []
 
     # Get immediate children
     page_children: Any = notion_client.blocks.children.list(
