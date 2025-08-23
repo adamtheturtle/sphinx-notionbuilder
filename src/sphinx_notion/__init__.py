@@ -539,6 +539,7 @@ class NotionTranslator(NodeVisitor):
         """
         Initialize block collection at document start.
         """
+        assert self
         del node
 
     def depart_document(self, node: nodes.Element) -> None:
