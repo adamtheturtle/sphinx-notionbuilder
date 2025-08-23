@@ -331,7 +331,7 @@ def test_multiple_links(
     """
     Multiple links in a paragraph convert correctly.
     """
-    # Write proper RST content to file to avoid Python string escaping issues
+    # Write proper rST content to file to avoid Python string escaping issues
     rst_file = tmp_path / "test_content.rst"
     content = (
         "Visit `Google <https://google.com>`_ and "
@@ -503,12 +503,12 @@ def test_multiline_quote(
     tmp_path: Path,
 ) -> None:
     """
-    Test that multiline block quotes convert to Notion Quote blocks.
+    Test that multi-line block quotes convert to Notion Quote blocks.
     """
     rst_content = """
         Regular paragraph.
 
-            This is a multiline
+            This is a multi-line
             block quote with
             multiple lines.
 
@@ -717,6 +717,7 @@ def test_bullet_list_with_inline_formatting(
     ],
 )
 def test_admonition_single_line(
+    *,
     admonition_type: str,
     emoji: str,
     color: Color,

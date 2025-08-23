@@ -191,7 +191,7 @@ repos:
 
       - id: pylint
         name: pylint
-        entry: uv run --extra=dev -m pylint *.py src/ tests/ docs/
+        entry: uv run --extra=dev -m pylint src/ tests/ sample/
         language: python
         stages: [manual]
         pass_filenames: false
@@ -265,7 +265,7 @@ repos:
 
       - id: linkcheck
         name: linkcheck
-        entry: make -C docs/ linkcheck SPHINXOPTS=-W
+        entry: make -C sample/ linkcheck SPHINXOPTS=-W
         language: python
         types_or: [rst]
         stages: [manual]
@@ -274,7 +274,7 @@ repos:
 
       - id: spelling
         name: spelling
-        entry: make -C docs/ spelling SPHINXOPTS=-W
+        entry: make -C sample/ spelling SPHINXOPTS=-W
         language: python
         types_or: [rst]
         stages: [manual]

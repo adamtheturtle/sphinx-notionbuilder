@@ -95,7 +95,7 @@ def _process_list_item_recursively(
 
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """
-    Create Notion rich text from docutils node children.
+    Create Notion rich text from ``docutils`` node children.
     """
     rich_text = Text.from_plain_text(text="")
 
@@ -132,7 +132,7 @@ def _process_node_to_blocks(
     section_level: int,
 ) -> NotionObject[Any]:  # pragma: no cover
     """
-    Required function for singledispatch.
+    Required function for ``singledispatch``.
     """
     del node
     del section_level
@@ -264,7 +264,7 @@ def _(node: nodes.tip, *, section_level: int) -> NotionObject[Any]:
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     """
-    Map Pygments language names to Notion CodeLang enum values.
+    Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
     """
     language_mapping: dict[str, CodeLang] = {
         "abap": CodeLang.ABAP,
@@ -368,7 +368,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 @beartype
 class NotionTranslator(NodeVisitor):
     """
-    Translate docutils nodes to Notion JSON.
+    Translate ``docutils`` nodes to Notion JSON.
     """
 
     def __init__(self, document: nodes.document, builder: TextBuilder) -> None:
