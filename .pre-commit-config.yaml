@@ -265,7 +265,7 @@ repos:
 
       - id: linkcheck
         name: linkcheck
-        entry: make -C sample/ linkcheck SPHINXOPTS=-W
+        entry: uv run sphinx-build -W -b linkcheck sample build-sample/
         language: python
         types_or: [rst]
         stages: [manual]
@@ -274,7 +274,7 @@ repos:
 
       - id: spelling
         name: spelling
-        entry: make -C sample/ spelling SPHINXOPTS=-W
+        entry: uv run sphinx-build -W -b spelling sample build-sample/
         language: python
         types_or: [rst]
         stages: [manual]
@@ -283,7 +283,7 @@ repos:
 
       - id: docs
         name: Build Documentation
-        entry: make docs
+        entry: uv run sphinx-build -W -b notion sample build-sample/
         language: python
         stages: [manual]
         pass_filenames: false
