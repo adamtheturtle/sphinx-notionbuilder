@@ -43,7 +43,7 @@ from ultimate_notion.rich_text import Text, text
 
 def _process_list_item_recursively(
     node: nodes.list_item,
-    depth: int = 0,
+    depth: int,
 ) -> UnoBulletedItem:
     """
     Recursively process a list item node and return a BulletedItem.
