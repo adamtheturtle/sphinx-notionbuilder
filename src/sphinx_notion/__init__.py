@@ -249,12 +249,39 @@ def _create_admonition_callout(
     emoji: str,
     color: Color,
 ) -> list[NotionObject[Any]]:
+    """Create a Notion Callout block for admonition nodes.
+
+    The first child (typically a paragraph) becomes the callout text,
+    and any remaining children become nested blocks within the callout.
     """
-    Create a Notion Callout block for admonition nodes.
-    """
-    rich_text = _create_rich_text_from_children(node=node)
     block = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
-    block.rich_text = rich_text
+
+    # Use the first child as the callout text
+    first_child = node.children[0]
+    if isinstance(first_child, nodes.paragraph):
+        rich_text = _create_rich_text_from_children(node=first_child)
+        block.rich_text = rich_text
+        # Process remaining children as nested blocks
+        children_to_process = node.children[1:]
+    else:
+        # If first child is not a paragraph, use empty text
+        block.rich_text = Text.from_plain_text(text="")
+        # Process all children as nested blocks (including the first)
+        children_to_process = node.children
+
+    # Process children as nested blocks
+    for child in children_to_process:
+        for child_block in list(
+            _process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        ):
+            # Add nested blocks as children to the callout
+            # Remove pyright ignore once we have
+            # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+            block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
     return [block]
 
 

@@ -15,6 +15,22 @@ This is **bold** and *italic* and ``inline code``.
 
    This is a warning that demonstrates the warning admonition support.
 
+   .. code-block:: python
+
+      """Python code nested in an admonition."""
+
+
+      def hello_world() -> int:
+          """Return the answer."""
+          return 42
+
+
+      hello_world()
+
+   .. warning::
+
+      This is a warning that demonstrates the warning admonition support.
+
 .. tip::
 
    This is a helpful tip that demonstrates the tip admonition support.
