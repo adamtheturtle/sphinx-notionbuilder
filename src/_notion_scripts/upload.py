@@ -102,32 +102,36 @@ def _find_existing_page_by_title(
 
 
 def _get_block_children(block: _Block) -> list[_Block]:
-    """Get children from a block, regardless of block type."""
+    """
+    Get children from a block, regardless of block type.
+    """
     block_type = block.get("type")
     if block_type == "bulleted_list_item":
-        return block.get("bulleted_list_item", {}).get("children", [])
+        return list(block.get("bulleted_list_item", {}).get("children", []))
     if block_type == "numbered_list_item":
-        return block.get("numbered_list_item", {}).get("children", [])
+        return list(block.get("numbered_list_item", {}).get("children", []))
     if block_type == "to_do":
-        return block.get("to_do", {}).get("children", [])
+        return list(block.get("to_do", {}).get("children", []))
     if block_type == "toggle":
-        return block.get("toggle", {}).get("children", [])
+        return list(block.get("toggle", {}).get("children", []))
     if block_type == "quote":
-        return block.get("quote", {}).get("children", [])
+        return list(block.get("quote", {}).get("children", []))
     if block_type == "callout":
-        return block.get("callout", {}).get("children", [])
+        return list(block.get("callout", {}).get("children", []))
     if block_type == "synced_block":
-        return block.get("synced_block", {}).get("children", [])
+        return list(block.get("synced_block", {}).get("children", []))
     if block_type == "column":
-        return block.get("column", {}).get("children", [])
+        return list(block.get("column", {}).get("children", []))
     if block_type == "table_row":
         return []  # Table rows don't have nested children in the same way
     # Generic case - many block types store children at the top level
-    return block.get("children", [])
+    return list(block.get("children", []))
 
 
 def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
-    """Set children on a block, regardless of block type."""
+    """
+    Set children on a block, regardless of block type.
+    """
     block_copy = dict(block)
     block_type = block.get("type")
 
@@ -171,43 +175,33 @@ def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
 
 
 def _remove_block_children(block: _Block) -> _Block:
-    """Remove children from a block, regardless of block type."""
+    """
+    Remove children from a block, regardless of block type.
+    """
     block_copy = dict(block)
     block_type = block.get("type")
-
-    if block_type == "bulleted_list_item":
-        if "bulleted_list_item" in block_copy:
-            block_copy["bulleted_list_item"].pop("children", None)
-    elif block_type == "numbered_list_item":
-        if "numbered_list_item" in block_copy:
-            block_copy["numbered_list_item"].pop("children", None)
-    elif block_type == "to_do":
-        if "to_do" in block_copy:
-            block_copy["to_do"].pop("children", None)
-    elif block_type == "toggle":
-        if "toggle" in block_copy:
-            block_copy["toggle"].pop("children", None)
-    elif block_type == "quote":
-        if "quote" in block_copy:
-            block_copy["quote"].pop("children", None)
-    elif block_type == "callout":
-        if "callout" in block_copy:
-            block_copy["callout"].pop("children", None)
-    elif block_type == "synced_block":
-        if "synced_block" in block_copy:
-            block_copy["synced_block"].pop("children", None)
-    elif block_type == "column":
-        if "column" in block_copy:
-            block_copy["column"].pop("children", None)
+    if block_type in {
+        "bulleted_list_item",
+        "numbered_list_item",
+        "to_do",
+        "toggle",
+        "quote",
+        "callout",
+        "synced_block",
+        "column",
+    }:
+        if block_type in block_copy:
+            block_copy[block_type].pop("children", None)
     else:
-        # Generic case
         block_copy.pop("children", None)
 
     return block_copy
 
 
 def _get_block_content(block: _Block) -> str:
-    """Get text content from a block for matching purposes."""
+    """
+    Get text content from a block for matching purposes.
+    """
     block_type = block.get("type")
 
     # Most block types store rich_text in their type-specific object
@@ -233,7 +227,7 @@ def _get_block_content(block: _Block) -> str:
         return "".join(item.get("plain_text", "") for item in rich_text)
     # For other block types, try to find any text content
     # This is a fallback for block types we haven't specifically handled
-    return str(block.get("id", ""))
+    return str(object=block.get("id", ""))
 
 
 def _extract_deep_children(
@@ -250,7 +244,7 @@ def _extract_deep_children(
     deep_upload_tasks = []
 
     def process_block(block: _Block, current_depth: int = 0) -> _Block:
-        children = _get_block_children(block)
+        children = _get_block_children(block=block)
         if not children:
             return block
 
@@ -258,34 +252,42 @@ def _extract_deep_children(
         processed_children = []
 
         for child in children:
-            child_children = _get_block_children(child)
+            child_children = _get_block_children(block=child)
 
             if current_depth >= max_depth and child_children:
                 # Extract deep children - remove them from this level
-                child_copy = _remove_block_children(child)
+                child_copy = _remove_block_children(block=child)
                 processed_children.append(child_copy)
 
                 # Store for later upload (we'll find the actual ID later)
                 deep_upload_tasks.append((child_copy, child_children))
             else:
                 # Keep processing normally, but check for children
-                processed_child = process_block(child, current_depth + 1)
+                processed_child = process_block(
+                    block=child, current_depth=current_depth + 1
+                )
                 # Remove empty children arrays
-                child_children_after = _get_block_children(processed_child)
+                child_children_after = _get_block_children(
+                    block=processed_child
+                )
                 if not child_children_after:
-                    processed_child = _remove_block_children(processed_child)
+                    processed_child = _remove_block_children(
+                        block=processed_child
+                    )
                 processed_children.append(processed_child)
 
         # Update children in the block
         if processed_children:
-            block_copy = _set_block_children(block_copy, processed_children)
+            block_copy = _set_block_children(
+                block=block_copy, children=processed_children
+            )
         else:
-            block_copy = _remove_block_children(block_copy)
+            block_copy = _remove_block_children(block=block_copy)
 
         return block_copy
 
     for block in blocks:
-        processed_block = process_block(block, 0)
+        processed_block = process_block(block=block, current_depth=0)
         processed_blocks.append(processed_block)
 
     return processed_blocks, deep_upload_tasks
@@ -313,7 +315,7 @@ def _get_all_uploaded_blocks_recursively(
         # If this block has children, fetch them recursively
         if block.get("has_children", False):
             child_blocks = _get_all_uploaded_blocks_recursively(
-                notion_client, block["id"]
+                notion_client=notion_client, parent_id=block["id"]
             )
             all_blocks.extend(child_blocks)
 
@@ -333,7 +335,7 @@ def _upload_blocks_with_deep_nesting(
         return
 
     # Extract deep children from all blocks
-    processed_blocks, deep_upload_tasks = _extract_deep_children(blocks)
+    processed_blocks, deep_upload_tasks = _extract_deep_children(blocks=blocks)
 
     # Upload the main blocks first (with max 2 levels of nesting)
     sys.stderr.write("Uploading main blocks...\n")
@@ -352,7 +354,7 @@ def _upload_blocks_with_deep_nesting(
 
         # Get all uploaded blocks recursively to find IDs
         uploaded_blocks = _get_all_uploaded_blocks_recursively(
-            notion_client, page_id
+            notion_client=notion_client, parent_id=page_id
         )
 
         # Process deep upload tasks
@@ -362,21 +364,13 @@ def _upload_blocks_with_deep_nesting(
                 template_block=parent_template, uploaded_blocks=uploaded_blocks
             )
 
-            if matching_block_id:
-                try:
-                    # Recursively upload deep children
-                    _upload_blocks_with_deep_nesting(
-                        notion_client=notion_client,
-                        page_id=matching_block_id,
-                        blocks=deep_children,
-                        batch_size=batch_size,
-                    )
-                except Exception as e:
-                    sys.stderr.write(f"Error uploading deep children: {e}\n")
-            else:
-                sys.stderr.write(
-                    "Warning: Could not find matching parent block\n"
-                )
+            assert matching_block_id is not None
+            _upload_blocks_with_deep_nesting(
+                notion_client=notion_client,
+                page_id=matching_block_id,
+                blocks=deep_children,
+                batch_size=batch_size,
+            )
 
 
 def _find_matching_block_id(
@@ -394,7 +388,9 @@ def _find_matching_block_id(
     def search_blocks_recursively(blocks: list[_Block]) -> str | None:
         for uploaded_block in blocks:
             # Check if this block matches
-            if _blocks_match(template_block, uploaded_block):
+            if _blocks_match(
+                template_block=template_block, uploaded_block=uploaded_block
+            ):
                 return uploaded_block.get("id")
 
             # Check children if they exist
@@ -403,12 +399,12 @@ def _find_matching_block_id(
                 # let's assume children are included in the response
                 children = uploaded_block.get("children", [])
                 if children:
-                    child_result = search_blocks_recursively(children)
+                    child_result = search_blocks_recursively(blocks=children)
                     if child_result:
                         return child_result
         return None
 
-    return search_blocks_recursively(uploaded_blocks)
+    return search_blocks_recursively(blocks=uploaded_blocks)
 
 
 def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
@@ -422,8 +418,8 @@ def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
         return False
 
     # Match by content for all block types that have text content
-    template_content = _get_block_content(template_block)
-    uploaded_content = _get_block_content(uploaded_block)
+    template_content = _get_block_content(block=template_block)
+    uploaded_content = _get_block_content(block=uploaded_block)
 
     return template_content == uploaded_content
 
@@ -545,7 +541,7 @@ def main() -> None:
         if len(processed_contents) > args.batch_size:
             # Create page with first batch (but limit nesting)
             initial_batch, deep_tasks = _extract_deep_children(
-                processed_contents[: args.batch_size], max_depth=1
+                blocks=processed_contents[: args.batch_size], max_depth=1
             )
             remaining_blocks = processed_contents[args.batch_size :]
 
@@ -589,41 +585,43 @@ def main() -> None:
                     blocks=remaining_blocks,
                     batch_size=args.batch_size,
                 )
-        else:
-            # Small enough to create in one go, but still handle deep nesting
-            main_blocks, deep_tasks = _extract_deep_children(
-                blocks=processed_contents, max_depth=1
-            )
+            sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
+            sys.exit(0)
 
-            new_page_small: Any = notion.pages.create(
-                parent={"type": "page_id", "page_id": args.parent_page_id},
-                properties={
-                    "title": {"title": [{"text": {"content": args.title}}]},
-                },
-                children=main_blocks,
-            )
-            page_id = new_page_small.get("id", "unknown")
+        # Small enough to create in one go, but still handle deep nesting
+        main_blocks, deep_tasks = _extract_deep_children(
+            blocks=processed_contents, max_depth=1
+        )
 
-            # Handle deep children
-            if deep_tasks:
-                sys.stderr.write("Processing deep children...\n")
-                page_children_2: Any = notion.blocks.children.list(
-                    block_id=page_id, page_size=100
+        new_page_small: Any = notion.pages.create(
+            parent={"type": "page_id", "page_id": args.parent_page_id},
+            properties={
+                "title": {"title": [{"text": {"content": args.title}}]},
+            },
+            children=main_blocks,
+        )
+        page_id = new_page_small.get("id", "unknown")
+
+        # Handle deep children
+        if deep_tasks:
+            sys.stderr.write("Processing deep children...\n")
+            page_children_2: Any = notion.blocks.children.list(
+                block_id=page_id, page_size=100
+            )
+            uploaded_blocks_2 = page_children_2.get("results", [])
+
+            for parent_template, deep_children in deep_tasks:
+                matching_block_id = _find_matching_block_id(
+                    template_block=parent_template,
+                    uploaded_blocks=uploaded_blocks_2,
                 )
-                uploaded_blocks_2 = page_children_2.get("results", [])
-
-                for parent_template, deep_children in deep_tasks:
-                    matching_block_id = _find_matching_block_id(
-                        template_block=parent_template,
-                        uploaded_blocks=uploaded_blocks_2,
+                if matching_block_id:
+                    _upload_blocks_with_deep_nesting(
+                        notion_client=notion,
+                        page_id=matching_block_id,
+                        blocks=deep_children,
+                        batch_size=args.batch_size,
                     )
-                    if matching_block_id:
-                        _upload_blocks_with_deep_nesting(
-                            notion_client=notion,
-                            page_id=matching_block_id,
-                            blocks=deep_children,
-                            batch_size=args.batch_size,
-                        )
 
         sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
 
