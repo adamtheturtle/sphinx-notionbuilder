@@ -935,55 +935,7 @@ def test_nested_bullet_list(
     tmp_path: Path,
 ) -> None:
     """
-    Test that nested bullet lists are converted to Notion BulletedItem blocks
-    with proper nesting structure (limited to 2 levels).
-    """
-    rst_content = """
-        * Top level item 1
-        * Top level item 2 with children
-
-          * Second level item 1
-          * Second level item 2
-
-        * Top level item 3
-    """
-
-    # Create nested bullet structure with only 2 levels
-    # Second level items (no children allowed at this level)
-    second_level_1 = UnoBulletedItem(text="Second level item 1")
-    second_level_2 = UnoBulletedItem(text="Second level item 2")
-
-    # Top level items
-    top_level_1 = UnoBulletedItem(text="Top level item 1")
-    top_level_2 = UnoBulletedItem(text="Top level item 2 with children")
-    # Add second level children to top level item 2
-    # Remove pyright ignore once we have
-    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-
-    top_level_3 = UnoBulletedItem(text="Top level item 3")
-
-    expected_objects: list[NotionObject[Any]] = [
-        top_level_1,
-        top_level_2,
-        top_level_3,
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_nested_bullet_list_with_deep_nesting(
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Test that deeply nested bullet lists work (limited by upload processing).
+    Test that deeply nested bullet lists work.
     """
     rst_content = """
         * Top level item
@@ -997,22 +949,14 @@ def test_nested_bullet_list_with_deep_nesting(
         * Another top level item
     """
 
-    # Create deeply nested bullet structure
-    # Second level items
     second_level_1 = UnoBulletedItem(text="Second level item")
     second_level_2 = UnoBulletedItem(text="Second level with children")
 
-    # Note: Third level children will be flattened by upload processing
-    # We expect only 2 levels in the final structure
-
-    # Top level items
     top_level_1 = UnoBulletedItem(text="Top level item")
     top_level_2 = UnoBulletedItem(text="Top level with children")
 
-    # Add second level children to top level item 2
     # Remove pyright ignore once we have
     # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-    # pylint: disable=line-too-long
     top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
