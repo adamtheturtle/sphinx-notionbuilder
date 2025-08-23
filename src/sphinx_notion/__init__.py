@@ -223,6 +223,45 @@ def _(node: nodes.title, *, section_level: int) -> NotionObject[Any]:
     return block
 
 
+@_process_node_to_blocks.register
+def _(node: nodes.note, *, section_level: int) -> NotionObject[Any]:
+    """
+    Process note admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level  # Not used for admonitions
+    rich_text = _create_rich_text_from_children(node=node)
+
+    block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    block.rich_text = rich_text
+    return block
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.warning, *, section_level: int) -> NotionObject[Any]:
+    """
+    Process warning admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level  # Not used for admonitions
+    rich_text = _create_rich_text_from_children(node=node)
+
+    block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
+    block.rich_text = rich_text
+    return block
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.tip, *, section_level: int) -> NotionObject[Any]:
+    """
+    Process tip admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level  # Not used for admonitions
+    rich_text = _create_rich_text_from_children(node=node)
+
+    block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
+    block.rich_text = rich_text
+    return block
+
+
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     """
     Map Pygments language names to Notion CodeLang enum values.
@@ -440,10 +479,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
-        block.rich_text = rich_text
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
 
         raise nodes.SkipNode
@@ -452,10 +491,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-        block.rich_text = rich_text
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
 
         raise nodes.SkipNode
@@ -464,10 +503,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
-        block.rich_text = rich_text
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
 
         raise nodes.SkipNode
