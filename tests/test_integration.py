@@ -906,18 +906,15 @@ def test_admonition_with_bullet_points(
            * B
     """
 
-    # Create the expected callout with bullet points as children
     callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
     callout.rich_text = text(
         text="This is an important note that demonstrates the note "
         "admonition\nsupport."
     )
 
-    # Create bullet points that should be nested inside the callout
     bullet_a = UnoBulletedItem(text="A")
     bullet_b = UnoBulletedItem(text="B")
 
-    # Add bullets as children to the callout
     callout.obj_ref.value.children.append(bullet_a.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     callout.obj_ref.value.children.append(bullet_b.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 

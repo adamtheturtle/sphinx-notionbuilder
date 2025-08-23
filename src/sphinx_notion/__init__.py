@@ -193,14 +193,10 @@ def _(
     *,
     section_level: int,
 ) -> list[NotionObject[Any]]:
-    """Process bullet list nodes by creating Notion BulletedItem blocks.
-
-    When bullet lists are nested inside other containers (like
-    admonitions), we need to process their children and return the
-    resulting blocks.
+    """
+    Process bullet list nodes by creating Notion BulletedItem blocks.
     """
     del section_level
-    # Process each list item and return the resulting blocks
     return [
         _process_list_item_recursively(node=list_item, depth=0)
         for list_item in node.children
