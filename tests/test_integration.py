@@ -517,7 +517,7 @@ def test_multiline_quote(
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
         UnoQuote(
-            text="This is a multiline\nblock quote with\nmultiple lines."
+            text="This is a multi-line\nblock quote with\nmultiple lines."
         ),
         UnoParagraph(text="Another paragraph."),
     ]
