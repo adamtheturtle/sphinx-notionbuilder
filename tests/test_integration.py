@@ -731,8 +731,7 @@ def test_admonition_single_line(
     rst_content = f"""
         Regular paragraph.
 
-        .. {admonition_type}::
-           {message}
+        .. {admonition_type}:: {message}
 
         Another paragraph.
     """
@@ -773,23 +772,119 @@ def test_admonition_multiline(
 ) -> None:
     """Test that admonitions with multiple paragraphs work.
 
-    For now, we ignore children and just combine all text content.
+    The first paragraph becomes the callout text, and subsequent
+    paragraphs become nested blocks within the callout.
     """
     rst_content = f"""
         .. {admonition_type}::
            This is the first paragraph of the {admonition_type}.
 
-           This is the second paragraph that should be combined.
+           This is the second paragraph that should be nested.
     """
-    # Create the callout with expected rich text structure
+    # Create the callout with the first paragraph as text
     callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
     callout.rich_text = text(
         text=f"This is the first paragraph of the {admonition_type}."
-    ) + text(text="This is the second paragraph that should be combined.")
+    )
+
+    # Create the nested paragraph block
+    nested_paragraph = UnoParagraph(
+        text="This is the second paragraph that should be nested."
+    )
+
+    # Add the nested paragraph as a child to the callout
+    children = callout.obj_ref.value.children  # pyright: ignore[reportUnknownMemberType]
+    children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
     ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_admonition_with_code_block(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that admonitions can contain code blocks as nested children.
+    """
+    rst_content = """
+        .. note::
+           This note contains a code example.
+
+           .. code-block:: python
+
+              def hello():
+                  print("Hello, world!")
+
+           The code above demonstrates a simple function.
+    """
+
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout.rich_text = text(text="This note contains a code example.")
+
+    nested_code_block = _create_code_block_without_annotations(
+        content='def hello():\n    print("Hello, world!")',
+        language=CodeLang.PYTHON,
+    )
+    nested_paragraph = UnoParagraph(
+        text="The code above demonstrates a simple function."
+    )
+
+    callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [
+        callout,
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_admonition_with_code_block_first(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Test admonition with code block as first child (not paragraph).
+
+    This tests the else clause when first child is not a paragraph.
+    """
+    rst_content = """
+        .. note::
+
+           .. code-block:: python
+
+              def hello():
+                  print("Hello, world!")
+
+           This paragraph comes after the code block.
+    """
+
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout.rich_text = text(text="")
+
+    nested_code_block = _create_code_block_without_annotations(
+        content='def hello():\n    print("Hello, world!")',
+        language=CodeLang.PYTHON,
+    )
+    nested_paragraph = UnoParagraph(
+        text="This paragraph comes after the code block."
+    )
+
+    callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [callout]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
