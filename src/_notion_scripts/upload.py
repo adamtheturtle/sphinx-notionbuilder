@@ -106,22 +106,17 @@ def _get_block_children(block: _Block) -> list[_Block]:
     Get children from a block, regardless of block type.
     """
     block_type = block.get("type")
-    if block_type == "bulleted_list_item":
-        return list(block.get("bulleted_list_item", {}).get("children", []))
-    if block_type == "numbered_list_item":
-        return list(block.get("numbered_list_item", {}).get("children", []))
-    if block_type == "to_do":
-        return list(block.get("to_do", {}).get("children", []))
-    if block_type == "toggle":
-        return list(block.get("toggle", {}).get("children", []))
-    if block_type == "quote":
-        return list(block.get("quote", {}).get("children", []))
-    if block_type == "callout":
-        return list(block.get("callout", {}).get("children", []))
-    if block_type == "synced_block":
-        return list(block.get("synced_block", {}).get("children", []))
-    if block_type == "column":
-        return list(block.get("column", {}).get("children", []))
+    if block_type in {
+        "bulleted_list_item",
+        "numbered_list_item",
+        "to_do",
+        "toggle",
+        "quote",
+        "callout",
+        "synced_block",
+        "column",
+    }:
+        return list(block.get(block_type, {}).get("children", []))
     if block_type == "table_row":
         return []  # Table rows don't have nested children in the same way
     # Generic case - many block types store children at the top level
