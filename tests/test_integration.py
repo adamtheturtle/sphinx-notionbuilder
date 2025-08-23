@@ -889,6 +889,50 @@ def test_admonition_with_code_block_first(
     )
 
 
+def test_admonition_with_bullet_points(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that bullet points show up within admonitions (issue #78).
+    """
+    rst_content = """
+        .. note::
+
+           This is an important note that demonstrates the note admonition
+           support.
+
+           * A
+           * B
+    """
+
+    # Create the expected callout with bullet points as children
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout.rich_text = text(
+        text="This is an important note that demonstrates the note "
+        "admonition\nsupport."
+    )
+
+    # Create bullet points that should be nested inside the callout
+    bullet_a = UnoBulletedItem(text="A")
+    bullet_b = UnoBulletedItem(text="B")
+
+    # Add bullets as children to the callout
+    callout.obj_ref.value.children.append(bullet_a.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(bullet_b.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_nested_bullet_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,

@@ -188,28 +188,24 @@ def _(
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.list_item, *, section_level: int) -> list[NotionObject[Any]]:
-    """
-    Process list item nodes by creating BulletedItem blocks.
-    """
-    del section_level
-    return [_process_list_item_recursively(node=node, depth=0)]
-
-
-@_process_node_to_blocks.register
 def _(
     node: nodes.bullet_list,
     *,
     section_level: int,
 ) -> list[NotionObject[Any]]:
-    """
-    Process bullet list nodes by creating Notion BulletedItem blocks.
+    """Process bullet list nodes by creating Notion BulletedItem blocks.
+
+    When bullet lists are nested inside other containers (like
+    admonitions), we need to process their children and return the
+    resulting blocks.
     """
     del section_level
-    del node
-    # We don't create a block for the list itself,
-    # just process the children (list items)
-    return []
+    # Process each list item and return the resulting blocks
+    return [
+        _process_list_item_recursively(node=list_item, depth=0)
+        for list_item in node.children
+        if isinstance(list_item, nodes.list_item)
+    ]
 
 
 @_process_node_to_blocks.register
@@ -493,23 +489,6 @@ class NotionTranslator(NodeVisitor):
     def visit_bullet_list(self, node: nodes.Element) -> None:
         """
         Handle bullet list nodes by processing each list item.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-    def depart_bullet_list(self, node: nodes.Element) -> None:
-        """
-        Handle leaving bullet list nodes.
-        """
-        assert self
-        del node
-
-    def visit_list_item(self, node: nodes.Element) -> None:
-        """
-        Handle list item nodes by creating Notion BulletedItem blocks.
         """
         blocks = _process_node_to_blocks(
             node,
