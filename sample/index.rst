@@ -57,9 +57,17 @@ Some key features:
 * Converts RST to Notion-compatible format
 
   * Supports nested bullet points (new!)
-  * Deep nesting works too (limited to 2 levels)
-  * This limit is described in https://developers.notion.com/reference/patch-block-children "For blocks that allow children, we allow up to two levels of nesting in a single request."
-  * Note that the top level bullet-list is the "child" of the "body" so there is really only one level of nesting in the Notion API in one request.
+  * Deep nesting now works with multiple levels
+
+    * Third level nesting is now supported
+    * Fourth level also works
+
+      * Fifth level nesting works too!
+      * The upload script handles deep nesting automatically
+
+    * Back to third level
+
+  * Back to second level
 
 * Supports code blocks with syntax highlighting
 * Handles headings, links, and formatting

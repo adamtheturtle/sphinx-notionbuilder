@@ -937,12 +937,12 @@ def test_nested_bullet_list(
     )
 
 
-def test_nested_bullet_list_error_on_excessive_depth(
+def test_nested_bullet_list_with_deep_nesting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Test that an error is raised when bullet lists exceed the 2-level limit.
+    Test that deeply nested bullet lists work (limited by upload processing).
     """
     rst_content = """
         * Top level item
@@ -951,18 +951,41 @@ def test_nested_bullet_list_error_on_excessive_depth(
           * Second level item
           * Second level with children
 
-            * Third level item (should cause error)
+            * Third level item (now allowed!)
 
         * Another top level item
     """
 
-    expected_message = (
-        "Nested bullet point at depth 3 exceeds Notion API limit of 2 levels."
+    # Create deeply nested bullet structure
+    # Second level items
+    second_level_1 = UnoBulletedItem(text="Second level item")
+    second_level_2 = UnoBulletedItem(text="Second level with children")
+
+    # Note: Third level children will be flattened by upload processing
+    # We expect only 2 levels in the final structure
+
+    # Top level items
+    top_level_1 = UnoBulletedItem(text="Top level item")
+    top_level_2 = UnoBulletedItem(text="Top level with children")
+
+    # Add second level children to top level item 2
+    # Remove pyright ignore once we have
+    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+    # pylint: disable=line-too-long
+    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    top_level_3 = UnoBulletedItem(text="Another top level item")
+
+    expected_objects: list[NotionObject[Any]] = [
+        top_level_1,
+        top_level_2,
+        top_level_3,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )

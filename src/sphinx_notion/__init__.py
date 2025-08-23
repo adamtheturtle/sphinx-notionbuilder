@@ -57,24 +57,6 @@ def _process_list_item_recursively(
     bullet_only_msg = (
         "The only thing Notion supports within a bullet list is a bullet list"
     )
-    max_notion_depth = 1
-    if depth >= max_notion_depth:
-        # This limit is described in https://developers.notion.com/reference/patch-block-children
-        #
-        # "For blocks that allow children, we allow up to two levels of
-        # nesting in a single request."
-        #
-        # Note that the top level bullet-list is the "child" of the "body"
-        # so there is really only one level of nesting in the Notion API
-        # in one request.
-        for child in node.children[1:]:
-            assert isinstance(child, nodes.bullet_list), bullet_only_msg
-            max_levels = max_notion_depth + 1
-            msg = (
-                f"Nested bullet point at depth {max_levels + 1} "
-                f"exceeds Notion API limit of {max_levels} levels."
-            )
-            raise ValueError(msg)
 
     for child in node.children[1:]:
         assert isinstance(child, nodes.bullet_list), bullet_only_msg
@@ -88,6 +70,7 @@ def _process_list_item_recursively(
             )
             # Remove pyright ignore once we have
             # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+            # pylint: disable=line-too-long
             block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     return block
