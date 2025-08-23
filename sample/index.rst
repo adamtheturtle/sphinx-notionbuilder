@@ -11,6 +11,31 @@ This is **bold** and *italic* and ``inline code``.
 
    This is an important note that demonstrates the note admonition support.
 
+   Some nested content:
+
+   * First level item in note
+   * Another first level item
+
+     * Second level nested in note
+     * Another second level item
+
+       * Third level nested in note (deep!)
+       * Another third level item
+
+         * Fourth level nested in note (very deep!)
+         * Another fourth level item
+
+           * Fifth level nested in note (extremely deep!)
+           * Another fifth level item
+
+         * Back to fourth level in note
+
+       * Back to third level in note
+
+     * Back to second level in note
+
+   * Back to first level in note
+
 .. warning::
 
    This is a warning that demonstrates the warning admonition support.
@@ -30,6 +55,14 @@ This is **bold** and *italic* and ``inline code``.
    .. warning::
 
       This is a warning that demonstrates the warning admonition support.
+
+      .. warning::
+
+         This is a warning that demonstrates the nested admonition support.
+
+         .. warning::
+
+            This is a warning that demonstrates the even deeper admonition support.
 
 .. tip::
 

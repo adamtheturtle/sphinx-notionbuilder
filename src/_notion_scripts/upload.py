@@ -101,6 +101,141 @@ def _find_existing_page_by_title(
     return None
 
 
+def _get_block_children(block: _Block) -> list[_Block]:
+    """Get children from a block, regardless of block type."""
+    block_type = block.get("type")
+    if block_type == "bulleted_list_item":
+        return block.get("bulleted_list_item", {}).get("children", [])
+    if block_type == "numbered_list_item":
+        return block.get("numbered_list_item", {}).get("children", [])
+    if block_type == "to_do":
+        return block.get("to_do", {}).get("children", [])
+    if block_type == "toggle":
+        return block.get("toggle", {}).get("children", [])
+    if block_type == "quote":
+        return block.get("quote", {}).get("children", [])
+    if block_type == "callout":
+        return block.get("callout", {}).get("children", [])
+    if block_type == "synced_block":
+        return block.get("synced_block", {}).get("children", [])
+    if block_type == "column":
+        return block.get("column", {}).get("children", [])
+    if block_type == "table_row":
+        return []  # Table rows don't have nested children in the same way
+    # Generic case - many block types store children at the top level
+    return block.get("children", [])
+
+
+def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
+    """Set children on a block, regardless of block type."""
+    block_copy = dict(block)
+    block_type = block.get("type")
+
+    if block_type == "bulleted_list_item":
+        if "bulleted_list_item" not in block_copy:
+            block_copy["bulleted_list_item"] = {}
+        block_copy["bulleted_list_item"]["children"] = children
+    elif block_type == "numbered_list_item":
+        if "numbered_list_item" not in block_copy:
+            block_copy["numbered_list_item"] = {}
+        block_copy["numbered_list_item"]["children"] = children
+    elif block_type == "to_do":
+        if "to_do" not in block_copy:
+            block_copy["to_do"] = {}
+        block_copy["to_do"]["children"] = children
+    elif block_type == "toggle":
+        if "toggle" not in block_copy:
+            block_copy["toggle"] = {}
+        block_copy["toggle"]["children"] = children
+    elif block_type == "quote":
+        if "quote" not in block_copy:
+            block_copy["quote"] = {}
+        block_copy["quote"]["children"] = children
+    elif block_type == "callout":
+        if "callout" not in block_copy:
+            block_copy["callout"] = {}
+        block_copy["callout"]["children"] = children
+    elif block_type == "synced_block":
+        if "synced_block" not in block_copy:
+            block_copy["synced_block"] = {}
+        block_copy["synced_block"]["children"] = children
+    elif block_type == "column":
+        if "column" not in block_copy:
+            block_copy["column"] = {}
+        block_copy["column"]["children"] = children
+    else:
+        # Generic case
+        block_copy["children"] = children
+
+    return block_copy
+
+
+def _remove_block_children(block: _Block) -> _Block:
+    """Remove children from a block, regardless of block type."""
+    block_copy = dict(block)
+    block_type = block.get("type")
+
+    if block_type == "bulleted_list_item":
+        if "bulleted_list_item" in block_copy:
+            block_copy["bulleted_list_item"].pop("children", None)
+    elif block_type == "numbered_list_item":
+        if "numbered_list_item" in block_copy:
+            block_copy["numbered_list_item"].pop("children", None)
+    elif block_type == "to_do":
+        if "to_do" in block_copy:
+            block_copy["to_do"].pop("children", None)
+    elif block_type == "toggle":
+        if "toggle" in block_copy:
+            block_copy["toggle"].pop("children", None)
+    elif block_type == "quote":
+        if "quote" in block_copy:
+            block_copy["quote"].pop("children", None)
+    elif block_type == "callout":
+        if "callout" in block_copy:
+            block_copy["callout"].pop("children", None)
+    elif block_type == "synced_block":
+        if "synced_block" in block_copy:
+            block_copy["synced_block"].pop("children", None)
+    elif block_type == "column":
+        if "column" in block_copy:
+            block_copy["column"].pop("children", None)
+    else:
+        # Generic case
+        block_copy.pop("children", None)
+
+    return block_copy
+
+
+def _get_block_content(block: _Block) -> str:
+    """Get text content from a block for matching purposes."""
+    block_type = block.get("type")
+
+    # Most block types store rich_text in their type-specific object
+    if block_type in [
+        "bulleted_list_item",
+        "numbered_list_item",
+        "to_do",
+        "toggle",
+        "quote",
+        "heading_1",
+        "heading_2",
+        "heading_3",
+        "paragraph",
+    ]:
+        type_obj = block.get(block_type, {})
+        rich_text = type_obj.get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in rich_text)
+    if block_type == "callout":
+        rich_text = block.get("callout", {}).get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in rich_text)
+    if block_type == "code":
+        rich_text = block.get("code", {}).get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in rich_text)
+    # For other block types, try to find any text content
+    # This is a fallback for block types we haven't specifically handled
+    return str(block.get("id", ""))
+
+
 def _extract_deep_children(
     blocks: list[_Block],
     max_depth: int = 1,
@@ -115,13 +250,7 @@ def _extract_deep_children(
     deep_upload_tasks = []
 
     def process_block(block: _Block, current_depth: int = 0) -> _Block:
-        # Get children from the appropriate location based on block type
-        children = None
-        if block.get("type") == "bulleted_list_item":
-            children = block.get("bulleted_list_item", {}).get("children", [])
-        else:
-            children = block.get("children", [])
-
+        children = _get_block_children(block)
         if not children:
             return block
 
@@ -129,65 +258,30 @@ def _extract_deep_children(
         processed_children = []
 
         for child in children:
-            # Get child's children for depth checking
-            child_children = None
-            if child.get("type") == "bulleted_list_item":
-                child_children = child.get("bulleted_list_item", {}).get(
-                    "children", []
-                )
-            else:
-                child_children = child.get("children", [])
+            child_children = _get_block_children(child)
 
             if current_depth >= max_depth and child_children:
                 # Extract deep children - remove them from this level
-                child_copy = dict(child)
-                if child.get("type") == "bulleted_list_item":
-                    child_copy["bulleted_list_item"] = dict(
-                        child["bulleted_list_item"]
-                    )
-                    deep_children = child_copy["bulleted_list_item"].pop(
-                        "children", []
-                    )
-                else:
-                    deep_children = child_copy.pop("children", [])
+                child_copy = _remove_block_children(child)
                 processed_children.append(child_copy)
 
                 # Store for later upload (we'll find the actual ID later)
-                deep_upload_tasks.append((child_copy, deep_children))
+                deep_upload_tasks.append((child_copy, child_children))
             else:
                 # Keep processing normally, but check for children
                 processed_child = process_block(child, current_depth + 1)
                 # Remove empty children arrays
-                if processed_child.get("type") == "bulleted_list_item":
-                    if (
-                        "children"
-                        in processed_child.get("bulleted_list_item", {})
-                        and not processed_child["bulleted_list_item"][
-                            "children"
-                        ]
-                    ):
-                        del processed_child["bulleted_list_item"]["children"]
-                elif (
-                    "children" in processed_child
-                    and not processed_child["children"]
-                ):
-                    del processed_child["children"]
+                child_children_after = _get_block_children(processed_child)
+                if not child_children_after:
+                    processed_child = _remove_block_children(processed_child)
                 processed_children.append(processed_child)
 
-        # Update children in the appropriate location
+        # Update children in the block
         if processed_children:
-            if block.get("type") == "bulleted_list_item":
-                if "bulleted_list_item" not in block_copy:
-                    block_copy["bulleted_list_item"] = {}
-                block_copy["bulleted_list_item"]["children"] = (
-                    processed_children
-                )
-            else:
-                block_copy["children"] = processed_children
-        elif block.get("type") == "bulleted_list_item":
-            block_copy.get("bulleted_list_item", {}).pop("children", None)
+            block_copy = _set_block_children(block_copy, processed_children)
         else:
-            block_copy.pop("children", None)
+            block_copy = _remove_block_children(block_copy)
+
         return block_copy
 
     for block in blocks:
@@ -327,26 +421,11 @@ def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
     if template_type != uploaded_type:
         return False
 
-    # For bulleted_list_item, match by rich_text content
-    if template_type == "bulleted_list_item":
-        template_rich_text = template_block.get("bulleted_list_item", {}).get(
-            "rich_text", []
-        )
-        uploaded_rich_text = uploaded_block.get("bulleted_list_item", {}).get(
-            "rich_text", []
-        )
+    # Match by content for all block types that have text content
+    template_content = _get_block_content(template_block)
+    uploaded_content = _get_block_content(uploaded_block)
 
-        template_content = "".join(
-            item.get("plain_text", "") for item in template_rich_text
-        )
-        uploaded_content = "".join(
-            item.get("plain_text", "") for item in uploaded_rich_text
-        )
-
-        return template_content == uploaded_content
-
-    # Add more matching logic for other block types as needed
-    return False
+    return template_content == uploaded_content
 
 
 def _upload_blocks_in_batches(
