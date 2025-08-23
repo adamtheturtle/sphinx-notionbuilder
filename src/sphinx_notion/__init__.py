@@ -423,17 +423,26 @@ class NotionTranslator(NodeVisitor):
         self.body: str
         self._section_level = 0
 
-    def visit_title(self, node: nodes.Element) -> None:
+    def _visit_and_skip_node(self, node: nodes.Element) -> None:
         """
-        Handle title nodes by creating appropriate Notion heading blocks.
+        Helper method for visit methods that process nodes and skip children.
         """
         blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
         self._blocks.extend(blocks)
-
         raise nodes.SkipNode
+
+    visit_title = _visit_and_skip_node
+    visit_paragraph = _visit_and_skip_node
+    visit_block_quote = _visit_and_skip_node
+    visit_literal_block = _visit_and_skip_node
+    visit_bullet_list = _visit_and_skip_node
+    visit_topic = _visit_and_skip_node
+    visit_note = _visit_and_skip_node
+    visit_warning = _visit_and_skip_node
+    visit_tip = _visit_and_skip_node
 
     def visit_section(self, node: nodes.Element) -> None:
         """
@@ -448,97 +457,6 @@ class NotionTranslator(NodeVisitor):
         """
         del node
         self._section_level -= 1
-
-    def visit_paragraph(self, node: nodes.Element) -> None:
-        """
-        Handle paragraph nodes by creating Notion Paragraph blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_block_quote(self, node: nodes.Element) -> None:
-        """
-        Handle block quote nodes by creating Notion Quote blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_literal_block(self, node: nodes.Element) -> None:
-        """
-        Handle literal block nodes by creating Notion Code blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_bullet_list(self, node: nodes.Element) -> None:
-        """
-        Handle bullet list nodes by processing each list item.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_topic(self, node: nodes.Element) -> None:
-        """
-        Handle topic nodes, specifically for table of contents.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_note(self, node: nodes.Element) -> None:
-        """
-        Handle note admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_warning(self, node: nodes.Element) -> None:
-        """
-        Handle warning admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_tip(self, node: nodes.Element) -> None:
-        """
-        Handle tip admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
 
     def visit_document(self, node: nodes.Element) -> None:
         """
