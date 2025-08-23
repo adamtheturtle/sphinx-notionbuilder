@@ -8,16 +8,16 @@ Some text with a link to `Google <https://google.com>`_ and `<https://example.co
 This is **bold** and *italic* and ``inline code``.
 
 .. note::
+
    This is an important note that demonstrates the note admonition support.
-   It will be converted to a Notion callout block with a note emoji.
 
 .. warning::
+
    This is a warning that demonstrates the warning admonition support.
-   It will be converted to a Notion callout block with a warning emoji and yellow background.
 
 .. tip::
+
    This is a helpful tip that demonstrates the tip admonition support.
-   It will be converted to a Notion callout block with a lightbulb emoji and green background.
 
 .. code-block:: python
 
@@ -58,6 +58,6 @@ Heading 3 with ``inline code``
 
 Regular paragraph.
 
-    This is a multiline
+    This is a multi-line
     block quote with
     multiple lines.
