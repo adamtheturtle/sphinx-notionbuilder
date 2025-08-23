@@ -474,6 +474,7 @@ class NotionTranslator(NodeVisitor):
         """
         Handle leaving bullet list nodes.
         """
+        assert self
         del node
 
     def visit_list_item(self, node: nodes.Element) -> None:
