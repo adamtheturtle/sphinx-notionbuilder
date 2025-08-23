@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pygments.lexers import get_all_lexers
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -875,3 +876,106 @@ def test_nested_bullet_list_error_on_excessive_depth(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def _get_supported_pygments_languages() -> list[tuple[str, CodeLang]]:
+    """
+    Get Pygments language aliases and their expected CodeLang mappings.
+    """
+    # Get all Pygments lexer aliases
+    all_aliases: set[str] = set()
+    for _, aliases, _, _ in get_all_lexers():
+        all_aliases.update(aliases)
+
+    # Define mapping from Pygments language to expected CodeLang
+    # This is based on the actual mapping in the implementation
+    language_mappings = [
+        ("abap", CodeLang.ABAP),
+        ("bash", CodeLang.BASH),
+        ("c", CodeLang.C),
+        ("cpp", CodeLang.CPP),
+        ("c++", CodeLang.CPP),
+        ("csharp", CodeLang.CSHARP),
+        ("css", CodeLang.CSS),
+        ("dart", CodeLang.DART),
+        ("diff", CodeLang.DIFF),
+        ("elixir", CodeLang.ELIXIR),
+        ("elm", CodeLang.ELM),
+        ("erlang", CodeLang.ERLANG),
+        ("fortran", CodeLang.FORTRAN),
+        ("go", CodeLang.GO),
+        ("haskell", CodeLang.HASKELL),
+        ("html", CodeLang.HTML),
+        ("java", CodeLang.JAVA),
+        ("javascript", CodeLang.JAVASCRIPT),
+        ("js", CodeLang.JAVASCRIPT),
+        ("json", CodeLang.JSON),
+        ("julia", CodeLang.JULIA),
+        ("kotlin", CodeLang.KOTLIN),
+        ("latex", CodeLang.LATEX),
+        ("lua", CodeLang.LUA),
+        ("markdown", CodeLang.MARKDOWN),
+        ("matlab", CodeLang.MATLAB),
+        ("objective-c", CodeLang.OBJECTIVE_C),
+        ("ocaml", CodeLang.OCAML),
+        ("pascal", CodeLang.PASCAL),
+        ("perl", CodeLang.PERL),
+        ("php", CodeLang.PHP),
+        ("powershell", CodeLang.POWERSHELL),
+        ("python", CodeLang.PYTHON),
+        ("py", CodeLang.PYTHON),
+        ("r", CodeLang.R),
+        ("ruby", CodeLang.RUBY),
+        ("rust", CodeLang.RUST),
+        ("scala", CodeLang.SCALA),
+        ("shell", CodeLang.SHELL),
+        ("sh", CodeLang.SHELL),
+        ("sql", CodeLang.SQL),
+        ("swift", CodeLang.SWIFT),
+        ("typescript", CodeLang.TYPESCRIPT),
+        ("ts", CodeLang.TYPESCRIPT),
+        ("xml", CodeLang.XML),
+        ("yaml", CodeLang.YAML),
+    ]
+
+    # Only return languages that are valid Pygments aliases
+    return [
+        (lang, code_lang)
+        for lang, code_lang in language_mappings
+        if lang in all_aliases
+    ]
+
+
+@pytest.mark.parametrize(
+    argnames=("pygments_lang", "expected_code_lang"),
+    argvalues=_get_supported_pygments_languages(),
+)
+def test_pygments_language_mapping(
+    pygments_lang: str,
+    expected_code_lang: CodeLang,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that Pygments languages map to correct Notion languages.
+    """
+    rst_content = f"""
+        .. code-block:: {pygments_lang}
+
+           def example():
+               return "Hello, world!"
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        _create_code_block_without_annotations(
+            content='def example():\n    return "Hello, world!"',
+            language=expected_code_lang,
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
