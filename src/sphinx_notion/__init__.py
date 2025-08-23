@@ -197,6 +197,22 @@ def _(node: nodes.list_item, *, section_level: int) -> list[NotionObject[Any]]:
 
 
 @_process_node_to_blocks.register
+def _(
+    node: nodes.bullet_list,
+    *,
+    section_level: int,
+) -> list[NotionObject[Any]]:
+    """
+    Process bullet list nodes by creating Notion BulletedItem blocks.
+    """
+    del section_level
+    del node
+    # We don't create a block for the list itself,
+    # just process the children (list items)
+    return []
+
+
+@_process_node_to_blocks.register
 def _(node: nodes.topic, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process topic nodes, specifically for table of contents.
@@ -232,7 +248,7 @@ def _(node: nodes.note, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process note admonition nodes by creating Notion Callout blocks.
     """
-    del section_level  # Not used for admonitions
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
 
     block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
@@ -245,7 +261,7 @@ def _(node: nodes.warning, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process warning admonition nodes by creating Notion Callout blocks.
     """
-    del section_level  # Not used for admonitions
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
 
     block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
@@ -258,7 +274,7 @@ def _(node: nodes.tip, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process tip admonition nodes by creating Notion Callout blocks.
     """
-    del section_level  # Not used for admonitions
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
 
     block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
@@ -448,8 +464,11 @@ class NotionTranslator(NodeVisitor):
         """
         Handle bullet list nodes by processing each list item.
         """
-        # We don't create a block for the list itself,
-        # just process the children (list items)
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
 
     def depart_bullet_list(self, node: nodes.Element) -> None:
         """
