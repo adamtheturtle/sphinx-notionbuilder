@@ -107,13 +107,8 @@ def _upload_blocks_in_batches(
     blocks: list[_Block],
     batch_size: int = NOTION_BLOCKS_BATCH_SIZE,
 ) -> None:
-    """Upload blocks to a page in batches to avoid 413 errors.
-
-    Args:
-        notion_client: The Notion client
-        page_id: ID of the page to add blocks to
-        blocks: List of blocks to upload
-        batch_size: Number of blocks per batch
+    """
+    Upload blocks to a page in batches to avoid 413 errors.
     """
     if not blocks:
         return
