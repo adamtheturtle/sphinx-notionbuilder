@@ -41,10 +41,7 @@ from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
 
 
-def _process_list_item_recursively(
-    node: nodes.list_item,
-    depth: int,
-) -> UnoBulletedItem:
+def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
     """
     Recursively process a list item node and return a BulletedItem.
     """
@@ -66,7 +63,6 @@ def _process_list_item_recursively(
             )
             nested_block = _process_list_item_recursively(
                 node=nested_list_item,
-                depth=depth + 1,
             )
             # Remove pyright ignore once we have
             # https://github.com/ultimate-notion/ultimate-notion/issues/94.
@@ -181,7 +177,7 @@ def _(
     """
     del section_level
     return [
-        _process_list_item_recursively(node=list_item, depth=0)
+        _process_list_item_recursively(node=list_item)
         for list_item in node.children
         if isinstance(list_item, nodes.list_item)
     ]
