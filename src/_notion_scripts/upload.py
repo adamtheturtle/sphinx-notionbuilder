@@ -13,6 +13,7 @@ from typing import Any, cast
 from notion_client import Client
 
 NOTION_RICH_TEXT_LIMIT = 2000
+NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
 
 _Block = dict[str, Any]
@@ -100,6 +101,45 @@ def _find_existing_page_by_title(
     return None
 
 
+def _upload_blocks_in_batches(
+    notion_client: Client,
+    page_id: str,
+    blocks: list[_Block],
+    batch_size: int = NOTION_BLOCKS_BATCH_SIZE,
+) -> None:
+    """
+    Upload blocks to a page in batches to avoid 413 errors.
+    """
+    if not blocks:
+        return
+
+    total_blocks = len(blocks)
+    sys.stderr.write(
+        f"Uploading {total_blocks} blocks in batches of {batch_size}...\n"
+    )
+
+    for i in range(0, total_blocks, batch_size):
+        batch = blocks[i : i + batch_size]
+        batch_num = (i // batch_size) + 1
+        total_batches = (total_blocks + batch_size - 1) // batch_size
+
+        sys.stderr.write(
+            f"Uploading batch {batch_num}/{total_batches} "
+            f"({len(batch)} blocks)...\n"
+        )
+
+        try:
+            notion_client.blocks.children.append(
+                block_id=page_id,
+                children=batch,
+            )
+        except Exception as e:
+            sys.stderr.write(f"Error uploading batch {batch_num}: {e}\n")
+            raise
+
+    sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
+
+
 def main() -> None:
     """
     Main entry point for the upload command.
@@ -123,6 +163,14 @@ def main() -> None:
         "--title",
         help="Title of the new page",
         required=True,
+    )
+    parser.add_argument(
+        "--batch-size",
+        help=(
+            f"Number of blocks per batch (default: {NOTION_BLOCKS_BATCH_SIZE})"
+        ),
+        type=int,
+        default=NOTION_BLOCKS_BATCH_SIZE,
     )
     args = parser.parse_args()
 
@@ -156,22 +204,51 @@ def main() -> None:
             if child_id:
                 notion.blocks.delete(block_id=child_id)
 
-        notion.blocks.children.append(
-            block_id=existing_page_id,
-            children=processed_contents,
+        _upload_blocks_in_batches(
+            notion_client=notion,
+            page_id=existing_page_id,
+            blocks=processed_contents,
+            batch_size=args.batch_size,
         )
         sys.stdout.write(
             f"Updated existing page: {args.title} (ID: {existing_page_id})"
         )
     else:
-        new_page: Any = notion.pages.create(
-            parent={"type": "page_id", "page_id": args.parent_page_id},
-            properties={
-                "title": {"title": [{"text": {"content": args.title}}]},
-            },
-            children=processed_contents,
-        )
-        page_id = new_page.get("id", "unknown")
+        # For new pages, we still need to handle large content
+        # Split into initial creation + additional batches if needed
+        if len(processed_contents) > args.batch_size:
+            # Create page with first batch
+            initial_batch = processed_contents[: args.batch_size]
+            remaining_blocks = processed_contents[args.batch_size :]
+
+            new_page: Any = notion.pages.create(
+                parent={"type": "page_id", "page_id": args.parent_page_id},
+                properties={
+                    "title": {"title": [{"text": {"content": args.title}}]},
+                },
+                children=initial_batch,
+            )
+            page_id = new_page.get("id", "unknown")
+
+            # Upload remaining blocks in batches
+            if remaining_blocks:
+                _upload_blocks_in_batches(
+                    notion_client=notion,
+                    page_id=page_id,
+                    blocks=remaining_blocks,
+                    batch_size=args.batch_size,
+                )
+        else:
+            # Small enough to create in one go
+            new_page_small: Any = notion.pages.create(
+                parent={"type": "page_id", "page_id": args.parent_page_id},
+                properties={
+                    "title": {"title": [{"text": {"content": args.title}}]},
+                },
+                children=processed_contents,
+            )
+            page_id = new_page_small.get("id", "unknown")
+
         sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
 
 
