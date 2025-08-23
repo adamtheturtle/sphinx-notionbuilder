@@ -129,39 +129,19 @@ def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
     """
     block_copy = dict(block)
     block_type = block.get("type")
-
-    if block_type == "bulleted_list_item":
-        if "bulleted_list_item" not in block_copy:
-            block_copy["bulleted_list_item"] = {}
-        block_copy["bulleted_list_item"]["children"] = children
-    elif block_type == "numbered_list_item":
-        if "numbered_list_item" not in block_copy:
-            block_copy["numbered_list_item"] = {}
-        block_copy["numbered_list_item"]["children"] = children
-    elif block_type == "to_do":
-        if "to_do" not in block_copy:
-            block_copy["to_do"] = {}
-        block_copy["to_do"]["children"] = children
-    elif block_type == "toggle":
-        if "toggle" not in block_copy:
-            block_copy["toggle"] = {}
-        block_copy["toggle"]["children"] = children
-    elif block_type == "quote":
-        if "quote" not in block_copy:
-            block_copy["quote"] = {}
-        block_copy["quote"]["children"] = children
-    elif block_type == "callout":
-        if "callout" not in block_copy:
-            block_copy["callout"] = {}
-        block_copy["callout"]["children"] = children
-    elif block_type == "synced_block":
-        if "synced_block" not in block_copy:
-            block_copy["synced_block"] = {}
-        block_copy["synced_block"]["children"] = children
-    elif block_type == "column":
-        if "column" not in block_copy:
-            block_copy["column"] = {}
-        block_copy["column"]["children"] = children
+    if block_type in {
+        "bulleted_list_item",
+        "numbered_list_item",
+        "to_do",
+        "toggle",
+        "quote",
+        "callout",
+        "synced_block",
+        "column",
+    }:
+        if block_type not in block_copy:
+            block_copy[block_type] = {}
+        block_copy[block_type]["children"] = children
     else:
         # Generic case
         block_copy["children"] = children
