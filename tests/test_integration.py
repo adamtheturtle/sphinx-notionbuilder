@@ -781,20 +781,16 @@ def test_admonition_multiline(
 
            This is the second paragraph that should be nested.
     """
-    # Create the callout with the first paragraph as text
     callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
     callout.rich_text = text(
         text=f"This is the first paragraph of the {admonition_type}."
     )
 
-    # Create the nested paragraph block
     nested_paragraph = UnoParagraph(
         text="This is the second paragraph that should be nested."
     )
 
-    # Add the nested paragraph as a child to the callout
-    children = callout.obj_ref.value.children  # pyright: ignore[reportUnknownMemberType]
-    children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
