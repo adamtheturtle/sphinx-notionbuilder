@@ -218,7 +218,10 @@ def _extract_deep_children(
     processed_blocks = []
     deep_upload_tasks = []
 
-    def process_block(block: _Block, current_depth: int = 0) -> _Block:
+    def _process_block(block: _Block, current_depth: int = 0) -> _Block:
+        """
+        Process a block and its children, limiting the depth of processing.
+        """
         children = _get_block_children(block=block)
         if not children:
             return block
@@ -238,7 +241,7 @@ def _extract_deep_children(
                 deep_upload_tasks.append((child_copy, child_children))
             else:
                 # Keep processing normally, but check for children
-                processed_child = process_block(
+                processed_child = _process_block(
                     block=child, current_depth=current_depth + 1
                 )
                 # Remove empty children arrays
@@ -262,7 +265,7 @@ def _extract_deep_children(
         return block_copy
 
     for block in blocks:
-        processed_block = process_block(block=block, current_depth=0)
+        processed_block = _process_block(block=block, current_depth=0)
         processed_blocks.append(processed_block)
 
     return processed_blocks, deep_upload_tasks
@@ -360,7 +363,10 @@ def _find_matching_block_id(
     if not template_type:
         return None
 
-    def search_blocks_recursively(blocks: list[_Block]) -> str | None:
+    def _search_blocks_recursively(blocks: list[_Block]) -> str | None:
+        """
+        Recursively search blocks for a match.
+        """
         for uploaded_block in blocks:
             # Check if this block matches
             if _blocks_match(
@@ -374,12 +380,12 @@ def _find_matching_block_id(
                 # let's assume children are included in the response
                 children = uploaded_block.get("children", [])
                 if children:
-                    child_result = search_blocks_recursively(blocks=children)
+                    child_result = _search_blocks_recursively(blocks=children)
                     if child_result:
                         return child_result
         return None
 
-    return search_blocks_recursively(blocks=uploaded_blocks)
+    return _search_blocks_recursively(blocks=uploaded_blocks)
 
 
 def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
@@ -438,7 +444,7 @@ def _upload_blocks_in_batches(
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     """
     Main entry point for the upload command.
     """
