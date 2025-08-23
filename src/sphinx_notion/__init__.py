@@ -243,17 +243,28 @@ def _(node: nodes.title, *, section_level: int) -> list[NotionObject[Any]]:
     return [block]
 
 
+def _create_admonition_callout(
+    node: nodes.Element,
+    *,
+    emoji: str,
+    color: Color,
+) -> list[NotionObject[Any]]:
+    """
+    Create a Notion Callout block for admonition nodes.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+    block = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
+    block.rich_text = rich_text
+    return [block]
+
+
 @_process_node_to_blocks.register
 def _(node: nodes.note, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process note admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    rich_text = _create_rich_text_from_children(node=node)
-
-    block = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
-    block.rich_text = rich_text
-    return [block]
+    return _create_admonition_callout(node=node, emoji="📝", color=Color.BLUE)
 
 
 @_process_node_to_blocks.register
@@ -262,11 +273,7 @@ def _(node: nodes.warning, *, section_level: int) -> list[NotionObject[Any]]:
     Process warning admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    rich_text = _create_rich_text_from_children(node=node)
-
-    block = UnoCallout(text="", icon=Emoji(emoji="⚠️"), color=Color.YELLOW)
-    block.rich_text = rich_text
-    return [block]
+    return _create_admonition_callout(node=node, emoji="⚠️", color=Color.YELLOW)
 
 
 @_process_node_to_blocks.register
@@ -275,11 +282,7 @@ def _(node: nodes.tip, *, section_level: int) -> list[NotionObject[Any]]:
     Process tip admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    rich_text = _create_rich_text_from_children(node=node)
-
-    block = UnoCallout(text="", icon=Emoji(emoji="💡"), color=Color.GREEN)
-    block.rich_text = rich_text
-    return [block]
+    return _create_admonition_callout(node=node, emoji="💡", color=Color.GREEN)
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
