@@ -127,19 +127,24 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
 @singledispatch
 def _process_node_to_blocks(
-    _: nodes.Element,
+    node: nodes.Element,
+    *,
+    section_level: int,
 ) -> NotionObject[Any]:  # pragma: no cover
     """
     Required function for singledispatch.
     """
+    del node
+    del section_level
     raise NotImplementedError
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.paragraph) -> NotionObject[Any]:
+def _(node: nodes.paragraph, *, section_level: int) -> NotionObject[Any]:
     """
     Process paragraph nodes by creating Notion Paragraph blocks.
     """
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
     paragraph_block = UnoParagraph(text="")
     paragraph_block.rich_text = rich_text
@@ -147,10 +152,11 @@ def _(node: nodes.paragraph) -> NotionObject[Any]:
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.block_quote) -> NotionObject[Any]:
+def _(node: nodes.block_quote, *, section_level: int) -> NotionObject[Any]:
     """
     Process block quote nodes by creating Notion Quote blocks.
     """
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
     quote_block = UnoQuote(text="")
     quote_block.rich_text = rich_text
@@ -158,10 +164,11 @@ def _(node: nodes.block_quote) -> NotionObject[Any]:
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.literal_block) -> NotionObject[Any]:
+def _(node: nodes.literal_block, *, section_level: int) -> NotionObject[Any]:
     """
     Process literal block nodes by creating Notion Code blocks.
     """
+    del section_level
     code_text = _create_rich_text_from_children(node=node)
     pygments_lang = node.get(key="language", failobj="")
     language = _map_pygments_to_notion_language(
@@ -177,22 +184,43 @@ def _(node: nodes.literal_block) -> NotionObject[Any]:
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.list_item) -> NotionObject[Any]:
+def _(node: nodes.list_item, *, section_level: int) -> NotionObject[Any]:
     """
     Process list item nodes by creating BulletedItem blocks.
     """
+    del section_level
     return _process_list_item_recursively(node=node, depth=0)
 
 
 @_process_node_to_blocks.register
-def _(node: nodes.topic) -> NotionObject[Any]:
+def _(node: nodes.topic, *, section_level: int) -> NotionObject[Any]:
     """
     Process topic nodes, specifically for table of contents.
     """
+    del section_level  # Not used for topics
     # Later, we can support `.. topic::` directives, likely as
     # a callout with no icon.
     assert "contents" in node["classes"]
     return UnoTableOfContents()
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.title, *, section_level: int) -> NotionObject[Any]:
+    """
+    Process title nodes by creating appropriate Notion heading blocks.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+
+    heading_levels: dict[int, type[UnoHeading[Any]]] = {
+        1: UnoHeading1,
+        2: UnoHeading2,
+        3: UnoHeading3,
+    }
+    heading_cls = heading_levels[section_level]
+    block = heading_cls(text="")
+
+    block.rich_text = rich_text
+    return block
 
 
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
@@ -318,18 +346,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle title nodes by creating appropriate Notion heading blocks.
         """
-        heading_level = self._section_level
-        rich_text = _create_rich_text_from_children(node=node)
-
-        heading_levels: dict[int, type[UnoHeading[Any]]] = {
-            1: UnoHeading1,
-            2: UnoHeading2,
-            3: UnoHeading3,
-        }
-        heading_cls = heading_levels[heading_level]
-        block = heading_cls(text="")
-
-        block.rich_text = rich_text
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
 
         raise nodes.SkipNode
@@ -352,7 +372,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        block = _process_node_to_blocks(node)
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
         raise nodes.SkipNode
 
@@ -360,7 +383,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        block = _process_node_to_blocks(node)
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
         raise nodes.SkipNode
 
@@ -368,7 +394,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        block = _process_node_to_blocks(node)
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
         raise nodes.SkipNode
 
@@ -389,7 +418,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle list item nodes by creating Notion BulletedItem blocks.
         """
-        block = _process_node_to_blocks(node)
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
         raise nodes.SkipNode
 
@@ -397,7 +429,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle topic nodes, specifically for table of contents.
         """
-        block = _process_node_to_blocks(node)
+        block = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
         self._blocks.append(block)
         raise nodes.SkipNode
 
