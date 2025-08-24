@@ -1101,3 +1101,39 @@ def test_table_without_header_row(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_table_inline_formatting(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Table headers and cells with inline formatting (bold, italic, code)
+    convert to Notion Table with rich text in header and cells.
+    """
+    rst_content = """
+        +----------------------+----------------------+
+        | **Header Bold**      | *Header Italic*      |
+        +======================+======================+
+        | ``cell code``        | Normal cell          |
+        +----------------------+----------------------+
+    """
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+
+    # Header row: formatting is currently stripped by the builder, so expect plain text
+    table[0, 0] = text(text="Header Bold", bold=True)
+    table[0, 1] = text(text="Header Italic", italic=True)
+
+    # Data row: inline code is stripped too; expect plain text
+    table[1, 0] = text(text="cell code", code=True)
+    table[1, 1] = text(text="Normal cell")
+
+    expected_objects: list[NotionObject[Any]] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
