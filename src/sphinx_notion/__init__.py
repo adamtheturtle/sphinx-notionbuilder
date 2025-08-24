@@ -44,7 +44,6 @@ from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
-from ultimate_notion.rich_text import text as ut_text
 
 
 def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
@@ -152,12 +151,12 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     if header_row:
         for col_idx, entry in enumerate(iterable=header_row.children):
             cell_text = " ".join(entry.astext().split())
-            table[row_idx, col_idx] = ut_text(text=cell_text)
+            table[row_idx, col_idx] = text(text=cell_text)
         row_idx += 1
     for body_row in body_rows:
         for col_idx, entry in enumerate(iterable=body_row.children):
             cell_text = " ".join(entry.astext().split())
-            table[row_idx, col_idx] = ut_text(text=cell_text)
+            table[row_idx, col_idx] = text(text=cell_text)
         row_idx += 1
     return [table]
 
