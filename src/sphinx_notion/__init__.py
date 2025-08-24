@@ -135,13 +135,12 @@ def _extract_table_structure(
     return n_cols, header_row, body_rows
 
 
-def _cell_source_node(entry: nodes.Node) -> nodes.Element:
+def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
     """Return the paragraph child of an entry if present, else the entry.
 
     This isolates the small branch used when converting a table cell so
     the main table function becomes simpler.
     """
-    # If a single paragraph child exists, return it (fast-path).
     paragraph_children = [
         c for c in entry.children if isinstance(c, nodes.paragraph)
     ]
@@ -152,18 +151,14 @@ def _cell_source_node(entry: nodes.Node) -> nodes.Element:
     # create a combined node that preserves all content. We insert a
     # double-newline text node between each top-level child to mimic
     # paragraph separation when converting to plain text/rich text.
-    if len(entry.children) > 1:
-        # Join the plain text of each top-level child with two newlines so
-        # the resulting rich text becomes a single text fragment like
-        # 'Cell 3\n\nCell 3' (matches test expectations).
-        parts: list[str] = [c.astext() for c in entry.children]
-        joined = "\n\n".join(parts)
-        combined = nodes.paragraph()
-        combined += nodes.Text(joined)
-        return combined
-
-    # Fallback: return the entry as-is.
-    return cast("nodes.Element", entry)
+    # Join the plain text of each top-level child with two newlines so
+    # the resulting rich text becomes a single text fragment like
+    # 'Cell 3\n\nCell 3' (matches test expectations).
+    parts: list[str] = [c.astext() for c in entry.children]
+    joined = "\n\n".join(parts)
+    combined = nodes.paragraph()
+    combined += nodes.Text(joined)
+    return combined
 
 
 @singledispatch
