@@ -201,12 +201,12 @@ def _(node: nodes.topic, *, section_level: int) -> list[NotionObject[Any]]:
 @_process_node_to_blocks.register
 def _(node: nodes.compound, *, section_level: int) -> list[NotionObject[Any]]:
     """
-    Process Sphinx toctree nodes.
+    Process Sphinx ``toctree`` nodes.
     """
     del node
     del section_level
-    # There are no specific Notion blocks for toctree nodes.
-    # We need to support toctree in index.rst.
+    # There are no specific Notion blocks for ``toctree`` nodes.
+    # We need to support ``toctree`` in ``index.rst``.
     # Just ignore it.
     return []
 

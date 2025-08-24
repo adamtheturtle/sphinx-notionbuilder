@@ -578,7 +578,7 @@ def test_toctree_directive(
     tmp_path: Path,
 ) -> None:
     """
-    Test that the toctree directive converts to nothing.
+    Test that the ``toctree`` directive converts to nothing.
     """
     rst_content = """
         Introduction
