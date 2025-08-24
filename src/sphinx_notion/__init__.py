@@ -135,17 +135,17 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     body_rows = []
     n_cols = 0
     for child in node.children:
-        if isinstance(child, nodes.tgroup):
-            n_cols = int(child.get("cols", 0))
-            for tgroup_child in child.children:
-                if isinstance(tgroup_child, nodes.thead):
-                    for row in tgroup_child.children:
-                        assert isinstance(row, nodes.row)
-                        header_row = row
-                elif isinstance(tgroup_child, nodes.tbody):
-                    for row in tgroup_child.children:
-                        assert isinstance(row, nodes.row)
-                        body_rows.append(row)
+        assert isinstance(child, nodes.tgroup)
+        n_cols = int(child.get("cols", 0))
+        for tgroup_child in child.children:
+            if isinstance(tgroup_child, nodes.thead):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    header_row = row
+            elif isinstance(tgroup_child, nodes.tbody):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    body_rows.append(row)
     n_rows = 1 + len(body_rows) if header_row else len(body_rows)
     table = UnoTable(n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row))
     row_idx = 0
