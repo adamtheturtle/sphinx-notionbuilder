@@ -29,6 +29,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Quote as UnoQuote,
 )
+from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
@@ -1030,4 +1031,42 @@ def test_collapse_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+    )
+
+
+def test_simple_table(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Simple rST table converts to Notion Table block.
+    """
+    rst_content = """
+        +----------+----------+
+        | Header 1 | Header 2 |
+        +==========+==========+
+        | Cell 1   | Cell 2   |
+        +----------+----------+
+        | Cell 3   | Cell 4   |
+        +----------+----------+
+    """
+
+    table = UnoTable(n_rows=3, n_cols=2, header_row=True)
+    # Header row
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    # First data row
+    table[1, 0] = text(text="Cell 1")
+    table[1, 1] = text(text="Cell 2")
+    # Second data row
+    table[2, 0] = text(text="Cell 3")
+    table[2, 1] = text(text="Cell 4")
+
+    expected_objects: list[NotionObject[Any]] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )

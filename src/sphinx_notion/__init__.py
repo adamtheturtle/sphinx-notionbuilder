@@ -33,6 +33,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Quote as UnoQuote,
 )
+from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
@@ -43,6 +44,7 @@ from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import Text, text
+from ultimate_notion.rich_text import text as ut_text
 
 
 def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
@@ -120,6 +122,44 @@ def _process_node_to_blocks(
     del node
     del section_level
     raise NotImplementedError
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
+    """
+    Process rST table nodes by creating Notion Table blocks.
+    """
+    del section_level
+    # Find header and body rows
+    header_row = None
+    body_rows = []
+    n_cols = 0
+    for child in node.children:
+        if isinstance(child, nodes.tgroup):
+            n_cols = int(child.get("cols", 0))
+            for tgroup_child in child.children:
+                if isinstance(tgroup_child, nodes.thead):
+                    for row in tgroup_child.children:
+                        if isinstance(row, nodes.row):
+                            header_row = row
+                elif isinstance(tgroup_child, nodes.tbody):
+                    for row in tgroup_child.children:
+                        if isinstance(row, nodes.row):
+                            body_rows.append(row)
+    n_rows = 1 + len(body_rows) if header_row else len(body_rows)
+    table = UnoTable(n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row))
+    row_idx = 0
+    if header_row:
+        for col_idx, entry in enumerate(header_row.children):
+            cell_text = " ".join(entry.astext().split())
+            table[row_idx, col_idx] = ut_text(text=cell_text)
+        row_idx += 1
+    for body_row in body_rows:
+        for col_idx, entry in enumerate(body_row.children):
+            cell_text = " ".join(entry.astext().split())
+            table[row_idx, col_idx] = ut_text(text=cell_text)
+        row_idx += 1
+    return [table]
 
 
 @_process_node_to_blocks.register
@@ -540,6 +580,18 @@ class NotionTranslator(NodeVisitor):
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_table(self, node: nodes.Element) -> None:
+        """
+        Handle table nodes by creating Notion Table blocks.
         """
         blocks = _process_node_to_blocks(
             node,
