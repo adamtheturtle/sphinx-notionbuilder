@@ -973,6 +973,14 @@ def test_nested_bullet_list(
         top_level_3,
     ]
 
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+    )
+
 
 def test_collapse_block(
     *,
