@@ -150,13 +150,33 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     row_idx = 0
     if header_row:
         for col_idx, entry in enumerate(iterable=header_row.children):
-            cell_text = " ".join(entry.astext().split())
-            table[row_idx, col_idx] = text(text=cell_text)
+            # Table entries usually contain a paragraph node; use that to
+            # preserve inline formatting (strong, emphasis, literal).
+            paragraph_node = None
+            for child in entry.children:
+                if isinstance(child, nodes.paragraph):
+                    paragraph_node = child
+                    break
+            source_node = (
+                paragraph_node if paragraph_node is not None else entry
+            )
+            table[row_idx, col_idx] = _create_rich_text_from_children(
+                node=source_node
+            )
         row_idx += 1
     for body_row in body_rows:
         for col_idx, entry in enumerate(iterable=body_row.children):
-            cell_text = " ".join(entry.astext().split())
-            table[row_idx, col_idx] = text(text=cell_text)
+            paragraph_node = None
+            for child in entry.children:
+                if isinstance(child, nodes.paragraph):
+                    paragraph_node = child
+                    break
+            source_node = (
+                paragraph_node if paragraph_node is not None else entry
+            )
+            table[row_idx, col_idx] = _create_rich_text_from_children(
+                node=source_node
+            )
         row_idx += 1
     return [table]
 
