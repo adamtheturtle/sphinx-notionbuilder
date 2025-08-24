@@ -4,7 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatch
-from typing import Any
+from typing import Any, cast
 
 from beartype import beartype
 from docutils import nodes
@@ -109,6 +109,42 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
+def _extract_table_structure(
+    node: nodes.table,
+) -> tuple[int, nodes.row | None, list[nodes.row]]:
+    """Return (n_cols, header_row, body_rows) for a table node."""
+    header_row = None
+    body_rows: list[nodes.row] = []
+    n_cols = 0
+
+    for child in node.children:
+        assert isinstance(child, nodes.tgroup)
+        n_cols = int(child.get(key="cols", failobj=0))
+        for tgroup_child in child.children:
+            if isinstance(tgroup_child, nodes.thead):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    header_row = row
+            elif isinstance(tgroup_child, nodes.tbody):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    body_rows.append(row)
+
+    return n_cols, header_row, body_rows
+
+
+def _cell_source_node(entry: nodes.Node) -> nodes.Element:
+    """Return the paragraph child of an entry if present, else the entry.
+
+    This isolates the small branch used when converting a table cell so the
+    main table function becomes simpler.
+    """
+    for child in entry.children:
+        if isinstance(child, nodes.paragraph):
+            return child
+    return cast("nodes.Element", entry)
+
+
 @singledispatch
 def _process_node_to_blocks(
     node: nodes.Element,
@@ -125,59 +161,35 @@ def _process_node_to_blocks(
 
 @_process_node_to_blocks.register
 def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
-    """
-    Process rST table nodes by creating Notion Table blocks.
+    """Process rST table nodes by creating Notion Table blocks.
+
+    This implementation delegates small branches to helpers which keeps the
+    function body linear and easier to reason about.
     """
     del section_level
-    # Find header and body rows
-    header_row = None
-    body_rows: list[nodes.row] = []
-    n_cols = 0
-    for child in node.children:
-        assert isinstance(child, nodes.tgroup)
-        n_cols = int(child.get(key="cols", failobj=0))
-        for tgroup_child in child.children:
-            if isinstance(tgroup_child, nodes.thead):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    header_row = row
-            elif isinstance(tgroup_child, nodes.tbody):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    body_rows.append(row)
+
+    n_cols, header_row, body_rows = _extract_table_structure(node=node)
+
     n_rows = 1 + len(body_rows) if header_row else len(body_rows)
     table = UnoTable(n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row))
+
     row_idx = 0
-    if header_row:
-        for col_idx, entry in enumerate(iterable=header_row.children):
-            # Table entries usually contain a paragraph node; use that to
-            # preserve inline formatting (strong, emphasis, literal).
-            paragraph_node = None
-            for child in entry.children:
-                if isinstance(child, nodes.paragraph):
-                    paragraph_node = child
-                    break
-            source_node = (
-                paragraph_node if paragraph_node is not None else entry
-            )
+    if header_row is not None:
+        for col_idx, entry in enumerate(header_row.children):
+            source = _cell_source_node(entry)
             table[row_idx, col_idx] = _create_rich_text_from_children(
-                node=source_node
+                node=source
             )
         row_idx += 1
+
     for body_row in body_rows:
-        for col_idx, entry in enumerate(iterable=body_row.children):
-            paragraph_node = None
-            for child in entry.children:
-                if isinstance(child, nodes.paragraph):
-                    paragraph_node = child
-                    break
-            source_node = (
-                paragraph_node if paragraph_node is not None else entry
-            )
+        for col_idx, entry in enumerate(body_row.children):
+            source = _cell_source_node(entry)
             table[row_idx, col_idx] = _create_rich_text_from_children(
-                node=source_node
+                node=source
             )
         row_idx += 1
+
     return [table]
 
 
