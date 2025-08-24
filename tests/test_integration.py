@@ -964,7 +964,7 @@ def test_nested_bullet_list(
 
     # Remove pyright ignore once we have
     # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-    second_level_1.obj_ref.value.children.append(third_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    second_level_2.obj_ref.value.children.append(third_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
