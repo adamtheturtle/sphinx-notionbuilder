@@ -170,9 +170,8 @@ def _process_node_to_blocks(
     """
     Required function for ``singledispatch``.
     """
-    del node
     del section_level
-    raise NotImplementedError
+    raise NotImplementedError(node)
 
 
 @_process_node_to_blocks.register
@@ -284,6 +283,19 @@ def _(node: nodes.topic, *, section_level: int) -> list[NotionObject[Any]]:
     # a callout with no icon.
     assert "contents" in node["classes"]
     return [UnoTableOfContents()]
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.compound, *, section_level: int) -> list[NotionObject[Any]]:
+    """
+    Process Sphinx ``toctree`` nodes.
+    """
+    del node
+    del section_level
+    # There are no specific Notion blocks for ``toctree`` nodes.
+    # We need to support ``toctree`` in ``index.rst``.
+    # Just ignore it.
+    return []
 
 
 @_process_node_to_blocks.register
@@ -639,6 +651,18 @@ class NotionTranslator(NodeVisitor):
     def visit_table(self, node: nodes.Element) -> None:
         """
         Handle table nodes by creating Notion Table blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_compound(self, node: nodes.Element) -> None:
+        """
+        Handle compound admonition nodes by creating a table of contents block.
         """
         blocks = _process_node_to_blocks(
             node,
