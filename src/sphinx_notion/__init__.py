@@ -4,7 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatch
-from typing import Any, cast
+from typing import Any
 
 from beartype import beartype
 from docutils import nodes

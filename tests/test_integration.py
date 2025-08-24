@@ -1126,11 +1126,9 @@ def test_table_inline_formatting(
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
 
-    # Header row: formatting is currently stripped by the builder, so expect plain text
     table[0, 0] = text(text="Header Bold", bold=True)
     table[0, 1] = text(text="Header Italic", italic=True)
 
-    # Data row: inline code is stripped too; expect plain text
     table[1, 0] = text(text="cell code", code=True)
     table[1, 1] = text(text="Normal cell")
 
