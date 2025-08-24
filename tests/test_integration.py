@@ -32,6 +32,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import (
+    ToggleItem as UnoToggleItem,
+)
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
@@ -62,12 +65,14 @@ def _assert_rst_converts_to_notion_objects(
     expected_objects: list[NotionObject[Any]],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    extensions: tuple[str, ...] = ("sphinx_notion",),
 ) -> None:
     """
     The given rST content is converted to the given expected objects.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
+
     (srcdir / "conf.py").write_text(data="")
 
     cleaned_content = textwrap.dedent(text=rst_content).strip()
@@ -77,7 +82,7 @@ def _assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": ["sphinx_notion"]},
+        confoverrides={"extensions": list(extensions)},
     )
     app.build()
 
@@ -968,9 +973,50 @@ def test_nested_bullet_list(
         top_level_3,
     ]
 
+
+def test_collapse_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that collapse directives convert to Notion ToggleItem blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. collapse:: Click to expand
+
+           This content is hidden by default.
+
+           It supports **formatting**.
+
+        Another paragraph.
+    """
+
+    toggle_block = UnoToggleItem(text="Click to expand")
+
+    nested_para1 = UnoParagraph(text="This content is hidden by default.")
+    nested_para2 = UnoParagraph(text="It supports formatting.")
+    nested_para2.rich_text = (
+        text(text="It supports ", bold=False)
+        + text(text="formatting", bold=True)
+        + text(text=".", bold=False)
+    )
+
+    toggle_block.obj_ref.value.children.append(nested_para1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.obj_ref.value.children.append(nested_para2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        toggle_block,
+        UnoParagraph(text="Another paragraph."),
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
     )
