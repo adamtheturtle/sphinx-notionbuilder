@@ -42,7 +42,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
-from ultimate_notion.obj_api.enums import CodeLang, Color
+from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
 
@@ -321,14 +321,16 @@ def _create_admonition_callout(
     node: nodes.Element,
     *,
     emoji: str,
-    color: Color,
+    background_color: BGColor,
 ) -> list[NotionObject[Any]]:
     """Create a Notion Callout block for admonition nodes.
 
     The first child (typically a paragraph) becomes the callout text,
     and any remaining children become nested blocks within the callout.
     """
-    block = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
+    block = UnoCallout(
+        text="", icon=Emoji(emoji=emoji), color=background_color
+    )
 
     # Use the first child as the callout text
     first_child = node.children[0]
@@ -365,7 +367,11 @@ def _(node: nodes.note, *, section_level: int) -> list[NotionObject[Any]]:
     Process note admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    return _create_admonition_callout(node=node, emoji="📝", color=Color.BLUE)
+    return _create_admonition_callout(
+        node=node,
+        emoji="📝",
+        background_color=BGColor.BLUE,
+    )
 
 
 @_process_node_to_blocks.register
@@ -374,7 +380,11 @@ def _(node: nodes.warning, *, section_level: int) -> list[NotionObject[Any]]:
     Process warning admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    return _create_admonition_callout(node=node, emoji="⚠️", color=Color.YELLOW)
+    return _create_admonition_callout(
+        node=node,
+        emoji="⚠️",
+        background_color=BGColor.YELLOW,
+    )
 
 
 @_process_node_to_blocks.register
@@ -383,7 +393,11 @@ def _(node: nodes.tip, *, section_level: int) -> list[NotionObject[Any]]:
     Process tip admonition nodes by creating Notion Callout blocks.
     """
     del section_level
-    return _create_admonition_callout(node=node, emoji="💡", color=Color.GREEN)
+    return _create_admonition_callout(
+        node=node,
+        emoji="💡",
+        background_color=BGColor.GREEN,
+    )
 
 
 @_process_node_to_blocks.register

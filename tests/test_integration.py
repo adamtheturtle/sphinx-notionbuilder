@@ -38,7 +38,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
-from ultimate_notion.obj_api.enums import CodeLang, Color
+from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import text
 
 
@@ -741,18 +741,18 @@ def test_bullet_list_with_inline_formatting(
 
 
 @pytest.mark.parametrize(
-    argnames=("admonition_type", "emoji", "color", "message"),
+    argnames=("admonition_type", "emoji", "background_color", "message"),
     argvalues=[
-        ("note", "📝", Color.BLUE, "This is an important note."),
-        ("warning", "⚠️", Color.YELLOW, "This is a warning message."),
-        ("tip", "💡", Color.GREEN, "This is a helpful tip."),
+        ("note", "📝", BGColor.BLUE, "This is an important note."),
+        ("warning", "⚠️", BGColor.YELLOW, "This is a warning message."),
+        ("tip", "💡", BGColor.GREEN, "This is a helpful tip."),
     ],
 )
 def test_admonition_single_line(
     *,
     admonition_type: str,
     emoji: str,
-    color: Color,
+    background_color: BGColor,
     message: str,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
@@ -771,7 +771,7 @@ def test_admonition_single_line(
     callout = UnoCallout(
         text=message,
         icon=Emoji(emoji=emoji),
-        color=color,
+        color=background_color,
     )
 
     expected_objects: list[NotionObject[Any]] = [
@@ -788,17 +788,17 @@ def test_admonition_single_line(
 
 
 @pytest.mark.parametrize(
-    argnames=("admonition_type", "emoji", "color"),
+    argnames=("admonition_type", "emoji", "background_color"),
     argvalues=[
-        ("note", "📝", Color.BLUE),
-        ("warning", "⚠️", Color.YELLOW),
-        ("tip", "💡", Color.GREEN),
+        ("note", "📝", BGColor.BLUE),
+        ("warning", "⚠️", BGColor.YELLOW),
+        ("tip", "💡", BGColor.GREEN),
     ],
 )
 def test_admonition_multiline(
     admonition_type: str,
     emoji: str,
-    color: Color,
+    background_color: BGColor,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -813,7 +813,11 @@ def test_admonition_multiline(
 
            This is the second paragraph that should be nested.
     """
-    callout = UnoCallout(text="", icon=Emoji(emoji=emoji), color=color)
+    callout = UnoCallout(
+        text="",
+        icon=Emoji(emoji=emoji),
+        color=background_color,
+    )
     callout.rich_text = text(
         text=f"This is the first paragraph of the {admonition_type}."
     )
@@ -854,7 +858,7 @@ def test_admonition_with_code_block(
            The code above demonstrates a simple function.
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
     callout.rich_text = text(text="This note contains a code example.")
 
     nested_code_block = _create_code_block_without_annotations(
@@ -898,7 +902,7 @@ def test_admonition_with_code_block_first(
            This paragraph comes after the code block.
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
     callout.rich_text = text(text="")
 
     nested_code_block = _create_code_block_without_annotations(
@@ -938,7 +942,7 @@ def test_admonition_with_bullet_points(
            * B
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=Color.BLUE)
+    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
     callout.rich_text = text(
         text="This is an important note that demonstrates the note "
         "admonition\nsupport."
