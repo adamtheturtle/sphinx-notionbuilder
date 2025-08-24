@@ -1070,3 +1070,34 @@ def test_simple_table(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_table_without_header_row(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    RST table without a heading row converts to Notion Table block with
+    header_row=False.
+    """
+    rst_content = """
+        +--------+--------+
+        | Cell 1 | Cell 2 |
+        +--------+--------+
+        | Cell 3 | Cell 4 |
+        +--------+--------+
+    """
+    table = UnoTable(n_rows=2, n_cols=2, header_row=False)
+    table[0, 0] = text(text="Cell 1")
+    table[0, 1] = text(text="Cell 2")
+    table[1, 0] = text(text="Cell 3")
+    table[1, 1] = text(text="Cell 4")
+
+    expected_objects: list[NotionObject[Any]] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
