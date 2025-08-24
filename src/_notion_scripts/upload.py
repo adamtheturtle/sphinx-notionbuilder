@@ -481,8 +481,8 @@ def parse_args() -> argparse.Namespace:
 
 def load_and_process_contents(file_path: Path) -> list[_Block]:
     """
-    Load a JSON file from disk and preprocess its blocks to handle
-    Notion's rich text length limits.
+    Load a JSON file from disk and preprocess its blocks to handle Notion's
+    rich text length limits.
     """
     with file_path.open("r", encoding="utf-8") as f:
         contents = json.load(fp=f)
