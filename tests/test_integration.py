@@ -41,6 +41,9 @@ from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import text
 
+# docutils.nodes used earlier in helper tests which were moved into integration
+# tests; keep imports local where needed to reduce top-level unused imports.
+
 
 def _create_code_block_without_annotations(
     content: str, language: CodeLang
@@ -1048,6 +1051,8 @@ def test_simple_table(
         | Cell 1   | Cell 2   |
         +----------+----------+
         | Cell 3   | Cell 4   |
+        |          |          |
+        | Cell 3   | Cell 4   |
         +----------+----------+
     """
 
@@ -1059,8 +1064,8 @@ def test_simple_table(
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
     # Second data row
-    table[2, 0] = text(text="Cell 3")
-    table[2, 1] = text(text="Cell 4")
+    table[2, 0] = text(text="Cell 3\n\nCell 3")
+    table[2, 1] = text(text="Cell 4\n\nCell 4")
 
     expected_objects: list[NotionObject[Any]] = [table]
 
@@ -1108,8 +1113,8 @@ def test_table_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Table headers and cells with inline formatting (bold, italic, code)
-    convert to Notion Table with rich text in header and cells.
+    Table headers and cells with inline formatting (bold, italic, code) convert
+    to Notion Table with rich text in header and cells.
     """
     rst_content = """
         +----------------------+----------------------+
