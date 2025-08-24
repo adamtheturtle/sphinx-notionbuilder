@@ -491,6 +491,35 @@ def load_and_process_contents(file_path: Path) -> list[_Block]:
     return [_process_block(block=content_block) for content_block in contents]
 
 
+def _update_existing_page(
+    notion_client: Client,
+    page_id: str,
+    blocks: list[_Block],
+    batch_size: int,
+    title: str,
+) -> None:
+    """
+    Update an existing Notion page by removing its current children and
+    uploading the provided blocks.
+    """
+    existing_children: Any = notion_client.blocks.children.list(
+        block_id=page_id,
+    )
+    child_results = existing_children.get("results", [])
+    for child in child_results:
+        child_id = child.get("id")
+        if child_id:
+            notion_client.blocks.delete(block_id=child_id)
+
+    _upload_blocks_with_deep_nesting(
+        notion_client=notion_client,
+        page_id=page_id,
+        blocks=blocks,
+        batch_size=batch_size,
+    )
+    sys.stdout.write(f"Updated existing page: {title} (ID: {page_id})")
+
+
 def main() -> None:
     """
     Main entry point for the upload command.
@@ -510,26 +539,12 @@ def main() -> None:
     )
 
     if existing_page_id:
-        existing_children: Any = notion.blocks.children.list(
-            block_id=existing_page_id,
-        )
-        child_results = existing_children.get(
-            "results",
-            [],
-        )
-        for child in child_results:
-            child_id = child.get("id")
-            if child_id:
-                notion.blocks.delete(block_id=child_id)
-
-        _upload_blocks_with_deep_nesting(
+        _update_existing_page(
             notion_client=notion,
             page_id=existing_page_id,
             blocks=processed_contents,
             batch_size=args.batch_size,
-        )
-        sys.stdout.write(
-            f"Updated existing page: {args.title} (ID: {existing_page_id})"
+            title=args.title,
         )
     # For new pages, we need to handle deep nesting
     elif len(processed_contents) > args.batch_size:
