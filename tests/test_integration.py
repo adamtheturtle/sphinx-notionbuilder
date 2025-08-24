@@ -65,12 +65,14 @@ def _assert_rst_converts_to_notion_objects(
     expected_objects: list[NotionObject[Any]],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    extensions: tuple[str, ...] = ("sphinx_notion",),
 ) -> None:
     """
     The given rST content is converted to the given expected objects.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
+
     (srcdir / "conf.py").write_text(data="")
 
     cleaned_content = textwrap.dedent(text=rst_content).strip()
@@ -80,7 +82,7 @@ def _assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": ["sphinx_notion"]},
+        confoverrides={"extensions": list(extensions)},
     )
     app.build()
 
@@ -1020,7 +1022,7 @@ def test_collapse_block(
     """
     Test that collapse directives convert to Notion ToggleItem blocks.
     """
-    rst_content = textwrap.dedent("""
+    rst_content = """
         Regular paragraph.
 
         .. collapse:: Click to expand
@@ -1030,7 +1032,7 @@ def test_collapse_block(
            It supports **formatting**.
 
         Another paragraph.
-    """)
+    """
 
     # Create the toggle block with nested content
     toggle_block = UnoToggleItem(text="Click to expand")
@@ -1044,7 +1046,7 @@ def test_collapse_block(
         + text(text=".", bold=False)
     )
 
-    # Add nested content to toggle (ignoring formatting due to complexity)
+    # Add nested content to toggle
     obj_ref_1 = nested_para1.obj_ref  # pyright: ignore[reportUnknownMemberType]
     obj_ref_2 = nested_para2.obj_ref  # pyright: ignore[reportUnknownMemberType]
     toggle_block.obj_ref.value.children.append(obj_ref_1)  # pyright: ignore[reportUnknownMemberType]
@@ -1056,38 +1058,10 @@ def test_collapse_block(
         UnoParagraph(text="Another paragraph."),
     ]
 
-    # Use a custom test helper for this specific test with sphinx-toolbox
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-
-    # Create conf.py with both extensions
-    conf_content = """
-extensions = ['sphinx_notion', 'sphinx_toolbox.collapse']
-"""
-    (srcdir / "conf.py").write_text(data=conf_content)
-
-    cleaned_content = textwrap.dedent(text=rst_content).strip()
-    (srcdir / "index.rst").write_text(data=cleaned_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=["sphinx_notion", "sphinx_toolbox.collapse"],
     )
-    app.build()
-
-    output_path = tmp_path / "build" / "notion" / "index.json"
-    assert output_path.exists()
-
-    with output_path.open() as file:
-        actual_json = file.read()
-
-    actual_objects = json.loads(s=actual_json)
-
-    expected_json_objects = [
-        obj.obj_ref.serialize_for_api()
-        for obj in expected_objects
-        if isinstance(obj.obj_ref, GenericObject)
-    ]
-
-    assert actual_objects == expected_json_objects
