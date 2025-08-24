@@ -586,7 +586,7 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
-    def visit_collapse_node(self, node: nodes.Element) -> None:
+    def visit_CollapseNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
         """
         Handle collapse nodes by creating Notion ToggleItem blocks.
         """
@@ -597,13 +597,6 @@ class NotionTranslator(NodeVisitor):
         self._blocks.extend(blocks)
 
         raise nodes.SkipNode
-
-    def depart_collapse_node(self, node: nodes.Element) -> None:
-        """
-        Handle leaving collapse nodes.
-        """
-        # This method is required but not used since we skip the node
-        del node
 
     def visit_document(self, node: nodes.Element) -> None:
         """
@@ -649,14 +642,5 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     """
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
-
-    # Add visitor methods for CollapseNode
-    app.add_node(
-        CollapseNode,
-        notion=(
-            NotionTranslator.visit_collapse_node,
-            NotionTranslator.depart_collapse_node,
-        ),
-    )
 
     return {"parallel_read_safe": True}
