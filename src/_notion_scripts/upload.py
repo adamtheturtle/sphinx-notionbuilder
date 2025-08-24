@@ -180,7 +180,7 @@ def _get_block_content(block: _Block) -> str:
     block_type = block.get("type")
 
     # Most block types store rich_text in their type-specific object
-    if block_type in [
+    if block_type in {
         "bulleted_list_item",
         "numbered_list_item",
         "to_do",
@@ -190,7 +190,7 @@ def _get_block_content(block: _Block) -> str:
         "heading_2",
         "heading_3",
         "paragraph",
-    ]:
+    }:
         type_obj = block.get(block_type, {})
         rich_text = type_obj.get("rich_text", [])
         return "".join(item.get("plain_text", "") for item in rich_text)
