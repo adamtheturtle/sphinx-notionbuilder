@@ -251,7 +251,8 @@ def _(
     # By default, the code block has a color set (DEFAULT) which means
     # that there is no syntax highlighting.
     # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+    for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
     code_block.rich_text = code_text
     return [code_block]
 

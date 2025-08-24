@@ -741,7 +741,7 @@ def test_bullet_list_with_inline_formatting(
 
 
 @pytest.mark.parametrize(
-    argnames=("admonition_type", "emoji", "color", "message"),
+    argnames=("admonition_type", "emoji", "background_color", "message"),
     argvalues=[
         ("note", "📝", BGColor.BLUE, "This is an important note."),
         ("warning", "⚠️", BGColor.YELLOW, "This is a warning message."),
@@ -788,7 +788,7 @@ def test_admonition_single_line(
 
 
 @pytest.mark.parametrize(
-    argnames=("admonition_type", "emoji", "color"),
+    argnames=("admonition_type", "emoji", "background_color"),
     argvalues=[
         ("note", "📝", BGColor.BLUE),
         ("warning", "⚠️", BGColor.YELLOW),
