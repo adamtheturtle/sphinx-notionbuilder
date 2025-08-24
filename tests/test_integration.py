@@ -41,9 +41,6 @@ from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
 from ultimate_notion.rich_text import text
 
-# docutils.nodes used earlier in helper tests which were moved into integration
-# tests; keep imports local where needed to reduce top-level unused imports.
-
 
 def _create_code_block_without_annotations(
     content: str, language: CodeLang
