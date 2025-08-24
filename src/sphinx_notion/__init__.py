@@ -9,7 +9,6 @@ from typing import Any
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
-from sphinx.addnodes import toctree
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -200,7 +199,7 @@ def _(node: nodes.topic, *, section_level: int) -> list[NotionObject[Any]]:
 
 
 @_process_node_to_blocks.register
-def _(node: toctree, *, section_level: int) -> list[NotionObject[Any]]:
+def _(node: nodes.compound, *, section_level: int) -> list[NotionObject[Any]]:
     """
     Process Sphinx toctree nodes by creating Notion TableOfContents blocks.
     """
