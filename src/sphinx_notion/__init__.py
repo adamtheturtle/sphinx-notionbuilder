@@ -112,7 +112,9 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 def _extract_table_structure(
     node: nodes.table,
 ) -> tuple[int, nodes.row | None, list[nodes.row]]:
-    """Return (n_cols, header_row, body_rows) for a table node."""
+    """
+    Return (n_cols, header_row, body_rows) for a table node.
+    """
     header_row = None
     body_rows: list[nodes.row] = []
     n_cols = 0
@@ -136,12 +138,31 @@ def _extract_table_structure(
 def _cell_source_node(entry: nodes.Node) -> nodes.Element:
     """Return the paragraph child of an entry if present, else the entry.
 
-    This isolates the small branch used when converting a table cell so the
-    main table function becomes simpler.
+    This isolates the small branch used when converting a table cell so
+    the main table function becomes simpler.
     """
-    for child in entry.children:
-        if isinstance(child, nodes.paragraph):
-            return child
+    # If a single paragraph child exists, return it (fast-path).
+    paragraph_children = [
+        c for c in entry.children if isinstance(c, nodes.paragraph)
+    ]
+    if len(paragraph_children) == 1:
+        return paragraph_children[0]
+
+    # If there are multiple children (multiple paragraphs or mixed nodes),
+    # create a combined node that preserves all content. We insert a
+    # double-newline text node between each top-level child to mimic
+    # paragraph separation when converting to plain text/rich text.
+    if len(entry.children) > 1:
+        # Join the plain text of each top-level child with two newlines so
+        # the resulting rich text becomes a single text fragment like
+        # 'Cell 3\n\nCell 3' (matches test expectations).
+        parts: list[str] = [c.astext() for c in entry.children]
+        joined = "\n\n".join(parts)
+        combined = nodes.paragraph()
+        combined += nodes.Text(joined)
+        return combined
+
+    # Fallback: return the entry as-is.
     return cast("nodes.Element", entry)
 
 
@@ -163,8 +184,8 @@ def _process_node_to_blocks(
 def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     """Process rST table nodes by creating Notion Table blocks.
 
-    This implementation delegates small branches to helpers which keeps the
-    function body linear and easier to reason about.
+    This implementation delegates small branches to helpers which keeps
+    the function body linear and easier to reason about.
     """
     del section_level
 
