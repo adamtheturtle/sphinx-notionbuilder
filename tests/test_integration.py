@@ -1034,10 +1034,8 @@ def test_collapse_block(
         Another paragraph.
     """
 
-    # Create the toggle block with nested content
     toggle_block = UnoToggleItem(text="Click to expand")
 
-    # Create nested content
     nested_para1 = UnoParagraph(text="This content is hidden by default.")
     nested_para2 = UnoParagraph(text="It supports formatting.")
     nested_para2.rich_text = (
@@ -1046,11 +1044,8 @@ def test_collapse_block(
         + text(text=".", bold=False)
     )
 
-    # Add nested content to toggle
-    obj_ref_1 = nested_para1.obj_ref  # pyright: ignore[reportUnknownMemberType]
-    obj_ref_2 = nested_para2.obj_ref  # pyright: ignore[reportUnknownMemberType]
-    toggle_block.obj_ref.value.children.append(obj_ref_1)  # pyright: ignore[reportUnknownMemberType]
-    toggle_block.obj_ref.value.children.append(obj_ref_2)  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.obj_ref.value.children.append(nested_para1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.obj_ref.value.children.append(nested_para2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
@@ -1063,5 +1058,5 @@ def test_collapse_block(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=["sphinx_notion", "sphinx_toolbox.collapse"],
+        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
     )
