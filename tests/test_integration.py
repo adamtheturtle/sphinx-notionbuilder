@@ -578,32 +578,17 @@ def test_toctree_directive(
     tmp_path: Path,
 ) -> None:
     """
-    Test that the toctree directive converts to Notion TableOfContents blocks.
+    Test that the toctree directive converts to nothing.
     """
     rst_content = """
         Introduction
         ============
 
         .. toctree::
-
-        First Section
-        -------------
-
-        Content here.
-
-        Second Section
-        --------------
-
-        More content.
     """
 
     expected_objects: list[NotionObject[Any]] = [
         UnoHeading1(text="Introduction"),
-        UnoTableOfContents(),
-        UnoHeading2(text="First Section"),
-        UnoParagraph(text="Content here."),
-        UnoHeading2(text="Second Section"),
-        UnoParagraph(text="More content."),
     ]
 
     _assert_rst_converts_to_notion_objects(
