@@ -32,6 +32,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import (
+    ToggleItem as UnoToggleItem,
+)
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import CodeLang, Color
@@ -1007,3 +1010,84 @@ def test_nested_bullet_list_error_on_excessive_depth(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_collapse_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that collapse directives convert to Notion ToggleItem blocks.
+    """
+    rst_content = textwrap.dedent("""
+        Regular paragraph.
+
+        .. collapse:: Click to expand
+
+           This content is hidden by default.
+
+           It supports **formatting**.
+
+        Another paragraph.
+    """)
+
+    # Create the toggle block with nested content
+    toggle_block = UnoToggleItem(text="Click to expand")
+
+    # Create nested content
+    nested_para1 = UnoParagraph(text="This content is hidden by default.")
+    nested_para2 = UnoParagraph(text="It supports formatting.")
+    nested_para2.rich_text = (
+        text(text="It supports ", bold=False)
+        + text(text="formatting", bold=True)
+        + text(text=".", bold=False)
+    )
+
+    # Add nested content to toggle (ignoring formatting due to complexity)
+    obj_ref_1 = nested_para1.obj_ref  # pyright: ignore[reportUnknownMemberType]
+    obj_ref_2 = nested_para2.obj_ref  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.obj_ref.value.children.append(obj_ref_1)  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.obj_ref.value.children.append(obj_ref_2)  # pyright: ignore[reportUnknownMemberType]
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        toggle_block,
+        UnoParagraph(text="Another paragraph."),
+    ]
+
+    # Use a custom test helper for this specific test with sphinx-toolbox
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+
+    # Create conf.py with both extensions
+    conf_content = """
+extensions = ['sphinx_notion', 'sphinx_toolbox.collapse']
+"""
+    (srcdir / "conf.py").write_text(data=conf_content)
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+    )
+    app.build()
+
+    output_path = tmp_path / "build" / "notion" / "index.json"
+    assert output_path.exists()
+
+    with output_path.open() as file:
+        actual_json = file.read()
+
+    actual_objects = json.loads(s=actual_json)
+
+    expected_json_objects = [
+        obj.obj_ref.serialize_for_api()
+        for obj in expected_objects
+        if isinstance(obj.obj_ref, GenericObject)
+    ]
+
+    assert actual_objects == expected_json_objects

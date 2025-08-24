@@ -12,6 +12,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_toolbox.collapse import CollapseNode
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
@@ -34,6 +35,9 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
+)
+from ultimate_notion.blocks import (
+    ToggleItem as UnoToggleItem,
 )
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
@@ -304,6 +308,48 @@ def _(node: nodes.tip, *, section_level: int) -> list[NotionObject[Any]]:
     return _create_admonition_callout(node=node, emoji="💡", color=Color.GREEN)
 
 
+@_process_node_to_blocks.register
+def _(node: CollapseNode, *, section_level: int) -> list[NotionObject[Any]]:
+    """
+    Process collapse nodes by creating Notion ToggleItem blocks.
+    """
+    del section_level
+
+    # Get the title from the label attribute or first child
+    title_text = ""
+    children_to_process = node.children
+
+    # Check if there's a label attribute
+    if hasattr(node, "attributes") and "label" in node.attributes:
+        title_text = node.attributes["label"] or ""
+
+    # If no label, try to get title from first child
+    if not title_text and children_to_process:
+        first_child = children_to_process[0]
+        if hasattr(first_child, "astext"):
+            title_text = first_child.astext()
+            # If the first child was used as title, skip it
+            children_to_process = children_to_process[1:]
+
+    # Create the toggle item with title
+    toggle_block = UnoToggleItem(text=title_text)
+
+    # Process children as nested blocks within the toggle
+    for child in children_to_process:
+        for child_block in list(
+            _process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        ):
+            # Add nested blocks as children to the toggle
+            # Remove pyright ignore once we have
+            # https://github.com/ultimate-notion/ultimate-notion/issues/94.
+            toggle_block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+    return [toggle_block]
+
+
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     """
     Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
@@ -540,6 +586,25 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
+    def visit_collapse_node(self, node: nodes.Element) -> None:
+        """
+        Handle collapse nodes by creating Notion ToggleItem blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def depart_collapse_node(self, node: nodes.Element) -> None:
+        """
+        Handle leaving collapse nodes.
+        """
+        # This method is required but not used since we skip the node
+        del node
+
     def visit_document(self, node: nodes.Element) -> None:
         """
         Initialize block collection at document start.
@@ -584,4 +649,14 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     """
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
+
+    # Add visitor methods for CollapseNode
+    app.add_node(
+        CollapseNode,
+        notion=(
+            NotionTranslator.visit_collapse_node,
+            NotionTranslator.depart_collapse_node,
+        ),
+    )
+
     return {"parallel_read_safe": True}

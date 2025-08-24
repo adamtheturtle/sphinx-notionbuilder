@@ -35,6 +35,38 @@ This is **bold** and *italic* and ``inline code``.
 
    This is a helpful tip that demonstrates the tip admonition support.
 
+.. collapse:: Click to expand this section
+
+   This content is hidden by default and can be expanded by clicking the toggle.
+
+   It supports **all the same formatting** as regular content:
+
+   * Bullet points
+   * ``Code snippets``
+   * *Emphasis* and **bold text**
+
+   .. note::
+
+      You can even nest admonitions inside collapsible sections!
+
+   .. code-block:: python
+
+      """Run code within a collapse."""
+
+
+      def example_function() -> str:
+          """Example code inside a collapsed section."""
+          return "This is hidden by default"
+
+
+      example_function()
+
+.. collapse:: Another collapsible section
+
+   You can have multiple collapsible sections in your document.
+
+   Each one can contain different types of content.
+
 .. code-block:: python
 
    """Python code."""
