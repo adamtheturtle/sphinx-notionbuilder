@@ -13,7 +13,7 @@ keywords = [
     "notion",
     "sphinx",
 ]
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
     { name = "Adam Dangoor", email = "adamdangoor@gmail.com" },
 ]
@@ -21,7 +21,6 @@ requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
