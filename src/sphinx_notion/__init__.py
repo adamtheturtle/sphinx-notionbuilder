@@ -132,11 +132,11 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     del section_level
     # Find header and body rows
     header_row = None
-    body_rows = []
+    body_rows: list[nodes.row] = []
     n_cols = 0
     for child in node.children:
         assert isinstance(child, nodes.tgroup)
-        n_cols = int(child.get("cols", 0))
+        n_cols = int(child.get(key="cols", failobj=0))
         for tgroup_child in child.children:
             if isinstance(tgroup_child, nodes.thead):
                 for row in tgroup_child.children:
@@ -150,12 +150,12 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
     table = UnoTable(n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row))
     row_idx = 0
     if header_row:
-        for col_idx, entry in enumerate(header_row.children):
+        for col_idx, entry in enumerate(iterable=header_row.children):
             cell_text = " ".join(entry.astext().split())
             table[row_idx, col_idx] = ut_text(text=cell_text)
         row_idx += 1
     for body_row in body_rows:
-        for col_idx, entry in enumerate(body_row.children):
+        for col_idx, entry in enumerate(iterable=body_row.children):
             cell_text = " ".join(entry.astext().split())
             table[row_idx, col_idx] = ut_text(text=cell_text)
         row_idx += 1
