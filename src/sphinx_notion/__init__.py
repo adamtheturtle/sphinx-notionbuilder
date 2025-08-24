@@ -157,7 +157,7 @@ def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
     parts: list[str] = [c.astext() for c in entry.children]
     joined = "\n\n".join(parts)
     combined = nodes.paragraph()
-    combined += nodes.Text(joined)
+    combined += nodes.Text(data=joined)
     return combined
 
 
@@ -191,16 +191,16 @@ def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
 
     row_idx = 0
     if header_row is not None:
-        for col_idx, entry in enumerate(header_row.children):
-            source = _cell_source_node(entry)
+        for col_idx, entry in enumerate(iterable=header_row.children):
+            source = _cell_source_node(entry=entry)
             table[row_idx, col_idx] = _create_rich_text_from_children(
                 node=source
             )
         row_idx += 1
 
     for body_row in body_rows:
-        for col_idx, entry in enumerate(body_row.children):
-            source = _cell_source_node(entry)
+        for col_idx, entry in enumerate(iterable=body_row.children):
+            source = _cell_source_node(entry=entry)
             table[row_idx, col_idx] = _create_rich_text_from_children(
                 node=source
             )
