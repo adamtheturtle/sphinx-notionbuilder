@@ -33,6 +33,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Quote as UnoQuote,
 )
+from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
@@ -108,6 +109,58 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
+def _extract_table_structure(
+    node: nodes.table,
+) -> tuple[int, nodes.row | None, list[nodes.row]]:
+    """
+    Return (n_cols, header_row, body_rows) for a table node.
+    """
+    header_row = None
+    body_rows: list[nodes.row] = []
+    n_cols = 0
+
+    for child in node.children:
+        assert isinstance(child, nodes.tgroup)
+        n_cols = int(child.get(key="cols", failobj=0))
+        for tgroup_child in child.children:
+            if isinstance(tgroup_child, nodes.thead):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    header_row = row
+            elif isinstance(tgroup_child, nodes.tbody):
+                for row in tgroup_child.children:
+                    assert isinstance(row, nodes.row)
+                    body_rows.append(row)
+
+    return n_cols, header_row, body_rows
+
+
+def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
+    """Return the paragraph child of an entry if present, else the entry.
+
+    This isolates the small branch used when converting a table cell so
+    the main table function becomes simpler.
+    """
+    paragraph_children = [
+        c for c in entry.children if isinstance(c, nodes.paragraph)
+    ]
+    if len(paragraph_children) == 1:
+        return paragraph_children[0]
+
+    # If there are multiple children (multiple paragraphs or mixed nodes),
+    # create a combined node that preserves all content. We insert a
+    # double-newline text node between each top-level child to mimic
+    # paragraph separation when converting to plain text/rich text.
+    # Join the plain text of each top-level child with two newlines so
+    # the resulting rich text becomes a single text fragment like
+    # 'Cell 3\n\nCell 3' (matches test expectations).
+    parts: list[str] = [c.astext() for c in entry.children]
+    joined = "\n\n".join(parts)
+    combined = nodes.paragraph()
+    combined += nodes.Text(data=joined)
+    return combined
+
+
 @singledispatch
 def _process_node_to_blocks(
     node: nodes.Element,
@@ -119,6 +172,40 @@ def _process_node_to_blocks(
     """
     del section_level
     raise NotImplementedError(node)
+
+
+@_process_node_to_blocks.register
+def _(node: nodes.table, *, section_level: int) -> list[NotionObject[Any]]:
+    """Process rST table nodes by creating Notion Table blocks.
+
+    This implementation delegates small branches to helpers which keeps
+    the function body linear and easier to reason about.
+    """
+    del section_level
+
+    n_cols, header_row, body_rows = _extract_table_structure(node=node)
+
+    n_rows = 1 + len(body_rows) if header_row else len(body_rows)
+    table = UnoTable(n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row))
+
+    row_idx = 0
+    if header_row is not None:
+        for col_idx, entry in enumerate(iterable=header_row.children):
+            source = _cell_source_node(entry=entry)
+            table[row_idx, col_idx] = _create_rich_text_from_children(
+                node=source
+            )
+        row_idx += 1
+
+    for body_row in body_rows:
+        for col_idx, entry in enumerate(iterable=body_row.children):
+            source = _cell_source_node(entry=entry)
+            table[row_idx, col_idx] = _create_rich_text_from_children(
+                node=source
+            )
+        row_idx += 1
+
+    return [table]
 
 
 @_process_node_to_blocks.register
@@ -552,6 +639,18 @@ class NotionTranslator(NodeVisitor):
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_table(self, node: nodes.Element) -> None:
+        """
+        Handle table nodes by creating Notion Table blocks.
         """
         blocks = _process_node_to_blocks(
             node,

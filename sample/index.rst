@@ -154,3 +154,17 @@ Regular paragraph.
     This is a multi-line
     block quote with
     multiple lines.
+
+
+Table Example
+-------------
+
+Here is a simple table:
+
++----------+----------+
+| Header 1 | Header 2 |
++==========+==========+
+| Cell 1   | Cell 2   |
++----------+----------+
+| Cell 3   | Cell 4   |
++----------+----------+
