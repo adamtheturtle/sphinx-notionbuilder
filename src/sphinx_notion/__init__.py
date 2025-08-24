@@ -315,26 +315,10 @@ def _(node: CollapseNode, *, section_level: int) -> list[NotionObject[Any]]:
     """
     del section_level
 
-    # Get the title from the label attribute or first child
-    title_text = ""
     children_to_process = node.children
-
-    # Check if there's a label attribute
-    if hasattr(node, "attributes") and "label" in node.attributes:
-        title_text = node.attributes["label"] or ""
-
-    # If no label, try to get title from first child
-    if not title_text and children_to_process:
-        first_child = children_to_process[0]
-        if hasattr(first_child, "astext"):
-            title_text = first_child.astext()
-            # If the first child was used as title, skip it
-            children_to_process = children_to_process[1:]
-
-    # Create the toggle item with title
+    title_text = node.attributes["label"]
     toggle_block = UnoToggleItem(text=title_text)
 
-    # Process children as nested blocks within the toggle
     for child in children_to_process:
         for child_block in list(
             _process_node_to_blocks(
