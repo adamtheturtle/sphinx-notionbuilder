@@ -444,9 +444,9 @@ def _upload_blocks_in_batches(
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
 
-def main() -> None:  # noqa: C901
+def parse_args() -> argparse.Namespace:
     """
-    Main entry point for the upload command.
+    Parse command-line arguments for the upload script.
     """
     parser = argparse.ArgumentParser(description="Upload to Notion")
     parser.add_argument(
@@ -476,7 +476,14 @@ def main() -> None:  # noqa: C901
         type=int,
         default=NOTION_BLOCKS_BATCH_SIZE,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> None:
+    """
+    Main entry point for the upload command.
+    """
+    args = parse_args()
 
     # Initialize Notion client
     notion = Client(auth=os.environ["NOTION_TOKEN"])
