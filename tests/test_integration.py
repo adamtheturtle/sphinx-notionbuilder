@@ -1105,7 +1105,7 @@ def test_table_without_header_row(
     tmp_path: Path,
 ) -> None:
     """
-    RST table without a heading row converts to Notion Table block with
+    Table without a heading row converts to Notion Table block with
     header_row=False.
     """
     rst_content = """
