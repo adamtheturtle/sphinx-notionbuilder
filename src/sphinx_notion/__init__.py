@@ -9,6 +9,7 @@ from typing import Any
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from sphinx.addnodes import toctree
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -117,9 +118,8 @@ def _process_node_to_blocks(
     """
     Required function for ``singledispatch``.
     """
-    del node
     del section_level
-    raise NotImplementedError
+    raise NotImplementedError(node)
 
 
 @_process_node_to_blocks.register
@@ -196,6 +196,16 @@ def _(node: nodes.topic, *, section_level: int) -> list[NotionObject[Any]]:
     # Later, we can support `.. topic::` directives, likely as
     # a callout with no icon.
     assert "contents" in node["classes"]
+    return [UnoTableOfContents()]
+
+
+@_process_node_to_blocks.register
+def _(node: toctree, *, section_level: int) -> list[NotionObject[Any]]:
+    """
+    Process Sphinx toctree nodes by creating Notion TableOfContents blocks.
+    """
+    del node
+    del section_level
     return [UnoTableOfContents()]
 
 
@@ -540,6 +550,18 @@ class NotionTranslator(NodeVisitor):
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_compound(self, node: nodes.Element) -> None:
+        """
+        Handle compound admonition nodes by creating a table of contents block.
         """
         blocks = _process_node_to_blocks(
             node,

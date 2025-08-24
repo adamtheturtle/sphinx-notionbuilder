@@ -573,6 +573,47 @@ def test_table_of_contents(
     )
 
 
+def test_toctree_directive(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that the toctree directive converts to Notion TableOfContents blocks.
+    """
+    rst_content = """
+        Introduction
+        ============
+
+        .. toctree::
+
+        First Section
+        -------------
+
+        Content here.
+
+        Second Section
+        --------------
+
+        More content.
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoHeading1(text="Introduction"),
+        UnoTableOfContents(),
+        UnoHeading2(text="First Section"),
+        UnoParagraph(text="Content here."),
+        UnoHeading2(text="Second Section"),
+        UnoParagraph(text="More content."),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_simple_code_block(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
