@@ -145,22 +145,9 @@ def _remove_block_children(block: _Block) -> _Block:
     Remove children from a block, regardless of block type.
     """
     block_copy = dict(block)
-    block_type = block.get("type")
-    if block_type in {
-        "bulleted_list_item",
-        "numbered_list_item",
-        "to_do",
-        "toggle",
-        "quote",
-        "callout",
-        "synced_block",
-        "column",
-    }:
-        if block_type in block_copy:
-            block_copy[block_type].pop("children", None)
-    else:
-        block_copy.pop("children", None)
-
+    block_type = block["type"]
+    block_copy[str(object=block_type)].pop("children", None)
+    block_copy.pop("children", None)
     return block_copy
 
 
