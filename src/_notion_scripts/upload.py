@@ -174,7 +174,6 @@ def _get_block_content(block: _Block) -> list[str]:
 @beartype
 def _extract_deep_children(
     blocks: list[_Block],
-    max_depth: int = 1,
 ) -> tuple[list[_Block], list[tuple[_Block, list[_Block]]]]:
     """Extract children beyond max_depth and return them separately.
 
@@ -182,6 +181,7 @@ def _extract_deep_children(
         - List of blocks with children limited to max_depth
         - List of (parent_block, deep_children) pairs for uploading later
     """
+    max_depth = 1
     processed_blocks: list[dict[str, Any]] = []
     deep_upload_tasks: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
 
