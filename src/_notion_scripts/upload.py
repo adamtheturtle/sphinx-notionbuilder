@@ -504,7 +504,7 @@ def _update_existing_page(
     sys.stdout.write(f"Updated existing page: {title} (ID: {page_id})")
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:  # pylint: disable=too-complex # noqa: C901
     """
     Main entry point for the upload command.
     """
