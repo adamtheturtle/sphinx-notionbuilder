@@ -145,22 +145,9 @@ def _remove_block_children(block: _Block) -> _Block:
     Remove children from a block, regardless of block type.
     """
     block_copy = dict(block)
-    block_type = block.get("type")
-    if block_type in {
-        "bulleted_list_item",
-        "numbered_list_item",
-        "to_do",
-        "toggle",
-        "quote",
-        "callout",
-        "synced_block",
-        "column",
-    }:
-        if block_type in block_copy:
-            block_copy[block_type].pop("children", None)
-    else:
-        block_copy.pop("children", None)
-
+    block_type = block["type"]
+    block_copy[str(object=block_type)].pop("children", None)
+    block_copy.pop("children", None)
     return block_copy
 
 
@@ -168,32 +155,10 @@ def _get_block_content(block: _Block) -> str:
     """
     Get text content from a block for matching purposes.
     """
-    block_type = block.get("type")
-
-    # Most block types store rich_text in their type-specific object
-    if block_type in {
-        "bulleted_list_item",
-        "numbered_list_item",
-        "to_do",
-        "toggle",
-        "quote",
-        "heading_1",
-        "heading_2",
-        "heading_3",
-        "paragraph",
-    }:
-        type_obj = block.get(block_type, {})
-        rich_text = type_obj.get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    if block_type == "callout":
-        rich_text = block.get("callout", {}).get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    if block_type == "code":
-        rich_text = block.get("code", {}).get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    # For other block types, try to find any text content
-    # This is a fallback for block types we haven't specifically handled
-    return str(object=block.get("id", ""))
+    block_type = block["type"]
+    type_obj = block[str(object=block_type)]
+    rich_text = type_obj.get("rich_text", [])
+    return "".join(item.get("plain_text", "") for item in rich_text)
 
 
 def _extract_deep_children(
@@ -282,9 +247,10 @@ def _get_all_uploaded_blocks_recursively(
         all_blocks.append(block)
 
         # If this block has children, fetch them recursively
-        if block.get("has_children", False):
+        if block["has_children"]:
             child_blocks = _get_all_uploaded_blocks_recursively(
-                notion_client=notion_client, parent_id=block["id"]
+                notion_client=notion_client,
+                parent_id=block["id"],
             )
             all_blocks.extend(child_blocks)
 
@@ -367,7 +333,7 @@ def _find_matching_block_id(
                 return uploaded_block.get("id")
 
             # Check children if they exist
-            if uploaded_block.get("has_children", False):
+            if uploaded_block["has_children"]:
                 # Note: We'd need to fetch children here, but for now
                 # let's assume children are included in the response
                 children = uploaded_block.get("children", [])
@@ -465,18 +431,6 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _load_and_process_contents(file_path: Path) -> list[_Block]:
-    """
-    Load a JSON file from disk and preprocess its blocks to handle Notion's
-    rich text length limits.
-    """
-    with file_path.open(mode="r", encoding="utf-8") as f:
-        contents = json.load(fp=f)
-
-    # Workaround Notion 2k char limit: preprocess contents
-    return [_process_block(block=content_block) for content_block in contents]
-
-
 def main() -> None:
     """
     Main entry point for the upload command.
@@ -487,9 +441,14 @@ def main() -> None:
     session = Session(client=notion_client)
     batch_size = args.batch_size
     title = args.title
+    file_path = args.file
 
     # Load and preprocess contents from the provided JSON file
-    processed_contents = _load_and_process_contents(file_path=args.file)
+    contents = json.loads(s=file_path.read_text(encoding="utf-8"))
+    # Workaround Notion 2k char limit: preprocess contents
+    processed_contents = [
+        _process_block(block=content_block) for content_block in contents
+    ]
 
     parent_page = session.get_page(page_ref=args.parent_page_id)
     page = _find_existing_page_by_title(
