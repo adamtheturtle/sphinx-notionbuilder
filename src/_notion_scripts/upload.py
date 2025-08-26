@@ -7,12 +7,14 @@ import argparse
 import json
 import os
 import sys
+from collections import deque
 from pathlib import Path
 from typing import Any, cast
 
 from beartype import beartype
 from notion_client import Client
 from ultimate_notion import Session
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.page import Page
 
 _NOTION_RICH_TEXT_LIMIT = 2000
@@ -238,31 +240,27 @@ def _extract_deep_children(
 
 @beartype
 def _get_all_uploaded_blocks_recursively(
-    notion_client: Client,
-    parent_id: str,
-) -> list[_Block]:
+    parent: Page | Block[Any],
+) -> deque[Block[Any]]:
     """
     Recursively fetch all uploaded blocks and their children.
     """
-    all_blocks: list[Any] = []
+    all_blocks: deque[Block[Any]] = deque()
 
-    # Get immediate children
-    page_children: Any = notion_client.blocks.children.list(
-        block_id=parent_id,
-        page_size=100,
-    )
-    immediate_blocks = page_children.get("results", [])
+    assert isinstance(parent, ChildrenMixin)
+    parent.reload()
+    children = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    pending_blocks: deque[Block[Any]] = deque(iterable=children)  # pyright: ignore[reportUnknownArgumentType]
 
-    for block in immediate_blocks:
-        all_blocks.append(block)
+    while pending_blocks:
+        current_block = pending_blocks.popleft()
+        all_blocks.append(current_block)
 
-        # If this block has children, fetch them recursively
-        if block["has_children"]:
-            child_blocks = _get_all_uploaded_blocks_recursively(
-                notion_client=notion_client,
-                parent_id=block["id"],
-            )
-            all_blocks.extend(child_blocks)
+        if current_block.has_children:
+            assert isinstance(current_block, ChildrenMixin)
+            child_blocks: list[Block[Any]] = list(current_block.children)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            for child_block in reversed(child_blocks):
+                pending_blocks.appendleft(child_block)
 
     return all_blocks
 
@@ -270,9 +268,10 @@ def _get_all_uploaded_blocks_recursively(
 @beartype
 def _upload_blocks_with_deep_nesting(
     notion_client: Client,
-    parent_id: str,
     blocks: list[_Block],
     batch_size: int,
+    parent: Page | Block[Any],
+    session: Session,
 ) -> None:
     """
     Upload blocks with support for deep nesting by making multiple API calls.
@@ -287,7 +286,7 @@ def _upload_blocks_with_deep_nesting(
     sys.stderr.write("Uploading main blocks...\n")
     _upload_blocks_in_batches(
         notion_client=notion_client,
-        parent_id=parent_id,
+        parent_id=str(object=parent.id),
         blocks=processed_blocks,
         batch_size=batch_size,
     )
@@ -297,38 +296,43 @@ def _upload_blocks_with_deep_nesting(
     )
 
     # Get all uploaded blocks recursively to find IDs
-    uploaded_blocks = _get_all_uploaded_blocks_recursively(
-        notion_client=notion_client,
-        parent_id=parent_id,
-    )
+    uploaded_blocks = _get_all_uploaded_blocks_recursively(parent=parent)
 
     # Process deep upload tasks
     for parent_template, deep_children in deep_upload_tasks:
         # Find the matching uploaded block by comparing content
+        assert uploaded_blocks
         (matching_block,) = [
             uploaded_block
             for uploaded_block in uploaded_blocks
             if _blocks_match(
-                template_block=parent_template, uploaded_block=uploaded_block
+                template_block=parent_template,
+                uploaded_block=uploaded_block,
             )
         ]
 
         _upload_blocks_with_deep_nesting(
             notion_client=notion_client,
-            parent_id=matching_block["id"],
             blocks=deep_children,
             batch_size=batch_size,
+            parent=matching_block,
+            session=session,
         )
 
 
 @beartype
-def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
+def _blocks_match(
+    template_block: _Block,
+    uploaded_block: Block[Any],
+) -> bool:
     """
     Check if a template block matches an uploaded block.
     """
     # Match by content for all block types that have text content
     template_content = _get_block_content(block=template_block)
-    uploaded_content = _get_block_content(block=uploaded_block)
+    uploaded_content = _get_block_content(
+        block=uploaded_block.obj_ref.serialize_for_api(),  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+    )
 
     return template_content == uploaded_content
 
@@ -438,9 +442,10 @@ def main() -> None:
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
-        parent_id=str(object=page.id),
         blocks=processed_contents,
         batch_size=batch_size,
+        parent=page,
+        session=session,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 

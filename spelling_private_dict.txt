@@ -6,5 +6,6 @@ pragma
 preprocess
 pyright
 recurse
+reportUnknownArgumentType
 reportUnknownMemberType
 reportUnknownVariableType
