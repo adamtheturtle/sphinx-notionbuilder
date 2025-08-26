@@ -407,9 +407,6 @@ def _upload_blocks_in_batches(
     """
     Upload blocks to a page in batches to avoid 413 errors.
     """
-    if not blocks:
-        return
-
     total_blocks = len(blocks)
     sys.stderr.write(
         f"Uploading {total_blocks} blocks in batches of {batch_size}...\n"
