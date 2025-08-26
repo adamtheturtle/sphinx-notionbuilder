@@ -247,9 +247,10 @@ def _get_all_uploaded_blocks_recursively(
         all_blocks.append(block)
 
         # If this block has children, fetch them recursively
-        if block.get("has_children", False):
+        if block["has_children"]:
             child_blocks = _get_all_uploaded_blocks_recursively(
-                notion_client=notion_client, parent_id=block["id"]
+                notion_client=notion_client,
+                parent_id=block["id"],
             )
             all_blocks.extend(child_blocks)
 
@@ -332,7 +333,7 @@ def _find_matching_block_id(
                 return uploaded_block.get("id")
 
             # Check children if they exist
-            if uploaded_block.get("has_children", False):
+            if uploaded_block["has_children"]:
                 # Note: We'd need to fetch children here, but for now
                 # let's assume children are included in the response
                 children = uploaded_block.get("children", [])
