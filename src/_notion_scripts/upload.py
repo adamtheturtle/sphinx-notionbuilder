@@ -12,6 +12,7 @@ from typing import Any, cast
 
 from notion_client import Client
 from ultimate_notion import Session
+from ultimate_notion.page import Page
 
 NOTION_RICH_TEXT_LIMIT = 2000
 NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
@@ -86,10 +87,10 @@ def _find_existing_page_by_title(
 
     Returns the page ID if found, None otherwise.
     """
-    parent = session.get_page(parent_page_id)
+    parent = session.get_page(page_ref=parent_page_id)
     for child_page in parent.subpages:
-        if str(child_page.title) == title:
-            return child_page.id
+        if str(object=child_page.title) == title:
+            return str(object=child_page.id)
     return None
 
 
@@ -490,14 +491,9 @@ def _update_existing_page(
     Update an existing Notion page by removing its current children and
     uploading the provided blocks.
     """
-    existing_children: Any = notion_client.blocks.children.list(
-        block_id=page_id,
-    )
-    child_results = existing_children.get("results", [])
-    for child in child_results:
-        child_id = child.get("id")
-        if child_id:
-            notion_client.blocks.delete(block_id=child_id)
+    page = Page(session=notion_client, id=page_id)
+    for child in list(page.children):  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportUnknownArgumentType]
+        child.delete()
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
