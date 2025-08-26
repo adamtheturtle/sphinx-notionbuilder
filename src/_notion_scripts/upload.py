@@ -304,36 +304,20 @@ def _upload_blocks_with_deep_nesting(
     # Process deep upload tasks
     for parent_template, deep_children in deep_upload_tasks:
         # Find the matching uploaded block by comparing content
-        matching_block_id = _find_matching_block_id(
-            template_block=parent_template,
-            uploaded_blocks=uploaded_blocks,
-        )
+        (matching_block,) = [
+            uploaded_block
+            for uploaded_block in uploaded_blocks
+            if _blocks_match(
+                template_block=parent_template, uploaded_block=uploaded_block
+            )
+        ]
 
         _upload_blocks_with_deep_nesting(
             notion_client=notion_client,
-            page_id=matching_block_id,
+            page_id=matching_block["id"],
             blocks=deep_children,
             batch_size=batch_size,
         )
-
-
-@beartype
-def _find_matching_block_id(
-    template_block: _Block,
-    uploaded_blocks: list[_Block],
-) -> str:
-    """
-    Find the ID of an uploaded block that matches the template block.
-    """
-    for uploaded_block in uploaded_blocks:
-        # Check if this block matches
-        if _blocks_match(
-            template_block=template_block, uploaded_block=uploaded_block
-        ):
-            return str(object=uploaded_block["id"])
-
-    msg = "No matching block found"
-    raise ValueError(msg)
 
 
 @beartype
