@@ -14,8 +14,8 @@ from notion_client import Client
 from ultimate_notion import Session
 from ultimate_notion.page import Page
 
-NOTION_RICH_TEXT_LIMIT = 2000
-NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
+_NOTION_RICH_TEXT_LIMIT = 2000
+_NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
 
 _Block = dict[str, Any]
@@ -32,10 +32,10 @@ def _split_rich_text(rich_text: list[_RichTextBlock]) -> list[_RichTextBlock]:
     for obj in rich_text:
         if obj.get("type") == "text" and "content" in obj["text"]:
             content = obj["text"]["content"]
-            if len(content) > NOTION_RICH_TEXT_LIMIT:
+            if len(content) > _NOTION_RICH_TEXT_LIMIT:
                 # Split content into chunks
-                for i in range(0, len(content), NOTION_RICH_TEXT_LIMIT):
-                    chunk = content[i : i + NOTION_RICH_TEXT_LIMIT]
+                for i in range(0, len(content), _NOTION_RICH_TEXT_LIMIT):
+                    chunk = content[i : i + _NOTION_RICH_TEXT_LIMIT]
                     new_obj = json.loads(s=json.dumps(obj=obj))  # deep copy
                     new_obj["text"]["content"] = chunk
                     new_rich_text.append(new_obj)
@@ -297,7 +297,7 @@ def _upload_blocks_with_deep_nesting(
     notion_client: Client,
     page_id: str,
     blocks: list[_Block],
-    batch_size: int = NOTION_BLOCKS_BATCH_SIZE,
+    batch_size: int = _NOTION_BLOCKS_BATCH_SIZE,
 ) -> None:
     """
     Upload blocks with support for deep nesting by making multiple API calls.
@@ -430,11 +430,14 @@ def _upload_blocks_in_batches(
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
 
-def parse_args() -> argparse.Namespace:
+def _parse_args() -> argparse.Namespace:
     """
     Parse command-line arguments for the upload script.
     """
-    parser = argparse.ArgumentParser(description="Upload to Notion")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Upload to Notion",
+    )
     parser.add_argument(
         "-f",
         "--file",
@@ -456,16 +459,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--batch-size",
-        help=(
-            f"Number of blocks per batch (default: {NOTION_BLOCKS_BATCH_SIZE})"
-        ),
+        help="Number of blocks per batch",
         type=int,
-        default=NOTION_BLOCKS_BATCH_SIZE,
+        default=_NOTION_BLOCKS_BATCH_SIZE,
     )
     return parser.parse_args()
 
 
-def load_and_process_contents(file_path: Path) -> list[_Block]:
+def _load_and_process_contents(file_path: Path) -> list[_Block]:
     """
     Load a JSON file from disk and preprocess its blocks to handle Notion's
     rich text length limits.
@@ -505,13 +506,13 @@ def main() -> None:  # pylint: disable=too-complex # noqa: C901
     """
     Main entry point for the upload command.
     """
-    args = parse_args()
+    args = _parse_args()
 
     notion = Client(auth=os.environ["NOTION_TOKEN"])
     session = Session(client=notion)
 
     # Load and preprocess contents from the provided JSON file
-    processed_contents = load_and_process_contents(file_path=args.file)
+    processed_contents = _load_and_process_contents(file_path=args.file)
 
     existing_page_id = _find_existing_page_by_title(
         session=session,
