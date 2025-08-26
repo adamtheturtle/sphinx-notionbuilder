@@ -504,7 +504,7 @@ def _update_existing_page(
     sys.stdout.write(f"Updated existing page: {title} (ID: {page_id})")
 
 
-def main() -> None:
+def main() -> None:  # pylint: disable=too-complex # noqa: C901
     """
     Main entry point for the upload command.
     """
@@ -530,22 +530,22 @@ def main() -> None:
             batch_size=args.batch_size,
             title=args.title,
         )
-    # For new pages, we need to handle deep nesting
-    elif len(processed_contents) > args.batch_size:
+        # For new pages, we need to handle deep nesting
+        return
+
+    if len(processed_contents) > args.batch_size:
         # Create page with first batch (but limit nesting)
         initial_batch, deep_tasks = _extract_deep_children(
             blocks=processed_contents[: args.batch_size], max_depth=1
         )
         remaining_blocks = processed_contents[args.batch_size :]
 
-        new_page: Any = notion.pages.create(
-            parent={"type": "page_id", "page_id": args.parent_page_id},
-            properties={
-                "title": {"title": [{"text": {"content": args.title}}]},
-            },
-            children=initial_batch,
-        )
-        page_id = new_page.get("id", "unknown")
+        # Use ultimate_notion to create the new page
+        parent_page = session.get_page(page_ref=args.parent_page_id)
+        new_page = session.create_page(parent=parent_page, title=args.title)
+        for block in initial_batch:
+            new_page.obj_ref.value.children.append(block)  # pyright: ignore[reportUnknownMemberType]
+        page_id = new_page.id
 
         # Handle deep children from initial batch
         if deep_tasks:
@@ -553,7 +553,7 @@ def main() -> None:
                 "Processing deep children from initial batch...\n"
             )
             page_children: Any = notion.blocks.children.list(
-                block_id=page_id, page_size=100
+                block_id=str(object=page_id), page_size=100
             )
             uploaded_blocks = page_children.get("results", [])
 
@@ -574,48 +574,50 @@ def main() -> None:
         if remaining_blocks:
             _upload_blocks_with_deep_nesting(
                 notion_client=notion,
-                page_id=page_id,
+                page_id=str(object=page_id),
                 blocks=remaining_blocks,
                 batch_size=args.batch_size,
             )
         sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
-    else:
-        # Small enough to create in one go, but still handle deep nesting
-        main_blocks, deep_tasks = _extract_deep_children(
-            blocks=processed_contents, max_depth=1
-        )
+        return
 
-        new_page_small: Any = notion.pages.create(
-            parent={"type": "page_id", "page_id": args.parent_page_id},
-            properties={
-                "title": {"title": [{"text": {"content": args.title}}]},
-            },
-            children=main_blocks,
-        )
-        page_id = new_page_small.get("id", "unknown")
+    # Small enough to create in one go, but still handle deep nesting
+    main_blocks, deep_tasks = _extract_deep_children(
+        blocks=processed_contents, max_depth=1
+    )
 
-        # Handle deep children
-        if deep_tasks:
-            sys.stderr.write("Processing deep children...\n")
-            page_children_2: Any = notion.blocks.children.list(
-                block_id=page_id, page_size=100
+    new_page_small: Any = notion.pages.create(
+        parent={"type": "page_id", "page_id": args.parent_page_id},
+        properties={
+            "title": {"title": [{"text": {"content": args.title}}]},
+        },
+        children=main_blocks,
+    )
+    page_id = new_page_small.get("id", "unknown")
+
+    # Handle deep children
+    if deep_tasks:
+        sys.stderr.write("Processing deep children...\n")
+        page_children_2: Any = notion.blocks.children.list(
+            block_id=str(object=page_id),
+            page_size=100,
+        )
+        uploaded_blocks_2 = page_children_2.get("results", [])
+
+        for parent_template, deep_children in deep_tasks:
+            matching_block_id = _find_matching_block_id(
+                template_block=parent_template,
+                uploaded_blocks=uploaded_blocks_2,
             )
-            uploaded_blocks_2 = page_children_2.get("results", [])
-
-            for parent_template, deep_children in deep_tasks:
-                matching_block_id = _find_matching_block_id(
-                    template_block=parent_template,
-                    uploaded_blocks=uploaded_blocks_2,
+            if matching_block_id:
+                _upload_blocks_with_deep_nesting(
+                    notion_client=notion,
+                    page_id=matching_block_id,
+                    blocks=deep_children,
+                    batch_size=args.batch_size,
                 )
-                if matching_block_id:
-                    _upload_blocks_with_deep_nesting(
-                        notion_client=notion,
-                        page_id=matching_block_id,
-                        blocks=deep_children,
-                        batch_size=args.batch_size,
-                    )
 
-        sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
+    sys.stdout.write(f"Created new page: {args.title} (ID: {page_id})")
 
 
 if __name__ == "__main__":
