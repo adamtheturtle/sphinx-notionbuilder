@@ -586,14 +586,12 @@ def main() -> None:  # pylint: disable=too-complex # noqa: C901
         blocks=processed_contents, max_depth=1
     )
 
-    new_page_small: Any = notion.pages.create(
-        parent={"type": "page_id", "page_id": args.parent_page_id},
-        properties={
-            "title": {"title": [{"text": {"content": args.title}}]},
-        },
-        children=main_blocks,
-    )
-    page_id = new_page_small.get("id", "unknown")
+    # Use ultimate_notion to create the new page (small page case)
+    parent_page = session.get_page(page_ref=args.parent_page_id)
+    new_page_small = session.create_page(parent=parent_page, title=args.title)
+    for block in main_blocks:
+        new_page_small.obj_ref.value.children.append(block)  # pyright: ignore[reportUnknownMemberType]
+    page_id = new_page_small.id
 
     # Handle deep children
     if deep_tasks:
