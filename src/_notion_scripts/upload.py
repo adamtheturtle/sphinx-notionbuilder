@@ -300,7 +300,6 @@ def _upload_blocks_with_deep_nesting(
                 uploaded_blocks=uploaded_blocks,
             )
 
-            assert matching_block_id is not None
             _upload_blocks_with_deep_nesting(
                 notion_client=notion_client,
                 page_id=matching_block_id,
@@ -312,14 +311,11 @@ def _upload_blocks_with_deep_nesting(
 def _find_matching_block_id(
     template_block: _Block,
     uploaded_blocks: list[_Block],
-) -> str | None:
+) -> str:
     """Find the ID of an uploaded block that matches the template block.
 
     Searches recursively through all uploaded blocks and their children.
     """
-    template_type = template_block.get("type")
-    if not template_type:
-        return None
 
     def _search_blocks_recursively(blocks: list[_Block]) -> str | None:
         """
@@ -341,7 +337,9 @@ def _find_matching_block_id(
                     child_result = _search_blocks_recursively(blocks=children)
                     if child_result:
                         return child_result
-        return None
+
+        msg = "No matching block found"
+        raise ValueError(msg)
 
     return _search_blocks_recursively(blocks=uploaded_blocks)
 
