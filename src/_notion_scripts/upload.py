@@ -330,7 +330,8 @@ def _upload_blocks_with_deep_nesting(
         for parent_template, deep_children in deep_upload_tasks:
             # Find the matching uploaded block by comparing content
             matching_block_id = _find_matching_block_id(
-                template_block=parent_template, uploaded_blocks=uploaded_blocks
+                template_block=parent_template,
+                uploaded_blocks=uploaded_blocks,
             )
 
             assert matching_block_id is not None
