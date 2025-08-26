@@ -300,7 +300,6 @@ def _upload_blocks_with_deep_nesting(
                 uploaded_blocks=uploaded_blocks,
             )
 
-            assert matching_block_id is not None
             _upload_blocks_with_deep_nesting(
                 notion_client=notion_client,
                 page_id=matching_block_id,
@@ -312,38 +311,19 @@ def _upload_blocks_with_deep_nesting(
 def _find_matching_block_id(
     template_block: _Block,
     uploaded_blocks: list[_Block],
-) -> str | None:
-    """Find the ID of an uploaded block that matches the template block.
-
-    Searches recursively through all uploaded blocks and their children.
+) -> str:
     """
-    template_type = template_block.get("type")
-    if not template_type:
-        return None
+    Find the ID of an uploaded block that matches the template block.
+    """
+    for uploaded_block in uploaded_blocks:
+        # Check if this block matches
+        if _blocks_match(
+            template_block=template_block, uploaded_block=uploaded_block
+        ):
+            return str(object=uploaded_block["id"])
 
-    def _search_blocks_recursively(blocks: list[_Block]) -> str | None:
-        """
-        Recursively search blocks for a match.
-        """
-        for uploaded_block in blocks:
-            # Check if this block matches
-            if _blocks_match(
-                template_block=template_block, uploaded_block=uploaded_block
-            ):
-                return uploaded_block.get("id")
-
-            # Check children if they exist
-            if uploaded_block["has_children"]:
-                # Note: We'd need to fetch children here, but for now
-                # let's assume children are included in the response
-                children = uploaded_block.get("children", [])
-                if children:
-                    child_result = _search_blocks_recursively(blocks=children)
-                    if child_result:
-                        return child_result
-        return None
-
-    return _search_blocks_recursively(blocks=uploaded_blocks)
+    msg = "No matching block found"
+    raise ValueError(msg)
 
 
 def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
