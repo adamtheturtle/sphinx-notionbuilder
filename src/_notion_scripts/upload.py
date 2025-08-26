@@ -512,28 +512,18 @@ def main() -> None:
     processed_contents = _load_and_process_contents(file_path=args.file)
 
     parent_page = session.get_page(page_ref=args.parent_page_id)
-    existing_page = _find_existing_page_by_title(
+    page = _find_existing_page_by_title(
         parent_page=parent_page,
         title=args.title,
     )
 
-    if existing_page:
-        _update_existing_page(
-            notion_client=notion,
-            page=existing_page,
-            blocks=processed_contents,
-            batch_size=args.batch_size,
-            title=args.title,
-        )
-        return
+    if not page:
+        page = session.create_page(parent=parent_page, title=args.title)
+        sys.stdout.write(f"Created new page: {args.title} (ID: {page.id})\n")
 
-    new_page_small = session.create_page(parent=parent_page, title=args.title)
-    sys.stdout.write(
-        f"Created new page: {args.title} (ID: {new_page_small.id})\n"
-    )
     _update_existing_page(
         notion_client=notion,
-        page=new_page_small,
+        page=page,
         blocks=processed_contents,
         batch_size=args.batch_size,
         title=args.title,
