@@ -81,7 +81,7 @@ def _find_existing_page_by_title(
     session: Session,
     parent_page_id: str,
     title: str,
-) -> str | None:
+) -> Page | None:
     """Find an existing page with the given title in the parent page (top-level
     only).
 
@@ -90,7 +90,7 @@ def _find_existing_page_by_title(
     parent = session.get_page(page_ref=parent_page_id)
     for child_page in parent.subpages:
         if str(object=child_page.title) == title:
-            return str(object=child_page.id)
+            return child_page
     return None
 
 
@@ -480,7 +480,7 @@ def _load_and_process_contents(file_path: Path) -> list[_Block]:
 
 def _update_existing_page(
     notion_client: Client,
-    page_id: str,
+    page: Page,
     blocks: list[_Block],
     batch_size: int,
     title: str,
@@ -489,17 +489,16 @@ def _update_existing_page(
     Update an existing Notion page by removing its current children and
     uploading the provided blocks.
     """
-    page = Page(session=notion_client, id=page_id)
     for child in list(page.children):  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportUnknownArgumentType]
         child.delete()
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
-        page_id=page_id,
+        page_id=str(object=page.id),
         blocks=blocks,
         batch_size=batch_size,
     )
-    sys.stdout.write(f"Updated existing page: {title} (ID: {page_id})\n")
+    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
 
 def main() -> None:
@@ -514,16 +513,16 @@ def main() -> None:
     # Load and preprocess contents from the provided JSON file
     processed_contents = _load_and_process_contents(file_path=args.file)
 
-    existing_page_id = _find_existing_page_by_title(
+    existing_page = _find_existing_page_by_title(
         session=session,
         parent_page_id=args.parent_page_id,
         title=args.title,
     )
 
-    if existing_page_id:
+    if existing_page:
         _update_existing_page(
             notion_client=notion,
-            page_id=existing_page_id,
+            page=existing_page,
             blocks=processed_contents,
             batch_size=args.batch_size,
             title=args.title,
@@ -537,7 +536,7 @@ def main() -> None:
     )
     _update_existing_page(
         notion_client=notion,
-        page_id=str(object=new_page_small.id),
+        page=new_page_small,
         blocks=processed_contents,
         batch_size=args.batch_size,
         title=args.title,
