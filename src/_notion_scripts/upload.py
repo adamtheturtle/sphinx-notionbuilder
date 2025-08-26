@@ -249,7 +249,8 @@ def _get_all_uploaded_blocks_recursively(
 
     assert isinstance(parent, ChildrenMixin)
     parent.reload()
-    pending_blocks: deque[Block[Any]] = deque(iterable=parent.children)
+    children = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    pending_blocks: deque[Block[Any]] = deque(iterable=children)  # pyright: ignore[reportUnknownArgumentType]
 
     while pending_blocks:
         current_block = pending_blocks.popleft()
@@ -257,7 +258,7 @@ def _get_all_uploaded_blocks_recursively(
 
         if current_block.has_children:
             assert isinstance(current_block, ChildrenMixin)
-            child_blocks: list[Block[Any]] = list(current_block.children)
+            child_blocks: list[Block[Any]] = list(current_block.children)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             for child_block in reversed(child_blocks):
                 pending_blocks.appendleft(child_block)
 
@@ -332,7 +333,7 @@ def _blocks_match(
     # Match by content for all block types that have text content
     template_content = _get_block_content(block=template_block)
     uploaded_content = _get_block_content(
-        block=uploaded_block.obj_ref.serialize_for_api(),
+        block=uploaded_block.obj_ref.serialize_for_api(),  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
     )
 
     return template_content == uploaded_content
