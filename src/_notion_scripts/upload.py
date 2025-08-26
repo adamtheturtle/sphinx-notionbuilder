@@ -317,7 +317,7 @@ def _find_matching_block_id(
     Searches recursively through all uploaded blocks and their children.
     """
 
-    def _search_blocks_recursively(blocks: list[_Block]) -> str | None:
+    def _search_blocks_recursively(blocks: list[_Block]) -> str:
         """
         Recursively search blocks for a match.
         """
@@ -326,7 +326,7 @@ def _find_matching_block_id(
             if _blocks_match(
                 template_block=template_block, uploaded_block=uploaded_block
             ):
-                return uploaded_block.get("id")
+                return str(object=uploaded_block["id"])
 
             # Check children if they exist
             if uploaded_block["has_children"]:
