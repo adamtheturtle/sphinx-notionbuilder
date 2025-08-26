@@ -268,7 +268,6 @@ def _get_all_uploaded_blocks_recursively(
 @beartype
 def _upload_blocks_with_deep_nesting(
     notion_client: Client,
-    parent_id: str,
     blocks: list[_Block],
     batch_size: int,
     parent: Page | Block[Any],
@@ -287,7 +286,7 @@ def _upload_blocks_with_deep_nesting(
     sys.stderr.write("Uploading main blocks...\n")
     _upload_blocks_in_batches(
         notion_client=notion_client,
-        parent_id=parent_id,
+        parent_id=str(object=parent.id),
         blocks=processed_blocks,
         batch_size=batch_size,
     )
@@ -314,10 +313,9 @@ def _upload_blocks_with_deep_nesting(
 
         _upload_blocks_with_deep_nesting(
             notion_client=notion_client,
-            parent_id=str(object=matching_block.id),
             blocks=deep_children,
             batch_size=batch_size,
-            parent=parent,
+            parent=matching_block,
             session=session,
         )
 
@@ -444,7 +442,6 @@ def main() -> None:
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
-        parent_id=str(object=page.id),
         blocks=processed_contents,
         batch_size=batch_size,
         parent=page,
