@@ -19,6 +19,7 @@ This is **bold** and *italic* and ``inline code``.
 
    * First level item in note
    * Another first level item
+   * Another first level item
 
      * Second level nested in note
      * Another second level item
@@ -27,6 +28,7 @@ This is **bold** and *italic* and ``inline code``.
        * Another third level item
 
          * Fourth level nested in note (very deep!)
+         * Another fourth level item
          * Another fourth level item
 
            * Fifth level nested in note (extremely deep!)
