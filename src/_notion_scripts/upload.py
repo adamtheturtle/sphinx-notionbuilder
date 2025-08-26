@@ -465,18 +465,6 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _load_and_process_contents(file_path: Path) -> list[_Block]:
-    """
-    Load a JSON file from disk and preprocess its blocks to handle Notion's
-    rich text length limits.
-    """
-    with file_path.open(mode="r", encoding="utf-8") as f:
-        contents = json.load(fp=f)
-
-    # Workaround Notion 2k char limit: preprocess contents
-    return [_process_block(block=content_block) for content_block in contents]
-
-
 def main() -> None:
     """
     Main entry point for the upload command.
@@ -487,9 +475,14 @@ def main() -> None:
     session = Session(client=notion_client)
     batch_size = args.batch_size
     title = args.title
+    file_path = args.file
 
     # Load and preprocess contents from the provided JSON file
-    processed_contents = _load_and_process_contents(file_path=args.file)
+    contents = json.loads(s=file_path.read_text(encoding="utf-8"))
+    # Workaround Notion 2k char limit: preprocess contents
+    processed_contents = [
+        _process_block(block=content_block) for content_block in contents
+    ]
 
     parent_page = session.get_page(page_ref=args.parent_page_id)
     page = _find_existing_page_by_title(
