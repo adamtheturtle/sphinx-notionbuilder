@@ -325,12 +325,6 @@ def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
     """
     Check if a template block matches an uploaded block.
     """
-    template_type = template_block.get("type")
-    uploaded_type = uploaded_block.get("type")
-
-    if template_type != uploaded_type:
-        return False
-
     # Match by content for all block types that have text content
     template_content = _get_block_content(block=template_block)
     uploaded_content = _get_block_content(block=uploaded_block)
