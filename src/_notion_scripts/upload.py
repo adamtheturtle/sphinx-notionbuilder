@@ -312,36 +312,18 @@ def _find_matching_block_id(
     template_block: _Block,
     uploaded_blocks: list[_Block],
 ) -> str:
-    """Find the ID of an uploaded block that matches the template block.
-
-    Searches recursively through all uploaded blocks and their children.
     """
+    Find the ID of an uploaded block that matches the template block.
+    """
+    for uploaded_block in uploaded_blocks:
+        # Check if this block matches
+        if _blocks_match(
+            template_block=template_block, uploaded_block=uploaded_block
+        ):
+            return str(object=uploaded_block["id"])
 
-    def _search_blocks_recursively(blocks: list[_Block]) -> str:
-        """
-        Recursively search blocks for a match.
-        """
-        for uploaded_block in blocks:
-            # Check if this block matches
-            if _blocks_match(
-                template_block=template_block, uploaded_block=uploaded_block
-            ):
-                return str(object=uploaded_block["id"])
-
-            # Check children if they exist
-            if uploaded_block["has_children"]:
-                # Note: We'd need to fetch children here, but for now
-                # let's assume children are included in the response
-                children = uploaded_block.get("children", [])
-                if children:
-                    child_result = _search_blocks_recursively(blocks=children)
-                    if child_result:
-                        return child_result
-
-        msg = "No matching block found"
-        raise ValueError(msg)
-
-    return _search_blocks_recursively(blocks=uploaded_blocks)
+    msg = "No matching block found"
+    raise ValueError(msg)
 
 
 def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
