@@ -424,14 +424,10 @@ def _upload_blocks_in_batches(
             f"({len(batch)} blocks)...\n"
         )
 
-        try:
-            notion_client.blocks.children.append(
-                block_id=page_id,
-                children=batch,
-            )
-        except Exception as e:
-            sys.stderr.write(f"Error uploading batch {batch_num}: {e}\n")
-            raise
+        notion_client.blocks.children.append(
+            block_id=page_id,
+            children=batch,
+        )
 
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
