@@ -297,7 +297,7 @@ def _upload_blocks_with_deep_nesting(
     notion_client: Client,
     page_id: str,
     blocks: list[_Block],
-    batch_size: int = _NOTION_BLOCKS_BATCH_SIZE,
+    batch_size: int,
 ) -> None:
     """
     Upload blocks with support for deep nesting by making multiple API calls.
