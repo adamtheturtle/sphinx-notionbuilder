@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from notion_client import Client
+from ultimate_notion import Session
 
 NOTION_RICH_TEXT_LIMIT = 2000
 NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
@@ -76,7 +77,7 @@ def _process_block(block: _Block) -> _Block:
 
 
 def _find_existing_page_by_title(
-    notion_client: Client,
+    session: Session,
     parent_page_id: str,
     title: str,
 ) -> str | None:
@@ -85,19 +86,10 @@ def _find_existing_page_by_title(
 
     Returns the page ID if found, None otherwise.
     """
-    children: Any = notion_client.blocks.children.list(block_id=parent_page_id)
-    children_results = children.get("results", [])
-
-    for child_block in children_results:
-        if (
-            child_block.get("type") == "child_page"
-            and "child_page" in child_block
-        ):
-            child_page = child_block["child_page"]
-            page_title = child_page.get("title", "")
-            if page_title == title:
-                return str(object=child_block.get("id"))
-
+    parent = session.get_page(parent_page_id)
+    for child_page in parent.subpages:
+        if str(child_page.title) == title:
+            return child_page.id
     return None
 
 
@@ -526,14 +518,14 @@ def main() -> None:
     """
     args = parse_args()
 
-    # Initialize Notion client
     notion = Client(auth=os.environ["NOTION_TOKEN"])
+    session = Session(client=notion)
 
     # Load and preprocess contents from the provided JSON file
     processed_contents = load_and_process_contents(file_path=args.file)
 
     existing_page_id = _find_existing_page_by_title(
-        notion_client=notion,
+        session=session,
         parent_page_id=args.parent_page_id,
         title=args.title,
     )
