@@ -168,32 +168,10 @@ def _get_block_content(block: _Block) -> str:
     """
     Get text content from a block for matching purposes.
     """
-    block_type = block.get("type")
-
-    # Most block types store rich_text in their type-specific object
-    if block_type in {
-        "bulleted_list_item",
-        "numbered_list_item",
-        "to_do",
-        "toggle",
-        "quote",
-        "heading_1",
-        "heading_2",
-        "heading_3",
-        "paragraph",
-    }:
-        type_obj = block.get(block_type, {})
-        rich_text = type_obj.get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    if block_type == "callout":
-        rich_text = block.get("callout", {}).get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    if block_type == "code":
-        rich_text = block.get("code", {}).get("rich_text", [])
-        return "".join(item.get("plain_text", "") for item in rich_text)
-    # For other block types, try to find any text content
-    # This is a fallback for block types we haven't specifically handled
-    return str(object=block.get("id", ""))
+    block_type = block["type"]
+    type_obj = block[str(object=block_type)]
+    rich_text = type_obj.get("rich_text", [])
+    return "".join(item.get("plain_text", "") for item in rich_text)
 
 
 def _extract_deep_children(
