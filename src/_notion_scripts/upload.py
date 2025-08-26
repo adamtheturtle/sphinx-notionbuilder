@@ -476,37 +476,16 @@ def _load_and_process_contents(file_path: Path) -> list[_Block]:
     return [_process_block(block=content_block) for content_block in contents]
 
 
-def _update_existing_page(
-    notion_client: Client,
-    page: Page,
-    blocks: list[_Block],
-    batch_size: int,
-    title: str,
-) -> None:
-    """
-    Update an existing Notion page by removing its current children and
-    uploading the provided blocks.
-    """
-    for child in list(page.children):  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportUnknownArgumentType]
-        child.delete()
-
-    _upload_blocks_with_deep_nesting(
-        notion_client=notion_client,
-        page_id=str(object=page.id),
-        blocks=blocks,
-        batch_size=batch_size,
-    )
-    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
-
-
 def main() -> None:
     """
     Main entry point for the upload command.
     """
     args = _parse_args()
 
-    notion = Client(auth=os.environ["NOTION_TOKEN"])
-    session = Session(client=notion)
+    notion_client = Client(auth=os.environ["NOTION_TOKEN"])
+    session = Session(client=notion_client)
+    batch_size = args.batch_size
+    title = args.title
 
     # Load and preprocess contents from the provided JSON file
     processed_contents = _load_and_process_contents(file_path=args.file)
@@ -521,13 +500,16 @@ def main() -> None:
         page = session.create_page(parent=parent_page, title=args.title)
         sys.stdout.write(f"Created new page: {args.title} (ID: {page.id})\n")
 
-    _update_existing_page(
-        notion_client=notion,
-        page=page,
+    for child in list(page.children):  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportUnknownArgumentType]
+        child.delete()
+
+    _upload_blocks_with_deep_nesting(
+        notion_client=notion_client,
+        page_id=str(object=page.id),
         blocks=processed_contents,
-        batch_size=args.batch_size,
-        title=args.title,
+        batch_size=batch_size,
     )
+    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
 
 if __name__ == "__main__":
