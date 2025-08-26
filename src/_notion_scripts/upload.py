@@ -159,14 +159,14 @@ def _remove_block_children(block: _Block) -> _Block:
 
 
 @beartype
-def _get_block_content(block: _Block) -> str:
+def _get_block_content(block: _Block) -> list[str]:
     """
     Get text content from a block for matching purposes.
     """
     block_type = block["type"]
     type_obj = block[str(object=block_type)]
     rich_text = type_obj.get("rich_text", [])
-    return "".join(item.get("plain_text", "") for item in rich_text)
+    return [str(object=item["plain_text"]) for item in rich_text]
 
 
 @beartype
