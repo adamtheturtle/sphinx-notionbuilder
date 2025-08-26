@@ -402,7 +402,7 @@ def _upload_blocks_in_batches(
     notion_client: Client,
     page_id: str,
     blocks: list[_Block],
-    batch_size: int = NOTION_BLOCKS_BATCH_SIZE,
+    batch_size: int,
 ) -> None:
     """
     Upload blocks to a page in batches to avoid 413 errors.
