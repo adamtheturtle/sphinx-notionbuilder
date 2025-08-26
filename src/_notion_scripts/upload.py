@@ -78,8 +78,7 @@ def _process_block(block: _Block) -> _Block:
 
 
 def _find_existing_page_by_title(
-    session: Session,
-    parent_page_id: str,
+    parent_page: Page,
     title: str,
 ) -> Page | None:
     """Find an existing page with the given title in the parent page (top-level
@@ -87,8 +86,7 @@ def _find_existing_page_by_title(
 
     Returns the page ID if found, None otherwise.
     """
-    parent = session.get_page(page_ref=parent_page_id)
-    for child_page in parent.subpages:
+    for child_page in parent_page.subpages:
         if str(object=child_page.title) == title:
             return child_page
     return None
@@ -513,9 +511,9 @@ def main() -> None:
     # Load and preprocess contents from the provided JSON file
     processed_contents = _load_and_process_contents(file_path=args.file)
 
+    parent_page = session.get_page(page_ref=args.parent_page_id)
     existing_page = _find_existing_page_by_title(
-        session=session,
-        parent_page_id=args.parent_page_id,
+        parent_page=parent_page,
         title=args.title,
     )
 
@@ -529,7 +527,6 @@ def main() -> None:
         )
         return
 
-    parent_page = session.get_page(page_ref=args.parent_page_id)
     new_page_small = session.create_page(parent=parent_page, title=args.title)
     sys.stdout.write(
         f"Created new page: {args.title} (ID: {new_page_small.id})\n"
