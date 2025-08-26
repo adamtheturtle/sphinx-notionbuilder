@@ -292,31 +292,29 @@ def _upload_blocks_with_deep_nesting(
         batch_size=batch_size,
     )
 
-    # Now handle deep children by finding their uploaded parents
-    if deep_upload_tasks:
-        sys.stderr.write(
-            f"Processing {len(deep_upload_tasks)} deep nesting tasks...\n"
+    sys.stderr.write(
+        f"Processing {len(deep_upload_tasks)} deep nesting tasks...\n"
+    )
+
+    # Get all uploaded blocks recursively to find IDs
+    uploaded_blocks = _get_all_uploaded_blocks_recursively(
+        notion_client=notion_client, parent_id=page_id
+    )
+
+    # Process deep upload tasks
+    for parent_template, deep_children in deep_upload_tasks:
+        # Find the matching uploaded block by comparing content
+        matching_block_id = _find_matching_block_id(
+            template_block=parent_template,
+            uploaded_blocks=uploaded_blocks,
         )
 
-        # Get all uploaded blocks recursively to find IDs
-        uploaded_blocks = _get_all_uploaded_blocks_recursively(
-            notion_client=notion_client, parent_id=page_id
+        _upload_blocks_with_deep_nesting(
+            notion_client=notion_client,
+            page_id=matching_block_id,
+            blocks=deep_children,
+            batch_size=batch_size,
         )
-
-        # Process deep upload tasks
-        for parent_template, deep_children in deep_upload_tasks:
-            # Find the matching uploaded block by comparing content
-            matching_block_id = _find_matching_block_id(
-                template_block=parent_template,
-                uploaded_blocks=uploaded_blocks,
-            )
-
-            _upload_blocks_with_deep_nesting(
-                notion_client=notion_client,
-                page_id=matching_block_id,
-                blocks=deep_children,
-                batch_size=batch_size,
-            )
 
 
 @beartype
