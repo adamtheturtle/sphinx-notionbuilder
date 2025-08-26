@@ -182,8 +182,8 @@ def _extract_deep_children(
         - List of (parent_block, deep_children) pairs for uploading later
     """
     max_depth = 1
-    processed_blocks: list[dict[str, Any]] = []
-    deep_upload_tasks: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
+    processed_blocks: list[_Block] = []
+    deep_upload_tasks: list[tuple[_Block, list[_Block]]] = []
 
     def _process_block(block: _Block, current_depth: int = 0) -> _Block:
         """
@@ -194,7 +194,7 @@ def _extract_deep_children(
             return block
 
         block_copy = dict(block)
-        processed_children: list[dict[str, Any]] = []
+        processed_children: list[_Block] = []
 
         for child in children:
             child_children = _get_block_children(block=child)
