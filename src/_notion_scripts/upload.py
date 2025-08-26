@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from beartype import beartype
 from notion_client import Client
 from ultimate_notion import Session
 from ultimate_notion.page import Page
@@ -22,6 +23,7 @@ _Block = dict[str, Any]
 _RichTextBlock = dict[str, Any]
 
 
+@beartype
 def _split_rich_text(rich_text: list[_RichTextBlock]) -> list[_RichTextBlock]:
     """
     Given a list of rich_text objects, split any 'text.content' >2000 chars
@@ -46,6 +48,7 @@ def _split_rich_text(rich_text: list[_RichTextBlock]) -> list[_RichTextBlock]:
     return new_rich_text
 
 
+@beartype
 def _process_block(block: _Block) -> _Block:
     """
     Recursively process a Notion block dict, splitting any rich_text >2000
@@ -77,6 +80,7 @@ def _process_block(block: _Block) -> _Block:
     return block
 
 
+@beartype
 def _find_existing_page_by_title(
     parent_page: Page,
     title: str,
@@ -92,6 +96,7 @@ def _find_existing_page_by_title(
     return None
 
 
+@beartype
 def _get_block_children(block: _Block) -> list[_Block]:
     """
     Get children from a block, regardless of block type.
@@ -114,6 +119,7 @@ def _get_block_children(block: _Block) -> list[_Block]:
     return list(block.get("children", []))
 
 
+@beartype
 def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
     """
     Set children on a block, regardless of block type.
@@ -140,6 +146,7 @@ def _set_block_children(block: _Block, children: list[_Block]) -> _Block:
     return block_copy
 
 
+@beartype
 def _remove_block_children(block: _Block) -> _Block:
     """
     Remove children from a block, regardless of block type.
@@ -151,6 +158,7 @@ def _remove_block_children(block: _Block) -> _Block:
     return block_copy
 
 
+@beartype
 def _get_block_content(block: _Block) -> str:
     """
     Get text content from a block for matching purposes.
@@ -161,6 +169,7 @@ def _get_block_content(block: _Block) -> str:
     return "".join(item.get("plain_text", "") for item in rich_text)
 
 
+@beartype
 def _extract_deep_children(
     blocks: list[_Block],
     max_depth: int = 1,
@@ -227,6 +236,7 @@ def _extract_deep_children(
     return processed_blocks, deep_upload_tasks
 
 
+@beartype
 def _get_all_uploaded_blocks_recursively(
     notion_client: Client,
     parent_id: str,
@@ -257,6 +267,7 @@ def _get_all_uploaded_blocks_recursively(
     return all_blocks
 
 
+@beartype
 def _upload_blocks_with_deep_nesting(
     notion_client: Client,
     page_id: str,
@@ -308,6 +319,7 @@ def _upload_blocks_with_deep_nesting(
             )
 
 
+@beartype
 def _find_matching_block_id(
     template_block: _Block,
     uploaded_blocks: list[_Block],
@@ -326,6 +338,7 @@ def _find_matching_block_id(
     raise ValueError(msg)
 
 
+@beartype
 def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
     """
     Check if a template block matches an uploaded block.
@@ -343,6 +356,7 @@ def _blocks_match(template_block: _Block, uploaded_block: _Block) -> bool:
     return template_content == uploaded_content
 
 
+@beartype
 def _upload_blocks_in_batches(
     notion_client: Client,
     page_id: str,
@@ -375,6 +389,7 @@ def _upload_blocks_in_batches(
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
 
+@beartype
 def _parse_args() -> argparse.Namespace:
     """
     Parse command-line arguments for the upload script.
@@ -411,6 +426,7 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+@beartype
 def main() -> None:
     """
     Main entry point for the upload command.
