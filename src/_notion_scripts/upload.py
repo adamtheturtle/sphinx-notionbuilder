@@ -21,7 +21,6 @@ _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
 
 _Block = dict[str, Any]
-_RichTextBlock = dict[str, Any]
 
 
 @beartype
