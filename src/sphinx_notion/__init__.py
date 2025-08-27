@@ -281,7 +281,7 @@ class NotionTranslator(NodeVisitor):
         *,
         node: nodes.list_item,
         parent_path: list[tuple[NotionObject[Any], int]],
-    ) -> UnoBulletedItem:
+    ) -> None:
         """
         Recursively process a list item node and return a BulletedItem.
         """
@@ -303,14 +303,10 @@ class NotionTranslator(NodeVisitor):
                 assert isinstance(nested_list_item, nodes.list_item), (
                     bullet_only_msg
                 )
-                nested_block = self._process_list_item_recursively(
+                self._process_list_item_recursively(
                     node=nested_list_item,
                     parent_path=[*parent_path, (block, id(block))],
                 )
-                # Add the nested block as a child to this block
-                block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-
-        return block
 
     @singledispatchmethod
     def _process_node_to_blocks(
@@ -446,13 +442,10 @@ class NotionTranslator(NodeVisitor):
         del section_level
         for list_item in node.children:
             if isinstance(list_item, nodes.list_item):
-                bullet_item = self._process_list_item_recursively(
+                self._process_list_item_recursively(
                     node=list_item,
                     parent_path=parent_path,
                 )
-                # Add to main blocks list if this is a top-level bullet list
-                if not parent_path:
-                    self._blocks.append(bullet_item)
 
     @_process_node_to_blocks.register
     def _(
@@ -548,27 +541,13 @@ class NotionTranslator(NodeVisitor):
             # Process all children as nested blocks (including the first)
             children_to_process = node.children
 
-        # Process children as nested blocks and add them as children to the callout
+        # Process children as nested blocks
         for child in children_to_process:
-            # Create a temporary list to capture the blocks created by processing this child
-            temp_blocks: list[NotionObject[Any]] = []
-            original_blocks = self._blocks
-            self._blocks = temp_blocks
-
             self._process_node_to_blocks(
                 child,
                 section_level=1,
                 parent_path=[*parent_path, (block, id(block))],
             )
-
-            # Add the processed blocks as children to the callout
-            for nested_block in temp_blocks:
-                block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-
-            # Restore the original blocks list
-            self._blocks = original_blocks
-
-        self._blocks.append(block)
 
     @_process_node_to_blocks.register
     def _(
@@ -640,33 +619,16 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
 
-        children_to_process = node.children
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=title_text)
         self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
 
-        for child in children_to_process:
-            # Create a temporary list to capture the blocks created by processing this child
-            temp_blocks: list[NotionObject[Any]] = []
-            original_blocks = self._blocks
-            self._blocks = temp_blocks
-
+        for child in node.children:
             self._process_node_to_blocks(
                 child,
                 section_level=1,
                 parent_path=[*parent_path, (toggle_block, id(toggle_block))],
             )
-
-            # Add the processed blocks as children to the toggle block
-            for nested_block in temp_blocks:
-                toggle_block.obj_ref.value.children.append(
-                    nested_block.obj_ref
-                )  # pyright: ignore[reportUnknownMemberType]
-
-            # Restore the original blocks list
-            self._blocks = original_blocks
-
-        self._blocks.append(toggle_block)
 
     def visit_title(self, node: nodes.Element) -> None:
         """
@@ -837,7 +799,10 @@ class NotionTranslator(NodeVisitor):
         self,
         block_tree: Any,
     ) -> list[dict[str, Any]]:
-        """Convert the block tree to a JSON-serializable format, ignoring IDs from tuples."""
+        """
+        Convert the block tree to a JSON-serializable format, ignoring IDs from
+        tuples.
+        """
         result: list[dict[str, Any]] = []
         for (block, _), subtree in block_tree.items():
             obj_ref = block.obj_ref

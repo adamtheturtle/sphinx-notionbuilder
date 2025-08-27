@@ -133,17 +133,53 @@ def main() -> None:
     ):
         child.delete()
 
-    for block_details in blocks:
+    def upload_blocks_recursively(
+        parent_id: str, block_details_list: list[dict[str, Any]]
+    ) -> None:
         """
-        TODO:
-
-        block_details has a "block" and "children" key.
-
-        We upload blocks in batches, but we need to upload children recursively.
-        Upload one level at a time.
-
-        Maybe make a recursive function that uploads one level at a time.
+        Upload blocks recursively, handling the new structure with block and
+        children.
         """
+        if not block_details_list:
+            return
+
+        # Extract just the blocks for this level
+        level_blocks = [details["block"] for details in block_details_list]
+
+        # Upload this level's blocks in batches
+        _upload_blocks_in_batches(
+            notion_client=notion_client,
+            parent_id=parent_id,
+            blocks=level_blocks,
+            batch_size=batch_size,
+        )
+
+        # Get the uploaded blocks to get their IDs for children
+        uploaded_blocks = notion_client.blocks.children.list(
+            block_id=parent_id
+        )
+        block_id_map: dict[str, list[dict[str, Any]]] = {}
+
+        # Map the uploaded blocks to their details for children processing
+        results = uploaded_blocks.get("results", [])
+        for i, block in enumerate(results):
+            if i < len(block_details_list):
+                block_details = block_details_list[i]
+                if block_details["children"]:
+                    block_id = block.get("id")
+                    if block_id:
+                        block_id_map[str(block_id)] = block_details["children"]
+
+        # Recursively upload children for each block that has them
+        for block_id, children in block_id_map.items():
+            upload_blocks_recursively(
+                parent_id=block_id, block_details_list=children
+            )
+
+    # Start the recursive upload process
+    upload_blocks_recursively(
+        parent_id=str(page.id), block_details_list=blocks
+    )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
 
