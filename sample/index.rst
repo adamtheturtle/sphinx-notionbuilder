@@ -144,6 +144,7 @@ Some key features:
 * Handles headings, links, and formatting
 * Works with bullet points like this one
 * Now supports note, warning, and tip admonitions!
+* Supports images with URLs
 
 Heading 2 with *italic*
 -----------------------
@@ -171,6 +172,35 @@ Here is a simple table:
 | Cell 3   | Cell 4   |
 +----------+----------+
 
+
+Image Examples
+--------------
+
+Simple Image
+~~~~~~~~~~~~
+
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+
+Image with Alt Text
+~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+   :alt: Mountain landscape with snow-capped peaks
+
+Image with Alt Text
+~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+   :alt: Beautiful mountain scenery
+
+Mixed Content with Images
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's some text before the image.
+
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+
+And here's some text after the image.
 
 .. collapse:: Long code block
 

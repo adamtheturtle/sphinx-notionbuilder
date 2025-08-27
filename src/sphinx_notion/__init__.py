@@ -27,6 +27,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
+from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -639,6 +640,25 @@ class NotionTranslator(NodeVisitor):
                 parent_path=[*parent_path, (toggle_block, id(toggle_block))],
             )
 
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: nodes.image,
+        *,
+        section_level: int,
+        parent_path: list[tuple[NotionObject[Any], int]],
+    ) -> None:
+        """
+        Process image nodes by creating Notion Image blocks.
+        """
+        del section_level
+
+        image_url = node.attributes["uri"]
+
+        # Create the image block (alt text is not used as caption)
+        image_block = UnoImage(url=image_url, caption=None)
+        self._add_block_to_tree(block=image_block, parent_path=parent_path)
+
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
@@ -788,6 +808,18 @@ class NotionTranslator(NodeVisitor):
     def visit_CollapseNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
         """
         Handle collapse nodes by creating Notion ToggleItem blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_image(self, node: nodes.Element) -> None:
+        """
+        Handle image nodes by creating Notion Image blocks.
         """
         self._process_node_to_blocks(
             node,

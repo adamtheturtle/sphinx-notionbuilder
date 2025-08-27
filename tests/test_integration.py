@@ -24,6 +24,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
+from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -1199,6 +1200,63 @@ def test_table_inline_formatting(
     table[1, 1] = text(text="Normal cell")
 
     expected_objects: list[NotionObject[Any]] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_simple_image(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that image directives convert to Notion Image blocks.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. image:: https://www.example.com/path/to/image.png
+
+        Another paragraph.
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        UnoImage(url="https://www.example.com/path/to/image.png"),
+        UnoParagraph(text="Another paragraph."),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_image_with_alt_text_only(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that image directives with only alt text convert to Notion Image
+    blocks without captions.
+    """
+    rst_content = """
+        .. image:: https://www.example.com/path/to/image.png
+           :alt: Example image
+
+        Content follows.
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoImage(url="https://www.example.com/path/to/image.png"),
+        UnoParagraph(text="Content follows."),
+    ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
