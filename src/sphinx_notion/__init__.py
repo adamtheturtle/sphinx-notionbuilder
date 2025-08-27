@@ -274,7 +274,6 @@ class NotionTranslator(NodeVisitor):
         for parent in parent_path[1:]:
             current_node = current_node[parent]
         current_node[block] = {}
-        print(self._block_tree)
 
     def _process_list_item_recursively(
         self,
@@ -837,7 +836,7 @@ class NotionTranslator(NodeVisitor):
         """
         Output collected blocks as JSON at document end.
         """
-        print(self._block_tree)
+        breakpoint()
         del node
         dumped_blocks: list[dict[str, Any]] = []
         for block in self._blocks:
