@@ -265,6 +265,10 @@ class NotionTranslator(NodeVisitor):
 
         First has to find the parent in the tree recursively.
         """
+        if not parent_path:
+            self._block_tree[block] = {}
+            return
+
         current_node = self._block_tree[parent_path[0]]
         for parent in parent_path[1:]:
             current_node = current_node[parent]
@@ -310,21 +314,30 @@ class NotionTranslator(NodeVisitor):
         node: nodes.Element,
         *,
         section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
     ) -> None:  # pragma: no cover
         """
         Required function for ``singledispatch``.
         """
         del section_level
+        del parent_path
         raise NotImplementedError(node)
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.table, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.table,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """Process rST table nodes by creating Notion Table blocks.
 
         This implementation delegates small branches to helpers which
         keeps the function body linear and easier to reason about.
         """
         del section_level
+        del parent_path
 
         n_cols, header_row, body_rows = _extract_table_structure(node=node)
 
@@ -350,36 +363,57 @@ class NotionTranslator(NodeVisitor):
                 )
             row_idx += 1
 
-        return [table]
+        self._blocks.append(table)
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.paragraph, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.paragraph,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process paragraph nodes by creating Notion Paragraph blocks.
         """
         del section_level
+        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text="")
         paragraph_block.rich_text = rich_text
         self._blocks.append(paragraph_block)
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.block_quote, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.block_quote,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process block quote nodes by creating Notion Quote blocks.
         """
         del section_level
+        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text="")
         quote_block.rich_text = rich_text
         self._blocks.append(quote_block)
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.literal_block, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.literal_block,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process literal block nodes by creating Notion Code blocks.
         """
         del section_level
+        del parent_path
         code_text = _create_rich_text_from_children(node=node)
         pygments_lang = node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
@@ -400,12 +434,14 @@ class NotionTranslator(NodeVisitor):
         node: nodes.bullet_list,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]],
+        parent_path: list[NotionObject[Any]] | None = None,
     ) -> None:
         """
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
+        if parent_path is None:
+            parent_path = []
         for list_item in node.children:
             if isinstance(list_item, nodes.list_item):
                 self._process_list_item_recursively(
@@ -414,32 +450,53 @@ class NotionTranslator(NodeVisitor):
                 )
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.topic, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.topic,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process topic nodes, specifically for table of contents.
         """
         del section_level  # Not used for topics
+        del parent_path
         # Later, we can support `.. topic::` directives, likely as
         # a callout with no icon.
         assert "contents" in node["classes"]
         self._blocks.append(UnoTableOfContents())
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.compound, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.compound,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process Sphinx ``toctree`` nodes.
         """
         del node
         del section_level
+        del parent_path
         # There are no specific Notion blocks for ``toctree`` nodes.
         # We need to support ``toctree`` in ``index.rst``.
         # Just ignore it.
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.title, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.title,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process title nodes by creating appropriate Notion heading blocks.
         """
+        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
 
         heading_levels: dict[int, type[UnoHeading[Any]]] = {
@@ -488,17 +545,24 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent=block,
+                parent_path=[block],
             )
 
         self._blocks.append(block)
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.note, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.note,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process note admonition nodes by creating Notion Callout blocks.
         """
         del section_level
+        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="📝",
@@ -506,11 +570,18 @@ class NotionTranslator(NodeVisitor):
         )
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.warning, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.warning,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process warning admonition nodes by creating Notion Callout blocks.
         """
         del section_level
+        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="⚠️",
@@ -518,11 +589,18 @@ class NotionTranslator(NodeVisitor):
         )
 
     @_process_node_to_blocks.register
-    def _(self, node: nodes.tip, *, section_level: int) -> None:
+    def _(
+        self,
+        node: nodes.tip,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process tip admonition nodes by creating Notion Callout blocks.
         """
         del section_level
+        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="💡",
@@ -530,11 +608,18 @@ class NotionTranslator(NodeVisitor):
         )
 
     @_process_node_to_blocks.register
-    def _(self, node: CollapseNode, *, section_level: int) -> None:
+    def _(
+        self,
+        node: CollapseNode,
+        *,
+        section_level: int,
+        parent_path: list[NotionObject[Any]] | None = None,
+    ) -> None:
         """
         Process collapse nodes by creating Notion ToggleItem blocks.
         """
         del section_level
+        del parent_path
 
         children_to_process = node.children
         title_text = node.attributes["label"]
@@ -544,7 +629,7 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent=toggle_block,
+                parent_path=[toggle_block],
             )
 
         self._blocks.append(toggle_block)
@@ -614,6 +699,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
