@@ -91,6 +91,53 @@ def _assert_rst_converts_to_notion_objects(
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
+    def reconstruct_nested_structure(
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for item in items:
+            block = item["block"]
+            block_type = block["type"]
+
+            # Handle blocks that can have children
+            if block_type in {
+                "paragraph",
+                "callout",
+                "bulleted_list_item",
+                "toggle",
+            }:
+                if item.get("children"):
+                    # Recursively process children
+                    nested_blocks = reconstruct_nested_structure(
+                        items=item["children"]
+                    )
+                    # Add nested blocks to the appropriate field
+                    block[block_type]["children"] = nested_blocks
+                    # if block_type == "callout":
+                    #     block["callout"]["children"] = nested_blocks
+                    # elif block_type == "bulleted_list_item":
+                    #     block["bulleted_list_item"]["children"] = nested_blocks
+                    # elif block_type == "toggle":
+                    #     block["toggle"]["children"] = nested_blocks
+                    # else:  # paragraph
+                    #     block["paragraph"]["children"] = nested_blocks
+                # No children, set empty list
+                elif block_type == "callout":
+                    block["callout"]["children"] = []
+                elif block_type == "bulleted_list_item":
+                    block["bulleted_list_item"]["children"] = []
+                elif block_type == "toggle":
+                    block["toggle"]["children"] = []
+                else:  # paragraph
+                    block["paragraph"]["children"] = []
+
+            result.append(block)
+        return result
+
+    generated_json_un_flattened = reconstruct_nested_structure(
+        items=generated_json
+    )
+
     expected_json: list[dict[str, Any]] = []
     for notion_object in expected_objects:
         obj_ref = notion_object.obj_ref
@@ -98,7 +145,10 @@ def _assert_rst_converts_to_notion_objects(
         dumped_block = obj_ref.serialize_for_api()
         expected_json.append(dumped_block)
 
-    assert generated_json == expected_json, (generated_json, expected_json)
+    assert generated_json_un_flattened == expected_json, (
+        generated_json_un_flattened,
+        expected_json,
+    )
 
 
 def test_single_paragraph(
