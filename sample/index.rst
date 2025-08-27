@@ -181,26 +181,26 @@ The sphinx-notionbuilder now supports images with URLs! Here are some examples:
 Simple Image
 ~~~~~~~~~~~~
 
-.. image:: https://www.example.com/path/to/image.png
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
 
 Image with Alt Text
 ~~~~~~~~~~~~~~~~~~~
 
-.. image:: https://www.example.com/path/to/image.png
-   :alt: Example image with alt text
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+   :alt: Mountain landscape with snow-capped peaks
 
 Image with Alt Text
 ~~~~~~~~~~~~~~~~~~~
 
-.. image:: https://www.example.com/path/to/image.png
-   :alt: Example image with alt text
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+   :alt: Beautiful mountain scenery
 
 Mixed Content with Images
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's some text before the image.
 
-.. image:: https://www.example.com/path/to/image.png
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
 
 And here's some text after the image.
 
