@@ -801,7 +801,7 @@ class NotionTranslator(NodeVisitor):
 
     def _convert_block_tree_to_json(
         self,
-        block_tree: Any,
+        block_tree: _BlockTree,
     ) -> list[dict[str, Any]]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
