@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -42,6 +43,7 @@ from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import text
 
 
+@beartype
 def _create_code_block_without_annotations(
     content: str, language: CodeLang
 ) -> UnoCode:
@@ -61,6 +63,7 @@ def _create_code_block_without_annotations(
     return code_block
 
 
+@beartype
 def _reconstruct_nested_structure(
     items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -89,6 +92,7 @@ def _reconstruct_nested_structure(
     return result
 
 
+@beartype
 def _assert_rst_converts_to_notion_objects(
     rst_content: str,
     expected_objects: list[NotionObject[Any]],
