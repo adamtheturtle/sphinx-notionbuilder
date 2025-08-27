@@ -176,8 +176,6 @@ Here is a simple table:
 Image Examples
 --------------
 
-The sphinx-notionbuilder now supports images with URLs! Here are some examples:
-
 Simple Image
 ~~~~~~~~~~~~
 

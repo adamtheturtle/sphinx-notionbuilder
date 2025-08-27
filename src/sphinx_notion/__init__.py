@@ -653,8 +653,7 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
 
-        # Get the image URL from the uri attribute
-        image_url = node.attributes.get("uri", "")
+        image_url = node.attributes["uri"]
 
         # Create the image block (alt text is not used as caption)
         image_block = UnoImage(url=image_url, caption=None)
