@@ -104,6 +104,58 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def upload_blocks_recursively(
+    parent_id: str,
+    block_details_list: list[dict[str, Any]],
+    notion_client: Client,
+    batch_size: int,
+) -> None:
+    """
+    Upload blocks recursively, handling the new structure with block and
+    children.
+    """
+    if not block_details_list:
+        return
+
+    # Extract just the blocks for this level
+    level_blocks = [details["block"] for details in block_details_list]
+
+    # Upload this level's blocks in batches
+    _upload_blocks_in_batches(
+        notion_client=notion_client,
+        parent_id=parent_id,
+        blocks=level_blocks,
+        batch_size=batch_size,
+    )
+
+    # Get the uploaded blocks to get their IDs for children
+    uploaded_blocks: dict[str, Any] = notion_client.blocks.children.list(  # type: ignore[assignment] # pyright: ignore[reportAssignmentType]
+        block_id=parent_id
+    )
+    block_id_map: dict[str, list[dict[str, Any]]] = {}
+
+    # Map the uploaded blocks to their details for children processing
+    results = uploaded_blocks.get("results", [])
+    for i, block in enumerate(iterable=results):
+        if i < len(block_details_list):
+            block_details = block_details_list[i]
+            if block_details["children"]:
+                block_id = block.get("id")
+                if block_id:
+                    block_id_map[str(object=block_id)] = block_details[
+                        "children"
+                    ]
+
+    # Recursively upload children for each block that has them
+    for block_id, children in block_id_map.items():
+        upload_blocks_recursively(
+            parent_id=block_id,
+            block_details_list=children,
+            notion_client=notion_client,
+            batch_size=batch_size,
+        )
+
+
 @beartype
 def main() -> None:
     """
@@ -133,54 +185,12 @@ def main() -> None:
     ):
         child.delete()
 
-    def upload_blocks_recursively(
-        parent_id: str, block_details_list: list[dict[str, Any]]
-    ) -> None:
-        """
-        Upload blocks recursively, handling the new structure with block and
-        children.
-        """
-        if not block_details_list:
-            return
-
-        # Extract just the blocks for this level
-        level_blocks = [details["block"] for details in block_details_list]
-
-        # Upload this level's blocks in batches
-        _upload_blocks_in_batches(
-            notion_client=notion_client,
-            parent_id=parent_id,
-            blocks=level_blocks,
-            batch_size=batch_size,
-        )
-
-        # Get the uploaded blocks to get their IDs for children
-        uploaded_blocks: dict[str, Any] = notion_client.blocks.children.list(  # type: ignore[assignment] # pyright: ignore[reportAssignmentType]
-            block_id=parent_id
-        )
-        block_id_map: dict[str, list[dict[str, Any]]] = {}
-
-        # Map the uploaded blocks to their details for children processing
-        results = uploaded_blocks.get("results", [])
-        for i, block in enumerate(iterable=results):
-            if i < len(block_details_list):
-                block_details = block_details_list[i]
-                if block_details["children"]:
-                    block_id = block.get("id")
-                    if block_id:
-                        block_id_map[str(object=block_id)] = block_details[
-                            "children"
-                        ]
-
-        # Recursively upload children for each block that has them
-        for block_id, children in block_id_map.items():
-            upload_blocks_recursively(
-                parent_id=block_id, block_details_list=children
-            )
-
     # Start the recursive upload process
     upload_blocks_recursively(
-        parent_id=str(object=page.id), block_details_list=blocks
+        parent_id=str(object=page.id),
+        block_details_list=blocks,
+        notion_client=notion_client,
+        batch_size=batch_size,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
