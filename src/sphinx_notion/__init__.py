@@ -45,36 +45,7 @@ from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-
-def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
-    """
-    Recursively process a list item node and return a BulletedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoBulletedItem(text="placeholder")
-    block.rich_text = rich_text
-
-    bullet_only_msg = (
-        "The only thing Notion supports within a bullet list is a bullet list"
-    )
-
-    for child in node.children[1:]:
-        assert isinstance(child, nodes.bullet_list), bullet_only_msg
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item), (
-                bullet_only_msg
-            )
-            nested_block = _process_list_item_recursively(
-                node=nested_list_item,
-            )
-            # Remove pyright ignore once we have
-            # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-            # pylint: disable=line-too-long
-            block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-
-    return block
+type _BlockTree = dict[NotionObject[Any], "_BlockTree"]
 
 
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
@@ -281,8 +252,57 @@ class NotionTranslator(NodeVisitor):
         del builder
         super().__init__(document=document)
         self._blocks: list[NotionObject[Any]] = []
+        self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
+
+    def _add_block_to_tree(
+        self,
+        block: NotionObject[Any],
+        parent_path: list[NotionObject[Any]],
+    ) -> None:
+        """Add a block to the block tree.
+
+        First has to find the parent in the tree recursively.
+        """
+        current_node = self._block_tree[parent_path[0]]
+        for parent in parent_path[1:]:
+            current_node = current_node[parent]
+        current_node[block] = {}
+
+    def _process_list_item_recursively(
+        self,
+        *,
+        node: nodes.list_item,
+        parent_path: list[NotionObject[Any]],
+    ) -> UnoBulletedItem:
+        """
+        Recursively process a list item node and return a BulletedItem.
+        """
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text="placeholder")
+        block.rich_text = rich_text
+        self._add_block_to_tree(
+            block=block,
+            parent_path=parent_path,
+        )
+
+        bullet_only_msg = "The only thing Notion supports within a bullet list is a bullet list"
+
+        for child in node.children[1:]:
+            assert isinstance(child, nodes.bullet_list), bullet_only_msg
+            for nested_list_item in child.children:
+                assert isinstance(nested_list_item, nodes.list_item), (
+                    bullet_only_msg
+                )
+                self._process_list_item_recursively(
+                    node=nested_list_item,
+                    parent_path=[*parent_path, block],
+                )
+
+        return block
 
     @singledispatchmethod
     def _process_node_to_blocks(
@@ -290,7 +310,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.Element,
         *,
         section_level: int,
-    ) -> list[NotionObject[Any]]:  # pragma: no cover
+    ) -> None:  # pragma: no cover
         """
         Required function for ``singledispatch``.
         """
@@ -298,9 +318,7 @@ class NotionTranslator(NodeVisitor):
         raise NotImplementedError(node)
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.table, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.table, *, section_level: int) -> None:
         """Process rST table nodes by creating Notion Table blocks.
 
         This implementation delegates small branches to helpers which
@@ -335,9 +353,7 @@ class NotionTranslator(NodeVisitor):
         return [table]
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.paragraph, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.paragraph, *, section_level: int) -> None:
         """
         Process paragraph nodes by creating Notion Paragraph blocks.
         """
@@ -345,12 +361,10 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text="")
         paragraph_block.rich_text = rich_text
-        return [paragraph_block]
+        self._blocks.append(paragraph_block)
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.block_quote, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.block_quote, *, section_level: int) -> None:
         """
         Process block quote nodes by creating Notion Quote blocks.
         """
@@ -358,12 +372,10 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text="")
         quote_block.rich_text = rich_text
-        return [quote_block]
+        self._blocks.append(quote_block)
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.literal_block, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.literal_block, *, section_level: int) -> None:
         """
         Process literal block nodes by creating Notion Code blocks.
         """
@@ -380,7 +392,7 @@ class NotionTranslator(NodeVisitor):
         for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
         code_block.rich_text = code_text
-        return [code_block]
+        self._blocks.append(code_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -388,21 +400,21 @@ class NotionTranslator(NodeVisitor):
         node: nodes.bullet_list,
         *,
         section_level: int,
-    ) -> list[NotionObject[Any]]:
+        parent_path: list[NotionObject[Any]],
+    ) -> None:
         """
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
-        return [
-            _process_list_item_recursively(node=list_item)
-            for list_item in node.children
-            if isinstance(list_item, nodes.list_item)
-        ]
+        for list_item in node.children:
+            if isinstance(list_item, nodes.list_item):
+                self._process_list_item_recursively(
+                    node=list_item,
+                    parent_path=parent_path,
+                )
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.topic, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.topic, *, section_level: int) -> None:
         """
         Process topic nodes, specifically for table of contents.
         """
@@ -410,12 +422,10 @@ class NotionTranslator(NodeVisitor):
         # Later, we can support `.. topic::` directives, likely as
         # a callout with no icon.
         assert "contents" in node["classes"]
-        return [UnoTableOfContents()]
+        self._blocks.append(UnoTableOfContents())
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.compound, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.compound, *, section_level: int) -> None:
         """
         Process Sphinx ``toctree`` nodes.
         """
@@ -424,12 +434,9 @@ class NotionTranslator(NodeVisitor):
         # There are no specific Notion blocks for ``toctree`` nodes.
         # We need to support ``toctree`` in ``index.rst``.
         # Just ignore it.
-        return []
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.title, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.title, *, section_level: int) -> None:
         """
         Process title nodes by creating appropriate Notion heading blocks.
         """
@@ -444,7 +451,7 @@ class NotionTranslator(NodeVisitor):
         block = heading_cls(text="")
 
         block.rich_text = rich_text
-        return [block]
+        self._blocks.append(block)
 
     def _create_admonition_callout(
         self,
@@ -452,7 +459,7 @@ class NotionTranslator(NodeVisitor):
         *,
         emoji: str,
         background_color: BGColor,
-    ) -> list[NotionObject[Any]]:
+    ) -> None:
         """Create a Notion Callout block for admonition nodes.
 
         The first child (typically a paragraph) becomes the callout
@@ -478,65 +485,52 @@ class NotionTranslator(NodeVisitor):
 
         # Process children as nested blocks
         for child in children_to_process:
-            for child_block in list(
-                self._process_node_to_blocks(
-                    child,
-                    section_level=1,
-                )
-            ):
-                # Add nested blocks as children to the callout
-                # Remove pyright ignore once we have
-                # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-                block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+            self._process_node_to_blocks(
+                child,
+                section_level=1,
+                parent=block,
+            )
 
-        return [block]
+        self._blocks.append(block)
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.note, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.note, *, section_level: int) -> None:
         """
         Process note admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        return self._create_admonition_callout(
+        self._create_admonition_callout(
             node=node,
             emoji="📝",
             background_color=BGColor.BLUE,
         )
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.warning, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.warning, *, section_level: int) -> None:
         """
         Process warning admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        return self._create_admonition_callout(
+        self._create_admonition_callout(
             node=node,
             emoji="⚠️",
             background_color=BGColor.YELLOW,
         )
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: nodes.tip, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: nodes.tip, *, section_level: int) -> None:
         """
         Process tip admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        return self._create_admonition_callout(
+        self._create_admonition_callout(
             node=node,
             emoji="💡",
             background_color=BGColor.GREEN,
         )
 
     @_process_node_to_blocks.register
-    def _(
-        self, node: CollapseNode, *, section_level: int
-    ) -> list[NotionObject[Any]]:
+    def _(self, node: CollapseNode, *, section_level: int) -> None:
         """
         Process collapse nodes by creating Notion ToggleItem blocks.
         """
@@ -547,28 +541,22 @@ class NotionTranslator(NodeVisitor):
         toggle_block = UnoToggleItem(text=title_text)
 
         for child in children_to_process:
-            for child_block in list(
-                self._process_node_to_blocks(
-                    child,
-                    section_level=1,
-                )
-            ):
-                # Add nested blocks as children to the toggle
-                # Remove pyright ignore once we have
-                # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-                toggle_block.obj_ref.value.children.append(child_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+            self._process_node_to_blocks(
+                child,
+                section_level=1,
+                parent=toggle_block,
+            )
 
-        return [toggle_block]
+        self._blocks.append(toggle_block)
 
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -590,66 +578,65 @@ class NotionTranslator(NodeVisitor):
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
+
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
+
         raise nodes.SkipNode
 
     def visit_literal_block(self, node: nodes.Element) -> None:
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
+
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
         """
         Handle bullet list nodes by processing each list item.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
+
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
+
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -657,11 +644,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -669,11 +655,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -681,11 +666,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle table nodes by creating Notion Table blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -693,11 +677,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle compound admonition nodes by creating a table of contents block.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -705,11 +688,10 @@ class NotionTranslator(NodeVisitor):
         """
         Handle collapse nodes by creating Notion ToggleItem blocks.
         """
-        blocks = self._process_node_to_blocks(
+        self._process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
-        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
