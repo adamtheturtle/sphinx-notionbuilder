@@ -340,7 +340,6 @@ class NotionTranslator(NodeVisitor):
         keeps the function body linear and easier to reason about.
         """
         del section_level
-        del parent_path
 
         n_cols, header_row, body_rows = _extract_table_structure(node=node)
 
@@ -366,7 +365,7 @@ class NotionTranslator(NodeVisitor):
                 )
             row_idx += 1
 
-        self._add_block_to_tree(block=table, parent_path=[])
+        self._add_block_to_tree(block=table, parent_path=parent_path)
         self._blocks.append(table)
 
     @_process_node_to_blocks.register
@@ -381,11 +380,10 @@ class NotionTranslator(NodeVisitor):
         Process paragraph nodes by creating Notion Paragraph blocks.
         """
         del section_level
-        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text="")
         paragraph_block.rich_text = rich_text
-        self._add_block_to_tree(block=paragraph_block, parent_path=[])
+        self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
         self._blocks.append(paragraph_block)
 
     @_process_node_to_blocks.register
@@ -400,11 +398,10 @@ class NotionTranslator(NodeVisitor):
         Process block quote nodes by creating Notion Quote blocks.
         """
         del section_level
-        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text="")
         quote_block.rich_text = rich_text
-        self._add_block_to_tree(block=quote_block, parent_path=[])
+        self._add_block_to_tree(block=quote_block, parent_path=parent_path)
         self._blocks.append(quote_block)
 
     @_process_node_to_blocks.register
@@ -419,7 +416,6 @@ class NotionTranslator(NodeVisitor):
         Process literal block nodes by creating Notion Code blocks.
         """
         del section_level
-        del parent_path
         code_text = _create_rich_text_from_children(node=node)
         pygments_lang = node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
@@ -432,7 +428,7 @@ class NotionTranslator(NodeVisitor):
         for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
         code_block.rich_text = code_text
-        self._add_block_to_tree(block=code_block, parent_path=[])
+        self._add_block_to_tree(block=code_block, parent_path=parent_path)
         self._blocks.append(code_block)
 
     @_process_node_to_blocks.register
@@ -469,12 +465,11 @@ class NotionTranslator(NodeVisitor):
         Process topic nodes, specifically for table of contents.
         """
         del section_level  # Not used for topics
-        del parent_path
         # Later, we can support `.. topic::` directives, likely as
         # a callout with no icon.
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
-        self._add_block_to_tree(block=toc_block, parent_path=[])
+        self._add_block_to_tree(block=toc_block, parent_path=parent_path)
         self._blocks.append(toc_block)
 
     @_process_node_to_blocks.register
@@ -506,7 +501,6 @@ class NotionTranslator(NodeVisitor):
         """
         Process title nodes by creating appropriate Notion heading blocks.
         """
-        del parent_path
         rich_text = _create_rich_text_from_children(node=node)
 
         heading_levels: dict[int, type[UnoHeading[Any]]] = {
@@ -518,7 +512,7 @@ class NotionTranslator(NodeVisitor):
         block = heading_cls(text="")
 
         block.rich_text = rich_text
-        self._add_block_to_tree(block=block, parent_path=[])
+        self._add_block_to_tree(block=block, parent_path=parent_path)
         self._blocks.append(block)
 
     def _create_admonition_callout(
@@ -527,6 +521,7 @@ class NotionTranslator(NodeVisitor):
         *,
         emoji: str,
         background_color: BGColor,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """Create a Notion Callout block for admonition nodes.
 
@@ -571,7 +566,7 @@ class NotionTranslator(NodeVisitor):
             # Restore the original blocks list
             self._blocks = original_blocks
 
-        self._add_block_to_tree(block=block, parent_path=[])
+        self._add_block_to_tree(block=block, parent_path=parent_path)
         self._blocks.append(block)
 
     @_process_node_to_blocks.register
@@ -586,11 +581,11 @@ class NotionTranslator(NodeVisitor):
         Process note admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="📝",
             background_color=BGColor.BLUE,
+            parent_path=parent_path,
         )
 
     @_process_node_to_blocks.register
@@ -605,11 +600,11 @@ class NotionTranslator(NodeVisitor):
         Process warning admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="⚠️",
             background_color=BGColor.YELLOW,
+            parent_path=parent_path,
         )
 
     @_process_node_to_blocks.register
@@ -624,11 +619,11 @@ class NotionTranslator(NodeVisitor):
         Process tip admonition nodes by creating Notion Callout blocks.
         """
         del section_level
-        del parent_path
         self._create_admonition_callout(
             node=node,
             emoji="💡",
             background_color=BGColor.GREEN,
+            parent_path=parent_path,
         )
 
     @_process_node_to_blocks.register
@@ -643,7 +638,6 @@ class NotionTranslator(NodeVisitor):
         Process collapse nodes by creating Notion ToggleItem blocks.
         """
         del section_level
-        del parent_path
 
         children_to_process = node.children
         title_text = node.attributes["label"]
@@ -658,7 +652,7 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[toggle_block],
+                parent_path=[*parent_path, toggle_block],
             )
 
             # Add the processed blocks as children to the toggle block
