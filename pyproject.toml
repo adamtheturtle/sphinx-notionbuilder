@@ -279,6 +279,8 @@ make-summary-multi-line = true
 ignore = [
     "CLAUDE.md",
     ".checkmake-config.ini",
+    ".cursor",
+    ".cursor/**",
     ".vscode",
     ".vscode/**",
     "sample/",
