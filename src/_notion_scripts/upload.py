@@ -307,9 +307,7 @@ def main() -> None:
     title = args.title
     file_path = args.file
 
-    contents = json.loads(s=file_path.read_text(encoding="utf-8"))
-
-    processed_contents = contents
+    blocks = json.loads(s=file_path.read_text(encoding="utf-8"))
 
     parent_page = session.get_page(page_ref=args.parent_page_id)
     page = _find_existing_page_by_title(
@@ -327,7 +325,7 @@ def main() -> None:
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
-        blocks=processed_contents,
+        blocks=blocks,
         batch_size=batch_size,
         parent=page,
         session=session,
