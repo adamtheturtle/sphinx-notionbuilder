@@ -251,7 +251,6 @@ class NotionTranslator(NodeVisitor):
         """
         del builder
         super().__init__(document=document)
-        self._blocks: list[NotionObject[Any]] = []
         self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
@@ -367,7 +366,6 @@ class NotionTranslator(NodeVisitor):
             row_idx += 1
 
         self._add_block_to_tree(block=table, parent_path=parent_path)
-        self._blocks.append(table)
 
     @_process_node_to_blocks.register
     def _(
@@ -385,7 +383,6 @@ class NotionTranslator(NodeVisitor):
         paragraph_block = UnoParagraph(text="")
         paragraph_block.rich_text = rich_text
         self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
-        self._blocks.append(paragraph_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -403,7 +400,6 @@ class NotionTranslator(NodeVisitor):
         quote_block = UnoQuote(text="")
         quote_block.rich_text = rich_text
         self._add_block_to_tree(block=quote_block, parent_path=parent_path)
-        self._blocks.append(quote_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -430,7 +426,6 @@ class NotionTranslator(NodeVisitor):
             del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
         code_block.rich_text = code_text
         self._add_block_to_tree(block=code_block, parent_path=parent_path)
-        self._blocks.append(code_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -472,7 +467,6 @@ class NotionTranslator(NodeVisitor):
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
         self._add_block_to_tree(block=toc_block, parent_path=parent_path)
-        self._blocks.append(toc_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -515,7 +509,6 @@ class NotionTranslator(NodeVisitor):
 
         block.rich_text = rich_text
         self._add_block_to_tree(block=block, parent_path=parent_path)
-        self._blocks.append(block)
 
     def _create_admonition_callout(
         self,
