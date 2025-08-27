@@ -444,12 +444,16 @@ class NotionTranslator(NodeVisitor):
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
+        bullet_only_msg = (
+            "The only thing Notion supports within a bullet list is a "
+            "bullet list"
+        )
         for list_item in node.children:
-            if isinstance(list_item, nodes.list_item):
-                self._process_list_item_recursively(
-                    node=list_item,
-                    parent_path=parent_path,
-                )
+            assert isinstance(list_item, nodes.list_item), bullet_only_msg
+            self._process_list_item_recursively(
+                node=list_item,
+                parent_path=parent_path,
+            )
 
     @_process_node_to_blocks.register
     def _(
