@@ -9,7 +9,7 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from beartype import beartype
 from notion_client import Client
@@ -166,7 +166,7 @@ def _extract_deep_children(
 @beartype
 def _get_uploaded_block_by_path(
     parent: Page | Block[Any], path: list[int]
-) -> Block[Any]:
+) -> Page | Block[Any]:
     """
     Follow an index path through .children to return the uploaded block.
     """
@@ -179,7 +179,7 @@ def _get_uploaded_block_by_path(
             current.children  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         )
         current = children[index]  # pyright: ignore[reportUnknownVariableType]
-    return cast("Block[Any]", current)
+    return current
 
 
 @beartype
