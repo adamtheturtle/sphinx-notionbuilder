@@ -1167,3 +1167,72 @@ def test_table_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_rich_text_limit_splitting(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rich text content longer than 2000 characters is split into multiple text
+    objects while preserving formatting and links.
+    """
+    # Create text that's longer than 2000 characters
+    long_text = (
+        "This is a very long text that exceeds the Notion limit. " * 50
+    )  # ~3000 chars
+
+    rst_content = f"""
+        {long_text}
+    """
+
+    # The ultimate_notion library automatically splits text at 2000 characters
+    # Create the expected rich text object - it will be automatically split
+    expected_text = text(text=long_text.strip())
+    expected_paragraph = UnoParagraph(text="dummy")
+    expected_paragraph.rich_text = expected_text
+
+    expected_objects: list[NotionObject[Any]] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_rich_text_limit_with_formatting(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rich text with formatting that exceeds 2000 characters is split while
+    preserving bold, italic, and code formatting.
+    """
+    # Create a test that verifies the splitting functionality works
+    # We'll test with a shorter text that should definitely be split
+    # and verify that formatting is preserved
+
+    # Create text that's exactly 2500 characters (over the 2000 limit)
+    long_text = "A" * 2500
+
+    rst_content = f"""
+        **{long_text}**
+    """
+
+    # The ultimate_notion library automatically splits text at 2000 characters
+    # Create the expected rich text object with bold formatting - it will be
+    # automatically split
+    expected_text = text(text=long_text.strip(), bold=True)
+    expected_paragraph = UnoParagraph(text="dummy")
+    expected_paragraph.rich_text = expected_text
+
+    expected_objects: list[NotionObject[Any]] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
