@@ -295,7 +295,11 @@ class NotionTranslator(NodeVisitor):
             parent_path=parent_path,
         )
 
-        bullet_only_msg = "The only thing Notion supports within a bullet list is a bullet list"
+        bullet_only_msg = (
+            "The only thing Notion supports within a bullet list is a "
+            "bullet list"
+        )
+        assert isinstance(node, nodes.list_item)
 
         for child in node.children[1:]:
             assert isinstance(child, nodes.bullet_list), bullet_only_msg
@@ -809,7 +813,9 @@ class NotionTranslator(NodeVisitor):
             assert isinstance(obj_ref, GenericObject)
             dumped_structure = {
                 "block": obj_ref.serialize_for_api(),
-                "children": self._convert_block_tree_to_json(subtree),
+                "children": self._convert_block_tree_to_json(
+                    block_tree=subtree
+                ),
             }
             result.append(dumped_structure)
         return result
@@ -821,7 +827,7 @@ class NotionTranslator(NodeVisitor):
         del node
 
         json_output = json.dumps(
-            obj=self._convert_block_tree_to_json(self._block_tree),
+            obj=self._convert_block_tree_to_json(block_tree=self._block_tree),
             indent=2,
             ensure_ascii=False,
         )
