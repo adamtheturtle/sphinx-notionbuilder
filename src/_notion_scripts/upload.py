@@ -104,6 +104,7 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+@beartype
 def upload_blocks_recursively(
     parent_id: str,
     block_details_list: list[dict[str, Any]],
