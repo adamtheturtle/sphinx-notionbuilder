@@ -45,9 +45,6 @@ from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-# Notion rich text limit per text.content field
-_NOTION_RICH_TEXT_LIMIT = 2000
-
 
 def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
     """
@@ -91,54 +88,23 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             link_url = child.attributes["refuri"]
             link_text = child.attributes.get("name", link_url)
 
-            # Split link text if it's too long
-            if len(link_text) > _NOTION_RICH_TEXT_LIMIT:
-                for i in range(0, len(link_text), _NOTION_RICH_TEXT_LIMIT):
-                    chunk = link_text[i : i + _NOTION_RICH_TEXT_LIMIT]
-                    new_text = text(
-                        text=chunk,
-                        href=link_url,
-                        bold=False,
-                        italic=False,
-                        code=False,
-                    )
-                    rich_text += new_text
-            else:
-                new_text = text(
-                    text=link_text,
-                    href=link_url,
-                    bold=False,
-                    italic=False,
-                    code=False,
-                )
-                rich_text += new_text
+            new_text = text(
+                text=link_text,
+                href=link_url,
+                bold=False,
+                italic=False,
+                code=False,
+            )
         elif isinstance(child, nodes.target):
             continue
         else:
-            text_content = child.astext()
-            is_bold = isinstance(child, nodes.strong)
-            is_italic = isinstance(child, nodes.emphasis)
-            is_code = isinstance(child, nodes.literal)
-
-            # Split text if it's too long
-            if len(text_content) > _NOTION_RICH_TEXT_LIMIT:
-                for i in range(0, len(text_content), _NOTION_RICH_TEXT_LIMIT):
-                    chunk = text_content[i : i + _NOTION_RICH_TEXT_LIMIT]
-                    new_text = text(
-                        text=chunk,
-                        bold=is_bold,
-                        italic=is_italic,
-                        code=is_code,
-                    )
-                    rich_text += new_text
-            else:
-                new_text = text(
-                    text=text_content,
-                    bold=is_bold,
-                    italic=is_italic,
-                    code=is_code,
-                )
-                rich_text += new_text
+            new_text = text(
+                text=child.astext(),
+                bold=isinstance(child, nodes.strong),
+                italic=isinstance(child, nodes.emphasis),
+                code=isinstance(child, nodes.literal),
+            )
+        rich_text += new_text
 
     return rich_text
 
