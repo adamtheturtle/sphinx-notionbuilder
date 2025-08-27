@@ -17,64 +17,10 @@ from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.page import Page
 
-_NOTION_RICH_TEXT_LIMIT = 2000
 _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
 
 _Block = dict[str, Any]
-_RichTextBlock = dict[str, Any]
-
-
-@beartype
-def _split_rich_text(rich_text: list[_RichTextBlock]) -> list[_RichTextBlock]:
-    """
-    Given a list of rich_text objects, split any 'text.content' >2000 chars
-    into multiple objects, preserving all other fields (annotations, links,
-    etc).
-    """
-    new_rich_text: list[_RichTextBlock] = []
-    for obj in rich_text:
-        if obj.get("type") == "text" and "content" in obj["text"]:
-            content = obj["text"]["content"]
-            if len(content) > _NOTION_RICH_TEXT_LIMIT:
-                for i in range(0, len(content), _NOTION_RICH_TEXT_LIMIT):
-                    chunk = content[i : i + _NOTION_RICH_TEXT_LIMIT]
-                    new_obj = json.loads(s=json.dumps(obj=obj))  # deep copy
-                    new_obj["text"]["content"] = chunk
-                    new_rich_text.append(new_obj)
-            else:
-                new_rich_text.append(obj)
-        else:
-            new_rich_text.append(obj)
-    return new_rich_text
-
-
-@beartype
-def _process_block(block: _Block) -> _Block:
-    """
-    Recursively process a Notion block dict, splitting any rich_text >2000
-    chars.
-    """
-    block = dict(block)  # shallow copy
-    for key, value in block.items():
-        if isinstance(value, dict):
-            if "rich_text" in value and isinstance(value["rich_text"], list):
-                rich_text_list = cast(
-                    "list[_RichTextBlock]", value["rich_text"]
-                )
-                value["rich_text"] = _split_rich_text(rich_text=rich_text_list)
-            typed_value = cast("_Block", value)
-            block[key] = _process_block(block=typed_value)
-        elif isinstance(value, list):
-            processed_list: list[Any] = []
-            for v in value:  # pyright: ignore[reportUnknownVariableType]
-                if isinstance(v, dict):
-                    typed_v = cast("_Block", v)
-                    processed_list.append(_process_block(block=typed_v))
-                else:
-                    processed_list.append(v)
-            block[key] = processed_list
-    return block
 
 
 @beartype
@@ -360,11 +306,7 @@ def main() -> None:
     title = args.title
     file_path = args.file
 
-    contents = json.loads(s=file_path.read_text(encoding="utf-8"))
-
-    processed_contents = [
-        _process_block(block=content_block) for content_block in contents
-    ]
+    blocks = json.loads(s=file_path.read_text(encoding="utf-8"))
 
     parent_page = session.get_page(page_ref=args.parent_page_id)
     page = _find_existing_page_by_title(
@@ -382,7 +324,7 @@ def main() -> None:
 
     _upload_blocks_with_deep_nesting(
         notion_client=notion_client,
-        blocks=processed_contents,
+        blocks=blocks,
         batch_size=batch_size,
         parent=page,
         session=session,

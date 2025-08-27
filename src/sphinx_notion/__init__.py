@@ -78,8 +78,12 @@ def _process_list_item_recursively(node: nodes.list_item) -> UnoBulletedItem:
 
 
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
-    """
-    Create Notion rich text from ``docutils`` node children.
+    """Create Notion rich text from ``docutils`` node children.
+
+    This uses ``ultimate-notion``'s rich text capabilities to
+    avoid some size limits.
+
+    See: https://developers.notion.com/reference/request-limits#size-limits.
     """
     rich_text = Text.from_plain_text(text="")
 
