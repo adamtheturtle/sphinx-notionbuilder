@@ -270,6 +270,7 @@ class NotionTranslator(NodeVisitor):
             return
 
         current_node = self._block_tree[parent_path[0]]
+
         for parent in parent_path[1:]:
             current_node = current_node[parent]
         current_node[block] = {}
@@ -301,10 +302,12 @@ class NotionTranslator(NodeVisitor):
                 assert isinstance(nested_list_item, nodes.list_item), (
                     bullet_only_msg
                 )
-                self._process_list_item_recursively(
+                nested_block = self._process_list_item_recursively(
                     node=nested_list_item,
                     parent_path=[*parent_path, block],
                 )
+                # Add the nested block as a child to this block
+                block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
         return block
 
@@ -363,6 +366,7 @@ class NotionTranslator(NodeVisitor):
                 )
             row_idx += 1
 
+        self._add_block_to_tree(block=table, parent_path=[])
         self._blocks.append(table)
 
     @_process_node_to_blocks.register
@@ -381,6 +385,7 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text="")
         paragraph_block.rich_text = rich_text
+        self._add_block_to_tree(block=paragraph_block, parent_path=[])
         self._blocks.append(paragraph_block)
 
     @_process_node_to_blocks.register
@@ -399,6 +404,7 @@ class NotionTranslator(NodeVisitor):
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text="")
         quote_block.rich_text = rich_text
+        self._add_block_to_tree(block=quote_block, parent_path=[])
         self._blocks.append(quote_block)
 
     @_process_node_to_blocks.register
@@ -426,6 +432,7 @@ class NotionTranslator(NodeVisitor):
         for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
         code_block.rich_text = code_text
+        self._add_block_to_tree(block=code_block, parent_path=[])
         self._blocks.append(code_block)
 
     @_process_node_to_blocks.register
@@ -444,10 +451,13 @@ class NotionTranslator(NodeVisitor):
             parent_path = []
         for list_item in node.children:
             if isinstance(list_item, nodes.list_item):
-                self._process_list_item_recursively(
+                bullet_item = self._process_list_item_recursively(
                     node=list_item,
                     parent_path=parent_path,
                 )
+                # Add to main blocks list if this is a top-level bullet list
+                if not parent_path:
+                    self._blocks.append(bullet_item)
 
     @_process_node_to_blocks.register
     def _(
@@ -465,7 +475,9 @@ class NotionTranslator(NodeVisitor):
         # Later, we can support `.. topic::` directives, likely as
         # a callout with no icon.
         assert "contents" in node["classes"]
-        self._blocks.append(UnoTableOfContents())
+        toc_block = UnoTableOfContents()
+        self._add_block_to_tree(block=toc_block, parent_path=[])
+        self._blocks.append(toc_block)
 
     @_process_node_to_blocks.register
     def _(
@@ -508,6 +520,7 @@ class NotionTranslator(NodeVisitor):
         block = heading_cls(text="")
 
         block.rich_text = rich_text
+        self._add_block_to_tree(block=block, parent_path=[])
         self._blocks.append(block)
 
     def _create_admonition_callout(
@@ -540,14 +553,26 @@ class NotionTranslator(NodeVisitor):
             # Process all children as nested blocks (including the first)
             children_to_process = node.children
 
-        # Process children as nested blocks
+        # Process children as nested blocks and add them as children to the callout
         for child in children_to_process:
+            # Create a temporary list to capture the blocks created by processing this child
+            temp_blocks: list[NotionObject[Any]] = []
+            original_blocks = self._blocks
+            self._blocks = temp_blocks
+
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[block],
             )
 
+            # Add the processed blocks as children to the callout
+            for nested_block in temp_blocks:
+                block.obj_ref.value.children.append(nested_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+
+            # Restore the original blocks list
+            self._blocks = original_blocks
+
+        self._add_block_to_tree(block=block, parent_path=[])
         self._blocks.append(block)
 
     @_process_node_to_blocks.register
@@ -626,12 +651,26 @@ class NotionTranslator(NodeVisitor):
         toggle_block = UnoToggleItem(text=title_text)
 
         for child in children_to_process:
+            # Create a temporary list to capture the blocks created by processing this child
+            temp_blocks: list[NotionObject[Any]] = []
+            original_blocks = self._blocks
+            self._blocks = temp_blocks
+
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[toggle_block],
             )
 
+            # Add the processed blocks as children to the toggle block
+            for nested_block in temp_blocks:
+                toggle_block.obj_ref.value.children.append(
+                    nested_block.obj_ref
+                )  # pyright: ignore[reportUnknownMemberType]
+
+            # Restore the original blocks list
+            self._blocks = original_blocks
+
+        self._add_block_to_tree(block=toggle_block, parent_path=[])
         self._blocks.append(toggle_block)
 
     def visit_title(self, node: nodes.Element) -> None:
