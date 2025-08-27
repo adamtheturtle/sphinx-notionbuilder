@@ -275,7 +275,6 @@ class NotionTranslator(NodeVisitor):
         for parent_key in parent_path[1:]:
             current_node = current_node[parent_key]
         current_node[block_key] = {}
-        print(self._block_tree)
 
     def _process_list_item_recursively(
         self,
@@ -834,21 +833,30 @@ class NotionTranslator(NodeVisitor):
         assert self
         del node
 
-    def depart_document(self, node: nodes.Element) -> None:
-        """
-        Output collected blocks as JSON at document end.
-        """
-        print(self._block_tree)
-        del node
-        dumped_blocks: list[dict[str, Any]] = []
-        for block in self._blocks:
+    def _convert_block_tree_to_json(
+        self,
+        block_tree: Any,
+    ) -> list[dict[str, Any]]:
+        """Convert the block tree to a JSON-serializable format, ignoring IDs from tuples."""
+        result: list[dict[str, Any]] = []
+        for (block, _), subtree in block_tree.items():
             obj_ref = block.obj_ref
             assert isinstance(obj_ref, GenericObject)
-            dumped_block = obj_ref.serialize_for_api()
-            dumped_blocks.append(dumped_block)
+            dumped_structure = {
+                "block": obj_ref.serialize_for_api(),
+                "children": self._convert_block_tree_to_json(subtree),
+            }
+            result.append(dumped_structure)
+        return result
+
+    def depart_document(self, node: nodes.Element) -> None:
+        """
+        Output collected block tree as JSON at document end.
+        """
+        del node
 
         json_output = json.dumps(
-            obj=dumped_blocks,
+            obj=self._convert_block_tree_to_json(self._block_tree),
             indent=2,
             ensure_ascii=False,
         )
