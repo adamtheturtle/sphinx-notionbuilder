@@ -61,6 +61,34 @@ def _create_code_block_without_annotations(
     return code_block
 
 
+def _reconstruct_nested_structure(
+    items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Reconstruct the nested structure of the nodes from the graph produced.
+    """
+    result: list[dict[str, Any]] = []
+    for item in items:
+        block = item["block"]
+        block_type = block["type"]
+
+        # Handle blocks that can have children
+        if block_type in {
+            "paragraph",
+            "callout",
+            "bulleted_list_item",
+            "toggle",
+        }:
+            children = item.get("children", [])
+            nested_blocks = _reconstruct_nested_structure(
+                items=children,
+            )
+            block[block_type]["children"] = nested_blocks
+
+        result.append(block)
+    return result
+
+
 def _assert_rst_converts_to_notion_objects(
     rst_content: str,
     expected_objects: list[NotionObject[Any]],
@@ -91,31 +119,7 @@ def _assert_rst_converts_to_notion_objects(
     with output_file.open() as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
-    def reconstruct_nested_structure(
-        items: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        result: list[dict[str, Any]] = []
-        for item in items:
-            block = item["block"]
-            block_type = block["type"]
-
-            # Handle blocks that can have children
-            if block_type in {
-                "paragraph",
-                "callout",
-                "bulleted_list_item",
-                "toggle",
-            }:
-                children = item.get("children", [])
-                nested_blocks = reconstruct_nested_structure(
-                    items=children,
-                )
-                block[block_type]["children"] = nested_blocks
-
-            result.append(block)
-        return result
-
-    generated_json_un_flattened = reconstruct_nested_structure(
+    generated_json_un_flattened = _reconstruct_nested_structure(
         items=generated_json
     )
 
