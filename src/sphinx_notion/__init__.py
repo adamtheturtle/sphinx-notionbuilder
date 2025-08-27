@@ -801,7 +801,9 @@ class NotionTranslator(NodeVisitor):
 
     def _convert_block_tree_to_json(
         self,
-        block_tree: _BlockTree,
+        # beartype does not support recursive types, so we need to use a
+        # simpler type.
+        block_tree: dict[tuple[NotionObject[Any], int], Any],
     ) -> list[dict[str, Any]]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
