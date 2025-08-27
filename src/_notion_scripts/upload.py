@@ -155,20 +155,22 @@ def main() -> None:
         )
 
         # Get the uploaded blocks to get their IDs for children
-        uploaded_blocks = notion_client.blocks.children.list(
+        uploaded_blocks: dict[str, Any] = notion_client.blocks.children.list(  # type: ignore[assignment] # pyright: ignore[reportAssignmentType]
             block_id=parent_id
         )
         block_id_map: dict[str, list[dict[str, Any]]] = {}
 
         # Map the uploaded blocks to their details for children processing
         results = uploaded_blocks.get("results", [])
-        for i, block in enumerate(results):
+        for i, block in enumerate(iterable=results):
             if i < len(block_details_list):
                 block_details = block_details_list[i]
                 if block_details["children"]:
                     block_id = block.get("id")
                     if block_id:
-                        block_id_map[str(block_id)] = block_details["children"]
+                        block_id_map[str(object=block_id)] = block_details[
+                            "children"
+                        ]
 
         # Recursively upload children for each block that has them
         for block_id, children in block_id_map.items():
@@ -178,7 +180,7 @@ def main() -> None:
 
     # Start the recursive upload process
     upload_blocks_recursively(
-        parent_id=str(page.id), block_details_list=blocks
+        parent_id=str(object=page.id), block_details_list=blocks
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
