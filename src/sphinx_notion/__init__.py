@@ -274,6 +274,7 @@ class NotionTranslator(NodeVisitor):
         for parent in parent_path[1:]:
             current_node = current_node[parent]
         current_node[block] = {}
+        print(self._block_tree)
 
     def _process_list_item_recursively(
         self,
@@ -533,6 +534,7 @@ class NotionTranslator(NodeVisitor):
             text="", icon=Emoji(emoji=emoji), color=background_color
         )
 
+        self._add_block_to_tree(block=block, parent_path=parent_path)
         # Use the first child as the callout text
         first_child = node.children[0]
         if isinstance(first_child, nodes.paragraph):
@@ -556,7 +558,7 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[block],
+                parent_path=[*parent_path, block],
             )
 
             # Add the processed blocks as children to the callout
@@ -566,7 +568,6 @@ class NotionTranslator(NodeVisitor):
             # Restore the original blocks list
             self._blocks = original_blocks
 
-        self._add_block_to_tree(block=block, parent_path=parent_path)
         self._blocks.append(block)
 
     @_process_node_to_blocks.register
@@ -642,6 +643,7 @@ class NotionTranslator(NodeVisitor):
         children_to_process = node.children
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=title_text)
+        self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
 
         for child in children_to_process:
             # Create a temporary list to capture the blocks created by processing this child
@@ -664,7 +666,6 @@ class NotionTranslator(NodeVisitor):
             # Restore the original blocks list
             self._blocks = original_blocks
 
-        self._add_block_to_tree(block=toggle_block, parent_path=[])
         self._blocks.append(toggle_block)
 
     def visit_title(self, node: nodes.Element) -> None:
