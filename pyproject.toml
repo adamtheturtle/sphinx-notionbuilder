@@ -240,6 +240,8 @@ disable = [
     'wrong-import-order',
     # mypy does not want untyped parameters.
     'useless-type-doc',
+    # interacts poorly with singledispatch
+    "bad-dunder-name",
 ]
 
 # We ignore invalid names because:

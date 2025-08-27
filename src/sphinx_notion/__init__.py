@@ -312,7 +312,7 @@ class NotionTranslator(NodeVisitor):
                 )
 
     @singledispatchmethod
-    def _process_node_to_blocks(
+    def _process_node_to_blocks(  # pylint: disable=no-self-use
         self,
         node: nodes.Element,
         *,
@@ -469,7 +469,7 @@ class NotionTranslator(NodeVisitor):
         self._add_block_to_tree(block=toc_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
-    def _(
+    def _(  # pylint: disable=no-self-use
         self,
         node: nodes.compound,
         *,
@@ -798,7 +798,7 @@ class NotionTranslator(NodeVisitor):
 
     def _convert_block_tree_to_json(
         self,
-        # beartype does not support recursive types, so we need to use a
+        # `beartype` does not support recursive types, so we need to use a
         # simpler type.
         block_tree: dict[tuple[NotionObject[Any], int], Any],
     ) -> list[dict[str, Any]]:
