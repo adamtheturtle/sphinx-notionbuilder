@@ -106,30 +106,11 @@ def _assert_rst_converts_to_notion_objects(
                 "bulleted_list_item",
                 "toggle",
             }:
-                if item.get("children"):
-                    # Recursively process children
-                    nested_blocks = reconstruct_nested_structure(
-                        items=item["children"]
-                    )
-                    # Add nested blocks to the appropriate field
-                    block[block_type]["children"] = nested_blocks
-                    # if block_type == "callout":
-                    #     block["callout"]["children"] = nested_blocks
-                    # elif block_type == "bulleted_list_item":
-                    #     block["bulleted_list_item"]["children"] = nested_blocks
-                    # elif block_type == "toggle":
-                    #     block["toggle"]["children"] = nested_blocks
-                    # else:  # paragraph
-                    #     block["paragraph"]["children"] = nested_blocks
-                # No children, set empty list
-                elif block_type == "callout":
-                    block["callout"]["children"] = []
-                elif block_type == "bulleted_list_item":
-                    block["bulleted_list_item"]["children"] = []
-                elif block_type == "toggle":
-                    block["toggle"]["children"] = []
-                else:  # paragraph
-                    block["paragraph"]["children"] = []
+                children = item.get("children", [])
+                nested_blocks = reconstruct_nested_structure(
+                    items=children,
+                )
+                block[block_type]["children"] = nested_blocks
 
             result.append(block)
         return result
