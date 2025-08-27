@@ -144,6 +144,7 @@ Some key features:
 * Handles headings, links, and formatting
 * Works with bullet points like this one
 * Now supports note, warning, and tip admonitions!
+* Supports images with URLs
 
 Heading 2 with *italic*
 -----------------------
@@ -171,6 +172,37 @@ Here is a simple table:
 | Cell 3   | Cell 4   |
 +----------+----------+
 
+
+Image Examples
+--------------
+
+The sphinx-notionbuilder now supports images with URLs! Here are some examples:
+
+Simple Image
+~~~~~~~~~~~~
+
+.. image:: https://www.example.com/path/to/image.png
+
+Image with Alt Text
+~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://www.example.com/path/to/image.png
+   :alt: Example image with alt text
+
+Image with Alt Text
+~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://www.example.com/path/to/image.png
+   :alt: Example image with alt text
+
+Mixed Content with Images
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's some text before the image.
+
+.. image:: https://www.example.com/path/to/image.png
+
+And here's some text after the image.
 
 .. collapse:: Long code block
 
