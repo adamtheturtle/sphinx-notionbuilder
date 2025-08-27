@@ -48,6 +48,7 @@ from ultimate_notion.rich_text import Text, text
 type _BlockTree = dict[tuple[NotionObject[Any], int], "_BlockTree"]
 
 
+@beartype
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """Create Notion rich text from ``docutils`` node children.
 
@@ -84,6 +85,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     return rich_text
 
 
+@beartype
 def _extract_table_structure(
     node: nodes.table,
 ) -> tuple[int, nodes.row | None, list[nodes.row]]:
@@ -110,6 +112,7 @@ def _extract_table_structure(
     return n_cols, header_row, body_rows
 
 
+@beartype
 def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
     """Return the paragraph child of an entry if present, else the entry.
 
@@ -136,6 +139,7 @@ def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
     return combined
 
 
+@beartype
 def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     """
     Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
@@ -255,6 +259,7 @@ class NotionTranslator(NodeVisitor):
         self.body: str
         self._section_level = 0
 
+    @beartype
     def _add_block_to_tree(
         self,
         block: NotionObject[Any],
@@ -275,6 +280,7 @@ class NotionTranslator(NodeVisitor):
             current_node = current_node[parent_key]
         current_node[block_key] = {}
 
+    @beartype
     def _process_list_item_recursively(
         self,
         *,
@@ -312,6 +318,7 @@ class NotionTranslator(NodeVisitor):
                 )
 
     @singledispatchmethod
+    @beartype
     def _process_node_to_blocks(  # pylint: disable=no-self-use
         self,
         node: nodes.Element,
@@ -510,6 +517,7 @@ class NotionTranslator(NodeVisitor):
         block.rich_text = rich_text
         self._add_block_to_tree(block=block, parent_path=parent_path)
 
+    @beartype
     def _create_admonition_callout(
         self,
         node: nodes.Element,
@@ -796,6 +804,7 @@ class NotionTranslator(NodeVisitor):
         assert self
         del node
 
+    @beartype
     def _convert_block_tree_to_json(
         self,
         # `beartype` does not support recursive types, so we need to use a
