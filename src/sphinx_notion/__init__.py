@@ -317,7 +317,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.Element,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:  # pragma: no cover
         """
         Required function for ``singledispatch``.
@@ -332,7 +332,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.table,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """Process rST table nodes by creating Notion Table blocks.
 
@@ -375,7 +375,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.paragraph,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process paragraph nodes by creating Notion Paragraph blocks.
@@ -394,7 +394,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.block_quote,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process block quote nodes by creating Notion Quote blocks.
@@ -413,7 +413,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.literal_block,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process literal block nodes by creating Notion Code blocks.
@@ -441,14 +441,12 @@ class NotionTranslator(NodeVisitor):
         node: nodes.bullet_list,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
-        if parent_path is None:
-            parent_path = []
         for list_item in node.children:
             if isinstance(list_item, nodes.list_item):
                 bullet_item = self._process_list_item_recursively(
@@ -465,7 +463,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.topic,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process topic nodes, specifically for table of contents.
@@ -485,7 +483,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.compound,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process Sphinx ``toctree`` nodes.
@@ -503,7 +501,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.title,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process title nodes by creating appropriate Notion heading blocks.
@@ -563,6 +561,7 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
+                parent_path=[block],
             )
 
             # Add the processed blocks as children to the callout
@@ -581,7 +580,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.note,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process note admonition nodes by creating Notion Callout blocks.
@@ -600,7 +599,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.warning,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process warning admonition nodes by creating Notion Callout blocks.
@@ -619,7 +618,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.tip,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process tip admonition nodes by creating Notion Callout blocks.
@@ -638,7 +637,7 @@ class NotionTranslator(NodeVisitor):
         node: CollapseNode,
         *,
         section_level: int,
-        parent_path: list[NotionObject[Any]] | None = None,
+        parent_path: list[NotionObject[Any]],
     ) -> None:
         """
         Process collapse nodes by creating Notion ToggleItem blocks.
@@ -659,6 +658,7 @@ class NotionTranslator(NodeVisitor):
             self._process_node_to_blocks(
                 child,
                 section_level=1,
+                parent_path=[toggle_block],
             )
 
             # Add the processed blocks as children to the toggle block
@@ -680,6 +680,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -705,6 +706,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -716,6 +718,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -727,6 +730,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -750,6 +754,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -761,6 +766,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -772,6 +778,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -783,6 +790,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -794,6 +802,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -805,6 +814,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -816,6 +826,7 @@ class NotionTranslator(NodeVisitor):
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
+            parent_path=[],
         )
 
         raise nodes.SkipNode
@@ -831,6 +842,7 @@ class NotionTranslator(NodeVisitor):
         """
         Output collected blocks as JSON at document end.
         """
+        print(self._block_tree)
         del node
         dumped_blocks: list[dict[str, Any]] = []
         for block in self._blocks:
