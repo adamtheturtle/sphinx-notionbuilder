@@ -80,9 +80,6 @@ Arguments:
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
-Supported features
-------------------
-
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder/branch/main/graph/badge.svg
