@@ -645,6 +645,67 @@ class NotionTranslator(NodeVisitor):
     @_process_node_to_blocks.register
     def _(
         self,
+        node: nodes.container,
+        *,
+        section_level: int,
+        parent_path: list[tuple[NotionObject[Any], int]],
+    ) -> None:
+        """
+        Process container nodes, specifically for literalinclude with caption.
+        """
+        del section_level
+
+        # Check if this is a literal-block-wrapper container
+        if node.get(key="literal_block", failobj=False):
+            # Find the caption and literal_block children
+            caption_node = None
+            literal_block_node = None
+
+            for child in node.children:
+                if isinstance(child, nodes.caption):
+                    caption_node = child
+                elif isinstance(child, nodes.literal_block):
+                    literal_block_node = child
+
+            if literal_block_node is not None:
+                # Process the literal block to get the code block
+                code_text = _create_rich_text_from_children(
+                    node=literal_block_node
+                )
+                pygments_lang = literal_block_node.get(
+                    key="language", failobj=""
+                )
+                language = _map_pygments_to_notion_language(
+                    pygments_lang=pygments_lang,
+                )
+                code_block = UnoCode(text=code_text, language=language)
+                # Remove annotations to prevent white text in code blocks
+                for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                    del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+                code_block.rich_text = code_text
+
+                # Add caption if present
+                if caption_node is not None:
+                    caption_text = _create_rich_text_from_children(
+                        node=caption_node
+                    )
+                    code_block.caption = caption_text
+
+                self._add_block_to_tree(
+                    block=code_block, parent_path=parent_path
+                )
+        else:
+            # For other containers, process children normally
+            for child in node.children:
+                self._process_node_to_blocks(
+                    child,
+                    section_level=1,  # Default section level for containers
+                    parent_path=parent_path,
+                )
+
+    @_process_node_to_blocks.register
+    def _(
+        self,
         node: nodes.image,
         *,
         section_level: int,
@@ -810,6 +871,18 @@ class NotionTranslator(NodeVisitor):
     def visit_CollapseNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
         """
         Handle collapse nodes by creating Notion ToggleItem blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_container(self, node: nodes.Element) -> None:
+        """
+        Handle container nodes by processing them as blocks.
         """
         self._process_node_to_blocks(
             node,

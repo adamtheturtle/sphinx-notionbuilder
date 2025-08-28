@@ -105,7 +105,7 @@ def _assert_rst_converts_to_notion_objects(
     The given rST content is converted to the given expected objects.
     """
     srcdir = tmp_path / "src"
-    srcdir.mkdir()
+    srcdir.mkdir(exist_ok=True)
 
     (srcdir / "conf.py").write_text(data="")
 
@@ -1256,6 +1256,97 @@ def test_image_with_alt_text_only(
     expected_objects: list[NotionObject[Any]] = [
         UnoImage(url="https://www.example.com/path/to/image.png"),
         UnoParagraph(text="Content follows."),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_literalinclude_with_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that literalinclude with caption converts to Notion Code blocks with
+    caption.
+    """
+    # Create the source directory first
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create a test file to include in the source directory
+    test_file = srcdir / "test_file.py"
+    test_file.write_text(data='def hello():\n    print("Hello, world!")')
+
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: test_file.py
+           :caption: Example Python function
+           :language: python
+
+        Another paragraph.
+    """
+
+    # Create the expected code block with caption
+    code_block = _create_code_block_without_annotations(
+        content='def hello():\n    print("Hello, world!")',
+        language=CodeLang.PYTHON,
+    )
+    code_block.caption = text(text="Example Python function")
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        code_block,
+        UnoParagraph(text="Another paragraph."),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_literalinclude_without_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that literalinclude without caption converts to Notion Code blocks.
+    """
+    # Create the source directory first
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create a test file to include in the source directory
+    test_file = srcdir / "test_file.py"
+    test_file.write_text(data='def hello():\n    print("Hello, world!")')
+
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: test_file.py
+           :language: python
+
+        Another paragraph.
+    """
+
+    # Create the expected code block
+    code_block = _create_code_block_without_annotations(
+        content='def hello():\n    print("Hello, world!")',
+        language=CodeLang.PYTHON,
+    )
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        code_block,
+        UnoParagraph(text="Another paragraph."),
     ]
 
     _assert_rst_converts_to_notion_objects(

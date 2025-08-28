@@ -122,6 +122,20 @@ This is **bold** and *italic* and ``inline code``.
 
    $ pip install sphinx-notionbuilder
 
+LiteralInclude Examples
+-----------------------
+
+Simple literalinclude without caption:
+
+.. literalinclude:: literalinclude_example.py
+   :language: python
+
+Literalinclude with caption:
+
+.. literalinclude:: literalinclude_example.py
+   :caption: Example Python functions
+   :language: python
+
 Some key features:
 
 * Easy integration with **Sphinx**
