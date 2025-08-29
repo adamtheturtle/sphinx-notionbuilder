@@ -139,10 +139,9 @@ def upload_blocks_recursively(
 
     # Map the uploaded blocks to their details for children processing
     for i, block in enumerate(iterable=uploaded_blocks):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-        if i < len(block_details_list):
-            block_details = block_details_list[i]
-            if block_details["children"]:
-                block_id_map[block.id] = block_details["children"]
+        block_details = block_details_list[i]
+        if block_details["children"]:
+            block_id_map[block.id] = block_details["children"]
 
     # Recursively upload children for each block that has them
     for block_id, children in block_id_map.items():
