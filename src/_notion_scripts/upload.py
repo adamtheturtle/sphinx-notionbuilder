@@ -121,9 +121,9 @@ def main() -> None:
     args = _parse_args()
 
     session = Session()
-    title = args.title
-    file_path = args.file
-    parent_page_id = args.parent_page_id
+    title = str(object=args.title)
+    file_path = Path(args.file)
+    parent_page_id = str(object=args.parent_page_id)
 
     blocks = json.loads(s=file_path.read_text(encoding="utf-8"))
 
