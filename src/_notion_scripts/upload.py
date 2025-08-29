@@ -8,14 +8,17 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from beartype import beartype
 from notion_client import Client
 from ultimate_notion import Session
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
@@ -38,7 +41,7 @@ def _find_existing_page_by_title(parent_page: Page, title: str) -> Page | None:
 
 @beartype
 def _upload_blocks_in_batches(
-    parent: Page | Block[Any],
+    parent: Page | ChildrenMixin[Any],
     blocks: list[_Block],
     batch_size: int,
 ) -> None:
@@ -63,11 +66,11 @@ def _upload_blocks_in_batches(
         block_api_objs = [
             UnoObjAPIBlock.model_validate(obj=block) for block in batch
         ]
-        block_objs = [
-            Block.wrap_obj_ref(block_api_obj)
+        block_objs: list[Block[Any]] = [
+            Block.wrap_obj_ref(block_api_obj)  # pyright: ignore[reportUnknownMemberType]
             for block_api_obj in block_api_objs
         ]
-        parent.append(blocks=block_objs)
+        parent.append(blocks=block_objs)  # pyright: ignore[reportUnknownMemberType]
 
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
@@ -111,7 +114,7 @@ def _parse_args() -> argparse.Namespace:
 
 @beartype
 def upload_blocks_recursively(
-    parent: Page | Block[Any],
+    parent: Page | ChildrenMixin[Any],
     block_details_list: list[dict[str, Any]],
     session: Session,
     batch_size: int,
@@ -134,23 +137,20 @@ def upload_blocks_recursively(
     )
 
     # Get the uploaded blocks to get their IDs for children
-    uploaded_blocks = parent.children
-    block_id_map: dict[str, list[dict[str, Any]]] = {}
+    uploaded_blocks = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    block_id_map: dict[UUID, list[dict[str, Any]]] = {}
 
     # Map the uploaded blocks to their details for children processing
-    for i, block in enumerate(iterable=uploaded_blocks):
+    for i, block in enumerate(iterable=uploaded_blocks):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         if i < len(block_details_list):
             block_details = block_details_list[i]
             if block_details["children"]:
-                block_id = block.id
-                if block_id:
-                    block_id_map[str(object=block_id)] = block_details[
-                        "children"
-                    ]
+                block_id_map[block.id] = block_details["children"]
 
     # Recursively upload children for each block that has them
     for block_id, children in block_id_map.items():
-        block_obj = session.get_block(block_ref=block_id)
+        block_obj = session.get_block(block_ref=block_id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        assert isinstance(block_obj, ChildrenMixin)
         upload_blocks_recursively(
             parent=block_obj,
             block_details_list=children,
