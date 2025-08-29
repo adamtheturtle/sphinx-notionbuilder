@@ -230,6 +230,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "ts": CodeLang.TYPESCRIPT,
         # This is not a perfect match, but it's the best we can do.
         "tsx": CodeLang.TYPESCRIPT,
+        "udiff": CodeLang.DIFF,
         "vb.net": CodeLang.VB_NET,
         "vbnet": CodeLang.VB_NET,
         "verilog": CodeLang.VERILOG,
