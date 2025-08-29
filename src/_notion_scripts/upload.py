@@ -40,7 +40,7 @@ def _find_existing_page_by_title(parent_page: Page, title: str) -> Page | None:
 @beartype
 def _upload_blocks_in_batches(
     parent: Page | ChildrenMixin[Any],
-    blocks: list[_Block],
+    blocks: list[Block[Any]],
     batch_size: int,
 ) -> None:
     """
@@ -61,14 +61,7 @@ def _upload_blocks_in_batches(
             f"({len(batch)} blocks)...\n"
         )
 
-        block_api_objs = [
-            UnoObjAPIBlock.model_validate(obj=block) for block in batch
-        ]
-        block_objs: list[Block[Any]] = [
-            Block.wrap_obj_ref(block_api_obj)  # pyright: ignore[reportUnknownMemberType]
-            for block_api_obj in block_api_objs
-        ]
-        parent.append(blocks=block_objs)  # pyright: ignore[reportUnknownMemberType]
+        parent.append(blocks=blocks)  # pyright: ignore[reportUnknownMemberType]
 
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
@@ -121,13 +114,18 @@ def upload_blocks_recursively(
     Upload blocks recursively, handling the new structure with block and
     children.
     """
-    # Extract just the blocks for this level
-    level_blocks = [details["block"] for details in block_details_list]
-
     # Upload this level's blocks in batches
+    block_api_objs = [
+        UnoObjAPIBlock.model_validate(obj=details["block"])
+        for details in block_details_list
+    ]
+    block_objs: list[Block[Any]] = [
+        Block.wrap_obj_ref(block_api_obj)  # pyright: ignore[reportUnknownMemberType]
+        for block_api_obj in block_api_objs
+    ]
     _upload_blocks_in_batches(
         parent=parent,
-        blocks=level_blocks,
+        blocks=block_objs,
         batch_size=batch_size,
     )
 
