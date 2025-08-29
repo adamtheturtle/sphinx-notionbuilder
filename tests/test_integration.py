@@ -144,6 +144,7 @@ def _assert_rst_converts_to_notion_objects(
 
 
 def test_single_paragraph(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -167,6 +168,7 @@ def test_single_paragraph(
 
 
 def test_multiple_paragraphs(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -196,6 +198,7 @@ def test_multiple_paragraphs(
 
 
 def test_inline_formatting(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -238,6 +241,7 @@ def test_inline_formatting(
 
 
 def test_single_heading(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -265,6 +269,7 @@ def test_single_heading(
 
 
 def test_multiple_heading_levels(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -306,6 +311,7 @@ def test_multiple_heading_levels(
 
 
 def test_heading_with_formatting(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -343,6 +349,7 @@ def test_heading_with_formatting(
 
 
 def test_simple_link(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -373,6 +380,7 @@ def test_simple_link(
 
 
 def test_multiple_links(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -412,6 +420,7 @@ def test_multiple_links(
 
 
 def test_link_in_heading(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -447,6 +456,7 @@ def test_link_in_heading(
 
 
 def test_mixed_formatting_with_links(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -489,6 +499,7 @@ def test_mixed_formatting_with_links(
 
 
 def test_unnamed_link_with_backticks(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -520,6 +531,7 @@ def test_unnamed_link_with_backticks(
 
 
 def test_simple_quote(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -547,6 +559,7 @@ def test_simple_quote(
 
 
 def test_multiline_quote(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -578,6 +591,7 @@ def test_multiline_quote(
 
 
 def test_table_of_contents(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -617,6 +631,7 @@ def test_table_of_contents(
 
 
 def test_toctree_directive(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -643,6 +658,7 @@ def test_toctree_directive(
 
 
 def test_simple_code_block(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -676,6 +692,7 @@ def test_simple_code_block(
 
 
 def test_code_block_language_mapping(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -729,6 +746,7 @@ def test_code_block_language_mapping(
 
 
 def test_flat_bullet_list(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -754,6 +772,7 @@ def test_flat_bullet_list(
 
 
 def test_bullet_list_with_inline_formatting(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -838,6 +857,7 @@ def test_admonition_single_line(
     ],
 )
 def test_admonition_multiline(
+    *,
     admonition_type: str,
     emoji: str,
     background_color: BGColor,
@@ -882,6 +902,7 @@ def test_admonition_multiline(
 
 
 def test_admonition_with_code_block(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -926,6 +947,7 @@ def test_admonition_with_code_block(
 
 
 def test_admonition_with_code_block_first(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -968,6 +990,7 @@ def test_admonition_with_code_block_first(
 
 
 def test_admonition_with_bullet_points(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1009,6 +1032,7 @@ def test_admonition_with_bullet_points(
 
 
 def test_nested_bullet_list(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1107,6 +1131,7 @@ def test_collapse_block(
 
 
 def test_simple_table(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1147,6 +1172,7 @@ def test_simple_table(
 
 
 def test_table_without_header_row(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1178,6 +1204,7 @@ def test_table_without_header_row(
 
 
 def test_table_inline_formatting(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1212,6 +1239,7 @@ def test_table_inline_formatting(
 
 
 def test_simple_image(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -1241,6 +1269,7 @@ def test_simple_image(
 
 
 def test_image_with_alt_text_only(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
