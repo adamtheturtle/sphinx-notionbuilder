@@ -21,7 +21,15 @@ if TYPE_CHECKING:
 _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
 
-_Block = dict[str, Any]
+@beartype
+def _batch_list[T](elements: list[T], batch_size: int) -> list[list[T]]:
+    """
+    Split a list into batches of a given size.
+    """
+    return [
+        elements[start_index : start_index + batch_size]
+        for start_index in range(0, len(elements), batch_size)
+    ]
 
 
 @beartype
@@ -35,35 +43,6 @@ def _find_existing_page_by_title(parent_page: Page, title: str) -> Page | None:
         if str(object=child_page.title) == title:
             return child_page
     return None
-
-
-@beartype
-def _upload_blocks_in_batches(
-    parent: Page | ChildrenMixin[Any],
-    blocks: list[Block[Any]],
-    batch_size: int,
-) -> None:
-    """
-    Upload blocks to a page in batches to avoid 413 errors.
-    """
-    total_blocks = len(blocks)
-    sys.stderr.write(
-        f"Uploading {total_blocks} blocks in batches of {batch_size}...\n"
-    )
-
-    for i in range(0, total_blocks, batch_size):
-        batch = blocks[i : i + batch_size]
-        batch_num = (i // batch_size) + 1
-        total_batches = (total_blocks + batch_size - 1) // batch_size
-
-        sys.stderr.write(
-            f"Uploading batch {batch_num}/{total_batches} "
-            f"({len(batch)} blocks)...\n"
-        )
-
-        parent.append(blocks=blocks)  # pyright: ignore[reportUnknownMemberType]
-
-    sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
 
 @beartype
@@ -115,19 +94,20 @@ def upload_blocks_recursively(
     children.
     """
     # Upload this level's blocks in batches
-    block_api_objs = [
+    children_block_api_objs = [
         UnoObjAPIBlock.model_validate(obj=details["block"])
         for details in block_details_list
     ]
-    block_objs: list[Block[Any]] = [
+    children_block_objs: list[Block[Any]] = [
         Block.wrap_obj_ref(block_api_obj)  # pyright: ignore[reportUnknownMemberType]
-        for block_api_obj in block_api_objs
+        for block_api_obj in children_block_api_objs
     ]
-    _upload_blocks_in_batches(
-        parent=parent,
-        blocks=block_objs,
+    children_block_batches = _batch_list(
+        elements=children_block_objs,
         batch_size=batch_size,
     )
+    for children_block_batch in children_block_batches:
+        parent.append(blocks=children_block_batch)  # pyright: ignore[reportUnknownMemberType]
 
     # Get the uploaded blocks to get their IDs for children
     uploaded_blocks = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
