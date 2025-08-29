@@ -1283,16 +1283,16 @@ def test_literalinclude_without_caption(
         Another paragraph.
     """
 
+    conf_py_content = 'def hello():\n    print("Hello from included file!")\n'
+
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
         _create_code_block_without_annotations(
-            content='def hello():\n    print("Hello from included file!")\n',
+            content=conf_py_content,
             language=CodeLang.PYTHON,
         ),
         UnoParagraph(text="Another paragraph."),
     ]
-
-    conf_py_content = 'def hello():\n    print("Hello from included file!")\n'
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
