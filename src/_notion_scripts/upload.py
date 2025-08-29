@@ -7,16 +7,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
 
@@ -111,24 +108,19 @@ def upload_blocks_recursively(
 
     # Get the uploaded blocks to get their IDs for children
     uploaded_blocks = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-    block_id_map: dict[UUID, list[dict[str, Any]]] = {}
 
     # Map the uploaded blocks to their details for children processing
     for i, block in enumerate(iterable=uploaded_blocks):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         block_details = block_details_list[i]
         if block_details["children"]:
-            block_id_map[block.id] = block_details["children"]
-
-    # Recursively upload children for each block that has them
-    for block_id, children in block_id_map.items():
-        block_obj = session.get_block(block_ref=block_id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        assert isinstance(block_obj, ChildrenMixin)
-        upload_blocks_recursively(
-            parent=block_obj,
-            block_details_list=children,
-            session=session,
-            batch_size=batch_size,
-        )
+            block_obj = session.get_block(block_ref=block.id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            assert isinstance(block_obj, ChildrenMixin)
+            upload_blocks_recursively(
+                parent=block_obj,
+                block_details_list=block_details["children"],
+                session=session,
+                batch_size=batch_size,
+            )
 
 
 @beartype
