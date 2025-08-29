@@ -123,9 +123,6 @@ def upload_blocks_recursively(
     Upload blocks recursively, handling the new structure with block and
     children.
     """
-    if not block_details_list:
-        return
-
     # Extract just the blocks for this level
     level_blocks = [details["block"] for details in block_details_list]
 
