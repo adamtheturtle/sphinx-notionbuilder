@@ -5,13 +5,11 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from beartype import beartype
-from notion_client import Client
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
@@ -162,8 +160,7 @@ def main() -> None:
     """
     args = _parse_args()
 
-    notion_client = Client(auth=os.environ["NOTION_TOKEN"])
-    session = Session(client=notion_client)
+    session = Session()
     batch_size = args.batch_size
     title = args.title
     file_path = args.file

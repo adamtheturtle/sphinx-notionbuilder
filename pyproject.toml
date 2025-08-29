@@ -32,7 +32,6 @@ dynamic = [
 dependencies = [
     "beartype>=0.21.0",
     "docutils>=0.21",
-    "notion-client>=2.0.0",
     "sphinx>=8.2.3",
     "sphinx-toolbox>=4.0.0",
     "ultimate-notion>=0.8",
