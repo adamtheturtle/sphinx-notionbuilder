@@ -15,8 +15,6 @@ from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
-_NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
-
 
 @beartype
 def _batch_list[T](elements: list[T], batch_size: int) -> list[list[T]]:
@@ -69,12 +67,6 @@ def _parse_args() -> argparse.Namespace:
         "--title",
         help="Title of the new page",
         required=True,
-    )
-    parser.add_argument(
-        "--batch-size",
-        help="Number of blocks per batch",
-        type=int,
-        default=_NOTION_BLOCKS_BATCH_SIZE,
     )
     return parser.parse_args()
 
@@ -129,7 +121,6 @@ def main() -> None:
     args = _parse_args()
 
     session = Session()
-    batch_size = args.batch_size
     title = args.title
     file_path = args.file
     parent_page_id = args.parent_page_id
@@ -150,11 +141,15 @@ def main() -> None:
     for child in page.children:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
         child.delete()
 
+    # See https://developers.notion.com/reference/request-limits#limits-for-property-values
+    # which shows that the max number of blocks per request is 100.
+    # Without batching, we get 413 errors.
+    notion_blocks_batch_size = 100
     upload_blocks_recursively(
         parent=page,
         block_details_list=blocks,
         session=session,
-        batch_size=batch_size,
+        batch_size=notion_blocks_batch_size,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
 
