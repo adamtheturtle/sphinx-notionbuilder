@@ -46,7 +46,7 @@ from ultimate_notion.rich_text import text
 
 @beartype
 def _create_code_block_without_annotations(
-    content: str, language: CodeLang
+    *, content: str, language: CodeLang
 ) -> UnoCode:
     """Create a code block without annotations to match the fixed behavior.
 
@@ -66,6 +66,7 @@ def _create_code_block_without_annotations(
 
 @beartype
 def _reconstruct_nested_structure(
+    *,
     items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """
@@ -95,6 +96,7 @@ def _reconstruct_nested_structure(
 
 @beartype
 def _assert_rst_converts_to_notion_objects(
+    *,
     rst_content: str,
     expected_objects: list[NotionObject[Any]],
     make_app: Callable[..., SphinxTestApp],

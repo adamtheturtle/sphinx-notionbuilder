@@ -88,6 +88,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
 @beartype
 def _extract_table_structure(
+    *,
     node: nodes.table,
 ) -> tuple[int, nodes.row | None, list[nodes.row]]:
     """
@@ -114,7 +115,7 @@ def _extract_table_structure(
 
 
 @beartype
-def _cell_source_node(entry: nodes.Node) -> nodes.paragraph:
+def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     """Return the paragraph child of an entry if present, else the entry.
 
     This isolates the small branch used when converting a table cell so
@@ -266,6 +267,7 @@ class NotionTranslator(NodeVisitor):
     @beartype
     def _add_block_to_tree(
         self,
+        *,
         block: NotionObject[Any],
         parent_path: list[tuple[NotionObject[Any], int]],
     ) -> None:
@@ -524,8 +526,8 @@ class NotionTranslator(NodeVisitor):
     @beartype
     def _create_admonition_callout(
         self,
-        node: nodes.Element,
         *,
+        node: nodes.Element,
         emoji: str,
         background_color: BGColor,
         parent_path: list[tuple[NotionObject[Any], int]],
@@ -842,7 +844,7 @@ class NotionTranslator(NodeVisitor):
     @beartype
     def _convert_block_tree_to_json(
         self,
-        # `beartype` does not support recursive types, so we need to use a
+        *,  # `beartype` does not support recursive types, so we need to use a
         # simpler type.
         block_tree: dict[tuple[NotionObject[Any], int], Any],
     ) -> list[dict[str, Any]]:
