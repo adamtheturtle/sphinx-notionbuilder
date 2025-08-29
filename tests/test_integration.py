@@ -1283,7 +1283,12 @@ def test_literalinclude_without_caption(
         Another paragraph.
     """
 
-    conf_py_content = 'def hello():\n    print("Hello from included file!")\n'
+    conf_py_content = textwrap.dedent(
+        text="""
+        def hello():
+            print("Hello from included file!")
+        """,
+    )
 
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text="Regular paragraph."),
