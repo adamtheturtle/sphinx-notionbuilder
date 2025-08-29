@@ -1272,7 +1272,7 @@ def test_literalinclude_without_caption(
     tmp_path: Path,
 ) -> None:
     """
-    Test that literalinclude directive without caption converts to code block.
+    ``literalinclude`` directives without captions convert to code blocks.
     """
     rst_content = """
         Regular paragraph.
