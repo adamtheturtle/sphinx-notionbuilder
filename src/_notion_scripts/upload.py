@@ -106,10 +106,8 @@ def upload_blocks_recursively(
     for children_block_batch in children_block_batches:
         parent.append(blocks=children_block_batch)  # pyright: ignore[reportUnknownMemberType]
 
-    # Get the uploaded blocks to get their IDs for children
     uploaded_blocks = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
-    # Map the uploaded blocks to their details for children processing
     for i, block in enumerate(iterable=uploaded_blocks):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         block_details = block_details_list[i]
         if block_details["children"]:
@@ -149,12 +147,9 @@ def main() -> None:
         page = session.create_page(parent=parent_page, title=title)
         sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
 
-    for child in list(  # pyright: ignore[reportUnknownVariableType]
-        page.children  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-    ):
+    for child in page.children:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
         child.delete()
 
-    # Start the recursive upload process
     upload_blocks_recursively(
         parent=page,
         block_details_list=blocks,
