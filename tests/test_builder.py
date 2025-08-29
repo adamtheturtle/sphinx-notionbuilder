@@ -12,6 +12,7 @@ import sphinx_notion
 
 
 def test_meta(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:

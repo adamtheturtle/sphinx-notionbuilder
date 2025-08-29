@@ -17,7 +17,7 @@ from ultimate_notion.page import Page
 
 
 @beartype
-def _batch_list[T](elements: list[T], batch_size: int) -> list[list[T]]:
+def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
     """
     Split a list into batches of a given size.
     """
@@ -28,7 +28,9 @@ def _batch_list[T](elements: list[T], batch_size: int) -> list[list[T]]:
 
 
 @beartype
-def _find_existing_page_by_title(parent_page: Page, title: str) -> Page | None:
+def _find_existing_page_by_title(
+    *, parent_page: Page, title: str
+) -> Page | None:
     """Find an existing page with the given title in the parent page (top-level
     only).
 
