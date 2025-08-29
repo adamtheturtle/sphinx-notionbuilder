@@ -13,6 +13,8 @@ from typing import Any
 from beartype import beartype
 from notion_client import Client
 from ultimate_notion import Session
+from ultimate_notion.blocks import Block
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
 _NOTION_BLOCKS_BATCH_SIZE = 100  # Max blocks per request to avoid 413 errors
@@ -36,8 +38,7 @@ def _find_existing_page_by_title(parent_page: Page, title: str) -> Page | None:
 
 @beartype
 def _upload_blocks_in_batches(
-    notion_client: Client,
-    parent_id: str,
+    parent: Page | Block[Any],
     blocks: list[_Block],
     batch_size: int,
 ) -> None:
@@ -59,10 +60,14 @@ def _upload_blocks_in_batches(
             f"({len(batch)} blocks)...\n"
         )
 
-        notion_client.blocks.children.append(
-            block_id=parent_id,
-            children=batch,
-        )
+        block_api_objs = [
+            UnoObjAPIBlock.model_validate(obj=block) for block in batch
+        ]
+        block_objs = [
+            Block.wrap_obj_ref(block_api_obj)
+            for block_api_obj in block_api_objs
+        ]
+        parent.append(blocks=block_objs)
 
     sys.stderr.write(f"Successfully uploaded all {total_blocks} blocks.\n")
 
@@ -106,9 +111,9 @@ def _parse_args() -> argparse.Namespace:
 
 @beartype
 def upload_blocks_recursively(
-    parent_id: str,
+    parent: Page | Block[Any],
     block_details_list: list[dict[str, Any]],
-    notion_client: Client,
+    session: Session,
     batch_size: int,
 ) -> None:
     """
@@ -123,25 +128,21 @@ def upload_blocks_recursively(
 
     # Upload this level's blocks in batches
     _upload_blocks_in_batches(
-        notion_client=notion_client,
-        parent_id=parent_id,
+        parent=parent,
         blocks=level_blocks,
         batch_size=batch_size,
     )
 
     # Get the uploaded blocks to get their IDs for children
-    uploaded_blocks: dict[str, Any] = notion_client.blocks.children.list(  # type: ignore[assignment] # pyright: ignore[reportAssignmentType]
-        block_id=parent_id
-    )
+    uploaded_blocks = parent.children
     block_id_map: dict[str, list[dict[str, Any]]] = {}
 
     # Map the uploaded blocks to their details for children processing
-    results = uploaded_blocks.get("results", [])
-    for i, block in enumerate(iterable=results):
+    for i, block in enumerate(iterable=uploaded_blocks):
         if i < len(block_details_list):
             block_details = block_details_list[i]
             if block_details["children"]:
-                block_id = block.get("id")
+                block_id = block.id
                 if block_id:
                     block_id_map[str(object=block_id)] = block_details[
                         "children"
@@ -149,10 +150,11 @@ def upload_blocks_recursively(
 
     # Recursively upload children for each block that has them
     for block_id, children in block_id_map.items():
+        block_obj = session.get_block(block_ref=block_id)
         upload_blocks_recursively(
-            parent_id=block_id,
+            parent=block_obj,
             block_details_list=children,
-            notion_client=notion_client,
+            session=session,
             batch_size=batch_size,
         )
 
@@ -192,9 +194,9 @@ def main() -> None:
 
     # Start the recursive upload process
     upload_blocks_recursively(
-        parent_id=str(object=page.id),
+        parent=page,
         block_details_list=blocks,
-        notion_client=notion_client,
+        session=session,
         batch_size=batch_size,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
