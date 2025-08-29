@@ -134,6 +134,7 @@ def main() -> None:
     batch_size = args.batch_size
     title = args.title
     file_path = args.file
+    parent_page_id = args.parent_page_id
 
     blocks = json.loads(s=file_path.read_text(encoding="utf-8"))
 
@@ -141,14 +142,12 @@ def main() -> None:
     Page.parent_db = None  # type: ignore[method-assign,assignment] # pyright: ignore[reportAttributeAccessIssue]
     assert Page.parent_db is None
 
-    parent_page = session.get_page(page_ref=args.parent_page_id)
-    page = _find_existing_page_by_title(
-        parent_page=parent_page, title=args.title
-    )
+    parent_page = session.get_page(page_ref=parent_page_id)
+    page = _find_existing_page_by_title(parent_page=parent_page, title=title)
 
     if not page:
-        page = session.create_page(parent=parent_page, title=args.title)
-        sys.stdout.write(f"Created new page: {args.title} (ID: {page.id})\n")
+        page = session.create_page(parent=parent_page, title=title)
+        sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
 
     for child in list(  # pyright: ignore[reportUnknownVariableType]
         page.children  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
