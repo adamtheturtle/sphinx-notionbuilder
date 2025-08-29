@@ -47,6 +47,9 @@ The following syntax is supported:
 - Block quotes
 - Note, warning, and tip admonitions
 - Collapsible sections (using sphinx-toolbox collapse directive)
+- Images (with URLs, not paths)
+- Tables
+
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 

@@ -122,6 +122,11 @@ This is **bold** and *italic* and ``inline code``.
 
    $ pip install sphinx-notionbuilder
 
+Here's an example of including a file:
+
+.. literalinclude:: conf.py
+   :language: python
+
 Some key features:
 
 * Easy integration with **Sphinx**
