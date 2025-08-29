@@ -100,6 +100,7 @@ def _assert_rst_converts_to_notion_objects(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
     extensions: tuple[str, ...] = ("sphinx_notion",),
+    conf_py_content: str = "",
 ) -> None:
     """
     The given rST content is converted to the given expected objects.
@@ -107,7 +108,7 @@ def _assert_rst_converts_to_notion_objects(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
 
-    (srcdir / "conf.py").write_text(data="")
+    (srcdir / "conf.py").write_text(data=conf_py_content)
 
     cleaned_content = textwrap.dedent(text=rst_content).strip()
     (srcdir / "index.rst").write_text(data=cleaned_content)
@@ -1263,4 +1264,40 @@ def test_image_with_alt_text_only(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
+    )
+
+
+def test_literalinclude_without_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that literalinclude directive without caption converts to code block.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: conf.py
+           :language: python
+
+        Another paragraph.
+    """
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text="Regular paragraph."),
+        _create_code_block_without_annotations(
+            content='def hello():\n    print("Hello from included file!")\n',
+            language=CodeLang.PYTHON,
+        ),
+        UnoParagraph(text="Another paragraph."),
+    ]
+
+    conf_py_content = 'def hello():\n    print("Hello from included file!")\n'
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
     )
