@@ -6,7 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 import click
 from beartype import beartype
@@ -14,6 +14,15 @@ from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
+
+
+class _SerializedBlockTreeNode(TypedDict):
+    """
+    A node in the block tree representing a Notion block with its children.
+    """
+
+    block: dict[str, Any]
+    children: list["_SerializedBlockTreeNode"]
 
 
 @beartype
@@ -30,7 +39,7 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 @beartype
 def upload_blocks_recursively(
     parent: Page | ChildrenMixin[Any],
-    block_details_list: list[dict[str, Any]],
+    block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
     batch_size: int,
 ) -> None:
@@ -38,28 +47,22 @@ def upload_blocks_recursively(
     Upload blocks recursively, handling the new structure with block and
     children.
     """
-    # Upload this level's blocks in batches
-    children_block_api_objs = [
-        UnoObjAPIBlock.model_validate(obj=details["block"])
+    first_level_blocks: list[Block[Any]] = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))  # pyright: ignore[reportUnknownMemberType]
         for details in block_details_list
     ]
-    children_block_objs: list[Block[Any]] = [
-        Block.wrap_obj_ref(block_api_obj)  # pyright: ignore[reportUnknownMemberType]
-        for block_api_obj in children_block_api_objs
-    ]
-    children_block_batches = _batch_list(
-        elements=children_block_objs,
+    for block_batch in _batch_list(
+        elements=first_level_blocks,
         batch_size=batch_size,
-    )
-    for children_block_batch in children_block_batches:
-        parent.append(blocks=children_block_batch)  # pyright: ignore[reportUnknownMemberType]
+    ):
+        parent.append(blocks=block_batch)  # pyright: ignore[reportUnknownMemberType]
 
-    uploaded_blocks = parent.children  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-
-    for i, block in enumerate(iterable=uploaded_blocks):  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
-        block_details = block_details_list[i]
+    for uploaded_block_index, uploaded_block in enumerate(  # pyright: ignore[reportUnknownVariableType]
+        iterable=parent.children  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+    ):
+        block_details = block_details_list[uploaded_block_index]
         if block_details["children"]:
-            block_obj = session.get_block(block_ref=block.id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            block_obj = session.get_block(block_ref=uploaded_block.id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             assert isinstance(block_obj, ChildrenMixin)
             upload_blocks_recursively(
                 parent=block_obj,
