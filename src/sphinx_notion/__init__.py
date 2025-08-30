@@ -4,7 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatchmethod
-from typing import Any
+from typing import Any, TypedDict
 
 from beartype import beartype
 from docutils import nodes
@@ -47,6 +47,15 @@ from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
 type _BlockTree = dict[tuple[NotionObject[Any], int], "_BlockTree"]
+
+
+class _SerializedBlockTreeNode(TypedDict):
+    """
+    A node in the block tree representing a Notion block with its children.
+    """
+
+    block: dict[str, Any]
+    children: list["_SerializedBlockTreeNode"]
 
 
 @beartype
@@ -847,16 +856,16 @@ class NotionTranslator(NodeVisitor):
         *,  # `beartype` does not support recursive types, so we need to use a
         # simpler type.
         block_tree: dict[tuple[NotionObject[Any], int], Any],
-    ) -> list[dict[str, Any]]:
+    ) -> list[_SerializedBlockTreeNode]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
         tuples.
         """
-        result: list[dict[str, Any]] = []
+        result: list[_SerializedBlockTreeNode] = []
         for (block, _), subtree in block_tree.items():
             obj_ref = block.obj_ref
             assert isinstance(obj_ref, GenericObject)
-            dumped_structure = {
+            dumped_structure: _SerializedBlockTreeNode = {
                 "block": obj_ref.serialize_for_api(),
                 "children": self._convert_block_tree_to_json(
                     block_tree=subtree
