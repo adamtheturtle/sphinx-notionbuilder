@@ -108,10 +108,6 @@ def main(
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
-    # Workaround for https://github.com/ultimate-notion/ultimate-notion/issues/103
-    Page.parent_db = None  # type: ignore[method-assign,assignment] # pyright: ignore[reportAttributeAccessIssue]
-    assert Page.parent_db is None
-
     parent_page = session.get_page(page_ref=parent_page_id)
     pages_matching_title = [
         child_page

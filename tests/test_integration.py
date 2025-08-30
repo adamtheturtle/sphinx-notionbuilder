@@ -53,12 +53,7 @@ def _create_code_block_without_annotations(
     This matches the fix in visit_literal_block where annotations are
     removed to prevent white text color in code blocks.
     """
-    # Create rich text and remove annotations to match the fix
-    code_text = text(text=content)
-    # Remove annotations to prevent white text in code blocks
-    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-
-    return UnoCode(text=code_text, language=language)
+    return UnoCode(text=text(text=content), language=language)
 
 
 @beartype
