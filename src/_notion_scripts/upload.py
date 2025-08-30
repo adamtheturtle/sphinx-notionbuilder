@@ -28,23 +28,6 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 
 
 @beartype
-def _find_existing_page_by_title(
-    *,
-    parent_page: Page,
-    title: str,
-) -> Page | None:
-    """Find an existing page with the given title in the parent page (top-level
-    only).
-
-    Return the page if found, otherwise None.
-    """
-    for child_page in parent_page.subpages:
-        if child_page.title == title:
-            return child_page
-    return None
-
-
-@beartype
 def upload_blocks_recursively(
     parent: Page | ChildrenMixin[Any],
     block_details_list: list[dict[str, Any]],
@@ -127,9 +110,20 @@ def main(
     assert Page.parent_db is None
 
     parent_page = session.get_page(page_ref=parent_page_id)
-    page = _find_existing_page_by_title(parent_page=parent_page, title=title)
+    pages_matching_title = [
+        child_page
+        for child_page in parent_page.subpages
+        if child_page.title == title
+    ]
 
-    if not page:
+    if pages_matching_title:
+        msg = (
+            f"Expected 1 page matching title {title}, but got "
+            f"{len(pages_matching_title)}"
+        )
+        assert len(pages_matching_title) == 1, msg
+        (page,) = pages_matching_title
+    else:
         page = session.create_page(parent=parent_page, title=title)
         sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
 
