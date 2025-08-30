@@ -1329,3 +1329,52 @@ def test_literalinclude_without_caption(
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
     )
+
+
+def test_literalinclude_with_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``literalinclude`` directives with captions convert to code blocks with
+    captions including bold text formatting.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: conf.py
+           :language: python
+           :caption: **Example** Configuration File
+
+        Another paragraph.
+    """
+
+    conf_py_content = textwrap.dedent(
+        text="""
+        def hello():
+            print("Hello from included file!")
+        """,
+    )
+
+    # Create caption with bold text
+    bold_text = text(text="Example", bold=True)
+    normal_text = text(text=" Configuration File")
+    caption_with_bold = bold_text + normal_text
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Regular paragraph.")),
+        UnoCode(
+            text=text(text=conf_py_content),
+            language=CodeLang.PYTHON,
+            caption=caption_with_bold,
+        ),
+        UnoParagraph(text=text(text="Another paragraph.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+    )
