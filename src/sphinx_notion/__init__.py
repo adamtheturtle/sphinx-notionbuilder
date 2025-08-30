@@ -14,6 +14,7 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -41,12 +42,11 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
-from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-type _BlockTree = dict[tuple[NotionObject[Any], int], "_BlockTree"]
+type _BlockTree = dict[tuple[Block[Any], int], "_BlockTree"]
 
 
 class _SerializedBlockTreeNode(TypedDict):
@@ -277,8 +277,8 @@ class NotionTranslator(NodeVisitor):
     def _add_block_to_tree(
         self,
         *,
-        block: NotionObject[Any],
-        parent_path: list[tuple[NotionObject[Any], int]],
+        block: Block[Any],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """Add a block to the block tree.
 
@@ -300,7 +300,7 @@ class NotionTranslator(NodeVisitor):
         self,
         *,
         node: nodes.list_item,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Recursively process a list item node and return a BulletedItem.
@@ -338,7 +338,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.Element,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:  # pragma: no cover
         """
         Required function for ``singledispatch``.
@@ -353,7 +353,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.table,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """Process rST table nodes by creating Notion Table blocks.
 
@@ -394,7 +394,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.paragraph,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process paragraph nodes by creating Notion Paragraph blocks.
@@ -410,7 +410,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.block_quote,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process block quote nodes by creating Notion Quote blocks.
@@ -426,7 +426,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.literal_block,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process literal block nodes by creating Notion Code blocks.
@@ -446,7 +446,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.bullet_list,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process bullet list nodes by creating Notion BulletedItem blocks.
@@ -469,7 +469,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.topic,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process topic nodes, specifically for table of contents.
@@ -487,7 +487,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.compound,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process Sphinx ``toctree`` nodes.
@@ -505,7 +505,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.title,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process title nodes by creating appropriate Notion heading blocks.
@@ -528,7 +528,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.Element,
         emoji: str,
         background_color: BGColor,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """Create a Notion Callout block for admonition nodes.
 
@@ -569,7 +569,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.note,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process note admonition nodes by creating Notion Callout blocks.
@@ -588,7 +588,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.warning,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process warning admonition nodes by creating Notion Callout blocks.
@@ -607,7 +607,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.tip,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process tip admonition nodes by creating Notion Callout blocks.
@@ -626,7 +626,7 @@ class NotionTranslator(NodeVisitor):
         node: CollapseNode,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process collapse nodes by creating Notion ToggleItem blocks.
@@ -650,7 +650,7 @@ class NotionTranslator(NodeVisitor):
         node: nodes.image,
         *,
         section_level: int,
-        parent_path: list[tuple[NotionObject[Any], int]],
+        parent_path: list[tuple[Block[Any], int]],
     ) -> None:
         """
         Process image nodes by creating Notion Image blocks.
@@ -845,7 +845,7 @@ class NotionTranslator(NodeVisitor):
         self,
         *,  # `beartype` does not support recursive types, so we need to use a
         # simpler type.
-        block_tree: dict[tuple[NotionObject[Any], int], Any],
+        block_tree: dict[tuple[Block[Any], int], Any],
     ) -> list[_SerializedBlockTreeNode]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
