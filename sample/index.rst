@@ -131,7 +131,7 @@ And with a caption:
 
 .. literalinclude:: conf.py
    :language: python
-   :caption: Example Configuration File
+   :caption: Example **Configuration** File
 
 And with a caption which is not specified:
 
