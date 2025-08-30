@@ -127,6 +127,12 @@ Here's an example of including a file:
 .. literalinclude:: conf.py
    :language: python
 
+And with a caption:
+
+.. literalinclude:: conf.py
+   :language: python
+   :caption: Example Configuration File
+
 Some key features:
 
 * Easy integration with **Sphinx**

@@ -669,6 +669,77 @@ class NotionTranslator(NodeVisitor):
         image_block = UnoImage(url=image_url, caption=None)
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: nodes.container,
+        *,
+        section_level: int,
+        parent_path: list[tuple[NotionObject[Any], int]],
+    ) -> None:
+        """Process container nodes, especially for literalinclude with
+        captions.
+
+        When literalinclude has a caption, Sphinx creates a container with:
+        1. A caption node as the first child
+        2. A literal_block node as the second child
+        """
+        del section_level
+
+        # Check if this is a code container (literalinclude with caption)
+        expected_children_count = 2
+        if len(node.children) == expected_children_count:
+            caption_node = node.children[0]
+            literal_node = node.children[1]
+
+            # Verify this is a caption + literal_block structure
+            if (
+                hasattr(caption_node, "tagname")
+                and caption_node.tagname == "caption"
+                and hasattr(literal_node, "tagname")
+                and literal_node.tagname == "literal_block"
+            ):
+                # Extract caption text
+                caption_text = caption_node.astext()
+
+                # Extract code content and language using the same method
+                # as literal_block
+                code_text = _create_rich_text_from_children(
+                    node=literal_node,  # pyright: ignore[reportArgumentType]
+                )
+                language_attr = literal_node.attributes.get(  # pyright: ignore[reportAttributeAccessIssue]
+                    "language", ""
+                )
+                language = _map_pygments_to_notion_language(
+                    pygments_lang=language_attr,
+                )
+
+                # Create code block with caption
+                code_block = UnoCode(
+                    text=code_text,
+                    language=language,
+                    caption=caption_text,
+                )
+
+                # Remove annotations to prevent white text in code blocks
+                # (same as literal_block)
+                for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                    del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+
+                self._add_block_to_tree(
+                    block=code_block,
+                    parent_path=parent_path,
+                )
+                return
+
+        # For other containers, process children normally
+        for child in node.children:
+            self._process_node_to_blocks(
+                child,
+                section_level=1,
+                parent_path=parent_path,
+            )
+
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
@@ -830,6 +901,18 @@ class NotionTranslator(NodeVisitor):
     def visit_image(self, node: nodes.Element) -> None:
         """
         Handle image nodes by creating Notion Image blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_container(self, node: nodes.Element) -> None:
+        """
+        Handle container nodes, especially for literalinclude with captions.
         """
         self._process_node_to_blocks(
             node,

@@ -62,6 +62,23 @@ def _create_code_block_without_annotations(
 
 
 @beartype
+def _create_code_block_with_caption(
+    *, content: str, language: CodeLang, caption: str
+) -> UnoCode:
+    """Create a code block with caption and without annotations.
+
+    This matches the fix in visit_literal_block where annotations are
+    removed to prevent white text color in code blocks.
+    """
+    # Create rich text and remove annotations to match the fix
+    code_text = text(text=content)
+    # Remove annotations to prevent white text in code blocks
+    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+
+    return UnoCode(text=code_text, language=language, caption=caption)
+
+
+@beartype
 def _reconstruct_nested_structure(
     *,
     items: list[dict[str, Any]],
@@ -1337,6 +1354,50 @@ def test_literalinclude_without_caption(
         _create_code_block_without_annotations(
             content=conf_py_content,
             language=CodeLang.PYTHON,
+        ),
+        UnoParagraph(text=text(text="Another paragraph.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+    )
+
+
+def test_literalinclude_with_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``literalinclude`` directives with captions convert to code blocks with
+    captions.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: conf.py
+           :language: python
+           :caption: Example Configuration File
+
+        Another paragraph.
+    """
+
+    conf_py_content = textwrap.dedent(
+        text="""
+        def hello():
+            print("Hello from included file!")
+        """,
+    )
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text=text(text="Regular paragraph.")),
+        _create_code_block_with_caption(
+            content=conf_py_content,
+            language=CodeLang.PYTHON,
+            caption="Example Configuration File",
         ),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
