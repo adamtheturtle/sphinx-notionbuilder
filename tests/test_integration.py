@@ -58,10 +58,7 @@ def _create_code_block_without_annotations(
     # Remove annotations to prevent white text in code blocks
     del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
 
-    # Create code block and set the rich text
-    code_block = UnoCode(text="dummy", language=language)
-    code_block.rich_text = code_text
-    return code_block
+    return UnoCode(text=code_text, language=language)
 
 
 @beartype
@@ -157,7 +154,7 @@ def test_single_paragraph(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="This is a simple paragraph for testing.")
+        UnoParagraph(text=text(text="This is a simple paragraph for testing."))
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -185,9 +182,13 @@ def test_multiple_paragraphs(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="First paragraph with some text."),
-        UnoParagraph(text="Second paragraph with different content."),
-        UnoParagraph(text="Third paragraph to test multiple blocks."),
+        UnoParagraph(text=text(text="First paragraph with some text.")),
+        UnoParagraph(
+            text=text(text="Second paragraph with different content.")
+        ),
+        UnoParagraph(
+            text=text(text="Third paragraph to test multiple blocks.")
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -228,8 +229,7 @@ def test_inline_formatting(
         + normal_text4
     )
 
-    expected_paragraph = UnoParagraph(text="dummy")
-    expected_paragraph.rich_text = combined_text
+    expected_paragraph = UnoParagraph(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
@@ -258,7 +258,7 @@ def test_single_heading(
 
     expected_objects: list[NotionObject[Any]] = [
         UnoHeading1(text="Main Title"),
-        UnoParagraph(text="This is content under the title."),
+        UnoParagraph(text=text(text="This is content under the title.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -296,11 +296,11 @@ def test_multiple_heading_levels(
 
     expected_objects: list[NotionObject[Any]] = [
         UnoHeading1(text="Main Title"),
-        UnoParagraph(text="Content under main title."),
+        UnoParagraph(text=text(text="Content under main title.")),
         UnoHeading2(text="Section Title"),
-        UnoParagraph(text="Content under section."),
+        UnoParagraph(text=text(text="Content under section.")),
         UnoHeading3(text="Subsection Title"),
-        UnoParagraph(text="Content under subsection."),
+        UnoParagraph(text=text(text="Content under subsection.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -333,12 +333,11 @@ def test_heading_with_formatting(
 
     combined_text = bold_text + normal_text + italic_text + normal_text2
 
-    expected_heading = UnoHeading1(text="dummy")
-    expected_heading.rich_text = combined_text
+    expected_heading = UnoHeading1(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [
         expected_heading,
-        UnoParagraph(text="Content follows."),
+        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -367,8 +366,7 @@ def test_simple_link(
 
     combined_text = normal_text1 + link_text + normal_text2
 
-    expected_paragraph = UnoParagraph(text="dummy")
-    expected_paragraph.rich_text = combined_text
+    expected_paragraph = UnoParagraph(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
@@ -407,9 +405,7 @@ def test_multiple_links(
         normal_text1 + link_text1 + normal_text2 + link_text2 + normal_text3
     )
 
-    expected_paragraph = UnoParagraph(text="dummy")
-    expected_paragraph.rich_text = combined_text
-
+    expected_paragraph = UnoParagraph(text=combined_text)
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
@@ -440,12 +436,11 @@ def test_link_in_heading(
 
     combined_text = normal_text1 + link_text
 
-    expected_heading = UnoHeading1(text="dummy")
-    expected_heading.rich_text = combined_text
+    expected_heading = UnoHeading1(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [
         expected_heading,
-        UnoParagraph(text="Content follows."),
+        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -486,8 +481,7 @@ def test_mixed_formatting_with_links(
         + normal_text4
     )
 
-    expected_paragraph = UnoParagraph(text="dummy")
-    expected_paragraph.rich_text = combined_text
+    expected_paragraph = UnoParagraph(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
@@ -518,8 +512,7 @@ def test_unnamed_link_with_backticks(
 
     combined_text = normal_text1 + link_text + normal_text2
 
-    expected_paragraph = UnoParagraph(text="dummy")
-    expected_paragraph.rich_text = combined_text
+    expected_paragraph = UnoParagraph(text=combined_text)
 
     expected_objects: list[NotionObject[Any]] = [expected_paragraph]
 
@@ -547,9 +540,9 @@ def test_simple_quote(
         Another paragraph.
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoQuote(text="This is a block quote."),
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -577,11 +570,11 @@ def test_multiline_quote(
         Another paragraph.
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoQuote(
             text="This is a multi-line\nblock quote with\nmultiple lines."
         ),
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -619,9 +612,9 @@ def test_table_of_contents(
         UnoHeading1(text="Introduction"),
         UnoTableOfContents(),
         UnoHeading2(text="First Section"),
-        UnoParagraph(text="Content here."),
+        UnoParagraph(text=text(text="Content here.")),
         UnoHeading2(text="Second Section"),
-        UnoParagraph(text="More content."),
+        UnoParagraph(text=text(text="More content.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -677,12 +670,12 @@ def test_simple_code_block(
         Another paragraph.
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         _create_code_block_without_annotations(
             content='def hello():\n    print("Hello, world!")',
             language=CodeLang.PYTHON,
         ),
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -837,9 +830,9 @@ def test_admonition_single_line(
     )
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         callout,
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -1105,8 +1098,10 @@ def test_collapse_block(
 
     toggle_block = UnoToggleItem(text="Click to expand")
 
-    nested_para1 = UnoParagraph(text="This content is hidden by default.")
-    nested_para2 = UnoParagraph(text="It supports formatting.")
+    nested_para1 = UnoParagraph(
+        text=text(text="This content is hidden by default.")
+    )
+    nested_para2 = UnoParagraph(text=text(text="It supports formatting."))
     nested_para2.rich_text = (
         text(text="It supports ", bold=False)
         + text(text="formatting", bold=True)
@@ -1117,9 +1112,9 @@ def test_collapse_block(
     toggle_block.obj_ref.value.children.append(nested_para2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         toggle_block,
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1256,9 +1251,9 @@ def test_simple_image(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoImage(url="https://www.example.com/path/to/image.png"),
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1287,7 +1282,7 @@ def test_image_with_alt_text_only(
 
     expected_objects: list[NotionObject[Any]] = [
         UnoImage(url="https://www.example.com/path/to/image.png"),
-        UnoParagraph(text="Content follows."),
+        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1322,12 +1317,12 @@ def test_literalinclude_without_caption(
     )
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoParagraph(text="Regular paragraph."),
+        UnoParagraph(text=text(text="Regular paragraph.")),
         _create_code_block_without_annotations(
             content=conf_py_content,
             language=CodeLang.PYTHON,
         ),
-        UnoParagraph(text="Another paragraph."),
+        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(

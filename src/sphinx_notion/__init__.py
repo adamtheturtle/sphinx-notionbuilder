@@ -402,8 +402,7 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
-        paragraph_block = UnoParagraph(text="")
-        paragraph_block.rich_text = rich_text
+        paragraph_block = UnoParagraph(text=rich_text)
         self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
