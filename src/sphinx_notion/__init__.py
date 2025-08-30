@@ -682,7 +682,6 @@ class NotionTranslator(NodeVisitor):
         del section_level
 
         caption_node, literal_node = node.children
-        assert isinstance(caption_node, nodes.Element)
         assert isinstance(literal_node, nodes.Element)
 
         caption_text = caption_node.astext()
@@ -699,6 +698,7 @@ class NotionTranslator(NodeVisitor):
             caption=caption_text,
         )
 
+        # Unnecessary in ``ultimate-notion`` 0.9+.
         # Remove annotations to prevent white text in code blocks
         # (same as literal_block)
         for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
