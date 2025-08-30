@@ -408,6 +408,8 @@ ignore_names = [
     "visit_*",
     # Singledispatch functions
     "_",
+    # CLI entry point
+    "main",
 ]
 
 # Duplicate some of .gitignore

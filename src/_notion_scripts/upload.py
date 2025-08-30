@@ -147,7 +147,3 @@ def main(
         batch_size=notion_blocks_batch_size,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
-
-
-if __name__ == "__main__":
-    main()
