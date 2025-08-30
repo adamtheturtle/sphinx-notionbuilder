@@ -688,9 +688,9 @@ class NotionTranslator(NodeVisitor):
         caption_text = caption_node.astext()
 
         code_text = _create_rich_text_from_children(node=literal_node)
-        language_attr = literal_node.attributes.get("language", "")
+        pygments_lang = literal_node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
-            pygments_lang=language_attr,
+            pygments_lang=pygments_lang,
         )
 
         code_block = UnoCode(
