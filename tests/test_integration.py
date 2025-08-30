@@ -63,7 +63,10 @@ def _create_code_block_without_annotations(
 
 @beartype
 def _create_code_block_with_caption(
-    *, content: str, language: CodeLang, caption: str | Text
+    *,
+    content: str,
+    language: CodeLang,
+    caption: Text,
 ) -> UnoCode:
     """Create a code block with caption and without annotations.
 
