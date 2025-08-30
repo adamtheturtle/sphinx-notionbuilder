@@ -686,59 +686,39 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
 
-        # Check if this is a code container (literalinclude with caption)
-        expected_children_count = 2
-        if len(node.children) == expected_children_count:
-            caption_node = node.children[0]
-            literal_node = node.children[1]
+        caption_node, literal_node = node.children
 
-            # Verify this is a caption + literal_block structure
-            if (
-                hasattr(caption_node, "tagname")
-                and caption_node.tagname == "caption"
-                and hasattr(literal_node, "tagname")
-                and literal_node.tagname == "literal_block"
-            ):
-                # Extract caption text
-                caption_text = caption_node.astext()
+        # Extract caption text
+        caption_text = caption_node.astext()
 
-                # Extract code content and language using the same method
-                # as literal_block
-                code_text = _create_rich_text_from_children(
-                    node=literal_node,  # pyright: ignore[reportArgumentType]
-                )
-                language_attr = literal_node.attributes.get(  # pyright: ignore[reportAttributeAccessIssue]
-                    "language", ""
-                )
-                language = _map_pygments_to_notion_language(
-                    pygments_lang=language_attr,
-                )
+        # Extract code content and language using the same method
+        # as literal_block
+        code_text = _create_rich_text_from_children(
+            node=literal_node,  # pyright: ignore[reportArgumentType]
+        )
+        language_attr = literal_node.attributes.get(  # pyright: ignore[reportAttributeAccessIssue]
+            "language", ""
+        )
+        language = _map_pygments_to_notion_language(
+            pygments_lang=language_attr,
+        )
 
-                # Create code block with caption
-                code_block = UnoCode(
-                    text=code_text,
-                    language=language,
-                    caption=caption_text,
-                )
+        # Create code block with caption
+        code_block = UnoCode(
+            text=code_text,
+            language=language,
+            caption=caption_text,
+        )
 
-                # Remove annotations to prevent white text in code blocks
-                # (same as literal_block)
-                for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                    del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+        # Remove annotations to prevent white text in code blocks
+        # (same as literal_block)
+        for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
 
-                self._add_block_to_tree(
-                    block=code_block,
-                    parent_path=parent_path,
-                )
-                return
-
-        # For other containers, process children normally
-        for child in node.children:
-            self._process_node_to_blocks(
-                child,
-                section_level=1,
-                parent_path=parent_path,
-            )
+        self._add_block_to_tree(
+            block=code_block,
+            parent_path=parent_path,
+        )
 
     def visit_title(self, node: nodes.Element) -> None:
         """
