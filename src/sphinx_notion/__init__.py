@@ -668,6 +668,53 @@ class NotionTranslator(NodeVisitor):
         image_block = UnoImage(url=image_url, caption=None)
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: nodes.container,
+        *,
+        section_level: int,
+        parent_path: list[tuple[NotionObject[Any], int]],
+    ) -> None:
+        """
+        Process container nodes, especially for ``literalinclude`` with
+        captions.
+        """
+        del section_level
+
+        caption_node, literal_node = node.children
+        msg = (
+            "The only supported container type is a literalinclude with "
+            "a caption"
+        )
+        assert isinstance(caption_node, nodes.caption), msg
+        assert isinstance(literal_node, nodes.literal_block), msg
+
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
+
+        code_text = _create_rich_text_from_children(node=literal_node)
+        pygments_lang = literal_node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
+        )
+
+        code_block = UnoCode(
+            text=code_text,
+            language=language,
+            caption=caption_rich_text,
+        )
+
+        # Unnecessary in ``ultimate-notion`` 0.9+.
+        # Remove annotations to prevent white text in code blocks
+        # (same as literal_block)
+        for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
+
+        self._add_block_to_tree(
+            block=code_block,
+            parent_path=parent_path,
+        )
+
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
@@ -829,6 +876,18 @@ class NotionTranslator(NodeVisitor):
     def visit_image(self, node: nodes.Element) -> None:
         """
         Handle image nodes by creating Notion Image blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_container(self, node: nodes.Element) -> None:
+        """
+        Handle container nodes.
         """
         self._process_node_to_blocks(
             node,

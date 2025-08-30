@@ -41,12 +41,12 @@ from ultimate_notion.blocks import (
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
-from ultimate_notion.rich_text import text
+from ultimate_notion.rich_text import Text, text
 
 
 @beartype
 def _create_code_block_without_annotations(
-    *, content: str, language: CodeLang
+    *, content: str, language: CodeLang, caption: Text | None = None
 ) -> UnoCode:
     """Create a code block without annotations to match the fixed behavior.
 
@@ -58,6 +58,8 @@ def _create_code_block_without_annotations(
     # Remove annotations to prevent white text in code blocks
     del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
 
+    if caption is not None:
+        return UnoCode(text=code_text, language=language, caption=caption)
     return UnoCode(text=code_text, language=language)
 
 
@@ -1337,6 +1339,55 @@ def test_literalinclude_without_caption(
         _create_code_block_without_annotations(
             content=conf_py_content,
             language=CodeLang.PYTHON,
+        ),
+        UnoParagraph(text=text(text="Another paragraph.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+    )
+
+
+def test_literalinclude_with_caption(
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``literalinclude`` directives with captions convert to code blocks with
+    captions including bold text formatting.
+    """
+    rst_content = """
+        Regular paragraph.
+
+        .. literalinclude:: conf.py
+           :language: python
+           :caption: **Example** Configuration File
+
+        Another paragraph.
+    """
+
+    conf_py_content = textwrap.dedent(
+        text="""
+        def hello():
+            print("Hello from included file!")
+        """,
+    )
+
+    # Create caption with bold text
+    bold_text = text(text="Example", bold=True)
+    normal_text = text(text=" Configuration File")
+    caption_with_bold = bold_text + normal_text
+
+    expected_objects: list[NotionObject[Any]] = [
+        UnoParagraph(text=text(text="Regular paragraph.")),
+        _create_code_block_without_annotations(
+            content=conf_py_content,
+            language=CodeLang.PYTHON,
+            caption=caption_with_bold,
         ),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
