@@ -3,12 +3,12 @@
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
-import argparse
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
+import click
 from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
@@ -29,7 +29,9 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 
 @beartype
 def _find_existing_page_by_title(
-    *, parent_page: Page, title: str
+    *,
+    parent_page: Page,
+    title: str,
 ) -> Page | None:
     """Find an existing page with the given title in the parent page (top-level
     only).
@@ -40,37 +42,6 @@ def _find_existing_page_by_title(
         if str(object=child_page.title) == title:
             return child_page
     return None
-
-
-@beartype
-def _parse_args() -> argparse.Namespace:
-    """
-    Parse command-line arguments for the upload script.
-    """
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Upload to Notion",
-    )
-    parser.add_argument(
-        "-f",
-        "--file",
-        help="JSON File to upload",
-        required=True,
-        type=Path,
-    )
-    parser.add_argument(
-        "-p",
-        "--parent_page_id",
-        help="Parent page ID (integration connected)",
-        required=True,
-    )
-    parser.add_argument(
-        "-t",
-        "--title",
-        help="Title of the new page",
-        required=True,
-    )
-    return parser.parse_args()
 
 
 @beartype
@@ -115,19 +86,41 @@ def upload_blocks_recursively(
             )
 
 
+@click.command()
+@click.option(
+    "--file",
+    help="JSON File to upload",
+    required=True,
+    type=click.Path(
+        exists=True,
+        path_type=Path,
+        file_okay=True,
+        dir_okay=False,
+    ),
+)
+@click.option(
+    "--parent-page-id",
+    help="Parent page ID (integration connected)",
+    required=True,
+)
+@click.option(
+    "--title",
+    help="Title of the page to update (or create if it does not exist)",
+    required=True,
+)
 @beartype
-def main() -> None:
+def main(
+    *,
+    file: Path,
+    parent_page_id: str,
+    title: str,
+) -> None:
     """
-    Main entry point for the upload command.
+    Upload documentation to Notion.
     """
-    args = _parse_args()
-
     session = Session()
-    title = str(object=args.title)
-    file_path = Path(args.file)
-    parent_page_id = str(object=args.parent_page_id)
 
-    blocks = json.loads(s=file_path.read_text(encoding="utf-8"))
+    blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     # Workaround for https://github.com/ultimate-notion/ultimate-notion/issues/103
     Page.parent_db = None  # type: ignore[method-assign,assignment] # pyright: ignore[reportAttributeAccessIssue]
