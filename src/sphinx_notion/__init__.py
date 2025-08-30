@@ -677,33 +677,23 @@ class NotionTranslator(NodeVisitor):
         section_level: int,
         parent_path: list[tuple[NotionObject[Any], int]],
     ) -> None:
-        """Process container nodes, especially for literalinclude with
-        captions.
-
-        When literalinclude has a caption, Sphinx creates a container with:
-        1. A caption node as the first child
-        2. A literal_block node as the second child
+        """
+        Process container nodes, especially for literalinclude with captions.
         """
         del section_level
 
         caption_node, literal_node = node.children
+        assert isinstance(caption_node, nodes.Element)
+        assert isinstance(literal_node, nodes.Element)
 
-        # Extract caption text
         caption_text = caption_node.astext()
 
-        # Extract code content and language using the same method
-        # as literal_block
-        code_text = _create_rich_text_from_children(
-            node=literal_node,  # pyright: ignore[reportArgumentType]
-        )
-        language_attr = literal_node.attributes.get(  # pyright: ignore[reportAttributeAccessIssue]
-            "language", ""
-        )
+        code_text = _create_rich_text_from_children(node=literal_node)
+        language_attr = literal_node.attributes.get("language", "")
         language = _map_pygments_to_notion_language(
             pygments_lang=language_attr,
         )
 
-        # Create code block with caption
         code_block = UnoCode(
             text=code_text,
             language=language,
