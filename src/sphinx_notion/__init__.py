@@ -855,8 +855,11 @@ class NotionTranslator(NodeVisitor):
         for (block, _), subtree in block_tree.items():
             obj_ref = block.obj_ref
             assert isinstance(obj_ref, GenericObject)
+            serialized_obj = obj_ref.serialize_for_api()
+            if block_tree[(block, id(block))]:
+                serialized_obj["has_children"] = True
             dumped_structure: _SerializedBlockTreeNode = {
-                "block": obj_ref.serialize_for_api(),
+                "block": serialized_obj,
                 "children": self._convert_block_tree_to_json(
                     block_tree=subtree
                 ),
