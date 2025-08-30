@@ -133,6 +133,12 @@ And with a caption:
    :language: python
    :caption: Example Configuration File
 
+And with a caption which is not specified:
+
+.. literalinclude:: conf.py
+   :language: python
+   :caption:
+
 Some key features:
 
 * Easy integration with **Sphinx**
