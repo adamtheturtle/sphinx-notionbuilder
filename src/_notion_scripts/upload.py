@@ -48,21 +48,21 @@ def upload_blocks_recursively(
     children.
     """
     first_level_blocks: list[Block[Any]] = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))  # pyright: ignore[reportUnknownMemberType]
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
         for details in block_details_list
     ]
     for block_batch in _batch_list(
         elements=first_level_blocks,
         batch_size=batch_size,
     ):
-        parent.append(blocks=block_batch)  # pyright: ignore[reportUnknownMemberType]
+        parent.append(blocks=block_batch)
 
-    for uploaded_block_index, uploaded_block in enumerate(  # pyright: ignore[reportUnknownVariableType]
-        iterable=parent.children  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+    for uploaded_block_index, uploaded_block in enumerate(
+        iterable=parent.children
     ):
         block_details = block_details_list[uploaded_block_index]
         if block_details["children"]:
-            block_obj = session.get_block(block_ref=uploaded_block.id)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            block_obj = session.get_block(block_ref=uploaded_block.id)
             assert isinstance(block_obj, ChildrenMixin)
             upload_blocks_recursively(
                 parent=block_obj,
@@ -126,7 +126,7 @@ def main(
         page = session.create_page(parent=parent_page, title=title)
         sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
 
-    for child in page.children:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    for child in page.children:
         child.delete()
 
     # See https://developers.notion.com/reference/request-limits#limits-for-property-values
