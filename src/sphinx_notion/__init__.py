@@ -308,8 +308,7 @@ class NotionTranslator(NodeVisitor):
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoBulletedItem(text="placeholder")
-        block.rich_text = rich_text
+        block = UnoBulletedItem(text=rich_text)
         self._add_block_to_tree(
             block=block,
             parent_path=parent_path,
@@ -418,8 +417,7 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
-        quote_block = UnoQuote(text="")
-        quote_block.rich_text = rich_text
+        quote_block = UnoQuote(text=rich_text)
         self._add_block_to_tree(block=quote_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
@@ -526,9 +524,7 @@ class NotionTranslator(NodeVisitor):
             3: UnoHeading3,
         }
         heading_cls = heading_levels[section_level]
-        block = heading_cls(text="")
-
-        block.rich_text = rich_text
+        block = heading_cls(text=rich_text)
         self._add_block_to_tree(block=block, parent_path=parent_path)
 
     @beartype
