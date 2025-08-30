@@ -876,7 +876,7 @@ def test_admonition_multiline(
     )
 
     nested_paragraph = UnoParagraph(
-        text="This is the second paragraph that should be nested."
+        text=text(text="This is the second paragraph that should be nested.")
     )
 
     callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -971,7 +971,7 @@ def test_admonition_with_code_block_first(
         language=CodeLang.PYTHON,
     )
     nested_paragraph = UnoParagraph(
-        text="This paragraph comes after the code block."
+        text=text(text="This paragraph comes after the code block.")
     )
 
     callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -1061,7 +1061,7 @@ def test_nested_bullet_list(
     )
 
     top_level_1 = UnoBulletedItem(text=text(text="Top level item"))
-    top_level_2 = UnoBulletedItem(text="Top level with children")
+    top_level_2 = UnoBulletedItem(text=text(text="Top level with children"))
 
     # Remove pyright ignore once we have
     # https://github.com/ultimate-notion/ultimate-notion/issues/94.

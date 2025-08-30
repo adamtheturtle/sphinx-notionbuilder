@@ -634,7 +634,7 @@ class NotionTranslator(NodeVisitor):
         del section_level
 
         title_text = node.attributes["label"]
-        toggle_block = UnoToggleItem(text=title_text)
+        toggle_block = UnoToggleItem(text=text(text=title_text))
         self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
 
         for child in node.children:
