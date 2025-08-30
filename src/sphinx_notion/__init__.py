@@ -542,24 +542,25 @@ class NotionTranslator(NodeVisitor):
         text, and any remaining children become nested blocks within the
         callout.
         """
-        block = UnoCallout(
-            text="", icon=Emoji(emoji=emoji), color=background_color
-        )
-
-        self._add_block_to_tree(block=block, parent_path=parent_path)
         # Use the first child as the callout text
         first_child = node.children[0]
         if isinstance(first_child, nodes.paragraph):
             rich_text = _create_rich_text_from_children(node=first_child)
-            block.rich_text = rich_text
             # Process remaining children as nested blocks
             children_to_process = node.children[1:]
         else:
             # If first child is not a paragraph, use empty text
-            block.rich_text = Text.from_plain_text(text="")
+            rich_text = Text.from_plain_text(text="")
             # Process all children as nested blocks (including the first)
             children_to_process = node.children
 
+        block = UnoCallout(
+            text=rich_text,
+            icon=Emoji(emoji=emoji),
+            color=background_color,
+        )
+
+        self._add_block_to_tree(block=block, parent_path=parent_path)
         # Process children as nested blocks
         for child in children_to_process:
             self._process_node_to_blocks(
