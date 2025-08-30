@@ -41,7 +41,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.core import NotionObject
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
-from ultimate_notion.rich_text import text
+from ultimate_notion.rich_text import Text, text
 
 
 @beartype
@@ -63,7 +63,7 @@ def _create_code_block_without_annotations(
 
 @beartype
 def _create_code_block_with_caption(
-    *, content: str, language: CodeLang, caption: str
+    *, content: str, language: CodeLang, caption: str | Text
 ) -> UnoCode:
     """Create a code block with caption and without annotations.
 
@@ -1373,14 +1373,14 @@ def test_literalinclude_with_caption(
 ) -> None:
     """
     ``literalinclude`` directives with captions convert to code blocks with
-    captions.
+    captions including bold text formatting.
     """
     rst_content = """
         Regular paragraph.
 
         .. literalinclude:: conf.py
            :language: python
-           :caption: Example Configuration File
+           :caption: **Example** Configuration File
 
         Another paragraph.
     """
@@ -1392,12 +1392,17 @@ def test_literalinclude_with_caption(
         """,
     )
 
+    # Create caption with bold text
+    bold_text = text(text="Example", bold=True)
+    normal_text = text(text=" Configuration File")
+    caption_with_bold = bold_text + normal_text
+
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
         _create_code_block_with_caption(
             content=conf_py_content,
             language=CodeLang.PYTHON,
-            caption="Example Configuration File",
+            caption=caption_with_bold,
         ),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
