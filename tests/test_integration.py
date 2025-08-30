@@ -45,23 +45,6 @@ from ultimate_notion.rich_text import text
 
 
 @beartype
-def _create_code_block_without_annotations(
-    *, content: str, language: CodeLang
-) -> UnoCode:
-    """Create a code block without annotations to match the fixed behavior.
-
-    This matches the fix in visit_literal_block where annotations are
-    removed to prevent white text color in code blocks.
-    """
-    # Create rich text and remove annotations to match the fix
-    code_text = text(text=content)
-    # Remove annotations to prevent white text in code blocks
-    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-
-    return UnoCode(text=code_text, language=language)
-
-
-@beartype
 def _reconstruct_nested_structure(
     *,
     items: list[dict[str, Any]],
@@ -673,8 +656,8 @@ def test_simple_code_block(
     """
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
-        _create_code_block_without_annotations(
-            content='def hello():\n    print("Hello, world!")',
+        UnoCode(
+            text=text(text='def hello():\n    print("Hello, world!")'),
             language=CodeLang.PYTHON,
         ),
         UnoParagraph(text=text(text="Another paragraph.")),
@@ -717,20 +700,20 @@ def test_code_block_language_mapping(
            Code with no language
     """
     expected_objects: list[NotionObject[Any]] = [
-        _create_code_block_without_annotations(
-            content="$ pip install example", language=CodeLang.SHELL
+        UnoCode(
+            text=text(text="$ pip install example"), language=CodeLang.SHELL
         ),
-        _create_code_block_without_annotations(
-            content='console.log("hello");', language=CodeLang.JAVASCRIPT
+        UnoCode(
+            text=text(text='console.log("hello");'),
+            language=CodeLang.JAVASCRIPT,
         ),
-        _create_code_block_without_annotations(
-            content='echo "test"', language=CodeLang.BASH
+        UnoCode(text=text(text='echo "test"'), language=CodeLang.BASH),
+        UnoCode(
+            text=text(text="Some plain text"), language=CodeLang.PLAIN_TEXT
         ),
-        _create_code_block_without_annotations(
-            content="Some plain text", language=CodeLang.PLAIN_TEXT
-        ),
-        _create_code_block_without_annotations(
-            content="Code with no language", language=CodeLang.PLAIN_TEXT
+        UnoCode(
+            text=text(text="Code with no language"),
+            language=CodeLang.PLAIN_TEXT,
         ),
     ]
     _assert_rst_converts_to_notion_objects(
@@ -884,7 +867,7 @@ def test_admonition_multiline(
         text=text(text="This is the second paragraph that should be nested.")
     )
 
-    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.append(blocks=[nested_paragraph])
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
@@ -923,16 +906,16 @@ def test_admonition_with_code_block(
         color=BGColor.BLUE,
     )
 
-    nested_code_block = _create_code_block_without_annotations(
-        content='def hello():\n    print("Hello, world!")',
+    nested_code_block = UnoCode(
+        text=text(text='def hello():\n    print("Hello, world!")'),
         language=CodeLang.PYTHON,
     )
     nested_paragraph = UnoParagraph(
         text=text(text="The code above demonstrates a simple function.")
     )
 
-    callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.append(blocks=[nested_code_block])
+    callout.append(blocks=[nested_paragraph])
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
@@ -971,16 +954,16 @@ def test_admonition_with_code_block_first(
         color=BGColor.BLUE,
     )
 
-    nested_code_block = _create_code_block_without_annotations(
-        content='def hello():\n    print("Hello, world!")',
+    nested_code_block = UnoCode(
+        text=text(text='def hello():\n    print("Hello, world!")'),
         language=CodeLang.PYTHON,
     )
     nested_paragraph = UnoParagraph(
         text=text(text="This paragraph comes after the code block.")
     )
 
-    callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.append(blocks=[nested_code_block])
+    callout.append(blocks=[nested_paragraph])
 
     expected_objects: list[NotionObject[Any]] = [callout]
     _assert_rst_converts_to_notion_objects(
@@ -1021,8 +1004,8 @@ def test_admonition_with_bullet_points(
     bullet_a = UnoBulletedItem(text=text(text="A"))
     bullet_b = UnoBulletedItem(text=text(text="B"))
 
-    callout.obj_ref.value.children.append(bullet_a.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    callout.obj_ref.value.children.append(bullet_b.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    callout.append(blocks=[bullet_a])
+    callout.append(blocks=[bullet_b])
 
     expected_objects: list[NotionObject[Any]] = [
         callout,
@@ -1068,11 +1051,9 @@ def test_nested_bullet_list(
     top_level_1 = UnoBulletedItem(text=text(text="Top level item"))
     top_level_2 = UnoBulletedItem(text=text(text="Top level with children"))
 
-    # Remove pyright ignore once we have
-    # https://github.com/ultimate-notion/ultimate-notion/issues/94.
-    second_level_2.obj_ref.value.children.append(third_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    second_level_2.append(blocks=[third_level_1])
+    top_level_2.append(blocks=[second_level_1])
+    top_level_2.append(blocks=[second_level_2])
 
     top_level_3 = UnoBulletedItem(text=text(text="Another top level item"))
 
@@ -1124,8 +1105,8 @@ def test_collapse_block(
         )
     )
 
-    toggle_block.obj_ref.value.children.append(nested_para1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
-    toggle_block.obj_ref.value.children.append(nested_para2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
+    toggle_block.append(blocks=[nested_para1])
+    toggle_block.append(blocks=[nested_para2])
 
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
@@ -1334,8 +1315,8 @@ def test_literalinclude_without_caption(
 
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
-        _create_code_block_without_annotations(
-            content=conf_py_content,
+        UnoCode(
+            text=text(text=conf_py_content),
             language=CodeLang.PYTHON,
         ),
         UnoParagraph(text=text(text="Another paragraph.")),

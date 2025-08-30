@@ -438,12 +438,6 @@ class NotionTranslator(NodeVisitor):
             pygments_lang=pygments_lang,
         )
         code_block = UnoCode(text=code_text, language=language)
-        # By default, the code block has a color set (DEFAULT) which means
-        # that there is no syntax highlighting.
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
-        for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-            del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-        code_block.rich_text = code_text
         self._add_block_to_tree(block=code_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
@@ -861,8 +855,11 @@ class NotionTranslator(NodeVisitor):
         for (block, _), subtree in block_tree.items():
             obj_ref = block.obj_ref
             assert isinstance(obj_ref, GenericObject)
+            serialized_obj = obj_ref.serialize_for_api()
+            if block_tree[(block, id(block))]:
+                serialized_obj["has_children"] = True
             dumped_structure: _SerializedBlockTreeNode = {
-                "block": obj_ref.serialize_for_api(),
+                "block": serialized_obj,
                 "children": self._convert_block_tree_to_json(
                     block_tree=subtree
                 ),
