@@ -47,7 +47,7 @@ def upload_blocks_recursively(
     Upload blocks recursively, handling the new structure with block and
     children.
     """
-    first_level_blocks: list[Block[Any]] = [
+    first_level_blocks: list[Block] = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
         for details in block_details_list
     ]
