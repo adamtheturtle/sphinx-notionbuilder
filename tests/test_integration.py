@@ -257,7 +257,7 @@ def test_single_heading(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoHeading1(text="Main Title"),
+        UnoHeading1(text=text(text="Main Title")),
         UnoParagraph(text=text(text="This is content under the title.")),
     ]
 
@@ -295,11 +295,11 @@ def test_multiple_heading_levels(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoHeading1(text="Main Title"),
+        UnoHeading1(text=text(text="Main Title")),
         UnoParagraph(text=text(text="Content under main title.")),
-        UnoHeading2(text="Section Title"),
+        UnoHeading2(text=text(text="Section Title")),
         UnoParagraph(text=text(text="Content under section.")),
-        UnoHeading3(text="Subsection Title"),
+        UnoHeading3(text=text(text="Subsection Title")),
         UnoParagraph(text=text(text="Content under subsection.")),
     ]
 
@@ -541,7 +541,7 @@ def test_simple_quote(
     """
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
-        UnoQuote(text="This is a block quote."),
+        UnoQuote(text=text(text="This is a block quote.")),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
@@ -572,7 +572,9 @@ def test_multiline_quote(
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
         UnoQuote(
-            text="This is a multi-line\nblock quote with\nmultiple lines."
+            text=text(
+                text="This is a multi-line\nblock quote with\nmultiple lines."
+            )
         ),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
@@ -609,11 +611,11 @@ def test_table_of_contents(
         More content.
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoHeading1(text="Introduction"),
+        UnoHeading1(text=text(text="Introduction")),
         UnoTableOfContents(),
-        UnoHeading2(text="First Section"),
+        UnoHeading2(text=text(text="First Section")),
         UnoParagraph(text=text(text="Content here.")),
-        UnoHeading2(text="Second Section"),
+        UnoHeading2(text=text(text="Second Section")),
         UnoParagraph(text=text(text="More content.")),
     ]
     _assert_rst_converts_to_notion_objects(
@@ -640,7 +642,7 @@ def test_toctree_directive(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoHeading1(text="Introduction"),
+        UnoHeading1(text=text(text="Introduction")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -753,9 +755,9 @@ def test_flat_bullet_list(
         * Third bullet point with longer text
     """
     expected_objects: list[NotionObject[Any]] = [
-        UnoBulletedItem(text="First bullet point"),
-        UnoBulletedItem(text="Second bullet point"),
-        UnoBulletedItem(text="Third bullet point with longer text"),
+        UnoBulletedItem(text=text(text="First bullet point")),
+        UnoBulletedItem(text=text(text="Second bullet point")),
+        UnoBulletedItem(text=text(text="Third bullet point with longer text")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -776,11 +778,12 @@ def test_bullet_list_with_inline_formatting(
     rst_content = """
         * This is **bold text** in a bullet
     """
-    bullet = UnoBulletedItem(text="placeholder")
-    bullet.rich_text = (
-        text(text="This is ", bold=False, italic=False, code=False)
-        + text(text="bold text", bold=True, italic=False, code=False)
-        + text(text=" in a bullet", bold=False, italic=False, code=False)
+    bullet = UnoBulletedItem(
+        text=(
+            text(text="This is ", bold=False, italic=False, code=False)
+            + text(text="bold text", bold=True, italic=False, code=False)
+            + text(text=" in a bullet", bold=False, italic=False, code=False)
+        )
     )
 
     expected_objects: list[NotionObject[Any]] = [
@@ -824,7 +827,7 @@ def test_admonition_single_line(
     """
 
     callout = UnoCallout(
-        text=message,
+        text=text(text=message),
         icon=Emoji(emoji=emoji),
         color=background_color,
     )
@@ -870,16 +873,15 @@ def test_admonition_multiline(
            This is the second paragraph that should be nested.
     """
     callout = UnoCallout(
-        text="",
+        text=text(
+            text=f"This is the first paragraph of the {admonition_type}."
+        ),
         icon=Emoji(emoji=emoji),
         color=background_color,
     )
-    callout.rich_text = text(
-        text=f"This is the first paragraph of the {admonition_type}."
-    )
 
     nested_paragraph = UnoParagraph(
-        text="This is the second paragraph that should be nested."
+        text=text(text="This is the second paragraph that should be nested.")
     )
 
     callout.obj_ref.value.children.append(nested_paragraph.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -915,15 +917,18 @@ def test_admonition_with_code_block(
            The code above demonstrates a simple function.
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
-    callout.rich_text = text(text="This note contains a code example.")
+    callout = UnoCallout(
+        text=text(text="This note contains a code example."),
+        icon=Emoji(emoji="📝"),
+        color=BGColor.BLUE,
+    )
 
     nested_code_block = _create_code_block_without_annotations(
         content='def hello():\n    print("Hello, world!")',
         language=CodeLang.PYTHON,
     )
     nested_paragraph = UnoParagraph(
-        text="The code above demonstrates a simple function."
+        text=text(text="The code above demonstrates a simple function.")
     )
 
     callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -960,15 +965,18 @@ def test_admonition_with_code_block_first(
            This paragraph comes after the code block.
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
-    callout.rich_text = text(text="")
+    callout = UnoCallout(
+        text=text(text=""),
+        icon=Emoji(emoji="📝"),
+        color=BGColor.BLUE,
+    )
 
     nested_code_block = _create_code_block_without_annotations(
         content='def hello():\n    print("Hello, world!")',
         language=CodeLang.PYTHON,
     )
     nested_paragraph = UnoParagraph(
-        text="This paragraph comes after the code block."
+        text=text(text="This paragraph comes after the code block.")
     )
 
     callout.obj_ref.value.children.append(nested_code_block.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -1001,14 +1009,17 @@ def test_admonition_with_bullet_points(
            * B
     """
 
-    callout = UnoCallout(text="", icon=Emoji(emoji="📝"), color=BGColor.BLUE)
-    callout.rich_text = text(
-        text="This is an important note that demonstrates the note "
-        "admonition\nsupport."
+    callout = UnoCallout(
+        text=text(
+            text="This is an important note that demonstrates the note "
+            "admonition\nsupport."
+        ),
+        icon=Emoji(emoji="📝"),
+        color=BGColor.BLUE,
     )
 
-    bullet_a = UnoBulletedItem(text="A")
-    bullet_b = UnoBulletedItem(text="B")
+    bullet_a = UnoBulletedItem(text=text(text="A"))
+    bullet_b = UnoBulletedItem(text=text(text="B"))
 
     callout.obj_ref.value.children.append(bullet_a.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     callout.obj_ref.value.children.append(bullet_b.obj_ref)  # pyright: ignore[reportUnknownMemberType]
@@ -1045,13 +1056,17 @@ def test_nested_bullet_list(
         * Another top level item
     """
 
-    third_level_1 = UnoBulletedItem(text="Third level item (now allowed!)")
+    third_level_1 = UnoBulletedItem(
+        text=text(text="Third level item (now allowed!)")
+    )
 
-    second_level_1 = UnoBulletedItem(text="Second level item")
-    second_level_2 = UnoBulletedItem(text="Second level with children")
+    second_level_1 = UnoBulletedItem(text=text(text="Second level item"))
+    second_level_2 = UnoBulletedItem(
+        text=text(text="Second level with children")
+    )
 
-    top_level_1 = UnoBulletedItem(text="Top level item")
-    top_level_2 = UnoBulletedItem(text="Top level with children")
+    top_level_1 = UnoBulletedItem(text=text(text="Top level item"))
+    top_level_2 = UnoBulletedItem(text=text(text="Top level with children"))
 
     # Remove pyright ignore once we have
     # https://github.com/ultimate-notion/ultimate-notion/issues/94.
@@ -1059,7 +1074,7 @@ def test_nested_bullet_list(
     top_level_2.obj_ref.value.children.append(second_level_1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
     top_level_2.obj_ref.value.children.append(second_level_2.obj_ref)  # pyright: ignore[reportUnknownMemberType]
 
-    top_level_3 = UnoBulletedItem(text="Another top level item")
+    top_level_3 = UnoBulletedItem(text=text(text="Another top level item"))
 
     expected_objects: list[NotionObject[Any]] = [
         top_level_1,
@@ -1096,16 +1111,17 @@ def test_collapse_block(
         Another paragraph.
     """
 
-    toggle_block = UnoToggleItem(text="Click to expand")
+    toggle_block = UnoToggleItem(text=text(text="Click to expand"))
 
     nested_para1 = UnoParagraph(
         text=text(text="This content is hidden by default.")
     )
-    nested_para2 = UnoParagraph(text=text(text="It supports formatting."))
-    nested_para2.rich_text = (
-        text(text="It supports ", bold=False)
-        + text(text="formatting", bold=True)
-        + text(text=".", bold=False)
+    nested_para2 = UnoParagraph(
+        text=(
+            text(text="It supports ", bold=False)
+            + text(text="formatting", bold=True)
+            + text(text=".", bold=False)
+        )
     )
 
     toggle_block.obj_ref.value.children.append(nested_para1.obj_ref)  # pyright: ignore[reportUnknownMemberType]
