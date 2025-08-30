@@ -443,7 +443,6 @@ class NotionTranslator(NodeVisitor):
         # See https://github.com/ultimate-notion/ultimate-notion/issues/93.
         for rich_text in code_text.rich_texts:  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             del rich_text.obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-        code_block.rich_text = code_text
         self._add_block_to_tree(block=code_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
