@@ -295,11 +295,11 @@ def test_multiple_heading_levels(
     """
 
     expected_objects: list[NotionObject[Any]] = [
-        UnoHeading1(text="Main Title"),
+        UnoHeading1(text=text(text="Main Title")),
         UnoParagraph(text=text(text="Content under main title.")),
-        UnoHeading2(text="Section Title"),
+        UnoHeading2(text=text(text="Section Title")),
         UnoParagraph(text=text(text="Content under section.")),
-        UnoHeading3(text="Subsection Title"),
+        UnoHeading3(text=text(text="Subsection Title")),
         UnoParagraph(text=text(text="Content under subsection.")),
     ]
 
