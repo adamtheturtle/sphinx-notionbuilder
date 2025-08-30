@@ -682,7 +682,12 @@ class NotionTranslator(NodeVisitor):
         del section_level
 
         caption_node, literal_node = node.children
-        assert isinstance(literal_node, nodes.Element)
+        msg = (
+            "The only supported container type is a literalinclude with "
+            "a caption"
+        )
+        assert isinstance(caption_node, nodes.caption), msg
+        assert isinstance(literal_node, nodes.literal_block), msg
 
         caption_text = caption_node.astext()
 
