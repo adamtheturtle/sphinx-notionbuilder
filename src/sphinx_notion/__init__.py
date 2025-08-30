@@ -689,7 +689,7 @@ class NotionTranslator(NodeVisitor):
         assert isinstance(caption_node, nodes.caption), msg
         assert isinstance(literal_node, nodes.literal_block), msg
 
-        caption_text = caption_node.astext()
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
         code_text = _create_rich_text_from_children(node=literal_node)
         pygments_lang = literal_node.get(key="language", failobj="")
@@ -700,7 +700,7 @@ class NotionTranslator(NodeVisitor):
         code_block = UnoCode(
             text=code_text,
             language=language,
-            caption=caption_text,
+            caption=caption_rich_text,
         )
 
         # Unnecessary in ``ultimate-notion`` 0.9+.
