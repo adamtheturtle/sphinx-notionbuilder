@@ -677,7 +677,8 @@ class NotionTranslator(NodeVisitor):
         parent_path: list[tuple[NotionObject[Any], int]],
     ) -> None:
         """
-        Process container nodes, especially for literalinclude with captions.
+        Process container nodes, especially for ``literalinclude`` with
+        captions.
         """
         del section_level
 
@@ -886,7 +887,7 @@ class NotionTranslator(NodeVisitor):
 
     def visit_container(self, node: nodes.Element) -> None:
         """
-        Handle container nodes, especially for literalinclude with captions.
+        Handle container nodes.
         """
         self._process_node_to_blocks(
             node,
