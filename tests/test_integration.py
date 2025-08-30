@@ -46,7 +46,7 @@ from ultimate_notion.rich_text import Text, text
 
 @beartype
 def _create_code_block_without_annotations(
-    *, content: str, language: CodeLang
+    *, content: str, language: CodeLang, caption: Text | None = None
 ) -> UnoCode:
     """Create a code block without annotations to match the fixed behavior.
 
@@ -58,27 +58,9 @@ def _create_code_block_without_annotations(
     # Remove annotations to prevent white text in code blocks
     del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
 
+    if caption is not None:
+        return UnoCode(text=code_text, language=language, caption=caption)
     return UnoCode(text=code_text, language=language)
-
-
-@beartype
-def _create_code_block_with_caption(
-    *,
-    content: str,
-    language: CodeLang,
-    caption: Text,
-) -> UnoCode:
-    """Create a code block with caption and without annotations.
-
-    This matches the fix in visit_literal_block where annotations are
-    removed to prevent white text color in code blocks.
-    """
-    # Create rich text and remove annotations to match the fix
-    code_text = text(text=content)
-    # Remove annotations to prevent white text in code blocks
-    del code_text.rich_texts[0].obj_ref.annotations  # pyright: ignore[reportUnknownMemberType]
-
-    return UnoCode(text=code_text, language=language, caption=caption)
 
 
 @beartype
@@ -1402,7 +1384,7 @@ def test_literalinclude_with_caption(
 
     expected_objects: list[NotionObject[Any]] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
-        _create_code_block_with_caption(
+        _create_code_block_without_annotations(
             content=conf_py_content,
             language=CodeLang.PYTHON,
             caption=caption_with_bold,
