@@ -39,7 +39,7 @@ def _find_existing_page_by_title(
     Return the page if found, otherwise None.
     """
     for child_page in parent_page.subpages:
-        if str(object=child_page.title) == title:
+        if child_page.title == title:
             return child_page
     return None
 
