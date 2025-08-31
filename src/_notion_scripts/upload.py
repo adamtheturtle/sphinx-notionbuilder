@@ -11,7 +11,7 @@ from typing import Any, TypedDict
 import click
 from beartype import beartype
 from ultimate_notion import Session
-from ultimate_notion.blocks import Block, ChildrenMixin
+from ultimate_notion.blocks import AnyBlock, Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
@@ -47,7 +47,7 @@ def upload_blocks_recursively(
     Upload blocks recursively, handling the new structure with block and
     children.
     """
-    first_level_blocks: list[Block[Any]] = [
+    first_level_blocks: list[AnyBlock] = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))  # pyright: ignore[reportUnknownMemberType]
         for details in block_details_list
     ]
