@@ -13,7 +13,6 @@ from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
-from ultimate_notion.page import Page
 
 
 class _SerializedBlockTreeNode(TypedDict):
@@ -38,7 +37,7 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 
 @beartype
 def upload_blocks_recursively(
-    parent: Page | ChildrenMixin[Any],
+    parent: ChildrenMixin[Any],
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
     batch_size: int,
