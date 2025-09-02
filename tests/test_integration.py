@@ -574,7 +574,7 @@ def test_table_of_contents(
     tmp_path: Path,
 ) -> None:
     """
-    Contents directive becomes Notion TableOfContents block.
+    ``contents`` directive becomes Notion TableOfContents block.
     """
     rst_content = """
         Introduction
@@ -614,7 +614,7 @@ def test_toctree_directive(
     tmp_path: Path,
 ) -> None:
     """
-    Toctree directive produces no output as it's for navigation structure.
+    ``toctree`` directive produces no output as it's for navigation structure.
     """
     rst_content = """
         Introduction
