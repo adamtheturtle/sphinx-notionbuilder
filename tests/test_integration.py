@@ -39,6 +39,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
+from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import text
@@ -1249,7 +1250,9 @@ def test_simple_image(
 
     expected_objects: list[Block] = [
         UnoParagraph(text=text(text="Regular paragraph.")),
-        UnoImage(url="https://www.example.com/path/to/image.png"),
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png")
+        ),
         UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
@@ -1278,7 +1281,9 @@ def test_image_with_alt_text_only(
     """
 
     expected_objects: list[Block] = [
-        UnoImage(url="https://www.example.com/path/to/image.png"),
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+        ),
         UnoParagraph(text=text(text="Content follows.")),
     ]
 

@@ -42,6 +42,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
+from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
@@ -660,7 +661,7 @@ class NotionTranslator(NodeVisitor):
         image_url = node.attributes["uri"]
 
         # Create the image block (alt text is not used as caption)
-        image_block = UnoImage(url=image_url, caption=None)
+        image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
