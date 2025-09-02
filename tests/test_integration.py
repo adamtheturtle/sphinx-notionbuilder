@@ -40,7 +40,6 @@ from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.core import GenericObject
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import text
 
@@ -114,9 +113,7 @@ def _assert_rst_converts_to_notion_objects(
 
     expected_json: list[dict[str, Any]] = []
     for notion_object in expected_objects:
-        obj_ref = notion_object.obj_ref
-        assert isinstance(obj_ref, GenericObject)
-        dumped_block = obj_ref.serialize_for_api()
+        dumped_block = notion_object.obj_ref.serialize_for_api()
         expected_json.append(dumped_block)
 
     assert generated_json_un_flattened == expected_json, (
