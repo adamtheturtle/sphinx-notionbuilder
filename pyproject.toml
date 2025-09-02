@@ -13,17 +13,17 @@ keywords = [
     "notion",
     "sphinx",
 ]
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
     { name = "Adam Dangoor", email = "adamdangoor@gmail.com" },
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 dynamic = [
@@ -31,10 +31,11 @@ dynamic = [
 ]
 dependencies = [
     "beartype>=0.21.0",
+    "click>=8.0.0",
     "docutils>=0.21",
-    "pydantic",
     "sphinx>=8.2.3",
-    "ultimate-notion>=0.8",
+    "sphinx-toolbox>=4.0.0",
+    "ultimate-notion>=0.9",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
@@ -53,14 +54,14 @@ optional-dependencies.dev = [
     "pyenchant==3.3.0rc1",
     "pygments==2.19.2",
     "pylint==3.3.8",
-    "pylint-per-file-ignores==1.4.0",
+    "pylint-per-file-ignores==2.0.3",
     "pyproject-fmt==2.6.0",
-    "pyright==1.1.403",
+    "pyright==1.1.404",
     "pyroma==5.0",
     "pytest==8.4.1",
     "pytest-cov==6.2.1",
     "pyyaml==6.0.2",
-    "ruff==0.12.9",
+    "ruff==0.12.11",
     # We add shellcheck-py not only for shell scripts and shell code blocks,
     # but also because having it installed means that ``actionlint-py`` will
     # use it to lint shell commands in GitHub workflow files.
@@ -70,12 +71,14 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
-    "types-docutils==0.22.0.20250814",
+    "types-docutils==0.22.0.20250822",
     "vulture==2.14",
     "yamlfix==1.17.0",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
+
+scripts.notion-upload = "_notion_scripts.upload:main"
 
 [tool.setuptools]
 zip-safe = false
@@ -86,7 +89,7 @@ where = [
 ]
 
 [tool.setuptools.package-data]
-sphinx_notionbuilder = [
+sphinx_notion = [
     "py.typed",
 ]
 
@@ -237,6 +240,8 @@ disable = [
     'wrong-import-order',
     # mypy does not want untyped parameters.
     'useless-type-doc',
+    # interacts poorly with singledispatch
+    "bad-dunder-name",
 ]
 
 # We ignore invalid names because:
@@ -244,8 +249,9 @@ disable = [
 # - We want to use global variables in documentation, which may not be uppercase.
 # - conf.py is a Sphinx configuration file which requires lowercase global variable names.
 per-file-ignores = [
-    "docs/:invalid-name",
-    "doccmd_README_rst.*.py:invalid-name",
+    "docs/source/conf.py:invalid-name",
+    "docs/source/doccmd_*.py:invalid-name",
+    "doccmd_README_rst_*.py:invalid-name",
 ]
 
 [tool.pylint.'FORMAT']
@@ -273,7 +279,10 @@ make-summary-multi-line = true
 [tool.check-manifest]
 
 ignore = [
+    "CLAUDE.md",
     ".checkmake-config.ini",
+    ".cursor",
+    ".cursor/**",
     ".vscode",
     ".vscode/**",
     "sample/",
@@ -317,6 +326,7 @@ log_cli = true
 [tool.coverage.run]
 
 branch = true
+omit = [ "src/_notion_scripts/upload.py" ]
 
 [tool.coverage.report]
 exclude_also = [
@@ -396,6 +406,10 @@ ignore_names = [
     # Docutils translator
     "depart_*",
     "visit_*",
+    # Singledispatch functions
+    "_",
+    # CLI entry point
+    "main",
 ]
 
 # Duplicate some of .gitignore

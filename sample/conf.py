@@ -2,4 +2,7 @@
 Configuration for Sphinx.
 """
 
-extensions = ["sphinx_notionbuilder"]
+extensions = [
+    "sphinx_notion",
+    "sphinx_toolbox.collapse",
+]

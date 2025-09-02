@@ -1,0 +1,12 @@
+backtick
+backticks
+callout
+href
+pragma
+preprocess
+pyright
+reStructuredText
+recurse
+reportUnknownArgumentType
+reportUnknownMemberType
+reportUnknownVariableType

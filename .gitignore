@@ -209,3 +209,5 @@ __marimo__/
 uv.lock
 
 build-sample/
+
+*.DS_Store
