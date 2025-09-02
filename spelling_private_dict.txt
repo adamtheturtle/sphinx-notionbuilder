@@ -5,6 +5,7 @@ href
 pragma
 preprocess
 pyright
+reStructuredText
 recurse
 reportUnknownArgumentType
 reportUnknownMemberType
