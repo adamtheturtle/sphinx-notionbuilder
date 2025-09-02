@@ -105,7 +105,7 @@ def _assert_rst_converts_to_notion_objects(
     app.build()
 
     output_file = app.outdir / "index.json"
-    with output_file.open() as f:
+    with output_file.open(encoding="utf-8") as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     generated_json_un_flattened = _reconstruct_nested_structure(
