@@ -35,7 +35,7 @@ dependencies = [
     "docutils>=0.21",
     "sphinx>=8.2.3",
     "sphinx-toolbox>=4.0.0",
-    "ultimate-notion>=0.8",
+    "ultimate-notion>=0.9",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
