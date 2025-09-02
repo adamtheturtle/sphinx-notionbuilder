@@ -136,7 +136,7 @@ And with a caption:
 Some key features:
 
 * Easy integration with **Sphinx**
-* Converts RST to Notion-compatible format
+* Converts reStructuredText to Notion-compatible format
 
   * Supports nested bullet points (new!)
   * Deep nesting now works with multiple levels

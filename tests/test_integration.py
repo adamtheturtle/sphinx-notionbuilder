@@ -69,7 +69,7 @@ def _reconstruct_nested_structure(
     items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """
-    Reconstruct the nested structure of the nodes from the graph produced.
+    Reconstruct nested structure from flattened block items.
     """
     result: list[dict[str, Any]] = []
     for item in items:
@@ -104,7 +104,8 @@ def _assert_rst_converts_to_notion_objects(
     conf_py_content: str = "",
 ) -> None:
     """
-    The given rST content is converted to the given expected objects.
+    ReStructuredText content converts to expected Notion objects via Sphinx
+    build process.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -149,7 +150,7 @@ def test_single_paragraph(
     tmp_path: Path,
 ) -> None:
     """
-    Single paragraph converts to Notion JSON.
+    Single paragraph becomes Notion paragraph block.
     """
     rst_content = """
         This is a simple paragraph for testing.
@@ -173,7 +174,7 @@ def test_multiple_paragraphs(
     tmp_path: Path,
 ) -> None:
     """
-    Multiple paragraphs in convert to separate Notion blocks.
+    Multiple paragraphs become separate Notion paragraph blocks.
     """
     rst_content = """
         First paragraph with some text.
@@ -207,7 +208,7 @@ def test_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Inline formatting (bold, italic, code) converts to rich text.
+    Inline formatting (bold, italic, code) becomes rich text annotations.
     """
     rst_content = """
         This is **bold** and *italic* and ``inline code``.
@@ -249,7 +250,7 @@ def test_single_heading(
     tmp_path: Path,
 ) -> None:
     """
-    Single heading converts to Heading 1 block.
+    Single heading becomes Heading 1 block.
     """
     rst_content = """
         Main Title
@@ -277,7 +278,7 @@ def test_multiple_heading_levels(
     tmp_path: Path,
 ) -> None:
     """
-    Multiple heading levels convert to appropriate Notion heading blocks.
+    Multiple heading levels become appropriate Notion heading blocks.
     """
     rst_content = """
         Main Title
@@ -319,7 +320,7 @@ def test_heading_with_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Headings with inline formatting convert to rich text in heading blocks.
+    Headings with inline formatting become rich text in heading blocks.
     """
     rst_content = """
         **Bold** and *Italic* Title
@@ -356,7 +357,7 @@ def test_simple_link(
     tmp_path: Path,
 ) -> None:
     """
-    Simple links convert to rich text with href.
+    Simple links become rich text with href attributes.
     """
     rst_content = """
         This paragraph contains a `link to example <https://example.com>`_.
@@ -386,7 +387,7 @@ def test_multiple_links(
     tmp_path: Path,
 ) -> None:
     """
-    Multiple links in a paragraph convert correctly.
+    Multiple links in a paragraph become separate rich text segments.
     """
     # Write proper rST content to file to avoid Python string escaping issues
     rst_file = tmp_path / "test_content.rst"
@@ -424,7 +425,7 @@ def test_link_in_heading(
     tmp_path: Path,
 ) -> None:
     """
-    Links in headings convert to rich text with href.
+    Links in headings become rich text with href attributes.
     """
     rst_content = """
         Check out `Notion API <https://developers.notion.com>`_
@@ -459,7 +460,7 @@ def test_mixed_formatting_with_links(
     tmp_path: Path,
 ) -> None:
     """
-    Links mixed with other formatting work correctly.
+    Links mixed with other formatting preserve all annotations.
     """
     rst_content = """
         This has **bold** and a `link <https://example.com>`_ and *italic*.
@@ -500,9 +501,9 @@ def test_unnamed_link_with_backticks(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Unnamed links with backticks convert to rich text with href.
+    """Unnamed links with backticks become rich text with URL as display text.
 
-    The text should be just the URL without angle brackets.
+    The display text excludes angle brackets from the URL.
     """
     rst_content = """
         Visit `<https://example.com>`_ for more information.
@@ -532,7 +533,7 @@ def test_simple_quote(
     tmp_path: Path,
 ) -> None:
     """
-    Test that block quotes convert to Notion Quote blocks.
+    Block quotes become Notion Quote blocks.
     """
     rst_content = """
         Regular paragraph.
@@ -560,7 +561,7 @@ def test_multiline_quote(
     tmp_path: Path,
 ) -> None:
     """
-    Test that multi-line block quotes convert to Notion Quote blocks.
+    Multi-line block quotes become single Notion Quote blocks with line breaks.
     """
     rst_content = """
         Regular paragraph.
@@ -594,7 +595,7 @@ def test_table_of_contents(
     tmp_path: Path,
 ) -> None:
     """
-    Test that contents directive converts to Notion TableOfContents blocks.
+    Contents directive becomes Notion TableOfContents block.
     """
     rst_content = """
         Introduction
@@ -634,7 +635,7 @@ def test_toctree_directive(
     tmp_path: Path,
 ) -> None:
     """
-    Test that the ``toctree`` directive converts to nothing.
+    Toctree directive produces no output as it's for navigation structure.
     """
     rst_content = """
         Introduction
@@ -661,7 +662,7 @@ def test_simple_code_block(
     tmp_path: Path,
 ) -> None:
     """
-    Code blocks convert to Notion Code blocks.
+    Code blocks become Notion Code blocks with syntax highlighting.
     """
     rst_content = """
         Regular paragraph.
@@ -695,7 +696,7 @@ def test_code_block_language_mapping(
     tmp_path: Path,
 ) -> None:
     """
-    Test that various languages map correctly.
+    Various languages map to appropriate Notion code block languages.
     """
     rst_content = """
         .. code-block:: console
@@ -749,7 +750,7 @@ def test_flat_bullet_list(
     tmp_path: Path,
 ) -> None:
     """
-    Test that flat bullet lists convert correctly to Notion BulletedItem.
+    Flat bullet lists become separate Notion BulletedItem blocks.
     """
     rst_content = """
         * First bullet point
@@ -775,7 +776,7 @@ def test_bullet_list_with_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Test bullet lists with inline formatting.
+    Bullet lists preserve inline formatting in rich text.
     """
     rst_content = """
         * This is **bold text** in a bullet
@@ -818,7 +819,7 @@ def test_admonition_single_line(
     tmp_path: Path,
 ) -> None:
     """
-    Test that admonitions convert to Notion Callout blocks.
+    Admonitions become Notion Callout blocks with appropriate icons and colors.
     """
     rst_content = f"""
         Regular paragraph.
@@ -863,7 +864,7 @@ def test_admonition_multiline(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test that admonitions with multiple paragraphs work.
+    """Admonitions with multiple paragraphs create nested blocks.
 
     The first paragraph becomes the callout text, and subsequent
     paragraphs become nested blocks within the callout.
@@ -905,7 +906,7 @@ def test_admonition_with_code_block(
     tmp_path: Path,
 ) -> None:
     """
-    Test that admonitions can contain code blocks as nested children.
+    Admonitions contain code blocks as nested children.
     """
     rst_content = """
         .. note::
@@ -952,9 +953,10 @@ def test_admonition_with_code_block_first(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Test admonition with code block as first child (not paragraph).
+    """Admonition with code block as first child creates empty callout text.
 
-    This tests the else clause when first child is not a paragraph.
+    When the first child is not a paragraph, the callout text remains
+    empty.
     """
     rst_content = """
         .. note::
@@ -999,7 +1001,7 @@ def test_admonition_with_bullet_points(
     tmp_path: Path,
 ) -> None:
     """
-    Test that bullet points show up within admonitions (issue #78).
+    Bullet points appear within admonitions as nested blocks (issue #78).
     """
     rst_content = """
         .. note::
@@ -1044,7 +1046,7 @@ def test_nested_bullet_list(
     tmp_path: Path,
 ) -> None:
     """
-    Test that deeply nested bullet lists work.
+    Deeply nested bullet lists create hierarchical block structures.
     """
     rst_content = """
         * Top level item
@@ -1099,7 +1101,8 @@ def test_collapse_block(
     tmp_path: Path,
 ) -> None:
     """
-    Test that collapse directives convert to Notion ToggleItem blocks.
+    ``collapse`` directives become Notion ToggleItem blocks for expandable
+    content.
     """
     rst_content = """
         Regular paragraph.
@@ -1150,7 +1153,7 @@ def test_simple_table(
     tmp_path: Path,
 ) -> None:
     """
-    Simple rST table converts to Notion Table block.
+    Simple rST table becomes Notion Table block with header row.
     """
     rst_content = """
         +----------+----------+
@@ -1191,8 +1194,7 @@ def test_table_without_header_row(
     tmp_path: Path,
 ) -> None:
     """
-    Table without a heading row converts to Notion Table block with
-    header_row=False.
+    Table without heading row becomes Notion Table block with header_row=False.
     """
     rst_content = """
         +--------+--------+
@@ -1223,8 +1225,7 @@ def test_table_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Table headers and cells with inline formatting (bold, italic, code) convert
-    to Notion Table with rich text in header and cells.
+    Table headers and cells preserve inline formatting as rich text.
     """
     rst_content = """
         +----------------------+----------------------+
@@ -1258,7 +1259,7 @@ def test_simple_image(
     tmp_path: Path,
 ) -> None:
     """
-    Test that image directives convert to Notion Image blocks.
+    ``image`` directives become Notion Image blocks with URL.
     """
     rst_content = """
         Regular paragraph.
@@ -1288,8 +1289,8 @@ def test_image_with_alt_text_only(
     tmp_path: Path,
 ) -> None:
     """
-    Test that image directives with only alt text convert to Notion Image
-    blocks without captions.
+    ``image`` directives with only alt text become Notion Image blocks without
+    captions.
     """
     rst_content = """
         .. image:: https://www.example.com/path/to/image.png
@@ -1316,7 +1317,7 @@ def test_literalinclude_without_caption(
     tmp_path: Path,
 ) -> None:
     """
-    ``literalinclude`` directives without captions convert to code blocks.
+    ``literalinclude`` directives without captions become code blocks.
     """
     rst_content = """
         Regular paragraph.
@@ -1357,8 +1358,8 @@ def test_literalinclude_with_caption(
     tmp_path: Path,
 ) -> None:
     """
-    ``literalinclude`` directives with captions convert to code blocks with
-    captions including bold text formatting.
+    ``literalinclude`` directives with captions become code blocks with
+    formatted captions.
     """
     rst_content = """
         Regular paragraph.
