@@ -17,7 +17,7 @@ def test_meta(
     tmp_path: Path,
 ) -> None:
     """
-    Test the metadata of the Notion builder.
+    Builder metadata and setup returns expected values for Sphinx integration.
     """
     builder_cls = sphinx_notion.NotionBuilder
     assert builder_cls.name == "notion"
