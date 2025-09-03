@@ -316,7 +316,8 @@ class NotionTranslator(NodeVisitor):
 
         bullet_only_msg = (
             "The only thing Notion supports within a bullet list is a "
-            "bullet list"
+            f"bullet list. Given {type(node).__name__} on line {node.line} "
+            f"in {node.source}"
         )
         assert isinstance(node, nodes.list_item)
 
@@ -454,7 +455,8 @@ class NotionTranslator(NodeVisitor):
         del section_level
         bullet_only_msg = (
             "The only thing Notion supports within a bullet list is a "
-            "bullet list"
+            f"bullet list. Given {type(node).__name__} on line {node.line} "
+            f"in {node.source}"
         )
         for list_item in node.children:
             assert isinstance(list_item, nodes.list_item), bullet_only_msg
