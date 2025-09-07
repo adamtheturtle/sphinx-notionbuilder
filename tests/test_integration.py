@@ -1422,8 +1422,13 @@ def test_heading_level_4_error(
         confoverrides={"extensions": ["sphinx_notion"]},
     )
 
+    expected_message = (
+        "Notion only supports heading levels 1-3, but found heading level 4 "
+        "on line 11. "
+        "Please restructure your document to use only heading levels 1-3."
+    )
     with pytest.raises(
         expected_exception=ValueError,
-        match=r"heading level 4 on line \d+\.",
+        match=expected_message,
     ):
         app.build()
