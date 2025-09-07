@@ -1407,21 +1407,6 @@ def test_heading_level_4_error(
         Content under sub-subsection.
     """
 
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-
-    (srcdir / "conf.py").write_text(data="")
-
-    cleaned_content = textwrap.dedent(text=rst_content).strip()
-    (srcdir / "index.rst").write_text(data=cleaned_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-        confoverrides={"extensions": ["sphinx_notion"]},
-    )
-
     expected_message = (
         "Notion only supports heading levels 1-3, but found heading level 4 "
         "on line 11. "
@@ -1431,4 +1416,9 @@ def test_heading_level_4_error(
         expected_exception=ValueError,
         match=expected_message,
     ):
-        app.build()
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
