@@ -1409,8 +1409,7 @@ def test_heading_level_4_error(
 
     expected_message = (
         "Notion only supports heading levels 1-3, but found heading level 4 "
-        "on line 11. "
-        "Please restructure your document to use only heading levels 1-3."
+        "on line 11."
     )
     with pytest.raises(
         expected_exception=ValueError,
