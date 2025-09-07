@@ -106,7 +106,10 @@ def _assert_rst_converts_to_notion_objects(
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
+        batched_structure: list[list[dict[str, Any]]] = json.load(fp=f)
+
+    # Extract the first batch (since we only have one batch in tests)
+    generated_json: list[dict[str, Any]] = batched_structure[0]
 
     generated_json_un_flattened = _reconstruct_nested_structure(
         items=generated_json
@@ -1421,3 +1424,64 @@ def test_heading_level_4_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_batching_with_many_blocks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that documents with more than 100 blocks get properly batched.
+    """
+    # Create a document with 150 headings to exceed the 100-block batch limit
+    # Each heading will be a separate block
+    rst_content = "\n".join(
+        [f"Section {i}\n{'=' * 20}" for i in range(1, 151)]
+    )
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+
+    output_file = app.outdir / "index.json"
+    with output_file.open(encoding="utf-8") as f:
+        batched_structure: list[list[dict[str, Any]]] = json.load(fp=f)
+
+    # Verify we have multiple batches
+    assert len(batched_structure) > 1, (
+        "Should have multiple batches for 150 blocks"
+    )
+
+    # Verify each batch has at most 100 blocks (Notion's limit)
+    notion_batch_limit = 100
+    for batch_idx, batch in enumerate(iterable=batched_structure):
+        assert len(batch) <= notion_batch_limit, (
+            f"Batch {batch_idx} has {len(batch)} blocks, "
+            f"should be <= {notion_batch_limit}"
+        )
+
+    # Verify total blocks across all batches
+    expected_total_blocks = 150
+    total_blocks = sum(len(batch) for batch in batched_structure)
+    assert total_blocks == expected_total_blocks, (
+        f"Expected {expected_total_blocks} total blocks, got {total_blocks}"
+    )
+
+    # Verify all blocks are headings
+    for batch in batched_structure:
+        for block in batch:
+            assert block["block"]["type"] == "heading_1", (
+                "All blocks should be heading_1"
+            )

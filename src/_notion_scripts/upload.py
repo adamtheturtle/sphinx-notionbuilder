@@ -24,15 +24,7 @@ class _SerializedBlockTreeNode(TypedDict):
     children: list["_SerializedBlockTreeNode"]
 
 
-@beartype
-def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
-    """
-    Split a list into batches of a given size.
-    """
-    return [
-        elements[start_index : start_index + batch_size]
-        for start_index in range(0, len(elements), batch_size)
-    ]
+type _BatchedBlockStructure = list[list[_SerializedBlockTreeNode]]
 
 
 @beartype
@@ -40,21 +32,17 @@ def upload_blocks_recursively(
     parent: ChildrenMixin[Any],
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
-    batch_size: int,
 ) -> None:
-    """
-    Upload blocks recursively, handling the new structure with block and
+    """Upload blocks recursively, handling the new structure with block and
     children.
+
+    The blocks are already batched by the JSON generation.
     """
     first_level_blocks: list[Block] = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
         for details in block_details_list
     ]
-    for block_batch in _batch_list(
-        elements=first_level_blocks,
-        batch_size=batch_size,
-    ):
-        parent.append(blocks=block_batch)
+    parent.append(blocks=first_level_blocks)
 
     for uploaded_block_index, uploaded_block in enumerate(
         iterable=parent.children
@@ -67,7 +55,6 @@ def upload_blocks_recursively(
                 parent=block_obj,
                 block_details_list=block_details["children"],
                 session=session,
-                batch_size=batch_size,
             )
 
 
@@ -105,7 +92,9 @@ def main(
     """
     session = Session()
 
-    blocks = json.loads(s=file.read_text(encoding="utf-8"))
+    batched_structure: _BatchedBlockStructure = json.loads(
+        s=file.read_text(encoding="utf-8")
+    )
 
     parent_page = session.get_page(page_ref=parent_page_id)
     pages_matching_title = [
@@ -128,14 +117,10 @@ def main(
     for child in page.children:
         child.delete()
 
-    # See https://developers.notion.com/reference/request-limits#limits-for-property-values
-    # which shows that the max number of blocks per request is 100.
-    # Without batching, we get 413 errors.
-    notion_blocks_batch_size = 100
-    upload_blocks_recursively(
-        parent=page,
-        block_details_list=blocks,
-        session=session,
-        batch_size=notion_blocks_batch_size,
-    )
+    for batch in batched_structure:
+        upload_blocks_recursively(
+            parent=page,
+            block_details_list=batch,
+            session=session,
+        )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
