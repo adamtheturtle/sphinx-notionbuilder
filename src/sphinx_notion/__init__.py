@@ -55,7 +55,10 @@ class _SerializedBlockTreeNode(TypedDict):
     """
 
     block: dict[str, Any]
-    children: list["_SerializedBlockTreeNode"]
+    children: (
+        list["_SerializedBlockTreeNode"]
+        | list[list["_SerializedBlockTreeNode"]]
+    )
 
 
 type _BatchedBlockStructure = list[list[_SerializedBlockTreeNode]]
@@ -956,8 +959,35 @@ class NotionTranslator(NodeVisitor):
         result: list[_SerializedBlockTreeNode] = []
         for block in blocks:
             # Recursively apply batching to children
-            batched_children = self._apply_batching_to_blocks(
-                blocks=block["children"],
+            children = block["children"]
+            if (
+                isinstance(children, list)
+                and children
+                and isinstance(children[0], list)
+            ):
+                # Children are already batched, process each batch
+                processed_children: list[_SerializedBlockTreeNode] = []
+                for child_batch in children:
+                    if isinstance(child_batch, list):
+                        processed_batch = self._apply_batching_to_blocks(
+                            blocks=child_batch,
+                            batch_size=batch_size,
+                        )
+                        processed_children.extend(processed_batch)
+            # Children are not batched yet, process them normally
+            elif isinstance(children, list) and not (
+                children and isinstance(children[0], list)
+            ):
+                processed_children = self._apply_batching_to_blocks(
+                    blocks=children,
+                    batch_size=batch_size,
+                )
+            else:
+                processed_children = []
+
+            # Batch the children if they exceed the batch size
+            batched_children = _batch_list(
+                elements=processed_children,
                 batch_size=batch_size,
             )
 

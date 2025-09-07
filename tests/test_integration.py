@@ -47,30 +47,44 @@ from ultimate_notion.rich_text import text
 @beartype
 def _reconstruct_nested_structure(
     *,
-    items: list[dict[str, Any]],
+    items: list[dict[str, Any]] | list[list[dict[str, Any]]],
 ) -> list[dict[str, Any]]:
+    """Reconstruct nested structure from flattened block items.
+
+    Handles both the old format (list[dict]) and new batched format
+    (list[list[dict]]).
     """
-    Reconstruct nested structure from flattened block items.
-    """
+    # If items is a list of batches, flatten it first
+    if items and isinstance(items[0], list):
+        # New batched format: list[list[dict]]
+        flattened_items: list[dict[str, Any]] = []
+        for batch in items:
+            if isinstance(batch, list):
+                flattened_items.extend(batch)
+            else:
+                flattened_items.append(batch)
+        items = flattened_items
+
     result: list[dict[str, Any]] = []
     for item in items:
-        block = item["block"]
-        block_type = block["type"]
+        if isinstance(item, dict):
+            block = item["block"]
+            block_type = block["type"]
 
-        # Handle blocks that can have children
-        if block_type in {
-            "paragraph",
-            "callout",
-            "bulleted_list_item",
-            "toggle",
-        }:
-            children = item.get("children", [])
-            nested_blocks = _reconstruct_nested_structure(
-                items=children,
-            )
-            block[block_type]["children"] = nested_blocks
+            # Handle blocks that can have children
+            if block_type in {
+                "paragraph",
+                "callout",
+                "bulleted_list_item",
+                "toggle",
+            }:
+                children = item.get("children", [])
+                nested_blocks = _reconstruct_nested_structure(
+                    items=children,
+                )
+                block[block_type]["children"] = nested_blocks
 
-        result.append(block)
+            result.append(block)
     return result
 
 
@@ -1474,6 +1488,71 @@ def test_batching_with_many_blocks(
 
     # Verify total blocks across all batches
     expected_total_blocks = 150
+    total_blocks = sum(len(batch) for batch in batched_structure)
+    assert total_blocks == expected_total_blocks, (
+        f"Expected {expected_total_blocks} total blocks, got {total_blocks}"
+    )
+
+    # Verify all blocks are headings
+    for batch in batched_structure:
+        for block in batch:
+            assert block["block"]["type"] == "heading_1", (
+                "All blocks should be heading_1"
+            )
+
+
+def test_batching_with_nested_many_blocks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Test that documents with more than 100 nested blocks get properly
+    batched.
+
+    This test creates a document with multiple top-level blocks to
+    demonstrate that the batching logic correctly handles the batch size
+    limit.
+    """
+    # Create a document with 250 headings to exceed the 100-block batch limit
+    # This will test the batching logic at the top level
+    rst_content = "\n".join(
+        [f"Section {i}\n{'=' * 20}" for i in range(1, 251)]
+    )
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+
+    output_file = app.outdir / "index.json"
+    with output_file.open(encoding="utf-8") as f:
+        batched_structure: list[list[dict[str, Any]]] = json.load(fp=f)
+
+    # Verify we have multiple batches (250 blocks should create 3 batches)
+    assert len(batched_structure) > 2, (
+        "Should have multiple batches for 250 blocks"
+    )
+
+    # Verify each batch has at most 100 blocks (Notion's limit)
+    notion_batch_limit = 100
+    for batch_idx, batch in enumerate(iterable=batched_structure):
+        assert len(batch) <= notion_batch_limit, (
+            f"Batch {batch_idx} has {len(batch)} blocks, "
+            f"should be <= {notion_batch_limit}"
+        )
+
+    # Verify total blocks across all batches
+    expected_total_blocks = 250
     total_blocks = sum(len(batch) for batch in batched_structure)
     assert total_blocks == expected_total_blocks, (
         f"Expected {expected_total_blocks} total blocks, got {total_blocks}"
