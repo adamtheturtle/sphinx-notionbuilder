@@ -4,7 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatchmethod
-from typing import Any, TypedDict
+from typing import Any
 
 from beartype import beartype
 from docutils import nodes
@@ -48,20 +48,7 @@ from ultimate_notion.rich_text import Text, text
 
 type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
 
-
-class _SerializedBlockTreeNode(TypedDict):
-    """
-    A node in the block tree representing a Notion block with its children.
-    """
-
-    block: dict[str, Any]
-    children: (
-        list["_SerializedBlockTreeNode"]
-        | list[list["_SerializedBlockTreeNode"]]
-    )
-
-
-type _BatchedBlockStructure = list[list[_SerializedBlockTreeNode]]
+type _BatchedBlockStructure = list[list[dict[str, Any]]]
 
 
 @beartype
@@ -289,6 +276,7 @@ class NotionTranslator(NodeVisitor):
         self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
+        self._batch_size = 100  # Notion's limit for blocks per request
 
     @beartype
     def _add_block_to_tree(
@@ -926,78 +914,30 @@ class NotionTranslator(NodeVisitor):
         *,  # `beartype` does not support recursive types, so we need to use a
         # simpler type.
         block_tree: dict[tuple[Block, int], Any],
-    ) -> list[_SerializedBlockTreeNode]:
+    ) -> _BatchedBlockStructure:
         """
-        Convert the block tree to a JSON-serializable format, ignoring IDs from
-        tuples.
+        Convert the block tree to a batched JSON-serializable format.
         """
-        result: list[_SerializedBlockTreeNode] = []
+        # First convert to flat list
+        flat_blocks: list[dict[str, Any]] = []
         for (block, _), subtree in block_tree.items():
             serialized_obj = block.obj_ref.serialize_for_api()
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
-            dumped_structure: _SerializedBlockTreeNode = {
-                "block": serialized_obj,
-                "children": self._convert_block_tree_to_json(
-                    block_tree=subtree
-                ),
-            }
-            result.append(dumped_structure)
-        return result
 
-    @beartype
-    def _apply_batching_to_blocks(
-        self,
-        *,
-        blocks: list[_SerializedBlockTreeNode],
-        batch_size: int,
-    ) -> list[_SerializedBlockTreeNode]:
-        """
-        Apply batching to blocks and their children recursively.
-        """
-        # Process each block and apply batching to children
-        result: list[_SerializedBlockTreeNode] = []
-        for block in blocks:
-            # Recursively apply batching to children
-            children = block["children"]
-            if (
-                isinstance(children, list)
-                and children
-                and isinstance(children[0], list)
-            ):
-                # Children are already batched, process each batch
-                processed_children: list[_SerializedBlockTreeNode] = []
-                for child_batch in children:
-                    if isinstance(child_batch, list):
-                        processed_batch = self._apply_batching_to_blocks(
-                            blocks=child_batch,
-                            batch_size=batch_size,
-                        )
-                        processed_children.extend(processed_batch)
-            # Children are not batched yet, process them normally
-            elif isinstance(children, list) and not (
-                children and isinstance(children[0], list)
-            ):
-                processed_children = self._apply_batching_to_blocks(
-                    blocks=children,
-                    batch_size=batch_size,
-                )
-            else:
-                processed_children = []
-
-            # Batch the children if they exceed the batch size
-            batched_children = _batch_list(
-                elements=processed_children,
-                batch_size=batch_size,
+            # Recursively convert children and apply batching
+            children_batches = self._convert_block_tree_to_json(
+                block_tree=subtree
             )
 
-            batched_block: _SerializedBlockTreeNode = {
-                "block": block["block"],
-                "children": batched_children,
+            dumped_structure: dict[str, Any] = {
+                "block": serialized_obj,
+                "children": children_batches,
             }
-            result.append(batched_block)
+            flat_blocks.append(dumped_structure)
 
-        return result
+        # Apply batching to the flat list
+        return _batch_list(elements=flat_blocks, batch_size=self._batch_size)
 
     @beartype
     def _convert_to_batched_json(
@@ -1009,17 +949,11 @@ class NotionTranslator(NodeVisitor):
         """
         Convert the block tree to a batched JSON structure for upload.
         """
-        # First convert to the normal structure
-        blocks = self._convert_block_tree_to_json(block_tree=block_tree)
+        # Set the batch size for this conversion
+        self._batch_size = batch_size
 
-        # Then apply batching to children recursively
-        processed_blocks = self._apply_batching_to_blocks(
-            blocks=blocks,
-            batch_size=batch_size,
-        )
-
-        # Finally, batch the top-level blocks
-        return _batch_list(elements=processed_blocks, batch_size=batch_size)
+        # Convert the block tree to batched JSON structure
+        return self._convert_block_tree_to_json(block_tree=block_tree)
 
     def depart_document(self, node: nodes.Element) -> None:
         """
