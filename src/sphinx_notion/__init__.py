@@ -514,6 +514,14 @@ class NotionTranslator(NodeVisitor):
         """
         rich_text = _create_rich_text_from_children(node=node)
 
+        max_heading_level = 3
+        if section_level > max_heading_level:
+            error_msg = (
+                f"Notion only supports heading levels 1-{max_heading_level}, "
+                f"but found heading level {section_level} on line {node.line}."
+            )
+            raise ValueError(error_msg)
+
         heading_levels: dict[int, type[UnoHeading[Any]]] = {
             1: UnoHeading1,
             2: UnoHeading2,

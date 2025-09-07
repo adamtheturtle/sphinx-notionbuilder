@@ -1381,3 +1381,43 @@ def test_literalinclude_with_caption(
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
     )
+
+
+def test_heading_level_4_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Heading level 4+ raises a clear error message.
+    """
+    rst_content = """
+        Main Title
+        ==========
+
+        Section Title
+        -------------
+
+        Subsection Title
+        ~~~~~~~~~~~~~~~~
+
+        Sub-subsection Title
+        ^^^^^^^^^^^^^^^^^^^^
+
+        Content under sub-subsection.
+    """
+
+    expected_message = (
+        "Notion only supports heading levels 1-3, but found heading level 4 "
+        "on line 11."
+    )
+    with pytest.raises(
+        expected_exception=ValueError,
+        match=expected_message,
+    ):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
