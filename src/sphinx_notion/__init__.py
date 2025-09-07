@@ -50,16 +50,7 @@ type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
 
 type _BatchedBlockStructure = list[list[dict[str, Any]]]
 
-
-@beartype
-def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
-    """
-    Split a list into batches of a given size.
-    """
-    return [
-        elements[start_index : start_index + batch_size]
-        for start_index in range(0, len(elements), batch_size)
-    ]
+type _BatchedBlockTree = list[list[tuple[Block, int]]]
 
 
 @beartype
@@ -274,9 +265,11 @@ class NotionTranslator(NodeVisitor):
         del builder
         super().__init__(document=document)
         self._block_tree: _BlockTree = {}
+        self._batched_tree: _BatchedBlockTree = []
         self.body: str
         self._section_level = 0
         self._batch_size = 100  # Notion's limit for blocks per request
+        self._current_batch: list[tuple[Block, int]] = []
 
     @beartype
     def _add_block_to_tree(
@@ -285,20 +278,42 @@ class NotionTranslator(NodeVisitor):
         block: Block,
         parent_path: list[tuple[Block, int]],
     ) -> None:
-        """Add a block to the block tree.
+        """Add a block to the batched tree structure.
 
-        First has to find the parent in the tree recursively.
+        If no parent path, add to current batch. If batch is full, start
+        new batch.
         """
         block_key = (block, id(block))
+
         if not parent_path:
+            # Top-level block - add to current batch
+            self._current_batch.append(block_key)
+
+            # If batch is full, finalize it and start a new one
+            if len(self._current_batch) >= self._batch_size:
+                self._batched_tree.append(self._current_batch)
+                self._current_batch = []
+
+            # Also maintain the original tree structure for children
             self._block_tree[block_key] = {}
             return
 
+        # For nested blocks, we still use the original tree structure
+        # The batching for children will be handled during serialization
         current_node = self._block_tree[parent_path[0]]
 
         for parent_key in parent_path[1:]:
             current_node = current_node[parent_key]
         current_node[block_key] = {}
+
+    @beartype
+    def _finalize_current_batch(self) -> None:
+        """
+        Finalize the current batch if it has any blocks.
+        """
+        if self._current_batch:
+            self._batched_tree.append(self._current_batch)
+            self._current_batch = []
 
     @beartype
     def _process_list_item_recursively(
@@ -914,46 +929,65 @@ class NotionTranslator(NodeVisitor):
         *,  # `beartype` does not support recursive types, so we need to use a
         # simpler type.
         block_tree: dict[tuple[Block, int], Any],
-    ) -> _BatchedBlockStructure:
+    ) -> list[dict[str, Any]]:
         """
-        Convert the block tree to a batched JSON-serializable format.
+        Convert the block tree to a JSON-serializable format.
         """
-        # First convert to flat list
-        flat_blocks: list[dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
         for (block, _), subtree in block_tree.items():
             serialized_obj = block.obj_ref.serialize_for_api()
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
 
-            # Recursively convert children and apply batching
-            children_batches = self._convert_block_tree_to_json(
-                block_tree=subtree
-            )
+            # Recursively convert children
+            children = self._convert_block_tree_to_json(block_tree=subtree)
 
             dumped_structure: dict[str, Any] = {
                 "block": serialized_obj,
-                "children": children_batches,
+                "children": children,
             }
-            flat_blocks.append(dumped_structure)
+            result.append(dumped_structure)
 
-        # Apply batching to the flat list
-        return _batch_list(elements=flat_blocks, batch_size=self._batch_size)
+        return result
 
     @beartype
-    def _convert_to_batched_json(
+    def _convert_tree_to_json(
         self,
         *,
         block_tree: dict[tuple[Block, int], Any],
-        batch_size: int,
     ) -> _BatchedBlockStructure:
         """
-        Convert the block tree to a batched JSON structure for upload.
+        Convert the tree structure to JSON format for upload.
         """
-        # Set the batch size for this conversion
-        self._batch_size = batch_size
+        # Finalize any remaining blocks in the current batch
+        self._finalize_current_batch()
 
-        # Convert the block tree to batched JSON structure
-        return self._convert_block_tree_to_json(block_tree=block_tree)
+        # Convert each batch to JSON
+        result: _BatchedBlockStructure = []
+        for batch in self._batched_tree:
+            batch_json: list[dict[str, Any]] = []
+            for block, _ in batch:
+                serialized_obj = block.obj_ref.serialize_for_api()
+
+                # Check if this block has children in the original tree
+                block_key = (block, id(block))
+                if block_tree.get(block_key):
+                    serialized_obj["has_children"] = True
+                    # Recursively convert children
+                    children = self._convert_block_tree_to_json(
+                        block_tree=block_tree[block_key]
+                    )
+                else:
+                    children = []
+
+                dumped_structure: dict[str, Any] = {
+                    "block": serialized_obj,
+                    "children": children,
+                }
+                batch_json.append(dumped_structure)
+            result.append(batch_json)
+
+        return result
 
     def depart_document(self, node: nodes.Element) -> None:
         """
@@ -961,18 +995,12 @@ class NotionTranslator(NodeVisitor):
         """
         del node
 
-        # See https://developers.notion.com/reference/request-limits#limits-for-property-values
-        # which shows that the max number of blocks per request is 100.
-        # Without batching, we get 413 errors.
-        notion_blocks_batch_size = 100
-
-        batched_structure = self._convert_to_batched_json(
+        json_structure = self._convert_tree_to_json(
             block_tree=self._block_tree,
-            batch_size=notion_blocks_batch_size,
         )
 
         json_output = json.dumps(
-            obj=batched_structure,
+            obj=json_structure,
             indent=2,
             ensure_ascii=False,
         )
