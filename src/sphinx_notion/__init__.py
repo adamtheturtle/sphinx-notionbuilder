@@ -518,7 +518,8 @@ class NotionTranslator(NodeVisitor):
         if section_level > max_heading_level:
             error_msg = (
                 f"Notion only supports heading levels 1-{max_heading_level}, "
-                f"but found heading level {section_level}. "
+                f"but found heading level {section_level} on line "
+                f"{node.line}. "
                 f"Please restructure your document to use only heading levels "
                 f"1-{max_heading_level}."
             )

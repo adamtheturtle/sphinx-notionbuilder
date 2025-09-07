@@ -1424,6 +1424,6 @@ def test_heading_level_4_error(
 
     with pytest.raises(
         expected_exception=ValueError,
-        match=r"heading level 4",
+        match=r"heading level 4 on line \d+\.",
     ):
         app.build()
