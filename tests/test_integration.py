@@ -1381,3 +1381,49 @@ def test_literalinclude_with_caption(
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
     )
+
+
+def test_heading_level_4_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Heading level 4+ raises a clear error message.
+    """
+    rst_content = """
+        Main Title
+        ==========
+
+        Section Title
+        -------------
+
+        Subsection Title
+        ~~~~~~~~~~~~~~~~
+
+        Sub-subsection Title
+        ^^^^^^^^^^^^^^^^^^^^
+
+        Content under sub-subsection.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+
+    (srcdir / "conf.py").write_text(data="")
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+
+    with pytest.raises(
+        expected_exception=ValueError,
+        match=r"heading level 4",
+    ):
+        app.build()
