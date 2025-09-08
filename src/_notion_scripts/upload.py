@@ -50,6 +50,9 @@ def upload_blocks_recursively(
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
         for details in block_details_list
     ]
+
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/119
+    # for removing this when Ultimate Notion supports batching.
     for block_batch in _batch_list(
         elements=first_level_blocks,
         batch_size=batch_size,

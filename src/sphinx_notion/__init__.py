@@ -283,6 +283,12 @@ class NotionTranslator(NodeVisitor):
         """Add a block to the block tree.
 
         First has to find the parent in the tree recursively.
+
+        See
+        https://github.com/ultimate-notion/ultimate-notion/issues/120
+        for
+        simplifying this (not having to build our own tree, just a list of top
+        level blocks).
         """
         block_key = (block, id(block))
         if not parent_path:
