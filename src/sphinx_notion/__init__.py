@@ -702,12 +702,12 @@ class NotionTranslator(NodeVisitor):
         sources: list[tuple[str, str, bool]] = node.attributes["sources"]
         assert isinstance(sources, list)
         primary_source = sources[0]
-        video_src, _, is_remote = primary_source
+        video_location, _, is_remote = primary_source
 
         if is_remote:
-            video_url = video_src
+            video_url = video_location
         else:
-            abs_path = Path(self.document.settings.env.srcdir) / video_src
+            abs_path = Path(self.document.settings.env.srcdir) / video_location
             video_url = abs_path.as_uri()
 
         caption_text = node.attributes["caption"]

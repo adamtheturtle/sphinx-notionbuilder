@@ -58,8 +58,8 @@ The following syntax is supported:
 - Block quotes
 - Note, warning, and tip admonitions
 - Collapsible sections (using sphinx-toolbox collapse directive)
-- Images (with URLs, not paths)
-- Videos (with URLs, not paths)
+- Images (with URLs or local paths)
+- Videos (with URLs or local paths)
 - Tables
 
 
