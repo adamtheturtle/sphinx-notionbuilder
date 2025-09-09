@@ -932,7 +932,7 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
-    def visit_video(self, node: video_node) -> None:
+    def visit_video(self, node: nodes.Element) -> None:
         """
         Process a video node into Notion blocks.
         """
@@ -1010,6 +1010,7 @@ class NotionBuilder(TextBuilder):
     out_suffix = ".json"
 
 
+@beartype
 def _visit_video_node_notion(
     translator: NotionTranslator,
     node: video_node,
@@ -1020,6 +1021,7 @@ def _visit_video_node_notion(
     translator.visit_video(node=node)
 
 
+@beartype
 def _depart_video_node_notion(
     translator: NotionTranslator,
     node: video_node,
@@ -1027,6 +1029,8 @@ def _depart_video_node_notion(
     """
     Depart from a video node (no action needed).
     """
+    del translator
+    del node
 
 
 @beartype
