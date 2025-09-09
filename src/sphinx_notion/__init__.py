@@ -1010,7 +1010,7 @@ class NotionBuilder(TextBuilder):
     out_suffix = ".json"
 
 
-def visit_video_node_notion(
+def _visit_video_node_notion(
     translator: NotionTranslator,
     node: video_node,
 ) -> None:
@@ -1020,7 +1020,7 @@ def visit_video_node_notion(
     translator.visit_video(node=node)
 
 
-def depart_video_node_notion(
+def _depart_video_node_notion(
     translator: NotionTranslator,
     node: video_node,
 ) -> None:
@@ -1039,7 +1039,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     app.add_node(
         node=video_node,
-        notion=(visit_video_node_notion, depart_video_node_notion),
+        notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
 
