@@ -4,6 +4,7 @@ Sphinx Notion Builder.
 
 import json
 from functools import singledispatchmethod
+from pathlib import Path
 from typing import Any, TypedDict
 
 from beartype import beartype
@@ -674,8 +675,12 @@ class NotionTranslator(NodeVisitor):
         del section_level
 
         image_url = node.attributes["uri"]
+        assert isinstance(image_url, str)
 
-        # Create the image block (alt text is not used as caption)
+        if "://" not in image_url:
+            abs_path = Path(self.document.settings.env.srcdir) / image_url
+            image_url = abs_path.as_uri()
+
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
