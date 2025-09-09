@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Required, TypedDict
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import click
 from beartype import beartype
@@ -41,7 +43,6 @@ def _first_level_block_from_details(
     *,
     details: _SerializedBlockTreeNode,
     session: Session,
-    source_dir: Path,
 ) -> Block:
     """Create a Block from a serialized block details.
 
@@ -51,13 +52,11 @@ def _first_level_block_from_details(
         UnoObjAPIBlock.model_validate(obj=details["block"])
     )
 
-    # Check if this is an image block with a file:// URL
     if isinstance(block, UnoImage) and block.url.startswith("file://"):
-        # Extract the file path from the file:// URL
-        file_path = Path(block.url[7:])  # Remove "file://" prefix
-        full_path = source_dir / file_path
-        with full_path.open(mode="rb") as f:
-            uploaded_file = session.upload(file=f, file_name=full_path.name)
+        parsed = urlparse(url=block.url)
+        file_path = Path(url2pathname(pathname=parsed.path))
+        with file_path.open(mode="rb") as f:
+            uploaded_file = session.upload(file=f, file_name=file_path.name)
 
         uploaded_file.wait_until_uploaded()
         block = UnoImage(file=uploaded_file, caption=block.caption)
@@ -71,7 +70,6 @@ def upload_blocks_recursively(
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
     batch_size: int,
-    source_dir: Path,
 ) -> None:
     """
     Upload blocks recursively, handling the new structure with block and
@@ -81,7 +79,6 @@ def upload_blocks_recursively(
         _first_level_block_from_details(
             details=details,
             session=session,
-            source_dir=source_dir,
         )
         for details in block_details_list
     ]
@@ -106,7 +103,6 @@ def upload_blocks_recursively(
                 block_details_list=block_details["children"],
                 session=session,
                 batch_size=batch_size,
-                source_dir=source_dir,
             )
 
 
@@ -132,24 +128,12 @@ def upload_blocks_recursively(
     help="Title of the page to update (or create if it does not exist)",
     required=True,
 )
-@click.option(
-    "--source-dir",
-    help="Source directory for resolving local file paths",
-    required=True,
-    type=click.Path(
-        exists=True,
-        path_type=Path,
-        file_okay=False,
-        dir_okay=True,
-    ),
-)
 @beartype
 def main(
     *,
     file: Path,
     parent_page_id: str,
     title: str,
-    source_dir: Path,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -188,6 +172,5 @@ def main(
         block_details_list=blocks,
         session=session,
         batch_size=notion_blocks_batch_size,
-        source_dir=source_dir,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
