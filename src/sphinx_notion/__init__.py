@@ -702,11 +702,11 @@ class NotionTranslator(NodeVisitor):
         # Get the first source (primary video file)
         sources = node.attributes["sources"]
         assert isinstance(sources, list)
-        assert len(sources) > 0
 
         # sources is a list of tuples: (src, type, is_remote)
         video_src, _, is_remote = sources[0]
         assert isinstance(video_src, str)
+        assert isinstance(is_remote, bool)
 
         if not is_remote:
             # Convert local path to absolute URI
@@ -949,6 +949,17 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
+    def process_video_node(self, node: video_node) -> None:
+        """
+        Process a video node into Notion blocks (public method for external
+        use).
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
     def visit_container(self, node: nodes.Element) -> None:
         """
         Handle container nodes.
@@ -1017,6 +1028,25 @@ class NotionBuilder(TextBuilder):
     out_suffix = ".json"
 
 
+def visit_video_node_notion(
+    translator: NotionTranslator,
+    node: video_node,
+) -> None:
+    """
+    Visit a video node and process it into Notion blocks.
+    """
+    translator.process_video_node(node=node)
+
+
+def depart_video_node_notion(
+    translator: NotionTranslator,
+    node: video_node,
+) -> None:
+    """
+    Depart from a video node (no action needed).
+    """
+
+
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
@@ -1025,37 +1055,9 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
-    # Add notion builder support to sphinxcontrib-video if it's available
-    # This needs to be done after sphinxcontrib-video is loaded
-    def add_video_support() -> None:
-        try:
-            # Create a visitor that processes the video node directly
-            def visit_video_node_notion(translator: Any, node: Any) -> None:
-                # Process the node directly using the _process_node_to_blocks method
-                translator._process_node_to_blocks(
-                    node,
-                    section_level=translator._section_level,
-                    parent_path=[],
-                )
-                raise nodes.SkipNode
-
-            def depart_video_node_notion(translator: Any, node: Any) -> None:
-                # Do nothing
-                pass
-
-            # Override the notion builder registration for video nodes
-            app.add_node(
-                node=video_node,
-                notion=(visit_video_node_notion, depart_video_node_notion),
-            )
-        except ImportError:
-            # sphinxcontrib-video is not available, skip
-            pass
-
-    # Connect to the env-before-read-docs event to ensure this runs after all extensions are loaded
-    # app.connect(
-    #     event="env-before-read-docs",
-    #     callback=lambda _, __, ___: add_video_support(),
-    # )
+    app.add_node(
+        node=video_node,
+        notion=(visit_video_node_notion, depart_video_node_notion),
+    )
 
     return {"parallel_read_safe": True}
