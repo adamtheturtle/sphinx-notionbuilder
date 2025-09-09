@@ -49,7 +49,7 @@ def _first_level_block_from_details(
 
 
 @beartype
-def upload_blocks_recursively(
+def _upload_blocks_recursively(
     parent: ChildrenMixin[Any],
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
@@ -79,7 +79,7 @@ def upload_blocks_recursively(
         if block_details["children"]:
             block_obj = session.get_block(block_ref=uploaded_block.id)
             assert isinstance(block_obj, ChildrenMixin)
-            upload_blocks_recursively(
+            _upload_blocks_recursively(
                 parent=block_obj,
                 block_details_list=block_details["children"],
                 session=session,
@@ -148,7 +148,7 @@ def main(
     # which shows that the max number of blocks per request is 100.
     # Without batching, we get 413 errors.
     notion_blocks_batch_size = 100
-    upload_blocks_recursively(
+    _upload_blocks_recursively(
         parent=page,
         block_details_list=blocks,
         session=session,
