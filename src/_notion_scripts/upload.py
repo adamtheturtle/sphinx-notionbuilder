@@ -88,7 +88,20 @@ def _process_local_files(
 
 
 @beartype
-def _upload_blocks_recursively(
+def _first_level_block_from_details(
+    *,
+    details: _SerializedBlockTreeNode,
+) -> Block:
+    """
+    Create a Block from a serialized block details.
+    """
+    return Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=details["block"])
+    )
+
+
+@beartype
+def upload_blocks_recursively(
     parent: ChildrenMixin[Any],
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
@@ -99,7 +112,7 @@ def _upload_blocks_recursively(
     children.
     """
     first_level_blocks: list[Block] = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
+        _first_level_block_from_details(details=details)
         for details in block_details_list
     ]
 
@@ -118,7 +131,7 @@ def _upload_blocks_recursively(
         if block_details["children"]:
             block_obj = session.get_block(block_ref=uploaded_block.id)
             assert isinstance(block_obj, ChildrenMixin)
-            _upload_blocks_recursively(
+            upload_blocks_recursively(
                 parent=block_obj,
                 block_details_list=block_details["children"],
                 session=session,
@@ -206,7 +219,7 @@ def main(
     # which shows that the max number of blocks per request is 100.
     # Without batching, we get 413 errors.
     notion_blocks_batch_size = 100
-    _upload_blocks_recursively(
+    upload_blocks_recursively(
         parent=page,
         block_details_list=blocks,
         session=session,
