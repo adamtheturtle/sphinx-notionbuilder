@@ -46,10 +46,11 @@ def _first_level_block_from_details(
 ) -> Block:
     """Create a Block from a serialized block details.
 
-    If the block has a file_to_upload, upload it to Notion and return an
-    Image block with the uploaded file.
+    Upload any required local files.
     """
-    # Check if this block has a file to upload
+    block = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=details["block"])
+    )
     if "file_to_upload" in details:
         file_path = details["file_to_upload"]
         full_path = source_dir / file_path
@@ -57,11 +58,10 @@ def _first_level_block_from_details(
             uploaded_file = session.upload(file=f, file_name=full_path.name)
 
         uploaded_file.wait_until_uploaded()
-        return UnoImage(file=uploaded_file, caption=None)
+        assert isinstance(block, UnoImage)
+        block = UnoImage(file=uploaded_file, caption=block.caption)
 
-    return Block.wrap_obj_ref(
-        UnoObjAPIBlock.model_validate(obj=details["block"])
-    )
+    return block
 
 
 @beartype

@@ -274,7 +274,6 @@ class NotionTranslator(NodeVisitor):
         self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
-        # Map block IDs to local files that need to be uploaded
         self._block_files_to_upload: dict[int, Path] = {}
 
     @beartype
@@ -298,7 +297,6 @@ class NotionTranslator(NodeVisitor):
         """
         block_key = (block, id(block))
 
-        # Track file to upload for this block
         if file_to_upload is not None:
             self._block_files_to_upload[id(block)] = file_to_upload
 
