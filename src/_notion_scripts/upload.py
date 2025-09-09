@@ -12,6 +12,7 @@ import click
 from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
+from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
@@ -33,6 +34,65 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
         elements[start_index : start_index + batch_size]
         for start_index in range(0, len(elements), batch_size)
     ]
+
+
+@beartype
+def _process_local_files(
+    *,
+    block_details_list: list[_SerializedBlockTreeNode],
+    session: Session,
+    source_dir: Path,
+) -> None:
+    """Process local files in the block details and upload them to Notion.
+
+    This modifies the block_details_list in place, replacing local file
+    references with uploaded file references.
+    """
+    for block_details in block_details_list:
+        block = block_details["block"]
+
+        # Check if this is an image block with a local file
+        if (
+            block.get("type") == "image"
+            and "image" in block
+            and "external" in block["image"]
+        ):
+            external_data = block["image"]["external"]
+            if external_data.get("is_local_file"):
+                file_path = external_data["file_path"]
+                # Resolve the file path relative to the source directory
+                full_path = source_dir / file_path
+                if full_path.exists():
+                    # Upload the file to Notion
+                    with full_path.open("rb") as f:
+                        uploaded_file = session.upload(
+                            file=f,
+                            file_name=full_path.name,
+                        )
+
+                    # Wait for the upload to complete
+                    uploaded_file.wait_until_uploaded()
+                    # Create a new Ultimate Notion Image block with the uploaded file
+                    # This will replace the entire block structure
+                    new_image_block = UnoImage(
+                        file=uploaded_file, caption=None
+                    )
+                    # Replace the entire block with the new one
+                    block_details["block"] = (
+                        new_image_block.obj_ref.serialize_for_api()
+                    )
+                else:
+                    sys.stderr.write(
+                        f"Warning: Local file not found: {full_path}\n"
+                    )
+
+        # Recursively process children
+        if block_details["children"]:
+            _process_local_files(
+                block_details_list=block_details["children"],
+                session=session,
+                source_dir=source_dir,
+            )
 
 
 @beartype
@@ -93,12 +153,23 @@ def upload_blocks_recursively(
     help="Title of the page to update (or create if it does not exist)",
     required=True,
 )
+@click.option(
+    "--source-dir",
+    help="Source directory for resolving local file paths",
+    type=click.Path(
+        exists=True,
+        path_type=Path,
+        file_okay=False,
+        dir_okay=True,
+    ),
+)
 @beartype
 def main(
     *,
     file: Path,
     parent_page_id: str,
     title: str,
+    source_dir: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -106,6 +177,14 @@ def main(
     session = Session()
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
+
+    # Process local files if source directory is provided
+    if source_dir is not None:
+        _process_local_files(
+            block_details_list=blocks,
+            session=session,
+            source_dir=source_dir,
+        )
 
     parent_page = session.get_page(page_ref=parent_page_id)
     pages_matching_title = [

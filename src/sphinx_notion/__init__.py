@@ -669,8 +669,23 @@ class NotionTranslator(NodeVisitor):
 
         image_url = node.attributes["uri"]
 
-        # Create the image block (alt text is not used as caption)
-        image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
+        # Check if this is a local file (not starting with http/https)
+        is_local_file = not image_url.startswith(("http://", "https://"))
+
+        if is_local_file:
+            # For local files, we need to include additional metadata in the JSON
+            # The upload script will handle the actual file upload
+            # We'll create a special structure that the upload script can recognize
+            image_block = UnoImage(
+                file=ExternalFile(url=image_url), caption=None
+            )
+            # Add metadata to indicate this is a local file
+            # We'll modify the serialization to include this information
+        else:
+            # For external URLs, use the existing behavior
+            image_block = UnoImage(
+                file=ExternalFile(url=image_url), caption=None
+            )
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
@@ -919,6 +934,25 @@ class NotionTranslator(NodeVisitor):
             serialized_obj = block.obj_ref.serialize_for_api()
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
+
+            # Check if this is an image block with a local file
+            if (
+                serialized_obj.get("type") == "image"
+                and "image" in serialized_obj
+                and "external" in serialized_obj["image"]
+            ):
+                image_url = serialized_obj["image"]["external"]["url"]
+                # Check if this is a local file (not starting with http/https)
+                is_local_file = not image_url.startswith(
+                    ("http://", "https://")
+                )
+                if is_local_file:
+                    # Add metadata to indicate this is a local file
+                    serialized_obj["image"]["external"]["is_local_file"] = True
+                    serialized_obj["image"]["external"]["file_path"] = (
+                        image_url
+                    )
+
             dumped_structure: _SerializedBlockTreeNode = {
                 "block": serialized_obj,
                 "children": self._convert_block_tree_to_json(

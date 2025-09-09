@@ -2,6 +2,7 @@
 Integration tests for the Sphinx Notion Builder functionality.
 """
 
+import base64
 import json
 import textwrap
 from collections.abc import Callable
@@ -1421,3 +1422,71 @@ def test_heading_level_4_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_local_image_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Local image files are handled with file path information in JSON.
+    """
+    # Create a test image file
+    test_image_path = tmp_path / "test_image.png"
+    # Create a simple 1x1 pixel PNG image (base64 encoded)
+    png_data = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
+    test_image_path.write_bytes(png_data)
+
+    rst_content = f"""
+        Regular paragraph.
+
+        .. image:: {test_image_path.name}
+
+        Another paragraph.
+    """
+
+    # Test that the JSON includes local file metadata
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").write_text(data="")
+
+    cleaned_content = textwrap.dedent(text=rst_content).strip()
+    (srcdir / "index.rst").write_text(data=cleaned_content)
+
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+
+    output_file = app.outdir / "index.json"
+    with output_file.open(encoding="utf-8") as f:
+        generated_json: list[dict[str, Any]] = json.load(fp=f)
+
+    # Find the image block in the generated JSON
+    image_block = None
+    for block_data in generated_json:
+        if block_data["block"]["type"] == "image":
+            image_block = block_data["block"]
+            break
+
+    assert image_block is not None, "Image block not found in generated JSON"
+
+    # Check that the image block has local file metadata
+    image_data = image_block["image"]
+    assert "external" in image_data, "Image should have external data"
+    external_data = image_data["external"]
+    assert external_data["url"] == test_image_path.name, (
+        f"Expected {test_image_path.name}, got {external_data['url']}"
+    )
+    assert external_data.get("is_local_file") is True, (
+        "Image should be marked as local file"
+    )
+    assert external_data.get("file_path") == test_image_path.name, (
+        "Image should have file_path metadata"
+    )
