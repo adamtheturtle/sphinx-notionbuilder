@@ -156,6 +156,7 @@ Some key features:
 * Works with bullet points like this one
 * Now supports note, warning, and tip admonitions!
 * Supports images with URLs
+* Supports videos with URLs and local files
 
 Heading 2 with *italic*
 -----------------------
@@ -218,6 +219,36 @@ Here's some text before the image.
 .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
 
 And here's some text after the image.
+
+Video Examples
+--------------
+
+Simple Video
+~~~~~~~~~~~~
+
+.. video:: https://www.w3schools.com/html/mov_bbb.mp4
+
+Video with Caption
+~~~~~~~~~~~~~~~~~~
+
+.. video:: https://www.w3schools.com/html/mov_bbb.mp4
+   :caption: Sample video demonstrating video support
+
+Local Video Example
+~~~~~~~~~~~~~~~~~~~
+
+.. video:: _static/test-video.mp4
+   :caption: Local test video file
+
+Mixed Content with Videos
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's some text before the video.
+
+.. video:: https://www.w3schools.com/html/mov_bbb.mp4
+   :caption: Video embedded in content
+
+And here's some text after the video.
 
 .. collapse:: Long code block
 

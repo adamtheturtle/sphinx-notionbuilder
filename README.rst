@@ -42,8 +42,8 @@ For video support, also add the sphinxcontrib-video extension:
    """Configuration for Sphinx."""
 
    extensions = [
+       "sphinxcontrib.video",  # Must be before sphinx_notion
        "sphinx_notion",
-       "sphinxcontrib.video",
    ]
 
 Supported markup

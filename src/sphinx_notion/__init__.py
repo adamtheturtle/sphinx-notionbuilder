@@ -1046,6 +1046,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_node(
         node=video_node,
         notion=(visit_video_node_notion, depart_video_node_notion),
+        override=True,
     )
 
     return {"parallel_read_safe": True}
