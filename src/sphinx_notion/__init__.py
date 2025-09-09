@@ -1029,8 +1029,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     # This needs to be done after sphinxcontrib-video is loaded
     def add_video_support() -> None:
         try:
-            from sphinxcontrib.video import video_node
-
             # Create a visitor that processes the video node directly
             def visit_video_node_notion(translator: Any, node: Any) -> None:
                 # Process the node directly using the _process_node_to_blocks method
@@ -1047,7 +1045,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
             # Override the notion builder registration for video nodes
             app.add_node(
-                video_node,
+                node=video_node,
                 notion=(visit_video_node_notion, depart_video_node_notion),
             )
         except ImportError:
@@ -1055,8 +1053,9 @@ def setup(app: Sphinx) -> ExtensionMetadata:
             pass
 
     # Connect to the env-before-read-docs event to ensure this runs after all extensions are loaded
-    app.connect(
-        "env-before-read-docs", lambda app, env, docnames: add_video_support()
-    )
+    # app.connect(
+    #     event="env-before-read-docs",
+    #     callback=lambda _, __, ___: add_video_support(),
+    # )
 
     return {"parallel_read_safe": True}

@@ -146,7 +146,6 @@ def test_single_paragraph(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -181,7 +180,6 @@ def test_multiple_paragraphs(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -224,7 +222,6 @@ def test_inline_formatting(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -250,7 +247,6 @@ def test_single_heading(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -293,7 +289,6 @@ def test_multiple_heading_levels(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -328,7 +323,6 @@ def test_heading_with_formatting(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -359,7 +353,6 @@ def test_simple_link(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -398,7 +391,6 @@ def test_multiple_links(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -431,7 +423,6 @@ def test_link_in_heading(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -474,7 +465,6 @@ def test_mixed_formatting_with_links(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -506,7 +496,6 @@ def test_unnamed_link_with_backticks(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -532,7 +521,6 @@ def test_simple_quote(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -564,7 +552,6 @@ def test_multiline_quote(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -599,7 +586,6 @@ def test_table_of_contents(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -627,7 +613,6 @@ def test_toctree_directive(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -656,7 +641,6 @@ def test_simple_code_block(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -711,7 +695,6 @@ def test_code_block_language_mapping(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -738,7 +721,6 @@ def test_flat_bullet_list(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -770,7 +752,6 @@ def test_bullet_list_with_inline_formatting(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -812,7 +793,6 @@ def test_admonition_single_line(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -865,7 +845,6 @@ def test_admonition_multiline(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -914,7 +893,6 @@ def test_admonition_with_code_block(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -962,7 +940,6 @@ def test_admonition_with_code_block_first(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1008,7 +985,6 @@ def test_admonition_with_bullet_points(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1149,7 +1125,6 @@ def test_simple_table(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1181,7 +1156,6 @@ def test_table_without_header_row(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1216,7 +1190,6 @@ def test_table_inline_formatting(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1243,7 +1216,6 @@ def test_simple_image(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1272,7 +1244,6 @@ def test_image_with_alt_text_only(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
