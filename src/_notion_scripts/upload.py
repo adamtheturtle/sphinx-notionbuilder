@@ -64,7 +64,7 @@ def _first_level_block_from_details(
                 )
 
             uploaded_file.wait_until_uploaded()
-            block = UnoImage(file=uploaded_file, caption=block.caption)
+            return UnoImage(file=uploaded_file, caption=block.caption)
     elif isinstance(block, UnoVideo):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
@@ -76,7 +76,7 @@ def _first_level_block_from_details(
                 )
 
             uploaded_file.wait_until_uploaded()
-            block = UnoVideo(file=uploaded_file, caption=block.caption)
+            return UnoVideo(file=uploaded_file, caption=block.caption)
 
     return block
 
