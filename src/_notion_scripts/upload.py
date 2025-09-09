@@ -80,10 +80,7 @@ def upload_blocks_recursively(
     children.
     """
     first_level_blocks: list[Block] = [
-        _first_level_block_from_details(
-            details=details,
-            session=session,
-        )
+        _first_level_block_from_details(details=details, session=session)
         for details in block_details_list
     ]
 
