@@ -6,7 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import json
 import sys
 from pathlib import Path
-from typing import Any, Required, TypedDict
+from typing import Any, TypedDict
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -23,8 +23,8 @@ class _SerializedBlockTreeNode(TypedDict):
     A node in the block tree representing a Notion block with its children.
     """
 
-    block: Required[dict[str, Any]]
-    children: Required[list["_SerializedBlockTreeNode"]]
+    block: dict[str, Any]
+    children: list["_SerializedBlockTreeNode"]
 
 
 @beartype
