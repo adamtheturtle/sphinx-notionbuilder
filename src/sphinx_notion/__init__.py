@@ -701,9 +701,7 @@ class NotionTranslator(NodeVisitor):
 
         image_url = node.attributes["uri"]
 
-        # Check if this is a local file (not starting with http/https)
-        is_local_file = not image_url.startswith(("http://", "https://"))
-        file_to_upload = Path(image_url) if is_local_file else None
+        file_to_upload = None if "://" in image_url else Path(image_url)
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(
