@@ -5,7 +5,7 @@ Sphinx Notion Builder.
 import json
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Any, Required, TypedDict
+from typing import Any, TypedDict
 
 from beartype import beartype
 from docutils import nodes
@@ -55,8 +55,8 @@ class _SerializedBlockTreeNode(TypedDict):
     A node in the block tree representing a Notion block with its children.
     """
 
-    block: Required[dict[str, Any]]
-    children: Required[list["_SerializedBlockTreeNode"]]
+    block: dict[str, Any]
+    children: list["_SerializedBlockTreeNode"]
 
 
 @beartype
