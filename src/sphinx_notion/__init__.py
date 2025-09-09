@@ -699,27 +699,19 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
 
-        # Get the first source (primary video file)
-        sources = node.attributes["sources"]
+        sources: list[tuple[str, str, bool]] = node.attributes["sources"]
         assert isinstance(sources, list)
+        primary_source = sources[0]
+        video_src, _, is_remote = primary_source
 
-        # sources is a list of tuples: (src, type, is_remote)
-        video_src, _, is_remote = sources[0]
-        assert isinstance(video_src, str)
-        assert isinstance(is_remote, bool)
-
-        if not is_remote:
-            # Convert local path to absolute URI
+        if is_remote:
+            video_url = video_src
+        else:
             abs_path = Path(self.document.settings.env.srcdir) / video_src
             video_url = abs_path.as_uri()
-        else:
-            video_url = video_src
 
-        # Get caption if available
         caption_text = node.attributes["caption"]
-        caption = None
-        if caption_text:
-            caption = text(text=caption_text)
+        caption = text(text=caption_text) if caption_text else None
 
         video_block = UnoVideo(
             file=ExternalFile(url=video_url),
