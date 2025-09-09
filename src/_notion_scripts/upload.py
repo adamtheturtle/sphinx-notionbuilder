@@ -38,63 +38,30 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 
 
 @beartype
-def _process_local_files(
-    *,
-    block_details_list: list[_SerializedBlockTreeNode],
-    session: Session,
-    source_dir: Path,
-) -> None:
-    """Process local files in the block details and upload them to Notion.
-
-    This modifies the block_details_list in place, replacing local file
-    references with uploaded file references.
-    """
-    for block_details in block_details_list:
-        # Check if this block has a file to upload
-        if "file_to_upload" in block_details:
-            file_path = block_details["file_to_upload"]
-            # Resolve the file path relative to the source directory
-            full_path = source_dir / file_path
-            # Upload the file to Notion
-            with full_path.open(mode="rb") as f:
-                uploaded_file = session.upload(
-                    file=f,
-                    file_name=full_path.name,
-                )
-
-            # Wait for the upload to complete
-            uploaded_file.wait_until_uploaded()
-            # Create a new Ultimate Notion Image block with the uploaded
-            # file.
-            # This will replace the entire block structure
-            new_image_block = UnoImage(
-                file=uploaded_file,
-                caption=None,
-            )
-            # Replace the entire block with the new one
-            block_details["block"] = (
-                new_image_block.obj_ref.serialize_for_api()
-            )
-            # Remove the file_to_upload field since it's been processed
-            del block_details["file_to_upload"]
-
-        # Recursively process children
-        if block_details["children"]:
-            _process_local_files(
-                block_details_list=block_details["children"],
-                session=session,
-                source_dir=source_dir,
-            )
-
-
-@beartype
 def _first_level_block_from_details(
     *,
     details: _SerializedBlockTreeNode,
+    session: Session,
+    source_dir: Path | None = None,
 ) -> Block:
+    """Create a Block from a serialized block details.
+
+    If the block has a file_to_upload, upload it to Notion and return an
+    Image block with the uploaded file.
     """
-    Create a Block from a serialized block details.
-    """
+    # Check if this block has a file to upload
+    if "file_to_upload" in details and source_dir is not None:
+        file_path = details["file_to_upload"]
+        full_path = source_dir / file_path
+        with full_path.open(mode="rb") as f:
+            uploaded_file = session.upload(
+                file=f,
+                file_name=full_path.name,
+            )
+
+        uploaded_file.wait_until_uploaded()
+        return UnoImage(file=uploaded_file, caption=None)
+
     return Block.wrap_obj_ref(
         UnoObjAPIBlock.model_validate(obj=details["block"])
     )
@@ -106,13 +73,18 @@ def upload_blocks_recursively(
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
     batch_size: int,
+    source_dir: Path | None = None,
 ) -> None:
     """
     Upload blocks recursively, handling the new structure with block and
     children.
     """
     first_level_blocks: list[Block] = [
-        _first_level_block_from_details(details=details)
+        _first_level_block_from_details(
+            details=details,
+            session=session,
+            source_dir=source_dir,
+        )
         for details in block_details_list
     ]
 
@@ -136,6 +108,7 @@ def upload_blocks_recursively(
                 block_details_list=block_details["children"],
                 session=session,
                 batch_size=batch_size,
+                source_dir=source_dir,
             )
 
 
@@ -186,14 +159,6 @@ def main(
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
-    # Process local files if source directory is provided
-    if source_dir is not None:
-        _process_local_files(
-            block_details_list=blocks,
-            session=session,
-            source_dir=source_dir,
-        )
-
     parent_page = session.get_page(page_ref=parent_page_id)
     pages_matching_title = [
         child_page
@@ -224,5 +189,6 @@ def main(
         block_details_list=blocks,
         session=session,
         batch_size=notion_blocks_batch_size,
+        source_dir=source_dir,
     )
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
