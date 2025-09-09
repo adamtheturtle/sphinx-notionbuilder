@@ -948,8 +948,8 @@ class NotionTranslator(NodeVisitor):
                     and "external" in serialized_obj["image"]
                 ):
                     serialized_obj["image"]["external"]["is_local_file"] = True
-                    serialized_obj["image"]["external"]["file_path"] = str(
-                        file_path
+                    serialized_obj["image"]["external"]["file_path"] = (
+                        file_path.as_posix()
                     )
 
             dumped_structure: _SerializedBlockTreeNode = {
