@@ -14,6 +14,7 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
+from sphinxcontrib.video import video_node
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -43,6 +44,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
+from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
@@ -687,6 +689,46 @@ class NotionTranslator(NodeVisitor):
     @_process_node_to_blocks.register
     def _(
         self,
+        node: video_node,
+        *,
+        section_level: int,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """
+        Process video nodes by creating Notion Video blocks.
+        """
+        del section_level
+
+        # Get the first source (primary video file)
+        sources = node.attributes["sources"]
+        assert isinstance(sources, list)
+        assert len(sources) > 0
+
+        # sources is a list of tuples: (src, type, is_remote)
+        video_src, _, is_remote = sources[0]
+        assert isinstance(video_src, str)
+
+        if not is_remote:
+            # Convert local path to absolute URI
+            abs_path = Path(self.document.settings.env.srcdir) / video_src
+            video_url = abs_path.as_uri()
+        else:
+            video_url = video_src
+
+        # Get caption if available
+        caption_text = node.attributes.get("caption", "")
+        caption = None
+        if caption_text:
+            caption = text(text=caption_text)
+
+        video_block = UnoVideo(
+            file=ExternalFile(url=video_url), caption=caption
+        )
+        self._add_block_to_tree(block=video_block, parent_path=parent_path)
+
+    @_process_node_to_blocks.register
+    def _(
+        self,
         node: nodes.container,
         *,
         section_level: int,
@@ -895,6 +937,18 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
+    def visit_video_node(self, node: video_node) -> None:
+        """
+        Handle video nodes by creating Notion Video blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
     def visit_container(self, node: nodes.Element) -> None:
         """
         Handle container nodes.
@@ -970,5 +1024,39 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     """
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
+
+    # Add notion builder support to sphinxcontrib-video if it's available
+    # This needs to be done after sphinxcontrib-video is loaded
+    def add_video_support() -> None:
+        try:
+            from sphinxcontrib.video import video_node
+
+            # Create a visitor that processes the video node directly
+            def visit_video_node_notion(translator: Any, node: Any) -> None:
+                # Process the node directly using the _process_node_to_blocks method
+                translator._process_node_to_blocks(
+                    node,
+                    section_level=translator._section_level,
+                    parent_path=[],
+                )
+                raise nodes.SkipNode
+
+            def depart_video_node_notion(translator: Any, node: Any) -> None:
+                # Do nothing
+                pass
+
+            # Override the notion builder registration for video nodes
+            app.add_node(
+                video_node,
+                notion=(visit_video_node_notion, depart_video_node_notion),
+            )
+        except ImportError:
+            # sphinxcontrib-video is not available, skip
+            pass
+
+    # Connect to the env-before-read-docs event to ensure this runs after all extensions are loaded
+    app.connect(
+        "env-before-read-docs", lambda app, env, docnames: add_video_support()
+    )
 
     return {"parallel_read_safe": True}

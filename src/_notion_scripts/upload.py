@@ -15,6 +15,7 @@ from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
@@ -64,6 +65,18 @@ def _first_level_block_from_details(
 
             uploaded_file.wait_until_uploaded()
             block = UnoImage(file=uploaded_file, caption=block.caption)
+    elif isinstance(block, UnoVideo):
+        parsed = urlparse(url=block.url)
+        if parsed.scheme == "file":
+            file_path = Path(url2pathname(pathname=parsed.path))
+            with file_path.open(mode="rb") as f:
+                uploaded_file = session.upload(
+                    file=f,
+                    file_name=file_path.name,
+                )
+
+            uploaded_file.wait_until_uploaded()
+            block = UnoVideo(file=uploaded_file, caption=block.caption)
 
     return block
 

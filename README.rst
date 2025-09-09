@@ -35,6 +35,17 @@ For collapsible sections (toggle blocks), also add the sphinx-toolbox collapse e
        "sphinx_toolbox.collapse",
    ]
 
+For video support, also add the sphinxcontrib-video extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_notion",
+       "sphinxcontrib.video",
+   ]
+
 Supported markup
 ----------------
 
@@ -48,6 +59,7 @@ The following syntax is supported:
 - Note, warning, and tip admonitions
 - Collapsible sections (using sphinx-toolbox collapse directive)
 - Images (with URLs, not paths)
+- Videos (with URLs, not paths)
 - Tables
 
 
