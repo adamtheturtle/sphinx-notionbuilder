@@ -282,7 +282,7 @@ class NotionTranslator(NodeVisitor):
         *,
         block: Block,
         parent_path: list[tuple[Block, int]],
-        file_to_upload: Path | None = None,
+        file_to_upload: Path | None,
     ) -> None:
         """Add a block to the block tree.
 
@@ -327,6 +327,7 @@ class NotionTranslator(NodeVisitor):
         self._add_block_to_tree(
             block=block,
             parent_path=parent_path,
+            file_to_upload=None,
         )
 
         bullet_only_msg = (
@@ -402,7 +403,9 @@ class NotionTranslator(NodeVisitor):
                 )
             row_idx += 1
 
-        self._add_block_to_tree(block=table, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=table, parent_path=parent_path, file_to_upload=None
+        )
 
     @_process_node_to_blocks.register
     def _(
@@ -418,7 +421,9 @@ class NotionTranslator(NodeVisitor):
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text=rich_text)
-        self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=paragraph_block, parent_path=parent_path, file_to_upload=None
+        )
 
     @_process_node_to_blocks.register
     def _(
@@ -434,7 +439,9 @@ class NotionTranslator(NodeVisitor):
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text=rich_text)
-        self._add_block_to_tree(block=quote_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=quote_block, parent_path=parent_path, file_to_upload=None
+        )
 
     @_process_node_to_blocks.register
     def _(
@@ -454,7 +461,9 @@ class NotionTranslator(NodeVisitor):
             pygments_lang=pygments_lang,
         )
         code_block = UnoCode(text=code_text, language=language)
-        self._add_block_to_tree(block=code_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=code_block, parent_path=parent_path, file_to_upload=None
+        )
 
     @_process_node_to_blocks.register
     def _(
@@ -496,7 +505,9 @@ class NotionTranslator(NodeVisitor):
         # a callout with no icon.
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
-        self._add_block_to_tree(block=toc_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=toc_block, parent_path=parent_path, file_to_upload=None
+        )
 
     @_process_node_to_blocks.register
     def _(  # pylint: disable=no-self-use
@@ -544,7 +555,9 @@ class NotionTranslator(NodeVisitor):
         }
         heading_cls = heading_levels[section_level]
         block = heading_cls(text=rich_text)
-        self._add_block_to_tree(block=block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=block, parent_path=parent_path, file_to_upload=None
+        )
 
     @beartype
     def _create_admonition_callout(
@@ -579,7 +592,9 @@ class NotionTranslator(NodeVisitor):
             color=background_color,
         )
 
-        self._add_block_to_tree(block=block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=block, parent_path=parent_path, file_to_upload=None
+        )
         # Process children as nested blocks
         for child in children_to_process:
             self._process_node_to_blocks(
@@ -660,7 +675,9 @@ class NotionTranslator(NodeVisitor):
 
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=text(text=title_text))
-        self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=toggle_block, parent_path=parent_path, file_to_upload=None
+        )
 
         for child in node.children:
             self._process_node_to_blocks(
@@ -734,6 +751,7 @@ class NotionTranslator(NodeVisitor):
         self._add_block_to_tree(
             block=code_block,
             parent_path=parent_path,
+            file_to_upload=None,
         )
 
     def visit_title(self, node: nodes.Element) -> None:
