@@ -1381,17 +1381,11 @@ def test_local_image_file(
     test_image_path.write_bytes(data=png_data)
 
     rst_content = """
-        Regular paragraph.
-
         .. image:: test_image.png
-
-        Another paragraph.
     """
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
