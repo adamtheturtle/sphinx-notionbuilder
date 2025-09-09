@@ -2,6 +2,7 @@
 Integration tests for the Sphinx Notion Builder functionality.
 """
 
+import base64
 import json
 import textwrap
 from collections.abc import Callable
@@ -89,7 +90,7 @@ def _assert_rst_converts_to_notion_objects(
     build process.
     """
     srcdir = tmp_path / "src"
-    srcdir.mkdir()
+    srcdir.mkdir(exist_ok=True)
 
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
@@ -1361,3 +1362,41 @@ def test_heading_level_4_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_local_image_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Local image files are converted to file:// URLs in the JSON output.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_image_path = srcdir / "test_image.png"
+    png_data = base64.b64decode(
+        s="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
+    test_image_path.write_bytes(data=png_data)
+
+    rst_content = """
+        Regular paragraph.
+
+        .. image:: test_image.png
+
+        Another paragraph.
+    """
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Regular paragraph.")),
+        UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
+        UnoParagraph(text=text(text="Another paragraph.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )

@@ -7,11 +7,14 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, TypedDict
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import click
 from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import Block, ChildrenMixin
+from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
@@ -39,13 +42,30 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 def _first_level_block_from_details(
     *,
     details: _SerializedBlockTreeNode,
+    session: Session,
 ) -> Block:
+    """Create a Block from a serialized block details.
+
+    Upload any required local files.
     """
-    Create a Block from a serialized block details.
-    """
-    return Block.wrap_obj_ref(
+    block = Block.wrap_obj_ref(
         UnoObjAPIBlock.model_validate(obj=details["block"])
     )
+
+    if isinstance(block, UnoImage):
+        parsed = urlparse(url=block.url)
+        if parsed.scheme == "file":
+            file_path = Path(url2pathname(pathname=parsed.path))
+            with file_path.open(mode="rb") as f:
+                uploaded_file = session.upload(
+                    file=f,
+                    file_name=file_path.name,
+                )
+
+            uploaded_file.wait_until_uploaded()
+            block = UnoImage(file=uploaded_file, caption=block.caption)
+
+    return block
 
 
 @beartype
@@ -60,7 +80,7 @@ def _upload_blocks_recursively(
     children.
     """
     first_level_blocks: list[Block] = [
-        _first_level_block_from_details(details=details)
+        _first_level_block_from_details(details=details, session=session)
         for details in block_details_list
     ]
 

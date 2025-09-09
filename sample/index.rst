@@ -204,6 +204,12 @@ Image with Alt Text
 .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
    :alt: Beautiful mountain scenery
 
+Local Image Example
+~~~~~~~~~~~~~~~~~~~
+
+.. image:: _static/test-image.png
+   :alt: Local test image
+
 Mixed Content with Images
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
