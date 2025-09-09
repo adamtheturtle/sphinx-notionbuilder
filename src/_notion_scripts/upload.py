@@ -36,6 +36,19 @@ def _batch_list[T](*, elements: list[T], batch_size: int) -> list[list[T]]:
 
 
 @beartype
+def _first_level_block_from_details(
+    *,
+    details: _SerializedBlockTreeNode,
+) -> Block:
+    """
+    Create a Block from a serialized block details.
+    """
+    return Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=details["block"])
+    )
+
+
+@beartype
 def _upload_blocks_recursively(
     parent: ChildrenMixin[Any],
     block_details_list: list[_SerializedBlockTreeNode],
@@ -47,7 +60,7 @@ def _upload_blocks_recursively(
     children.
     """
     first_level_blocks: list[Block] = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details["block"]))
+        _first_level_block_from_details(details=details)
         for details in block_details_list
     ]
 
