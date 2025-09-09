@@ -3,6 +3,7 @@ Sphinx Notion Builder.
 """
 
 import json
+from collections.abc import Sequence
 from functools import singledispatchmethod
 from typing import Any, TypedDict
 
@@ -272,6 +273,8 @@ class NotionTranslator(NodeVisitor):
         self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
+        # Map block IDs to local files that need to be uploaded
+        self._block_files_to_upload: dict[int, str] = {}
 
     @beartype
     def _add_block_to_tree(
@@ -279,12 +282,19 @@ class NotionTranslator(NodeVisitor):
         *,
         block: Block,
         parent_path: list[tuple[Block, int]],
+        files_to_upload: Sequence[str] = (),
     ) -> None:
         """Add a block to the block tree.
 
-        First has to find the parent in the tree recursively.
+        First has to find the parent in the tree recursively. Also
+        tracks any local files that need to be uploaded for this block.
         """
         block_key = (block, id(block))
+
+        # Track files to upload for this block
+        for file_path in files_to_upload:
+            self._block_files_to_upload[id(block)] = file_path
+
         if not parent_path:
             self._block_tree[block_key] = {}
             return
@@ -669,8 +679,16 @@ class NotionTranslator(NodeVisitor):
 
         image_url = node.attributes["uri"]
 
+        # Check if this is a local file (not starting with http/https)
+        is_local_file = not image_url.startswith(("http://", "https://"))
+        files_to_upload = (image_url,) if is_local_file else ()
+
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
-        self._add_block_to_tree(block=image_block, parent_path=parent_path)
+        self._add_block_to_tree(
+            block=image_block,
+            parent_path=parent_path,
+            files_to_upload=files_to_upload,
+        )
 
     @_process_node_to_blocks.register
     def _(
@@ -919,22 +937,19 @@ class NotionTranslator(NodeVisitor):
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
 
-            # Check if this is an image block with a local file
-            if (
-                serialized_obj.get("type") == "image"
-                and "image" in serialized_obj
-                and "external" in serialized_obj["image"]
-            ):
-                image_url = serialized_obj["image"]["external"]["url"]
-                # Check if this is a local file (not starting with http/https)
-                is_local_file = not image_url.startswith(
-                    ("http://", "https://")
-                )
-                if is_local_file:
-                    # Add metadata to indicate this is a local file
+            # Add local file metadata if this block has files to upload
+            block_id = id(block)
+            if block_id in self._block_files_to_upload:
+                file_path = self._block_files_to_upload[block_id]
+                # Check if this is an image block and add metadata
+                if (
+                    serialized_obj.get("type") == "image"
+                    and "image" in serialized_obj
+                    and "external" in serialized_obj["image"]
+                ):
                     serialized_obj["image"]["external"]["is_local_file"] = True
                     serialized_obj["image"]["external"]["file_path"] = (
-                        image_url
+                        file_path
                     )
 
             dumped_structure: _SerializedBlockTreeNode = {
