@@ -235,13 +235,10 @@ def test_single_heading(
     rst_content = """
         Main Title
         ==========
-
-        This is content under the title.
     """
 
     expected_objects: list[Block] = [
         UnoHeading1(text=text(text="Main Title")),
-        UnoParagraph(text=text(text="This is content under the title.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -305,8 +302,6 @@ def test_heading_with_formatting(
     rst_content = """
         **Bold** and *Italic* Title
         ============================
-
-        Content follows.
     """
 
     bold_text = text(text="Bold", bold=True)
@@ -320,7 +315,6 @@ def test_heading_with_formatting(
 
     expected_objects: list[Block] = [
         expected_heading,
-        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -410,8 +404,6 @@ def test_link_in_heading(
     rst_content = """
         Check out `Notion API <https://developers.notion.com>`_
         ========================================================
-
-        Content follows.
     """
 
     normal_text1 = text(text="Check out ")
@@ -423,7 +415,6 @@ def test_link_in_heading(
 
     expected_objects: list[Block] = [
         expected_heading,
-        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -516,16 +507,13 @@ def test_simple_quote(
     Block quotes become Notion Quote blocks.
     """
     rst_content = """
-        Regular paragraph.
+        Some content.
 
             This is a block quote.
-
-        Another paragraph.
     """
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
+        UnoParagraph(text=text(text="Some content.")),
         UnoQuote(text=text(text="This is a block quote.")),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -544,22 +532,19 @@ def test_multiline_quote(
     Multi-line block quotes become single Notion Quote blocks with line breaks.
     """
     rst_content = """
-        Regular paragraph.
+        Some content.
 
             This is a multi-line
             block quote with
             multiple lines.
-
-        Another paragraph.
     """
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
+        UnoParagraph(text=text(text="Some content.")),
         UnoQuote(
             text=text(
                 text="This is a multi-line\nblock quote with\nmultiple lines."
             )
         ),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -586,20 +571,14 @@ def test_table_of_contents(
         First Section
         -------------
 
-        Content here.
-
         Second Section
         --------------
-
-        More content.
     """
     expected_objects: list[Block] = [
         UnoHeading1(text=text(text="Introduction")),
         UnoTableOfContents(),
         UnoHeading2(text=text(text="First Section")),
-        UnoParagraph(text=text(text="Content here.")),
         UnoHeading2(text=text(text="Second Section")),
-        UnoParagraph(text=text(text="More content.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -645,22 +624,16 @@ def test_simple_code_block(
     Code blocks become Notion Code blocks with syntax highlighting.
     """
     rst_content = """
-        Regular paragraph.
-
         .. code-block:: python
 
            def hello():
                print("Hello, world!")
-
-        Another paragraph.
     """
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoCode(
             text=text(text='def hello():\n    print("Hello, world!")'),
             language=CodeLang.PYTHON,
         ),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -802,11 +775,7 @@ def test_admonition_single_line(
     Admonitions become Notion Callout blocks with appropriate icons and colors.
     """
     rst_content = f"""
-        Regular paragraph.
-
         .. {admonition_type}:: {message}
-
-        Another paragraph.
     """
 
     callout = UnoCallout(
@@ -816,9 +785,7 @@ def test_admonition_single_line(
     )
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         callout,
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
@@ -1083,15 +1050,11 @@ def test_collapse_block(
     content.
     """
     rst_content = """
-        Regular paragraph.
-
         .. collapse:: Click to expand
 
            This content is hidden by default.
 
            It supports **formatting**.
-
-        Another paragraph.
     """
 
     toggle_block = UnoToggleItem(text=text(text="Click to expand"))
@@ -1111,9 +1074,7 @@ def test_collapse_block(
     toggle_block.append(blocks=[nested_para2])
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         toggle_block,
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1240,19 +1201,13 @@ def test_simple_image(
     ``image`` directives become Notion Image blocks with URL.
     """
     rst_content = """
-        Regular paragraph.
-
         .. image:: https://www.example.com/path/to/image.png
-
-        Another paragraph.
     """
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoImage(
             file=ExternalFile(url="https://www.example.com/path/to/image.png")
         ),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1275,15 +1230,12 @@ def test_image_with_alt_text_only(
     rst_content = """
         .. image:: https://www.example.com/path/to/image.png
            :alt: Example image
-
-        Content follows.
     """
 
     expected_objects: list[Block] = [
         UnoImage(
             file=ExternalFile(url="https://www.example.com/path/to/image.png"),
         ),
-        UnoParagraph(text=text(text="Content follows.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1302,12 +1254,8 @@ def test_literalinclude_without_caption(
     ``literalinclude`` directives without captions become code blocks.
     """
     rst_content = """
-        Regular paragraph.
-
         .. literalinclude:: conf.py
            :language: python
-
-        Another paragraph.
     """
 
     conf_py_content = textwrap.dedent(
@@ -1318,12 +1266,10 @@ def test_literalinclude_without_caption(
     )
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoCode(
             text=text(text=conf_py_content),
             language=CodeLang.PYTHON,
         ),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1344,13 +1290,9 @@ def test_literalinclude_with_caption(
     formatted captions.
     """
     rst_content = """
-        Regular paragraph.
-
         .. literalinclude:: conf.py
            :language: python
            :caption: **Example** Configuration File
-
-        Another paragraph.
     """
 
     conf_py_content = textwrap.dedent(
@@ -1366,13 +1308,11 @@ def test_literalinclude_with_caption(
     caption_with_bold = bold_text + normal_text
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoCode(
             text=text(text=conf_py_content),
             language=CodeLang.PYTHON,
             caption=caption_with_bold,
         ),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1441,17 +1381,11 @@ def test_local_image_file(
     test_image_path.write_bytes(data=png_data)
 
     rst_content = """
-        Regular paragraph.
-
         .. image:: test_image.png
-
-        Another paragraph.
     """
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="Regular paragraph.")),
         UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
-        UnoParagraph(text=text(text="Another paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
