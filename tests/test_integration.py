@@ -1436,9 +1436,9 @@ def test_local_image_file(
     test_image_path = tmp_path / "test_image.png"
     # Create a simple 1x1 pixel PNG image (base64 encoded)
     png_data = base64.b64decode(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        s="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
     )
-    test_image_path.write_bytes(png_data)
+    test_image_path.write_bytes(data=png_data)
 
     rst_content = f"""
         Regular paragraph.
