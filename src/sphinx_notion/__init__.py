@@ -292,7 +292,6 @@ class NotionTranslator(NodeVisitor):
         level blocks).
         """
         block_key = (block, id(block))
-
         if not parent_path:
             self._block_tree[block_key] = {}
             return
@@ -684,10 +683,7 @@ class NotionTranslator(NodeVisitor):
             image_url = abs_path.as_uri()
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
-        self._add_block_to_tree(
-            block=image_block,
-            parent_path=parent_path,
-        )
+        self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -935,8 +931,6 @@ class NotionTranslator(NodeVisitor):
             serialized_obj = block.obj_ref.serialize_for_api()
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
-
-            # Create the dumped structure
             dumped_structure: _SerializedBlockTreeNode = {
                 "block": serialized_obj,
                 "children": self._convert_block_tree_to_json(
