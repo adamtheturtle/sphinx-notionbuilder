@@ -6,7 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import json
 import sys
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, NotRequired, Required, TypedDict
 
 import click
 from beartype import beartype
@@ -16,14 +16,14 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
-class _SerializedBlockTreeNode(TypedDict, total=False):
+class _SerializedBlockTreeNode(TypedDict):
     """
     A node in the block tree representing a Notion block with its children.
     """
 
-    block: dict[str, Any]
-    children: list["_SerializedBlockTreeNode"]
-    file_to_upload: str
+    block: Required[dict[str, Any]]
+    children: Required[list["_SerializedBlockTreeNode"]]
+    file_to_upload: NotRequired[str]
 
 
 @beartype
