@@ -90,7 +90,7 @@ def _assert_rst_converts_to_notion_objects(
     build process.
     """
     srcdir = tmp_path / "src"
-    srcdir.mkdir()
+    srcdir.mkdir(exist_ok=True)
 
     (srcdir / "conf.py").write_text(data=conf_py_content)
 
@@ -1432,65 +1432,33 @@ def test_local_image_file(
     """
     Local image files are converted to file:// URLs in the JSON output.
     """
-    # Create a test image file
-    test_image_path = tmp_path / "test_image.png"
+    # Create a test image file in the source directory
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    test_image_path = srcdir / "test_image.png"
     # Create a simple 1x1 pixel PNG image (base64 encoded)
     png_data = base64.b64decode(
         s="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
     )
     test_image_path.write_bytes(data=png_data)
 
-    rst_content = f"""
+    rst_content = """
         Regular paragraph.
 
-        .. image:: {test_image_path.name}
+        .. image:: test_image.png
 
         Another paragraph.
     """
 
-    # Test that the JSON includes local file metadata
-    srcdir = tmp_path / "src"
-    srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="")
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Regular paragraph.")),
+        UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
+        UnoParagraph(text=text(text="Another paragraph.")),
+    ]
 
-    cleaned_content = textwrap.dedent(text=rst_content).strip()
-    (srcdir / "index.rst").write_text(data=cleaned_content)
-
-    app = make_app(
-        srcdir=srcdir,
-        builddir=tmp_path / "build",
-        buildername="notion",
-        confoverrides={"extensions": ["sphinx_notion"]},
-    )
-    app.build()
-
-    output_file = app.outdir / "index.json"
-    with output_file.open(encoding="utf-8") as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
-
-    # Find the image block in the generated JSON
-    image_block_data = None
-    for block_data in generated_json:
-        if block_data["block"]["type"] == "image":
-            image_block_data = block_data
-            break
-
-    assert image_block_data is not None, (
-        "Image block not found in generated JSON"
-    )
-
-    # Check that the image block has the correct file:// URL
-    image_block = image_block_data["block"]
-    image_data = image_block["image"]
-    assert "external" in image_data, "Image should have external data"
-    external_data = image_data["external"]
-    # The URL should be an absolute file:// URL
-    expected_file_url = (srcdir / test_image_path.name).as_uri()
-    assert external_data["url"] == expected_file_url, (
-        f"Expected {expected_file_url}, got {external_data['url']}"
-    )
-
-    # Check that the block does NOT have file_to_upload metadata (removed)
-    assert "file_to_upload" not in image_block_data, (
-        "Image block should not have file_to_upload metadata anymore"
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
