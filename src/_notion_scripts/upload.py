@@ -54,10 +54,7 @@ def _first_level_block_from_details(
         file_path = details["file_to_upload"]
         full_path = source_dir / file_path
         with full_path.open(mode="rb") as f:
-            uploaded_file = session.upload(
-                file=f,
-                file_name=full_path.name,
-            )
+            uploaded_file = session.upload(file=f, file_name=full_path.name)
 
         uploaded_file.wait_until_uploaded()
         return UnoImage(file=uploaded_file, caption=None)
