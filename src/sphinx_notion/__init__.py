@@ -3,8 +3,8 @@ Sphinx Notion Builder.
 """
 
 import json
-from collections.abc import Sequence
 from functools import singledispatchmethod
+from pathlib import Path
 from typing import Any, TypedDict
 
 from beartype import beartype
@@ -274,7 +274,7 @@ class NotionTranslator(NodeVisitor):
         self.body: str
         self._section_level = 0
         # Map block IDs to local files that need to be uploaded
-        self._block_files_to_upload: dict[int, str] = {}
+        self._block_files_to_upload: dict[int, Path] = {}
 
     @beartype
     def _add_block_to_tree(
@@ -282,18 +282,18 @@ class NotionTranslator(NodeVisitor):
         *,
         block: Block,
         parent_path: list[tuple[Block, int]],
-        files_to_upload: Sequence[str] = (),
+        file_to_upload: Path | None = None,
     ) -> None:
         """Add a block to the block tree.
 
         First has to find the parent in the tree recursively. Also
-        tracks any local files that need to be uploaded for this block.
+        tracks any local file that needs to be uploaded for this block.
         """
         block_key = (block, id(block))
 
-        # Track files to upload for this block
-        for file_path in files_to_upload:
-            self._block_files_to_upload[id(block)] = file_path
+        # Track file to upload for this block
+        if file_to_upload is not None:
+            self._block_files_to_upload[id(block)] = file_to_upload
 
         if not parent_path:
             self._block_tree[block_key] = {}
@@ -681,13 +681,13 @@ class NotionTranslator(NodeVisitor):
 
         # Check if this is a local file (not starting with http/https)
         is_local_file = not image_url.startswith(("http://", "https://"))
-        files_to_upload = (image_url,) if is_local_file else ()
+        file_to_upload = Path(image_url) if is_local_file else None
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(
             block=image_block,
             parent_path=parent_path,
-            files_to_upload=files_to_upload,
+            file_to_upload=file_to_upload,
         )
 
     @_process_node_to_blocks.register
@@ -948,7 +948,7 @@ class NotionTranslator(NodeVisitor):
                     and "external" in serialized_obj["image"]
                 ):
                     serialized_obj["image"]["external"]["is_local_file"] = True
-                    serialized_obj["image"]["external"]["file_path"] = (
+                    serialized_obj["image"]["external"]["file_path"] = str(
                         file_path
                     )
 
