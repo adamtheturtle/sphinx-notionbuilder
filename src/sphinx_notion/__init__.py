@@ -716,13 +716,14 @@ class NotionTranslator(NodeVisitor):
             video_url = video_src
 
         # Get caption if available
-        caption_text = node.attributes.get("caption", "")
+        caption_text = node.attributes["caption"]
         caption = None
         if caption_text:
             caption = text(text=caption_text)
 
         video_block = UnoVideo(
-            file=ExternalFile(url=video_url), caption=caption
+            file=ExternalFile(url=video_url),
+            caption=caption,
         )
         self._add_block_to_tree(block=video_block, parent_path=parent_path)
 
@@ -928,18 +929,6 @@ class NotionTranslator(NodeVisitor):
     def visit_image(self, node: nodes.Element) -> None:
         """
         Handle image nodes by creating Notion Image blocks.
-        """
-        self._process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-            parent_path=[],
-        )
-
-        raise nodes.SkipNode
-
-    def visit_video_node(self, node: video_node) -> None:
-        """
-        Handle video nodes by creating Notion Video blocks.
         """
         self._process_node_to_blocks(
             node,
