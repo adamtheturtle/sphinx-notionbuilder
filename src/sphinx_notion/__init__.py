@@ -938,10 +938,9 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
-    def process_video_node(self, node: video_node) -> None:
+    def visit_video(self, node: video_node) -> None:
         """
-        Process a video node into Notion blocks (public method for external
-        use).
+        Process a video node into Notion blocks.
         """
         self._process_node_to_blocks(
             node,
@@ -1024,7 +1023,7 @@ def visit_video_node_notion(
     """
     Visit a video node and process it into Notion blocks.
     """
-    translator.process_video_node(node=node)
+    translator.visit_video(node=node)
 
 
 def depart_video_node_notion(
