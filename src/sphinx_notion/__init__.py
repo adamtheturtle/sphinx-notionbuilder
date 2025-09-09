@@ -50,13 +50,14 @@ from ultimate_notion.rich_text import Text, text
 type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
 
 
-class _SerializedBlockTreeNode(TypedDict):
+class _SerializedBlockTreeNode(TypedDict, total=False):
     """
     A node in the block tree representing a Notion block with its children.
     """
 
     block: dict[str, Any]
     children: list["_SerializedBlockTreeNode"]
+    file_to_upload: str
 
 
 @beartype
@@ -937,27 +938,19 @@ class NotionTranslator(NodeVisitor):
             if block_tree[(block, id(block))]:
                 serialized_obj["has_children"] = True
 
-            # Add local file metadata if this block has files to upload
-            block_id = id(block)
-            if block_id in self._block_files_to_upload:
-                file_path = self._block_files_to_upload[block_id]
-                # Check if this is an image block and add metadata
-                if (
-                    serialized_obj.get("type") == "image"
-                    and "image" in serialized_obj
-                    and "external" in serialized_obj["image"]
-                ):
-                    serialized_obj["image"]["external"]["is_local_file"] = True
-                    serialized_obj["image"]["external"]["file_path"] = (
-                        file_path.as_posix()
-                    )
-
+            # Create the dumped structure
             dumped_structure: _SerializedBlockTreeNode = {
                 "block": serialized_obj,
                 "children": self._convert_block_tree_to_json(
                     block_tree=subtree
                 ),
             }
+
+            # Add file upload metadata if this block has a file to upload
+            block_id = id(block)
+            if block_id in self._block_files_to_upload:
+                file_path = self._block_files_to_upload[block_id]
+                dumped_structure["file_to_upload"] = file_path.as_posix()
             result.append(dumped_structure)
         return result
 

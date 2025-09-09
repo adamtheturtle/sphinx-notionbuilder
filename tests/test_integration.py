@@ -1469,24 +1469,30 @@ def test_local_image_file(
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
     # Find the image block in the generated JSON
-    image_block = None
+    image_block_data = None
     for block_data in generated_json:
         if block_data["block"]["type"] == "image":
-            image_block = block_data["block"]
+            image_block_data = block_data
             break
 
-    assert image_block is not None, "Image block not found in generated JSON"
+    assert image_block_data is not None, (
+        "Image block not found in generated JSON"
+    )
 
-    # Check that the image block has local file metadata
+    # Check that the image block has the correct URL
+    image_block = image_block_data["block"]
     image_data = image_block["image"]
     assert "external" in image_data, "Image should have external data"
     external_data = image_data["external"]
     assert external_data["url"] == test_image_path.name, (
         f"Expected {test_image_path.name}, got {external_data['url']}"
     )
-    assert external_data.get("is_local_file") is True, (
-        "Image should be marked as local file"
+
+    # Check that the block has file_to_upload metadata
+    assert "file_to_upload" in image_block_data, (
+        "Image block should have file_to_upload metadata"
     )
-    assert external_data.get("file_path") == test_image_path.name, (
-        "Image should have file_path metadata"
+    assert image_block_data["file_to_upload"] == test_image_path.name, (
+        f"Expected {test_image_path.name}, "
+        f"got {image_block_data['file_to_upload']}"
     )

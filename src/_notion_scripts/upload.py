@@ -16,13 +16,14 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
-class _SerializedBlockTreeNode(TypedDict):
+class _SerializedBlockTreeNode(TypedDict, total=False):
     """
     A node in the block tree representing a Notion block with its children.
     """
 
     block: dict[str, Any]
     children: list["_SerializedBlockTreeNode"]
+    file_to_upload: str
 
 
 @beartype
@@ -49,42 +50,38 @@ def _process_local_files(
     references with uploaded file references.
     """
     for block_details in block_details_list:
-        block = block_details["block"]
+        # Check if this block has a file to upload
+        if "file_to_upload" in block_details:
+            file_path = block_details["file_to_upload"]
+            # Resolve the file path relative to the source directory
+            full_path = source_dir / file_path
+            if full_path.exists():
+                # Upload the file to Notion
+                with full_path.open(mode="rb") as f:
+                    uploaded_file = session.upload(
+                        file=f,
+                        file_name=full_path.name,
+                    )
 
-        # Check if this is an image block with a local file
-        if (
-            block.get("type") == "image"
-            and "image" in block
-            and "external" in block["image"]
-        ):
-            external_data = block["image"]["external"]
-            if external_data.get("is_local_file"):
-                file_path = external_data["file_path"]
-                # Resolve the file path relative to the source directory
-                full_path = source_dir / file_path
-                if full_path.exists():
-                    # Upload the file to Notion
-                    with full_path.open("rb") as f:
-                        uploaded_file = session.upload(
-                            file=f,
-                            file_name=full_path.name,
-                        )
-
-                    # Wait for the upload to complete
-                    uploaded_file.wait_until_uploaded()
-                    # Create a new Ultimate Notion Image block with the uploaded file
-                    # This will replace the entire block structure
-                    new_image_block = UnoImage(
-                        file=uploaded_file, caption=None
-                    )
-                    # Replace the entire block with the new one
-                    block_details["block"] = (
-                        new_image_block.obj_ref.serialize_for_api()
-                    )
-                else:
-                    sys.stderr.write(
-                        f"Warning: Local file not found: {full_path}\n"
-                    )
+                # Wait for the upload to complete
+                uploaded_file.wait_until_uploaded()
+                # Create a new Ultimate Notion Image block with the uploaded
+                # file.
+                # This will replace the entire block structure
+                new_image_block = UnoImage(
+                    file=uploaded_file,
+                    caption=None,
+                )
+                # Replace the entire block with the new one
+                block_details["block"] = (
+                    new_image_block.obj_ref.serialize_for_api()
+                )
+                # Remove the file_to_upload field since it's been processed
+                del block_details["file_to_upload"]
+            else:
+                sys.stderr.write(
+                    f"Warning: Local file not found: {full_path}\n"
+                )
 
         # Recursively process children
         if block_details["children"]:
