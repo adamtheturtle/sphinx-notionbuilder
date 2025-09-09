@@ -1432,11 +1432,9 @@ def test_local_image_file(
     """
     Local image files are converted to file:// URLs in the JSON output.
     """
-    # Create a test image file in the source directory
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
     test_image_path = srcdir / "test_image.png"
-    # Create a simple 1x1 pixel PNG image (base64 encoded)
     png_data = base64.b64decode(
         s="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
     )

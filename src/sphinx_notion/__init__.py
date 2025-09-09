@@ -675,10 +675,9 @@ class NotionTranslator(NodeVisitor):
         del section_level
 
         image_url = node.attributes["uri"]
+        assert isinstance(image_url, str)
 
-        # Convert local file paths to file:// URLs
         if "://" not in image_url:
-            # Make the path absolute relative to the source directory
             abs_path = Path(self.document.settings.env.srcdir) / image_url
             image_url = abs_path.as_uri()
 
