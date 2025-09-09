@@ -1430,7 +1430,7 @@ def test_local_image_file(
     tmp_path: Path,
 ) -> None:
     """
-    Local image files are handled with file path information in JSON.
+    Local image files are converted to file:// URLs in the JSON output.
     """
     # Create a test image file
     test_image_path = tmp_path / "test_image.png"
@@ -1479,20 +1479,18 @@ def test_local_image_file(
         "Image block not found in generated JSON"
     )
 
-    # Check that the image block has the correct URL
+    # Check that the image block has the correct file:// URL
     image_block = image_block_data["block"]
     image_data = image_block["image"]
     assert "external" in image_data, "Image should have external data"
     external_data = image_data["external"]
-    assert external_data["url"] == test_image_path.name, (
-        f"Expected {test_image_path.name}, got {external_data['url']}"
+    # The URL should be an absolute file:// URL
+    expected_file_url = (srcdir / test_image_path.name).as_uri()
+    assert external_data["url"] == expected_file_url, (
+        f"Expected {expected_file_url}, got {external_data['url']}"
     )
 
-    # Check that the block has file_to_upload metadata
-    assert "file_to_upload" in image_block_data, (
-        "Image block should have file_to_upload metadata"
-    )
-    assert image_block_data["file_to_upload"] == test_image_path.name, (
-        f"Expected {test_image_path.name}, "
-        f"got {image_block_data['file_to_upload']}"
+    # Check that the block does NOT have file_to_upload metadata (removed)
+    assert "file_to_upload" not in image_block_data, (
+        "Image block should not have file_to_upload metadata anymore"
     )

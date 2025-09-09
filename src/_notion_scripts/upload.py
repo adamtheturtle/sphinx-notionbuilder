@@ -6,7 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import json
 import sys
 from pathlib import Path
-from typing import Any, NotRequired, Required, TypedDict
+from typing import Any, Required, TypedDict
 
 import click
 from beartype import beartype
@@ -23,7 +23,6 @@ class _SerializedBlockTreeNode(TypedDict):
 
     block: Required[dict[str, Any]]
     children: Required[list["_SerializedBlockTreeNode"]]
-    file_to_upload: NotRequired[str]
 
 
 @beartype
@@ -51,14 +50,16 @@ def _first_level_block_from_details(
     block = Block.wrap_obj_ref(
         UnoObjAPIBlock.model_validate(obj=details["block"])
     )
-    if "file_to_upload" in details:
-        file_path = details["file_to_upload"]
+
+    # Check if this is an image block with a file:// URL
+    if isinstance(block, UnoImage) and block.url.startswith("file://"):
+        # Extract the file path from the file:// URL
+        file_path = Path(block.url[7:])  # Remove "file://" prefix
         full_path = source_dir / file_path
         with full_path.open(mode="rb") as f:
             uploaded_file = session.upload(file=f, file_name=full_path.name)
 
         uploaded_file.wait_until_uploaded()
-        assert isinstance(block, UnoImage)
         block = UnoImage(file=uploaded_file, caption=block.caption)
 
     return block

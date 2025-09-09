@@ -5,7 +5,7 @@ Sphinx Notion Builder.
 import json
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Any, NotRequired, Required, TypedDict
+from typing import Any, Required, TypedDict
 
 from beartype import beartype
 from docutils import nodes
@@ -57,7 +57,6 @@ class _SerializedBlockTreeNode(TypedDict):
 
     block: Required[dict[str, Any]]
     children: Required[list["_SerializedBlockTreeNode"]]
-    file_to_upload: NotRequired[str]
 
 
 @beartype
@@ -274,7 +273,6 @@ class NotionTranslator(NodeVisitor):
         self._block_tree: _BlockTree = {}
         self.body: str
         self._section_level = 0
-        self._block_files_to_upload: dict[int, Path] = {}
 
     @beartype
     def _add_block_to_tree(
@@ -282,12 +280,10 @@ class NotionTranslator(NodeVisitor):
         *,
         block: Block,
         parent_path: list[tuple[Block, int]],
-        file_to_upload: Path | None,
     ) -> None:
         """Add a block to the block tree.
 
-        First has to find the parent in the tree recursively. Also
-        tracks any local file that needs to be uploaded for this block.
+        First has to find the parent in the tree recursively.
 
         See
         https://github.com/ultimate-notion/ultimate-notion/issues/120
@@ -296,9 +292,6 @@ class NotionTranslator(NodeVisitor):
         level blocks).
         """
         block_key = (block, id(block))
-
-        if file_to_upload is not None:
-            self._block_files_to_upload[id(block)] = file_to_upload
 
         if not parent_path:
             self._block_tree[block_key] = {}
@@ -327,7 +320,6 @@ class NotionTranslator(NodeVisitor):
         self._add_block_to_tree(
             block=block,
             parent_path=parent_path,
-            file_to_upload=None,
         )
 
         bullet_only_msg = (
@@ -403,9 +395,7 @@ class NotionTranslator(NodeVisitor):
                 )
             row_idx += 1
 
-        self._add_block_to_tree(
-            block=table, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=table, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -421,9 +411,7 @@ class NotionTranslator(NodeVisitor):
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text=rich_text)
-        self._add_block_to_tree(
-            block=paragraph_block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -439,9 +427,7 @@ class NotionTranslator(NodeVisitor):
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text=rich_text)
-        self._add_block_to_tree(
-            block=quote_block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=quote_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -461,9 +447,7 @@ class NotionTranslator(NodeVisitor):
             pygments_lang=pygments_lang,
         )
         code_block = UnoCode(text=code_text, language=language)
-        self._add_block_to_tree(
-            block=code_block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=code_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -505,9 +489,7 @@ class NotionTranslator(NodeVisitor):
         # a callout with no icon.
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
-        self._add_block_to_tree(
-            block=toc_block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=toc_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(  # pylint: disable=no-self-use
@@ -555,9 +537,7 @@ class NotionTranslator(NodeVisitor):
         }
         heading_cls = heading_levels[section_level]
         block = heading_cls(text=rich_text)
-        self._add_block_to_tree(
-            block=block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=block, parent_path=parent_path)
 
     @beartype
     def _create_admonition_callout(
@@ -592,9 +572,7 @@ class NotionTranslator(NodeVisitor):
             color=background_color,
         )
 
-        self._add_block_to_tree(
-            block=block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=block, parent_path=parent_path)
         # Process children as nested blocks
         for child in children_to_process:
             self._process_node_to_blocks(
@@ -675,9 +653,7 @@ class NotionTranslator(NodeVisitor):
 
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=text(text=title_text))
-        self._add_block_to_tree(
-            block=toggle_block, parent_path=parent_path, file_to_upload=None
-        )
+        self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
 
         for child in node.children:
             self._process_node_to_blocks(
@@ -701,13 +677,16 @@ class NotionTranslator(NodeVisitor):
 
         image_url = node.attributes["uri"]
 
-        file_to_upload = None if "://" in image_url else Path(image_url)
+        # Convert local file paths to file:// URLs
+        if "://" not in image_url:
+            # Make the path absolute relative to the source directory
+            abs_path = Path(self.document.settings.env.srcdir) / image_url
+            image_url = abs_path.as_uri()
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(
             block=image_block,
             parent_path=parent_path,
-            file_to_upload=file_to_upload,
         )
 
     @_process_node_to_blocks.register
@@ -749,7 +728,6 @@ class NotionTranslator(NodeVisitor):
         self._add_block_to_tree(
             block=code_block,
             parent_path=parent_path,
-            file_to_upload=None,
         )
 
     def visit_title(self, node: nodes.Element) -> None:
@@ -965,12 +943,6 @@ class NotionTranslator(NodeVisitor):
                     block_tree=subtree
                 ),
             }
-
-            # Add file upload metadata if this block has a file to upload
-            block_id = id(block)
-            if block_id in self._block_files_to_upload:
-                file_path = self._block_files_to_upload[block_id]
-                dumped_structure["file_to_upload"] = file_path.as_posix()
             result.append(dumped_structure)
         return result
 
