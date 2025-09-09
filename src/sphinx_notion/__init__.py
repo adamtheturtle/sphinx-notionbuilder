@@ -289,6 +289,12 @@ class NotionTranslator(NodeVisitor):
 
         First has to find the parent in the tree recursively. Also
         tracks any local file that needs to be uploaded for this block.
+
+        See
+        https://github.com/ultimate-notion/ultimate-notion/issues/120
+        for
+        simplifying this (not having to build our own tree, just a list of top
+        level blocks).
         """
         block_key = (block, id(block))
 
