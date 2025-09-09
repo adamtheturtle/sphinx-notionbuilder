@@ -42,7 +42,7 @@ def _first_level_block_from_details(
     *,
     details: _SerializedBlockTreeNode,
     session: Session,
-    source_dir: Path | None = None,
+    source_dir: Path,
 ) -> Block:
     """Create a Block from a serialized block details.
 
@@ -50,7 +50,7 @@ def _first_level_block_from_details(
     Image block with the uploaded file.
     """
     # Check if this block has a file to upload
-    if "file_to_upload" in details and source_dir is not None:
+    if "file_to_upload" in details:
         file_path = details["file_to_upload"]
         full_path = source_dir / file_path
         with full_path.open(mode="rb") as f:
@@ -73,7 +73,7 @@ def upload_blocks_recursively(
     block_details_list: list[_SerializedBlockTreeNode],
     session: Session,
     batch_size: int,
-    source_dir: Path | None = None,
+    source_dir: Path,
 ) -> None:
     """
     Upload blocks recursively, handling the new structure with block and
@@ -137,6 +137,7 @@ def upload_blocks_recursively(
 @click.option(
     "--source-dir",
     help="Source directory for resolving local file paths",
+    required=True,
     type=click.Path(
         exists=True,
         path_type=Path,
@@ -150,7 +151,7 @@ def main(
     file: Path,
     parent_page_id: str,
     title: str,
-    source_dir: Path | None = None,
+    source_dir: Path,
 ) -> None:
     """
     Upload documentation to Notion.
