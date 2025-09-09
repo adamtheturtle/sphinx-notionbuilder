@@ -52,14 +52,18 @@ def _first_level_block_from_details(
         UnoObjAPIBlock.model_validate(obj=details["block"])
     )
 
-    if isinstance(block, UnoImage) and block.url.startswith("file://"):
+    if isinstance(block, UnoImage):
         parsed = urlparse(url=block.url)
-        file_path = Path(url2pathname(pathname=parsed.path))
-        with file_path.open(mode="rb") as f:
-            uploaded_file = session.upload(file=f, file_name=file_path.name)
+        if parsed.scheme == "file":
+            file_path = Path(url2pathname(pathname=parsed.path))
+            with file_path.open(mode="rb") as f:
+                uploaded_file = session.upload(
+                    file=f,
+                    file_name=file_path.name,
+                )
 
-        uploaded_file.wait_until_uploaded()
-        block = UnoImage(file=uploaded_file, caption=block.caption)
+            uploaded_file.wait_until_uploaded()
+            block = UnoImage(file=uploaded_file, caption=block.caption)
 
     return block
 
