@@ -14,7 +14,9 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
-from sphinxcontrib.video import video_node
+from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
+    video_node,
+)
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
