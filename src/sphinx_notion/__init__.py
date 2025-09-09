@@ -669,23 +669,7 @@ class NotionTranslator(NodeVisitor):
 
         image_url = node.attributes["uri"]
 
-        # Check if this is a local file (not starting with http/https)
-        is_local_file = not image_url.startswith(("http://", "https://"))
-
-        if is_local_file:
-            # For local files, we need to include additional metadata in the JSON
-            # The upload script will handle the actual file upload
-            # We'll create a special structure that the upload script can recognize
-            image_block = UnoImage(
-                file=ExternalFile(url=image_url), caption=None
-            )
-            # Add metadata to indicate this is a local file
-            # We'll modify the serialization to include this information
-        else:
-            # For external URLs, use the existing behavior
-            image_block = UnoImage(
-                file=ExternalFile(url=image_url), caption=None
-            )
+        image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
         self._add_block_to_tree(block=image_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
