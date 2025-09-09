@@ -55,33 +55,28 @@ def _process_local_files(
             file_path = block_details["file_to_upload"]
             # Resolve the file path relative to the source directory
             full_path = source_dir / file_path
-            if full_path.exists():
-                # Upload the file to Notion
-                with full_path.open(mode="rb") as f:
-                    uploaded_file = session.upload(
-                        file=f,
-                        file_name=full_path.name,
-                    )
+            # Upload the file to Notion
+            with full_path.open(mode="rb") as f:
+                uploaded_file = session.upload(
+                    file=f,
+                    file_name=full_path.name,
+                )
 
-                # Wait for the upload to complete
-                uploaded_file.wait_until_uploaded()
-                # Create a new Ultimate Notion Image block with the uploaded
-                # file.
-                # This will replace the entire block structure
-                new_image_block = UnoImage(
-                    file=uploaded_file,
-                    caption=None,
-                )
-                # Replace the entire block with the new one
-                block_details["block"] = (
-                    new_image_block.obj_ref.serialize_for_api()
-                )
-                # Remove the file_to_upload field since it's been processed
-                del block_details["file_to_upload"]
-            else:
-                sys.stderr.write(
-                    f"Warning: Local file not found: {full_path}\n"
-                )
+            # Wait for the upload to complete
+            uploaded_file.wait_until_uploaded()
+            # Create a new Ultimate Notion Image block with the uploaded
+            # file.
+            # This will replace the entire block structure
+            new_image_block = UnoImage(
+                file=uploaded_file,
+                caption=None,
+            )
+            # Replace the entire block with the new one
+            block_details["block"] = (
+                new_image_block.obj_ref.serialize_for_api()
+            )
+            # Remove the file_to_upload field since it's been processed
+            del block_details["file_to_upload"]
 
         # Recursively process children
         if block_details["children"]:
