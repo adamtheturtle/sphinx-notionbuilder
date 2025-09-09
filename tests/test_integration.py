@@ -40,6 +40,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
+from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import text
@@ -1393,4 +1394,93 @@ def test_local_image_file(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.video"),
+    )
+
+
+def test_simple_video(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``video`` directives become Notion Video blocks with URL.
+    """
+    rst_content = """
+        .. video:: https://www.example.com/path/to/video.mp4
+    """
+
+    expected_objects: list[Block] = [
+        UnoVideo(
+            file=ExternalFile(url="https://www.example.com/path/to/video.mp4")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.video"),
+    )
+
+
+def test_video_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Video directives with captions include the caption in the Notion Video
+    block.
+    """
+    rst_content = """
+        .. video:: https://www.example.com/path/to/video.mp4
+           :caption: Example video
+    """
+
+    expected_objects: list[Block] = [
+        UnoVideo(
+            file=ExternalFile(url="https://www.example.com/path/to/video.mp4"),
+            caption=text(text="Example video"),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.video"),
+    )
+
+
+def test_local_video_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Local video files are converted to file:// URLs in the JSON output.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_video_path = srcdir / "test_video.mp4"
+    # Create a minimal MP4 file (just some dummy data)
+    test_video_path.write_bytes(data=b"fake mp4 content")
+
+    rst_content = """
+        .. video:: test_video.mp4
+    """
+
+    expected_objects: list[Block] = [
+        UnoVideo(file=ExternalFile(url=test_video_path.as_uri())),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )

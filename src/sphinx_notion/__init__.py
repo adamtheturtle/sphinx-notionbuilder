@@ -14,6 +14,9 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
+from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
+    video_node,
+)
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -43,6 +46,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
+from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
@@ -687,6 +691,39 @@ class NotionTranslator(NodeVisitor):
     @_process_node_to_blocks.register
     def _(
         self,
+        node: video_node,
+        *,
+        section_level: int,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """
+        Process video nodes by creating Notion Video blocks.
+        """
+        del section_level
+
+        sources: list[tuple[str, str, bool]] = node.attributes["sources"]
+        assert isinstance(sources, list)
+        primary_source = sources[0]
+        video_location, _, is_remote = primary_source
+
+        if is_remote:
+            video_url = video_location
+        else:
+            abs_path = Path(self.document.settings.env.srcdir) / video_location
+            video_url = abs_path.as_uri()
+
+        caption_text = node.attributes["caption"]
+        caption = text(text=caption_text) if caption_text else None
+
+        video_block = UnoVideo(
+            file=ExternalFile(url=video_url),
+            caption=caption,
+        )
+        self._add_block_to_tree(block=video_block, parent_path=parent_path)
+
+    @_process_node_to_blocks.register
+    def _(
+        self,
         node: nodes.container,
         *,
         section_level: int,
@@ -895,6 +932,16 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
+    def visit_video(self, node: nodes.Element) -> None:
+        """
+        Process a video node into Notion blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
     def visit_container(self, node: nodes.Element) -> None:
         """
         Handle container nodes.
@@ -964,11 +1011,40 @@ class NotionBuilder(TextBuilder):
 
 
 @beartype
+def _visit_video_node_notion(
+    translator: NotionTranslator,
+    node: video_node,
+) -> None:
+    """
+    Visit a video node and process it into Notion blocks.
+    """
+    translator.visit_video(node=node)
+
+
+@beartype
+def _depart_video_node_notion(
+    translator: NotionTranslator,
+    node: video_node,
+) -> None:
+    """
+    Depart from a video node (no action needed).
+    """
+    del translator
+    del node
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
     """
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
+
+    app.add_node(
+        node=video_node,
+        notion=(_visit_video_node_notion, _depart_video_node_notion),
+        override=True,
+    )
 
     return {"parallel_read_safe": True}
