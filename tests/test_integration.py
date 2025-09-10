@@ -1311,6 +1311,135 @@ def test_table_inline_formatting(
     )
 
 
+def test_list_table_with_stub_columns(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with stub-columns creates Notion Table with header row from stub
+    columns.
+    """
+    rst_content = """
+.. list-table:: Sample Table
+   :stub-columns: 1
+   :widths: 25 75
+
+   * - Header 1
+     - Header 2
+   * - Row 1 Col 1
+     - Row 1 Col 2
+   * - Row 2 Col 1
+     - Row 2 Col 2
+"""
+
+    table = UnoTable(n_rows=3, n_cols=2, header_row=True)
+    # Header row - first column is stub, so it becomes header
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    # First data row
+    table[1, 0] = text(text="Row 1 Col 1")
+    table[1, 1] = text(text="Row 1 Col 2")
+    # Second data row
+    table[2, 0] = text(text="Row 2 Col 1")
+    table[2, 1] = text(text="Row 2 Col 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_list_table_with_stub_columns_no_explicit_header(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with stub-columns but no explicit header row creates header from
+    stub columns.
+    """
+    rst_content = """
+.. list-table:: Sample Table
+   :stub-columns: 1
+   :widths: 25 75
+
+   * - Row 1 Col 1
+     - Row 1 Col 2
+   * - Row 2 Col 1
+     - Row 2 Col 2
+"""
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    # Header row - first column is stub, so first row becomes header
+    table[0, 0] = text(text="Row 1 Col 1")
+    table[0, 1] = text(text="Row 1 Col 2")
+    # First data row (second row from original)
+    table[1, 0] = text(text="Row 2 Col 1")
+    table[1, 1] = text(text="Row 2 Col 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_list_table_with_multiple_stub_columns(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with multiple stub-columns creates Notion Table with header row.
+    """
+    rst_content = """
+.. list-table:: Sample Table
+   :stub-columns: 2
+   :widths: 25 25 50
+
+   * - Header 1
+     - Header 2
+     - Header 3
+   * - Row 1 Col 1
+     - Row 1 Col 2
+     - Row 1 Col 3
+   * - Row 2 Col 1
+     - Row 2 Col 2
+     - Row 2 Col 3
+"""
+
+    table = UnoTable(n_rows=3, n_cols=3, header_row=True)
+    # Header row - first two columns are stub, so they become headers
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[0, 2] = text(text="Header 3")
+    # First data row
+    table[1, 0] = text(text="Row 1 Col 1")
+    table[1, 1] = text(text="Row 1 Col 2")
+    table[1, 2] = text(text="Row 1 Col 3")
+    # Second data row
+    table[2, 0] = text(text="Row 2 Col 1")
+    table[2, 1] = text(text="Row 2 Col 2")
+    table[2, 2] = text(text="Row 2 Col 3")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_simple_image(
     *,
     make_app: Callable[..., SphinxTestApp],
