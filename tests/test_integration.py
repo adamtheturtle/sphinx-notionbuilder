@@ -1156,7 +1156,6 @@ def test_nested_numbered_list(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
     )
 
 
