@@ -158,6 +158,25 @@ Some key features:
 * Supports images with URLs
 * Supports videos with URLs and local files
 
+Numbered Lists
+~~~~~~~~~~~~~~
+
+The builder now supports numbered lists:
+
+1. First numbered item
+2. Second numbered item with **bold text**
+3. Third numbered item with nested content
+
+   1. First nested numbered item
+   2. Second nested numbered item
+
+      1. Deeply nested numbered item
+      2. Another deeply nested item
+
+   3. Back to second level
+
+4. Fourth top-level item
+
 Heading 2 with *italic*
 -----------------------
 

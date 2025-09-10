@@ -27,6 +27,7 @@ from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
 from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -64,6 +65,7 @@ def _reconstruct_nested_structure(
             "paragraph",
             "callout",
             "bulleted_list_item",
+            "numbered_list_item",
             "toggle",
         }:
             children = item.get("children", [])
@@ -1025,6 +1027,123 @@ def test_nested_bullet_list(
     top_level_2.append(blocks=[second_level_2])
 
     top_level_3 = UnoBulletedItem(text=text(text="Another top level item"))
+
+    expected_objects: list[Block] = [
+        top_level_1,
+        top_level_2,
+        top_level_3,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+    )
+
+
+def test_flat_numbered_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Flat numbered lists become separate Notion NumberedItem blocks.
+    """
+    rst_content = """
+        1. First numbered point
+        2. Second numbered point
+        3. Third numbered point with longer text
+    """
+    expected_objects: list[Block] = [
+        UnoNumberedItem(text=text(text="First numbered point")),
+        UnoNumberedItem(text=text(text="Second numbered point")),
+        UnoNumberedItem(
+            text=text(text="Third numbered point with longer text")
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_numbered_list_with_inline_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Numbered lists preserve inline formatting in rich text.
+    """
+    rst_content = """
+        1. This is **bold text** in a numbered list
+    """
+    numbered_item = UnoNumberedItem(
+        text=(
+            text(text="This is ", bold=False, italic=False, code=False)
+            + text(text="bold text", bold=True, italic=False, code=False)
+            + text(
+                text=" in a numbered list",
+                bold=False,
+                italic=False,
+                code=False,
+            )
+        )
+    )
+
+    expected_objects: list[Block] = [
+        numbered_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_nested_numbered_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Deeply nested numbered lists create hierarchical block structures.
+    """
+    rst_content = """
+        1. Top level item
+        2. Top level with children
+
+           1. Second level item
+           2. Second level with children
+
+              1. Third level item (now allowed!)
+
+        3. Another top level item
+    """
+
+    third_level_1 = UnoNumberedItem(
+        text=text(text="Third level item (now allowed!)")
+    )
+
+    second_level_1 = UnoNumberedItem(text=text(text="Second level item"))
+    second_level_2 = UnoNumberedItem(
+        text=text(text="Second level with children")
+    )
+
+    top_level_1 = UnoNumberedItem(text=text(text="Top level item"))
+    top_level_2 = UnoNumberedItem(text=text(text="Top level with children"))
+
+    second_level_2.append(blocks=[third_level_1])
+    top_level_2.append(blocks=[second_level_1])
+    top_level_2.append(blocks=[second_level_2])
+
+    top_level_3 = UnoNumberedItem(text=text(text="Another top level item"))
 
     expected_objects: list[Block] = [
         top_level_1,

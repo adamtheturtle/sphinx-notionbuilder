@@ -33,6 +33,7 @@ from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
 from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -343,6 +344,44 @@ class NotionTranslator(NodeVisitor):
                     parent_path=[*parent_path, (block, id(block))],
                 )
 
+    @beartype
+    def _process_numbered_list_item_recursively(
+        self,
+        *,
+        node: nodes.list_item,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """
+        Recursively process a numbered list item node and return a
+        NumberedItem.
+        """
+        paragraph = node.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoNumberedItem(text=rich_text)
+        self._add_block_to_tree(
+            block=block,
+            parent_path=parent_path,
+        )
+
+        numbered_only_msg = (
+            "The only thing Notion supports within a numbered list is a "
+            f"numbered list. Given {type(node).__name__} on line {node.line} "
+            f"in {node.source}"
+        )
+        assert isinstance(node, nodes.list_item)
+
+        for child in node.children[1:]:
+            assert isinstance(child, nodes.enumerated_list), numbered_only_msg
+            for nested_list_item in child.children:
+                assert isinstance(nested_list_item, nodes.list_item), (
+                    numbered_only_msg
+                )
+                self._process_numbered_list_item_recursively(
+                    node=nested_list_item,
+                    parent_path=[*parent_path, (block, id(block))],
+                )
+
     @singledispatchmethod
     @beartype
     def _process_node_to_blocks(  # pylint: disable=no-self-use
@@ -472,6 +511,30 @@ class NotionTranslator(NodeVisitor):
         for list_item in node.children:
             assert isinstance(list_item, nodes.list_item), bullet_only_msg
             self._process_list_item_recursively(
+                node=list_item,
+                parent_path=parent_path,
+            )
+
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: nodes.enumerated_list,
+        *,
+        section_level: int,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """
+        Process enumerated list nodes by creating Notion NumberedItem blocks.
+        """
+        del section_level
+        numbered_only_msg = (
+            "The only thing Notion supports within a numbered list is a "
+            f"numbered list. Given {type(node).__name__} on line {node.line} "
+            f"in {node.source}"
+        )
+        for list_item in node.children:
+            assert isinstance(list_item, nodes.list_item), numbered_only_msg
+            self._process_numbered_list_item_recursively(
                 node=list_item,
                 parent_path=parent_path,
             )
@@ -827,6 +890,18 @@ class NotionTranslator(NodeVisitor):
     def visit_bullet_list(self, node: nodes.Element) -> None:
         """
         Handle bullet list nodes by processing each list item.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_enumerated_list(self, node: nodes.Element) -> None:
+        """
+        Handle enumerated list nodes by processing each list item.
         """
         self._process_node_to_blocks(
             node,
