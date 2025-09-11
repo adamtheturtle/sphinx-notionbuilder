@@ -135,6 +135,9 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 
     This isolates the small branch used when converting a table cell so
     the main table function becomes simpler.
+
+    Notion table cells can only contain paragraph content, so we
+    validate that all children are paragraphs.
     """
     paragraph_children = [
         c for c in entry.children if isinstance(c, nodes.paragraph)
@@ -142,10 +145,23 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     if len(paragraph_children) == 1:
         return paragraph_children[0]
 
-    # If there are multiple children (multiple paragraphs or mixed nodes),
-    # create a combined node that preserves all content and rich text
-    # formatting. We need to preserve the rich text structure instead of
-    # converting to plain text.
+    # Check for non-paragraph content and raise an error
+    non_paragraph_children = [
+        c for c in entry.children if not isinstance(c, nodes.paragraph)
+    ]
+    if non_paragraph_children:
+        child_types = [
+            type(child).__name__ for child in non_paragraph_children
+        ]
+        msg = (
+            f"Notion table cells can only contain paragraph content. "
+            f"Found non-paragraph nodes: {', '.join(child_types)}. "
+            f"Please wrap content in paragraph nodes or use inline formatting."
+        )
+        raise ValueError(msg)
+
+    # If there are multiple paragraph children, create a combined node
+    # that preserves all content and rich text formatting.
     combined = nodes.paragraph()
 
     for i, child in enumerate(iterable=entry.children):
@@ -153,15 +169,9 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
             # Add double newline between paragraphs to maintain separation
             combined += nodes.Text(data="\n\n")
 
-        # Add the child's content, preserving its structure
-        if isinstance(child, nodes.paragraph):
-            # For paragraph nodes, add their children directly to preserve
-            # formatting
-            for grandchild in child.children:
-                combined += grandchild
-        else:
-            # For other node types, add them directly
-            combined += child
+        # Add the paragraph's children directly to preserve formatting
+        for grandchild in child.children:
+            combined += grandchild
 
     return combined
 

@@ -1311,6 +1311,39 @@ def test_table_inline_formatting(
     )
 
 
+def test_table_cell_non_paragraph_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Table cells with non-paragraph content raise a clear error message.
+    """
+    rst_content = """
+        +----------+----------+
+        | Header 1 | Header 2 |
+        +==========+==========+
+        | Cell 1   | Cell 2   |
+        +----------+----------+
+        | Cell 3   | * Item 1 |
+        |          | * Item 2 |
+        +----------+----------+
+    """
+
+    expected_message = (
+        "Notion table cells can only contain paragraph content. "
+        "Found non-paragraph nodes: bullet_list. "
+        "Please wrap content in paragraph nodes or use inline formatting."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
+
+
 def test_simple_image(
     *,
     make_app: Callable[..., SphinxTestApp],
