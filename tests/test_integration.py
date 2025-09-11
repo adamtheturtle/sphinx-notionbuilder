@@ -1232,9 +1232,18 @@ def test_simple_table(
     # First data row
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
-    # Second data row
-    table[2, 0] = text(text="Cell 3\n\nCell 3")
-    table[2, 1] = text(text="Cell 4\n\nCell 4")
+    # Second data row - multiple paragraphs with rich text preserved
+    cell3_text1 = text(text="Cell 3")
+    cell3_separator = text(text="\n\n")
+    cell3_text2 = text(text="Cell 3")
+    combined_cell3 = cell3_text1 + cell3_separator + cell3_text2
+    table[2, 0] = combined_cell3
+
+    cell4_text1 = text(text="Cell 4")
+    cell4_separator = text(text="\n\n")
+    cell4_text2 = text(text="Cell 4")
+    combined_cell4 = cell4_text1 + cell4_separator + cell4_text2
+    table[2, 1] = combined_cell4
 
     expected_objects: list[Block] = [table]
 
@@ -1300,6 +1309,48 @@ def test_table_inline_formatting(
 
     table[1, 0] = text(text="cell code", code=True)
     table[1, 1] = text(text="Normal cell")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_table_multiple_paragraphs_with_rich_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Table cells with multiple paragraphs preserve rich text formatting.
+
+    This test verifies that when a table cell contains multiple
+    paragraphs with rich text formatting (bold, italic, code), the
+    formatting is preserved when the paragraphs are combined.
+    """
+    rst_content = """
+        +----------------------+----------------------+
+        | **Bold paragraph**   | *Italic paragraph*   |
+        |                      |                      |
+        | ``Code paragraph``   | Normal paragraph     |
+        +----------------------+----------------------+
+    """
+
+    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
+
+    # First row - multiple paragraphs with rich text
+    bold_text = text(text="Bold paragraph", bold=True)
+    code_text = text(text="Code paragraph", code=True)
+    combined_text1 = bold_text + text(text="\n\n") + code_text
+    table[0, 0] = combined_text1
+
+    italic_text = text(text="Italic paragraph", italic=True)
+    normal_text = text(text="Normal paragraph")
+    combined_text2 = italic_text + text(text="\n\n") + normal_text
+    table[0, 1] = combined_text2
 
     expected_objects: list[Block] = [table]
 

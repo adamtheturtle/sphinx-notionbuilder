@@ -105,28 +105,39 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 def _extract_table_structure(
     *,
     node: nodes.table,
-) -> tuple[int, nodes.row | None, list[nodes.row]]:
-    """
-    Return (n_cols, header_row, body_rows) for a table node.
+) -> tuple[int, nodes.row | None, list[nodes.row], list[int]]:
+    """Return (n_cols, header_row, body_rows, stub_columns) for a table node.
+
+    stub_columns is a list of column indices (0-based) that are marked
+    as stub columns.
     """
     header_row = None
     body_rows: list[nodes.row] = []
     n_cols = 0
+    stub_columns: list[int] = []
 
     for child in node.children:
-        assert isinstance(child, nodes.tgroup)
-        n_cols = int(child.get(key="cols", failobj=0))
-        for tgroup_child in child.children:
-            if isinstance(tgroup_child, nodes.thead):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    header_row = row
-            elif isinstance(tgroup_child, nodes.tbody):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    body_rows.append(row)
+        if isinstance(child, nodes.tgroup):
+            n_cols = int(child.get(key="cols", failobj=0))
 
-    return n_cols, header_row, body_rows
+            # Check for stub columns in colspec nodes
+            for tgroup_child in child.children:
+                if isinstance(tgroup_child, nodes.colspec):
+                    col_idx = (
+                        int(tgroup_child.get(key="colnum", failobj=0)) - 1
+                    )  # Convert to 0-based
+                    if tgroup_child.get(key="stub", failobj=0):
+                        stub_columns.append(col_idx)
+                elif isinstance(tgroup_child, nodes.thead):
+                    for row in tgroup_child.children:
+                        assert isinstance(row, nodes.row)
+                        header_row = row
+                elif isinstance(tgroup_child, nodes.tbody):
+                    for row in tgroup_child.children:
+                        assert isinstance(row, nodes.row)
+                        body_rows.append(row)
+
+    return n_cols, header_row, body_rows, stub_columns
 
 
 @beartype
@@ -143,16 +154,25 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
         return paragraph_children[0]
 
     # If there are multiple children (multiple paragraphs or mixed nodes),
-    # create a combined node that preserves all content. We insert a
-    # double-newline text node between each top-level child to mimic
-    # paragraph separation when converting to plain text/rich text.
-    # Join the plain text of each top-level child with two newlines so
-    # the resulting rich text becomes a single text fragment like
-    # 'Cell 3\n\nCell 3' (matches test expectations).
-    parts: list[str] = [c.astext() for c in entry.children]
-    joined = "\n\n".join(parts)
+    # create a combined node that preserves all content and rich text
+    # formatting. We need to preserve the rich text structure rather than
+    # flattening to plain text.
     combined = nodes.paragraph()
-    combined += nodes.Text(data=joined)
+
+    for i, child in enumerate(iterable=entry.children):
+        # Add the child's content to the combined paragraph
+        if isinstance(child, nodes.paragraph):
+            # For paragraphs, add all their children to preserve formatting
+            for grandchild in child.children:
+                combined += grandchild
+        else:
+            # For non-paragraph nodes, add them directly
+            combined += child
+
+        # Add paragraph separator between children (except for the last one)
+        if i < len(entry.children) - 1:
+            combined += nodes.Text(data="\n\n")
+
     return combined
 
 
@@ -413,23 +433,62 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
 
-        n_cols, header_row, body_rows = _extract_table_structure(node=node)
+        n_cols, header_row, body_rows, stub_columns = _extract_table_structure(
+            node=node
+        )
 
-        n_rows = 1 + len(body_rows) if header_row else len(body_rows)
+        # Determine if we should have a header row
+        # We have a header row if there's an explicit header row OR if there
+        # are stub columns
+        has_header_row = bool(header_row) or bool(stub_columns)
+
+        # Calculate number of rows correctly
+        if has_header_row:
+            n_rows = (
+                1 + len(body_rows) if header_row else len(body_rows)
+            )  # Don't add 1 if using first body row as header
+        else:
+            # No header row at all
+            n_rows = len(body_rows)
         table = UnoTable(
-            n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row)
+            n_rows=n_rows, n_cols=n_cols, header_row=has_header_row
         )
 
         row_idx = 0
-        if header_row is not None:
-            for col_idx, entry in enumerate(iterable=header_row.children):
-                source = _cell_source_node(entry=entry)
-                table[row_idx, col_idx] = _create_rich_text_from_children(
-                    node=source
-                )
+        if has_header_row:
+            # If we have stub columns but no explicit header row, create header
+            # from first body row
+            if stub_columns and not header_row:
+                # Create header row from first body row
+                if body_rows:
+                    first_row = body_rows[0]
+                    for col_idx, entry in enumerate(
+                        iterable=first_row.children
+                    ):
+                        source = _cell_source_node(entry=entry)
+                        table[row_idx, col_idx] = (
+                            _create_rich_text_from_children(node=source)
+                        )
+                else:
+                    # Empty header if no body rows
+                    for col_idx in range(n_cols):
+                        table[row_idx, col_idx] = text(text="")
+            else:
+                # Use explicit header row (this includes the case where we have
+                # both header_row and stub_columns)
+                assert header_row is not None  # Type guard
+                for col_idx, entry in enumerate(iterable=header_row.children):
+                    source = _cell_source_node(entry=entry)
+                    table[row_idx, col_idx] = _create_rich_text_from_children(
+                        node=source
+                    )
             row_idx += 1
 
-        for body_row in body_rows:
+        # Process body rows
+        # If we have stub columns but no explicit header row, skip the first
+        # body row since we used it for headers
+        start_body_row = 1 if (stub_columns and not header_row) else 0
+        for body_row in body_rows[start_body_row:]:
             for col_idx, entry in enumerate(iterable=body_row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(
