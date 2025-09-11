@@ -203,6 +203,25 @@ Here is a simple table:
 | Cell 3   | Cell 4   |
 +----------+----------+
 
+Multi-Paragraph Rich Text Table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This table demonstrates the fix for issue #90 - tables with cells containing
+multiple paragraphs where at least one paragraph includes rich text formatting:
+
++----------------------+-------------------------------+
+| **Header Bold**      | *Header Italic*               |
++======================+===============================+
+| **Bold text**        | *Italic text*                 |
+| Normal text          | `Link <https://example.com>`_ |
++----------------------+-------------------------------+
+| **First paragraph**  | *Italic paragraph*            |
+|                      |                               |
+| **Second paragraph** | Normal paragraph              |
+|                      |                               |
+| Normal text          | `link2 <https://google.com>`_ |
++----------------------+-------------------------------+
+
 
 Image Examples
 --------------
