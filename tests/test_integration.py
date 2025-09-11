@@ -1232,9 +1232,9 @@ def test_simple_table(
     # First data row
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
-    # Second data row
-    table[2, 0] = text(text="Cell 3\n\nCell 3")
-    table[2, 1] = text(text="Cell 4\n\nCell 4")
+    # Second data row - now creates separate text segments for each paragraph
+    table[2, 0] = text(text="Cell 3") + text(text="\n\n") + text(text="Cell 3")
+    table[2, 1] = text(text="Cell 4") + text(text="\n\n") + text(text="Cell 4")
 
     expected_objects: list[Block] = [table]
 
@@ -1309,6 +1309,39 @@ def test_table_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_table_cell_non_paragraph_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Table cells with non-paragraph content raise a clear error message.
+    """
+    rst_content = """
+        +----------+----------+
+        | Header 1 | Header 2 |
+        +==========+==========+
+        | Cell 1   | Cell 2   |
+        +----------+----------+
+        | Cell 3   | * Item 1 |
+        |          | * Item 2 |
+        +----------+----------+
+    """
+
+    expected_message = (
+        "Notion table cells can only contain paragraph content. "
+        "Found non-paragraph nodes: bullet_list on line None "
+        "in None\\."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
 
 
 def test_simple_image(

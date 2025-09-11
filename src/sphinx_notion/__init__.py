@@ -135,6 +135,9 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 
     This isolates the small branch used when converting a table cell so
     the main table function becomes simpler.
+
+    Notion table cells can only contain paragraph content, so we
+    validate that all children are paragraphs.
     """
     paragraph_children = [
         c for c in entry.children if isinstance(c, nodes.paragraph)
@@ -142,17 +145,34 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     if len(paragraph_children) == 1:
         return paragraph_children[0]
 
-    # If there are multiple children (multiple paragraphs or mixed nodes),
-    # create a combined node that preserves all content. We insert a
-    # double-newline text node between each top-level child to mimic
-    # paragraph separation when converting to plain text/rich text.
-    # Join the plain text of each top-level child with two newlines so
-    # the resulting rich text becomes a single text fragment like
-    # 'Cell 3\n\nCell 3' (matches test expectations).
-    parts: list[str] = [c.astext() for c in entry.children]
-    joined = "\n\n".join(parts)
+    # Check for non-paragraph content and raise an error
+    non_paragraph_children = [
+        c for c in entry.children if not isinstance(c, nodes.paragraph)
+    ]
+    if non_paragraph_children:
+        child_types = [
+            type(child).__name__ for child in non_paragraph_children
+        ]
+        msg = (
+            f"Notion table cells can only contain paragraph content. "
+            f"Found non-paragraph nodes: {', '.join(child_types)} on line "
+            f"{entry.line} in {entry.source}."
+        )
+        raise ValueError(msg)
+
+    # If there are multiple paragraph children, create a combined node
+    # that preserves all content and rich text formatting.
     combined = nodes.paragraph()
-    combined += nodes.Text(data=joined)
+
+    for i, child in enumerate(iterable=entry.children):
+        if i > 0:
+            # Add double newline between paragraphs to maintain separation
+            combined += nodes.Text(data="\n\n")
+
+        # Add the paragraph's children directly to preserve formatting
+        for grandchild in child.children:
+            combined += grandchild
+
     return combined
 
 
