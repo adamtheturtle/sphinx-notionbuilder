@@ -12,7 +12,7 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
-from ultimate_notion import Session
+from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
@@ -142,12 +142,18 @@ def _upload_blocks_recursively(
     help="Title of the page to update (or create if it does not exist)",
     required=True,
 )
+@click.option(
+    "--icon",
+    help="Icon of the page",
+    required=False,
+)
 @beartype
 def main(
     *,
     file: Path,
     parent_page_id: str,
     title: str,
+    icon: str | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -173,6 +179,9 @@ def main(
     else:
         page = session.create_page(parent=parent_page, title=title)
         sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
+
+    if icon:
+        page.icon = Emoji(emoji=icon)
 
     for child in page.children:
         child.delete()

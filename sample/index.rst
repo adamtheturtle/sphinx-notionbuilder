@@ -133,7 +133,7 @@ And with a caption:
    :language: python
    :caption: Example **Configuration** File
 
-Some key features:
+Some key features 👍:
 
 * Easy integration with **Sphinx**
 * Converts reStructuredText to Notion-compatible format
