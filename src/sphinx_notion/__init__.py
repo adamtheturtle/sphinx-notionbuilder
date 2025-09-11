@@ -155,8 +155,8 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
         ]
         msg = (
             f"Notion table cells can only contain paragraph content. "
-            f"Found non-paragraph nodes: {', '.join(child_types)}. "
-            f"Please wrap content in paragraph nodes or use inline formatting."
+            f"Found non-paragraph nodes: {', '.join(child_types)} on line "
+            f"{entry.line} in {entry.source}."
         )
         raise ValueError(msg)
 
