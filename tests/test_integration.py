@@ -1232,9 +1232,9 @@ def test_simple_table(
     # First data row
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
-    # Second data row
-    table[2, 0] = text(text="Cell 3\n\nCell 3")
-    table[2, 1] = text(text="Cell 4\n\nCell 4")
+    # Second data row - now creates separate text segments for each paragraph
+    table[2, 0] = text(text="Cell 3") + text(text="\n\n") + text(text="Cell 3")
+    table[2, 1] = text(text="Cell 4") + text(text="\n\n") + text(text="Cell 4")
 
     expected_objects: list[Block] = [table]
 

@@ -143,16 +143,26 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
         return paragraph_children[0]
 
     # If there are multiple children (multiple paragraphs or mixed nodes),
-    # create a combined node that preserves all content. We insert a
-    # double-newline text node between each top-level child to mimic
-    # paragraph separation when converting to plain text/rich text.
-    # Join the plain text of each top-level child with two newlines so
-    # the resulting rich text becomes a single text fragment like
-    # 'Cell 3\n\nCell 3' (matches test expectations).
-    parts: list[str] = [c.astext() for c in entry.children]
-    joined = "\n\n".join(parts)
+    # create a combined node that preserves all content and rich text
+    # formatting. We need to preserve the rich text structure instead of
+    # converting to plain text.
     combined = nodes.paragraph()
-    combined += nodes.Text(data=joined)
+
+    for i, child in enumerate(iterable=entry.children):
+        if i > 0:
+            # Add double newline between paragraphs to maintain separation
+            combined += nodes.Text(data="\n\n")
+
+        # Add the child's content, preserving its structure
+        if isinstance(child, nodes.paragraph):
+            # For paragraph nodes, add their children directly to preserve
+            # formatting
+            for grandchild in child.children:
+                combined += grandchild
+        else:
+            # For other node types, add them directly
+            combined += child
+
     return combined
 
 
