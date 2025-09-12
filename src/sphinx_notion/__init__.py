@@ -357,8 +357,8 @@ class NotionTranslator(NodeVisitor):
             if not isinstance(child, nodes.bullet_list):
                 bullet_only_msg = (
                     "The only thing Notion supports within a bullet list is a "
-                    f"bullet list. Given {type(child).__name__} on line {child.line} "
-                    f"in {node.source}"
+                    f"bullet list. Given {type(child).__name__} on line "
+                    f"{child.line} in {child.source}"
                 )
                 raise ValueError(bullet_only_msg)
             for nested_list_item in child.children:
@@ -527,13 +527,13 @@ class NotionTranslator(NodeVisitor):
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
-        bullet_only_msg = (
-            "The only thing Notion supports within a bullet list is a "
-            f"bullet list. Given {type(node).__name__} on line {node.line} "
-            f"in {node.source}"
-        )
         for list_item in node.children:
             if not isinstance(list_item, nodes.list_item):
+                bullet_only_msg = (
+                    "The only thing Notion supports within a bullet list is a "
+                    f"bullet list. Given {type(list_item).__name__} on line "
+                    f"{list_item.line} in {list_item.source}"
+                )
                 raise ValueError(bullet_only_msg)
             self._process_list_item_recursively(
                 node=list_item,
