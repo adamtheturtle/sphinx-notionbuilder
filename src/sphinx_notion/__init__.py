@@ -1183,7 +1183,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-    app.add_role(name="strike", role=_patched_strike_role)
-    app.add_role(name="del", role=_patched_strike_role)
+    app.add_role(name="strike", role=_patched_strike_role, override=True)
+    app.add_role(name="del", role=_patched_strike_role, override=True)
 
     return {"parallel_read_safe": True}
