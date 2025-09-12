@@ -12,6 +12,7 @@ from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor, Text
 from docutils.parsers.rst import roles
+from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
 from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.builders.latex import LaTeXBuilder
@@ -1149,7 +1150,7 @@ def _patched_strike_role(
     rawtext: str,
     text: str,
     lineno: int,
-    inliner,
+    inliner: Inliner,
 ) -> tuple[list[strike_node], list[nodes.system_message]]:
     """
     Patched strike role that supports notion builder.
