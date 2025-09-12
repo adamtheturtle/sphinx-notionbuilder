@@ -1643,8 +1643,9 @@ def test_strikethrough_text(
     tmp_path: Path,
 ) -> None:
     """
-    Strikethrough text using sphinxnotes-strike extension becomes rich text
-    with strikethrough formatting.
+    Strikethrough text using
+    `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_
+    becomes rich text with strikethrough formatting.
     """
     rst_content = """
         This text has :strike:`strikethrough` formatting.

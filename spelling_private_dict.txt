@@ -1,6 +1,8 @@
 backtick
 backticks
 callout
+hardcode
+hardcodes
 href
 pragma
 preprocess
@@ -11,3 +13,4 @@ reportMissingTypeStubs
 reportUnknownArgumentType
 reportUnknownMemberType
 reportUnknownVariableType
+strikethrough

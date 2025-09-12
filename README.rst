@@ -46,7 +46,7 @@ For video support, also add the sphinxcontrib-video extension:
        "sphinx_notion",
    ]
 
-For strikethrough text support, also add the sphinxnotes-strike extension:
+For strikethrough text support, also add the `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ extension:
 
 .. code-block:: python
 
