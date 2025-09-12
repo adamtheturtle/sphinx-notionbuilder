@@ -37,6 +37,7 @@ dependencies = [
     "sphinx>=8.2.3",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
+    "sphinxnotes-strike>=1.2",
     "ultimate-notion>=0.9",
 ]
 optional-dependencies.dev = [
