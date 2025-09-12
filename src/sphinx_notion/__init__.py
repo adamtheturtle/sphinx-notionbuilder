@@ -96,21 +96,12 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         elif isinstance(child, nodes.target):
             continue
         else:
-            # Check for strikethrough nodes from sphinxnotes-strike extension
-            strikethrough = False
-            try:
-                from sphinxnotes.strike import strike_node
-
-                strikethrough = isinstance(child, strike_node)
-            except ImportError:
-                pass
-
             new_text = text(
                 text=child.astext(),
                 bold=isinstance(child, nodes.strong),
                 italic=isinstance(child, nodes.emphasis),
                 code=isinstance(child, nodes.literal),
-                strikethrough=strikethrough,
+                strikethrough=isinstance(child, strike_node),
             )
         rich_text += new_text
 
@@ -1158,6 +1149,8 @@ def _patched_strike_role(
     """
     Patched strike role that supports notion builder.
     """
+    del lineno
+    del typ
     env = inliner.document.settings.env
 
     # Check if it's a notion builder or supported builder
