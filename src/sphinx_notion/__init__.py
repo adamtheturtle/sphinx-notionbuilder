@@ -7,6 +7,7 @@ from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any, TypedDict
 
+import sphinxnotes.strike
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
@@ -1162,8 +1163,8 @@ def patched_strike_role(
     env = inliner.document.settings.env
 
     # Check if it's a notion builder or supported builder
-    if isinstance(env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder)) or (
-        hasattr(env.app.builder, "name") and env.app.builder.name == "notion"
+    if isinstance(
+        env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder, NotionBuilder)
     ):
         node = strike_node(rawtext, unescape(text))
         node["docname"] = env.docname
@@ -1192,7 +1193,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     original_strike_role = strike_role
 
     # Patch the role function
-    import sphinxnotes.strike
 
     sphinxnotes.strike.strike_role = patched_strike_role
 
