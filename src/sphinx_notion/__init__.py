@@ -289,7 +289,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 
 
 @beartype
-class NotionTranslator(NodeVisitor):
+class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
     """
     Translate ``docutils`` nodes to Notion JSON.
     """
@@ -848,6 +848,24 @@ class NotionTranslator(NodeVisitor):
             parent_path=parent_path,
         )
 
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: nodes.comment,
+        *,
+        section_level: int,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """Process comment nodes by ignoring them completely.
+
+        Comments in reStructuredText should not appear in the final
+        output.
+        """
+        assert self
+        del node
+        del section_level
+        del parent_path
+
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
@@ -1043,6 +1061,18 @@ class NotionTranslator(NodeVisitor):
     def visit_container(self, node: nodes.Element) -> None:
         """
         Handle container nodes.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
+    def visit_comment(self, node: nodes.Element) -> None:
+        """
+        Handle comment nodes by ignoring them completely.
         """
         self._process_node_to_blocks(
             node,

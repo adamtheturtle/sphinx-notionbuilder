@@ -7,6 +7,9 @@ Heading 1 with *bold*
 
    other
 
+.. This is a comment that demonstrates comment support.
+   Comments should not appear in the final output.
+
 Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
 
 This is **bold** and *italic* and ``inline code``.
