@@ -1648,6 +1648,8 @@ def test_strikethrough_text(
     """
     rst_content = """
         This text has :strike:`strikethrough` formatting.
+
+        This text has :del:`strikethrough` formatting.
     """
 
     normal_text1 = text(text="This text has ")
@@ -1657,6 +1659,7 @@ def test_strikethrough_text(
     combined_text = normal_text1 + strikethrough_text + normal_text2
 
     expected_objects: list[Block] = [
+        UnoParagraph(text=combined_text),
         UnoParagraph(text=combined_text),
     ]
 
