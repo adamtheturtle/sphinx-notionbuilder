@@ -10,12 +10,18 @@ from typing import Any, TypedDict
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
+from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
+)
+from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
+    strike_node,
+    strike_role,  # pyright: ignore[reportUnknownVariableType]
 )
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
@@ -95,6 +101,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 bold=isinstance(child, nodes.strong),
                 italic=isinstance(child, nodes.emphasis),
                 code=isinstance(child, nodes.literal),
+                strikethrough=isinstance(child, strike_node),
             )
         rich_text += new_text
 
@@ -1129,6 +1136,38 @@ def _depart_video_node_notion(
 
 
 @beartype
+def _patched_strike_role(  # pylint: disable=too-many-positional-arguments
+    typ: str,
+    rawtext: str,
+    role_text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, Any] | None = None,
+    content: list[str] | None = None,
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """
+    The original strike role hardcodes the supported builders.
+    """
+    env = inliner.document.settings.env
+    original_builder = env.app.builder
+    env.app.builder = StandaloneHTMLBuilder(app=env.app, env=env)
+    try:
+        result = strike_role(
+            typ=typ,
+            rawtext=rawtext,
+            text=role_text,
+            lineno=lineno,
+            inliner=inliner,
+            options=options or {},
+            content=content or [],
+        )
+    finally:
+        env.app.builder = original_builder
+
+    return result
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1141,5 +1180,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
+    app.add_role(name="strike", role=_patched_strike_role, override=True)
+    app.add_role(name="del", role=_patched_strike_role, override=True)
 
     return {"parallel_read_safe": True}

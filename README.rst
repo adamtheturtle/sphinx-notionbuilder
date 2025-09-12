@@ -46,6 +46,17 @@ For video support, also add the sphinxcontrib-video extension:
        "sphinx_notion",
    ]
 
+For strikethrough text support, also add the `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinxnotes.strike",  # Must be before sphinx_notion
+       "sphinx_notion",
+   ]
+
 Supported markup
 ----------------
 
@@ -61,7 +72,7 @@ The following syntax is supported:
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Tables
-
+- Strikethrough text
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 

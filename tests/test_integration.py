@@ -1635,3 +1635,42 @@ def test_local_video_file(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
+
+
+def test_strikethrough_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Strikethrough text using
+    `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_
+    becomes rich text with strikethrough formatting.
+    """
+    rst_content = """
+        This text has :strike:`strikethrough` formatting.
+
+        This text has :del:`strikethrough` formatting.
+    """
+
+    normal_text1 = text(text="This text has ")
+    strikethrough_text = text(text="strikethrough", strikethrough=True)
+    normal_text2 = text(text=" formatting.")
+
+    combined_text = normal_text1 + strikethrough_text + normal_text2
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=combined_text),
+        UnoParagraph(text=combined_text),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinxnotes.strike",
+            "sphinx_notion",
+        ),
+    )

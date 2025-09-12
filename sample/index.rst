@@ -11,6 +11,8 @@ Some text with a link to `Google <https://google.com>`_ and `<https://example.co
 
 This is **bold** and *italic* and ``inline code``.
 
+This text has :strike:`strikethrough` formatting and :del:`deleted text` as well.
+
 .. note::
 
    This is an important note that demonstrates the note admonition support.
