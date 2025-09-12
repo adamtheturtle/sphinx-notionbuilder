@@ -1063,14 +1063,6 @@ class NotionTranslator(NodeVisitor):
 
         raise nodes.SkipNode
 
-    def visit_strike_node(self, node: nodes.Element) -> None:
-        """
-        Handle strike nodes from sphinxnotes-strike extension.
-        """
-        # The strike_node should be processed as inline text with strikethrough formatting
-        # This is handled in _create_rich_text_from_children, so we just skip
-        raise nodes.SkipNode
-
     def visit_document(self, node: nodes.Element) -> None:
         """
         Initialize block collection at document start.
@@ -1205,11 +1197,5 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     import sphinxnotes.strike
 
     sphinxnotes.strike.strike_role = patched_strike_role
-
-    app.add_node(
-        node=strike_node,
-        notion=(NotionTranslator.visit_strike_node, None),
-        override=True,
-    )
 
     return {"parallel_read_safe": True}
