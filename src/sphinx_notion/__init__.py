@@ -1149,24 +1149,25 @@ def _patched_strike_role(
     | tuple[list[Text], list[nodes.system_message]]
 ):
     """
-    Patched strike role that supports notion builder.
+    The original strike role hardcodes the supported builders.
     """
     env = inliner.document.settings.env
+    original_builder = env.app.builder
+    env.app.builder = StandaloneHTMLBuilder(app=env.app, env=env)
+    try:
+        result = strike_role(
+            typ=typ,
+            rawtext=rawtext,
+            text=text,
+            lineno=lineno,
+            inliner=inliner,
+            options=options or {},
+            content=content or [],
+        )
+    finally:
+        env.app.builder = original_builder
 
-    if isinstance(env.app.builder, NotionBuilder):
-        node = strike_node(rawtext, unescape(text))
-        node["docname"] = env.docname
-        return [node], []
-
-    return strike_role(
-        typ=typ,
-        rawtext=rawtext,
-        text=text,
-        lineno=lineno,
-        inliner=inliner,
-        options=options or {},
-        content=content or [],
-    )
+    return result
 
 
 @beartype
