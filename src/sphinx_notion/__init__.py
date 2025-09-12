@@ -289,7 +289,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 
 
 @beartype
-class NotionTranslator(NodeVisitor):
+class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
     """
     Translate ``docutils`` nodes to Notion JSON.
     """
@@ -861,6 +861,7 @@ class NotionTranslator(NodeVisitor):
         Comments in reStructuredText should not appear in the final
         output.
         """
+        assert self
         del node
         del section_level
         del parent_path
