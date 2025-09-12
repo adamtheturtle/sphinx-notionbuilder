@@ -157,13 +157,11 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
         c for c in entry.children if not isinstance(c, nodes.paragraph)
     ]
     if non_paragraph_children:
-        child_types = [
-            type(child).__name__ for child in non_paragraph_children
-        ]
+        first_child = non_paragraph_children[0]
         msg = (
             f"Notion table cells can only contain paragraph content. "
-            f"Found non-paragraph nodes: {', '.join(child_types)} on line "
-            f"{entry.line} in {entry.source}."
+            f"Found non-paragraph node: {type(first_child).__name__} on line "
+            f"{first_child.line} in {first_child.source}."
         )
         raise ValueError(msg)
 

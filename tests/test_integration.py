@@ -1332,8 +1332,8 @@ def test_table_cell_non_paragraph_error(
 
     expected_message = (
         r"Notion table cells can only contain paragraph content. "
-        r"Found non-paragraph nodes: bullet_list on line None "
-        r"in None.$"
+        r"Found non-paragraph node: bullet_list on line 6 "
+        rf"in {tmp_path}/src/index.rst.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
