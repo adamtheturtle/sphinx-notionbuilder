@@ -7,22 +7,19 @@ from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any, TypedDict
 
-import sphinxnotes.strike
 from beartype import beartype
 from docutils import nodes
-from docutils.nodes import NodeVisitor, Text
-from docutils.parsers.rst import roles
+from docutils.nodes import NodeVisitor
 from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
 from sphinx.builders.html import StandaloneHTMLBuilder
-from sphinx.builders.latex import LaTeXBuilder
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
-from sphinxnotes.strike import strike_node, strike_role, unescape
+from sphinxnotes.strike import strike_node, strike_role
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
