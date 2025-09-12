@@ -1665,5 +1665,8 @@ def test_strikethrough_text(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxnotes.strike"),
+        extensions=(
+            "sphinxnotes.strike",
+            "sphinx_notion",
+        ),
     )
