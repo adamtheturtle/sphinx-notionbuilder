@@ -1059,7 +1059,7 @@ class NotionTranslator(NodeVisitor):
         """
         Initialize block collection at document start.
         """
-        assert self
+        del self
         del node
 
     @beartype
