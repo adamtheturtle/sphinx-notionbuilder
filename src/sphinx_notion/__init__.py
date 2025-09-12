@@ -1142,7 +1142,7 @@ def _patched_strike_role(
     text: str,
     lineno: int,
     inliner: Inliner,
-    options: dict | None = None,
+    options: dict[str, Any] | None = None,
     content: list[str] | None = None,
 ) -> (
     tuple[list[nodes.Node], list[nodes.system_message]]
