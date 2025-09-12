@@ -1708,3 +1708,35 @@ def test_bullet_list_item_invalid_nested_child_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_comment_ignored(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Comments in reStructuredText are ignored and do not appear in output.
+    """
+    rst_content = """
+        This is a paragraph with content.
+
+        .. This is a comment that should be ignored.
+           It can span multiple lines.
+
+        This is another paragraph after the comment.
+    """
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="This is a paragraph with content.")),
+        UnoParagraph(
+            text=text(text="This is another paragraph after the comment.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
