@@ -19,7 +19,10 @@ from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
-from sphinxnotes.strike import strike_node, strike_role
+from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
+    strike_node,
+    strike_role,  # pyright: ignore[reportUnknownVariableType]
+)
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
