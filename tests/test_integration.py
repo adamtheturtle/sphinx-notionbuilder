@@ -1331,9 +1331,9 @@ def test_table_cell_non_paragraph_error(
     """
 
     expected_message = (
-        "Notion table cells can only contain paragraph content. "
-        "Found non-paragraph nodes: bullet_list on line None "
-        "in None\\."
+        r"Notion table cells can only contain paragraph content. "
+        r"Found non-paragraph nodes: bullet_list on line None "
+        r"in None.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
@@ -1501,8 +1501,8 @@ def test_heading_level_4_error(
     """
 
     expected_message = (
-        "Notion only supports heading levels 1-3, but found heading level 4 "
-        "on line 11."
+        r"Notion only supports heading levels 1-3, but found heading level 4 "
+        r"on line 11.$"
     )
     with pytest.raises(
         expected_exception=ValueError,
