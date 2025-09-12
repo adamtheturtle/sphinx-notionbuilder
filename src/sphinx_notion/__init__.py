@@ -1151,7 +1151,10 @@ def _patched_strike_role(
     text: str,
     lineno: int,
     inliner: Inliner,
-) -> tuple[list[strike_node], list[nodes.system_message]]:
+) -> (
+    tuple[list[nodes.Node], list[nodes.system_message]]
+    | tuple[list[Text], list[nodes.system_message]]
+):
     """
     Patched strike role that supports notion builder.
     """
