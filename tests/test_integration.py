@@ -4,6 +4,7 @@ Integration tests for the Sphinx Notion Builder functionality.
 
 import base64
 import json
+import re
 import textwrap
 from collections.abc import Callable
 from pathlib import Path
@@ -1334,7 +1335,7 @@ def test_table_cell_non_paragraph_error(
     expected_message = (
         r"Notion table cells can only contain paragraph content. "
         r"Found non-paragraph node: bullet_list on line 6 "
-        rf"in {index_rst}.$"
+        rf"in {re.escape(pattern=str(object=index_rst))}.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
@@ -1504,7 +1505,7 @@ def test_heading_level_4_error(
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
         r"Notion only supports heading levels 1-3, but found heading level 4 "
-        rf"on line 11 in {index_rst}.$"
+        rf"on line 11 in {re.escape(pattern=str(object=index_rst))}.$"
     )
     with pytest.raises(
         expected_exception=ValueError,
