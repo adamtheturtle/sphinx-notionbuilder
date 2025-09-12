@@ -1136,10 +1136,10 @@ def _depart_video_node_notion(
 
 
 @beartype
-def _patched_strike_role(
+def _patched_strike_role(  # pylint: disable=too-many-positional-arguments
     typ: str,
     rawtext: str,
-    text: str,
+    role_text: str,
     lineno: int,
     inliner: Inliner,
     options: dict[str, Any] | None = None,
@@ -1155,7 +1155,7 @@ def _patched_strike_role(
         result = strike_role(
             typ=typ,
             rawtext=rawtext,
-            text=text,
+            text=role_text,
             lineno=lineno,
             inliner=inliner,
             options=options or {},
