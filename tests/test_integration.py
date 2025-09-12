@@ -1502,7 +1502,7 @@ def test_heading_level_4_error(
 
     expected_message = (
         r"Notion only supports heading levels 1-3, but found heading level 4 "
-        r"on line 11.$"
+        rf"on line 11 in {tmp_path}/src/index.rst.$"
     )
     with pytest.raises(
         expected_exception=ValueError,
