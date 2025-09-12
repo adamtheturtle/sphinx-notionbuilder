@@ -1143,7 +1143,8 @@ def _depart_video_node_notion(
     del node
 
 
-def patched_strike_role(
+@beartype
+def _patched_strike_role(
     typ: str,
     rawtext: str,
     text: str,
@@ -1193,6 +1194,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     # Patch the role function
 
-    sphinxnotes.strike.strike_role = patched_strike_role
+    sphinxnotes.strike.strike_role = _patched_strike_role
 
     return {"parallel_read_safe": True}
