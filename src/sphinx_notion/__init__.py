@@ -157,13 +157,11 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
         c for c in entry.children if not isinstance(c, nodes.paragraph)
     ]
     if non_paragraph_children:
-        child_types = [
-            type(child).__name__ for child in non_paragraph_children
-        ]
+        first_child = non_paragraph_children[0]
         msg = (
             f"Notion table cells can only contain paragraph content. "
-            f"Found non-paragraph nodes: {', '.join(child_types)} on line "
-            f"{entry.line} in {entry.source}."
+            f"Found non-paragraph node: {type(first_child).__name__} on line "
+            f"{first_child.line} in {first_child.source}."
         )
         raise ValueError(msg)
 
@@ -619,7 +617,8 @@ class NotionTranslator(NodeVisitor):
         if section_level > max_heading_level:
             error_msg = (
                 f"Notion only supports heading levels 1-{max_heading_level}, "
-                f"but found heading level {section_level} on line {node.line}."
+                f"but found heading level {section_level} on line {node.line} "
+                f"in {node.source}."
             )
             raise ValueError(error_msg)
 
