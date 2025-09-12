@@ -174,7 +174,8 @@ def main(
             f"Expected 1 page matching title {title}, but got "
             f"{len(pages_matching_title)}"
         )
-        assert len(pages_matching_title) == 1, msg
+        if len(pages_matching_title) != 1:
+            raise ValueError(msg)
         (page,) = pages_matching_title
     else:
         page = session.create_page(parent=parent_page, title=title)
