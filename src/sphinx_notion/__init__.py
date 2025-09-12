@@ -359,11 +359,11 @@ class NotionTranslator(NodeVisitor):
         assert isinstance(node, nodes.list_item)
 
         for child in node.children[1:]:
-            assert isinstance(child, nodes.bullet_list), bullet_only_msg
+            if not isinstance(child, nodes.bullet_list):
+                raise ValueError(bullet_only_msg)
             for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item), (
-                    bullet_only_msg
-                )
+                if not isinstance(nested_list_item, nodes.list_item):
+                    raise ValueError(bullet_only_msg)
                 self._process_list_item_recursively(
                     node=nested_list_item,
                     parent_path=[*parent_path, (block, id(block))],
@@ -534,7 +534,8 @@ class NotionTranslator(NodeVisitor):
             f"in {node.source}"
         )
         for list_item in node.children:
-            assert isinstance(list_item, nodes.list_item), bullet_only_msg
+            if not isinstance(list_item, nodes.list_item):
+                raise ValueError(bullet_only_msg)
             self._process_list_item_recursively(
                 node=list_item,
                 parent_path=parent_path,
