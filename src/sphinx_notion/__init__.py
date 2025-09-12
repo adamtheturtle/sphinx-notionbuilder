@@ -1144,10 +1144,7 @@ def _patched_strike_role(
     inliner: Inliner,
     options: dict[str, Any] | None = None,
     content: list[str] | None = None,
-) -> (
-    tuple[list[nodes.Node], list[nodes.system_message]]
-    | tuple[list[Text], list[nodes.system_message]]
-):
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """
     The original strike role hardcodes the supported builders.
     """
