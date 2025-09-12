@@ -531,16 +531,7 @@ class NotionTranslator(NodeVisitor):
         """
         del section_level
         for list_item in node.children:
-            if not isinstance(list_item, nodes.list_item):
-                bullet_only_msg = (
-                    "The only thing Notion supports within a bullet list is a "
-                    f"bullet list. Given {type(list_item).__name__} on line "
-                    f"{list_item.line} in {list_item.source}"
-                )
-                # Ignore error which is about a type error, but we want to
-                # raise a value error because the user has not sent anything to
-                # do with types.
-                raise ValueError(bullet_only_msg)  # noqa: TRY004
+            assert isinstance(list_item, nodes.list_item)
             self._process_list_item_recursively(
                 node=list_item,
                 parent_path=parent_path,
