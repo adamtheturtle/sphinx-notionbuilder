@@ -1150,17 +1150,10 @@ def _patched_strike_role(
     text: str,
     lineno: int,
     inliner,
-    options: dict = None,
-    content: list = None,
-):
+) -> tuple[list[strike_node], list[nodes.system_message]]:
     """
     Patched strike role that supports notion builder.
     """
-    if options is None:
-        options = {}
-    if content is None:
-        content = []
-
     env = inliner.document.settings.env
 
     # Check if it's a notion builder or supported builder
