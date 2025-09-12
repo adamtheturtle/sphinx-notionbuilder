@@ -1698,7 +1698,7 @@ def test_bullet_list_item_invalid_nested_child_error(
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
         r"The only thing Notion supports within a bullet list is a "
-        r"bullet list. Given list_item on line 1 "
+        r"bullet list. Given paragraph on line 3 "
         rf"in {re.escape(pattern=str(object=index_rst))}$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
