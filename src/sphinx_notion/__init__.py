@@ -1142,6 +1142,38 @@ def _depart_video_node_notion(
     del node
 
 
+def patched_strike_role(
+    typ: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner,
+    options: dict = None,
+    content: list = None,
+):
+    """
+    Patched strike role that supports notion builder.
+    """
+    if options is None:
+        options = {}
+    if content is None:
+        content = []
+
+    env = inliner.document.settings.env
+
+    # Check if it's a notion builder or supported builder
+    if isinstance(env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder)) or (
+        hasattr(env.app.builder, "name") and env.app.builder.name == "notion"
+    ):
+        node = strike_node(rawtext, unescape(text))
+        node["docname"] = env.docname
+        return [node], []
+    # Fallback to text for unsupported builders
+    from docutils.nodes import Text
+
+    return [Text(unescape(text))], []
+
+
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
@@ -1158,40 +1190,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     # Store the original role function
     original_strike_role = strike_role
-
-    def patched_strike_role(
-        typ: str,
-        rawtext: str,
-        text: str,
-        lineno: int,
-        inliner,
-        options: dict = None,
-        content: list = None,
-    ):
-        """
-        Patched strike role that supports notion builder.
-        """
-        if options is None:
-            options = {}
-        if content is None:
-            content = []
-
-        env = inliner.document.settings.env
-
-        # Check if it's a notion builder or supported builder
-        if isinstance(
-            env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder)
-        ) or (
-            hasattr(env.app.builder, "name")
-            and env.app.builder.name == "notion"
-        ):
-            node = strike_node(rawtext, unescape(text))
-            node["docname"] = env.docname
-            return [node], []
-        # Fallback to text for unsupported builders
-        from docutils.nodes import Text
-
-        return [Text(unescape(text))], []
 
     # Patch the role function
     import sphinxnotes.strike
