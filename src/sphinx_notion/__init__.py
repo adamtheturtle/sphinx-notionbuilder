@@ -10,13 +10,17 @@ from typing import Any, TypedDict
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import roles
 from sphinx.application import Sphinx
+from sphinx.builders.html import StandaloneHTMLBuilder
+from sphinx.builders.latex import LaTeXBuilder
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
+from sphinxnotes.strike import strike_node, strike_role, unescape
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -1159,12 +1163,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-
-    from docutils import nodes
-    from docutils.parsers.rst import roles
-    from sphinx.builders.html import StandaloneHTMLBuilder
-    from sphinx.builders.latex import LaTeXBuilder
-    from sphinxnotes.strike import strike_node, strike_role, unescape
 
     # Store the original role function
     original_strike_role = strike_role
