@@ -1677,3 +1677,34 @@ def test_strikethrough_text(
             "sphinx_notion",
         ),
     )
+
+
+def test_bullet_list_item_invalid_nested_child_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Bullet list items with invalid nested children raise a clear error message.
+    """
+    rst_content = """
+        * First bullet point
+
+          Some paragraph that should not be here
+
+          * Nested bullet
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_message = (
+        r"The only thing Notion supports within a bullet list is a "
+        r"bullet list. Given paragraph on line 3 "
+        rf"in {re.escape(pattern=str(object=index_rst))}$"
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )

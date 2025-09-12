@@ -351,19 +351,21 @@ class NotionTranslator(NodeVisitor):
             parent_path=parent_path,
         )
 
-        bullet_only_msg = (
-            "The only thing Notion supports within a bullet list is a "
-            f"bullet list. Given {type(node).__name__} on line {node.line} "
-            f"in {node.source}"
-        )
         assert isinstance(node, nodes.list_item)
 
         for child in node.children[1:]:
-            assert isinstance(child, nodes.bullet_list), bullet_only_msg
-            for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item), (
-                    bullet_only_msg
+            if not isinstance(child, nodes.bullet_list):
+                bullet_only_msg = (
+                    "The only thing Notion supports within a bullet list is a "
+                    f"bullet list. Given {type(child).__name__} on line "
+                    f"{child.line} in {child.source}"
                 )
+                # Ignore error which is about a type error, but we want to
+                # raise a value error because the user has not sent anything to
+                # do with types.
+                raise ValueError(bullet_only_msg)  # noqa: TRY004
+            for nested_list_item in child.children:
+                assert isinstance(nested_list_item, nodes.list_item)
                 self._process_list_item_recursively(
                     node=nested_list_item,
                     parent_path=[*parent_path, (block, id(block))],
@@ -528,13 +530,8 @@ class NotionTranslator(NodeVisitor):
         Process bullet list nodes by creating Notion BulletedItem blocks.
         """
         del section_level
-        bullet_only_msg = (
-            "The only thing Notion supports within a bullet list is a "
-            f"bullet list. Given {type(node).__name__} on line {node.line} "
-            f"in {node.source}"
-        )
         for list_item in node.children:
-            assert isinstance(list_item, nodes.list_item), bullet_only_msg
+            assert isinstance(list_item, nodes.list_item)
             self._process_list_item_recursively(
                 node=list_item,
                 parent_path=parent_path,
