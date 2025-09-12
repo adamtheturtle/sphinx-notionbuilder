@@ -10,7 +10,7 @@ from typing import Any, TypedDict
 import sphinxnotes.strike
 from beartype import beartype
 from docutils import nodes
-from docutils.nodes import NodeVisitor
+from docutils.nodes import NodeVisitor, Text
 from docutils.parsers.rst import roles
 from sphinx.application import Sphinx
 from sphinx.builders.html import StandaloneHTMLBuilder
@@ -1170,7 +1170,6 @@ def patched_strike_role(
         node["docname"] = env.docname
         return [node], []
     # Fallback to text for unsupported builders
-    from docutils.nodes import Text
 
     return [Text(unescape(text))], []
 
