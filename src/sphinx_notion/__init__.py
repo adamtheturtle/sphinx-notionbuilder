@@ -94,10 +94,10 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             strikethrough = False
             try:
                 from sphinxnotes.strike import strike_node
+
                 strikethrough = isinstance(child, strike_node)
             except ImportError:
                 pass
-
 
             new_text = text(
                 text=child.astext(),
@@ -1160,51 +1160,58 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         override=True,
     )
 
-    # Add support for sphinxnotes-strike extension
-    try:
-        from sphinxnotes.strike import strike_node, unescape, strike_role
-        from docutils import nodes
-        from docutils.parsers.rst import roles
-        from sphinx.builders.html import StandaloneHTMLBuilder
-        from sphinx.builders.latex import LaTeXBuilder
+    from docutils import nodes
+    from docutils.parsers.rst import roles
+    from sphinx.builders.html import StandaloneHTMLBuilder
+    from sphinx.builders.latex import LaTeXBuilder
+    from sphinxnotes.strike import strike_node, strike_role, unescape
 
-        # Store the original role function
-        original_strike_role = strike_role
+    # Store the original role function
+    original_strike_role = strike_role
 
-        def patched_strike_role(typ: str, rawtext: str, text: str, lineno: int,
-                               inliner, options: dict = None, content: list = None):
-            """
-            Patched strike role that supports notion builder.
-            """
-            if options is None:
-                options = {}
-            if content is None:
-                content = []
+    def patched_strike_role(
+        typ: str,
+        rawtext: str,
+        text: str,
+        lineno: int,
+        inliner,
+        options: dict = None,
+        content: list = None,
+    ):
+        """
+        Patched strike role that supports notion builder.
+        """
+        if options is None:
+            options = {}
+        if content is None:
+            content = []
 
-            env = inliner.document.settings.env
+        env = inliner.document.settings.env
 
-            # Check if it's a notion builder or supported builder
-            if (isinstance(env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder)) or
-                hasattr(env.app.builder, 'name') and env.app.builder.name == 'notion'):
-                node = strike_node(rawtext, unescape(text))
-                node['docname'] = env.docname
-                return [node], []
-            else:
-                # Fallback to text for unsupported builders
-                from docutils.nodes import Text
-                return [Text(unescape(text))], []
+        # Check if it's a notion builder or supported builder
+        if isinstance(
+            env.app.builder, (StandaloneHTMLBuilder, LaTeXBuilder)
+        ) or (
+            hasattr(env.app.builder, "name")
+            and env.app.builder.name == "notion"
+        ):
+            node = strike_node(rawtext, unescape(text))
+            node["docname"] = env.docname
+            return [node], []
+        # Fallback to text for unsupported builders
+        from docutils.nodes import Text
 
-        # Patch the role function
-        import sphinxnotes.strike
-        sphinxnotes.strike.strike_role = patched_strike_role
+        return [Text(unescape(text))], []
 
-        app.add_node(
-            node=strike_node,
-            notion=(NotionTranslator.visit_strike_node, None),
-            override=True,
-        )
-    except ImportError as e:
-        print(f"DEBUG: Failed to import sphinxnotes.strike: {e}")
-        pass
+    # Patch the role function
+    import sphinxnotes.strike
+
+    sphinxnotes.strike.strike_role = patched_strike_role
+
+    app.add_node(
+        node=strike_node,
+        notion=(NotionTranslator.visit_strike_node, None),
+        override=True,
+    )
 
     return {"parallel_read_safe": True}
