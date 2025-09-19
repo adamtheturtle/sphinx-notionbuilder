@@ -1742,7 +1742,7 @@ def test_comment_ignored(
     )
 
 
-def test_list_table_header_rows_validation(
+def test_list_table_header_one_allowed(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
@@ -1760,18 +1760,20 @@ def test_list_table_header_rows_validation(
              - Cell 2
     """
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_message = (
-        r"List table header-rows option must be 0, but got 1 "
-        rf"on line 1 in {re.escape(pattern=str(object=index_rst))}.$"
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[1, 0] = text(text="Cell 1")
+    table[0, 1] = text(text="Cell 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
 
 
 def test_list_table_header_rows_zero_allowed(
@@ -1802,3 +1804,35 @@ def test_list_table_header_rows_zero_allowed(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_list_table_header_maximum_one_allowed(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with header-rows option other than 0 or 1 raises ValueError.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 2
+
+           * - Header 1
+             - Header 2
+           * - Cell 1
+             - Cell 2
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_message = (
+        r"List table header-rows option must be 0 or 1, but got 2 "
+        rf"on line 1 in {re.escape(pattern=str(object=index_rst))}.$"
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )

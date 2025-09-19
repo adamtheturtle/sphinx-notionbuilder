@@ -1171,21 +1171,5 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         override=True,
     )
 
-    # Add custom list-table directive that validates header-rows option
-    from docutils.parsers.rst.directives.tables import ListTable
-
-    class ValidatedListTable(ListTable):
-        def run(self):
-            header_rows = self.options.get("header-rows", 0)
-            if header_rows != 0:
-                msg = (
-                    f"List table header-rows option must be 0, but got {header_rows} "
-                    f"on line {self.lineno} in {self.state.document.current_source}."
-                )
-                raise ValueError(msg)
-            return super().run()
-
-    app.add_directive(name="list-table", cls=ValidatedListTable, override=True)
-
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}
