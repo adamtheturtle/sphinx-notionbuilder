@@ -227,6 +227,28 @@ multiple paragraphs where at least one paragraph includes rich text formatting:
 | Normal text          | `link2 <https://google.com>`_ |
 +----------------------+-------------------------------+
 
+List Table with Stub Column
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This table demonstrates a list table with a stub column (header column):
+
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
+
+   * - Feature
+     - Description
+     - Status
+   * - Bold text
+     - Supports **bold** formatting
+     - ✅ Working
+   * - Italic text
+     - Supports *italic* formatting
+     - ✅ Working
+   * - Code blocks
+     - Supports ``inline code``
+     - ✅ Working
+
 
 Image Examples
 --------------

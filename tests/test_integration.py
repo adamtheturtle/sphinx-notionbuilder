@@ -1923,3 +1923,88 @@ def test_list_table_header_maximum_one_allowed(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_list_table_stub_columns_one(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with :stub-columns: 1 creates table with header column.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 1
+           :stub-columns: 1
+
+           * - Header 1
+             - Header 2
+             - Header 3
+           * - Row 1, Col 1
+             - Row 1, Col 2
+             - Row 1, Col 3
+           * - Row 2, Col 1
+             - Row 2, Col 2
+             - Row 2, Col 3
+    """
+
+    table = UnoTable(n_rows=3, n_cols=3, header_row=True, header_col=True)
+    # Header row
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[0, 2] = text(text="Header 3")
+    # First data row
+    table[1, 0] = text(text="Row 1, Col 1")
+    table[1, 1] = text(text="Row 1, Col 2")
+    table[1, 2] = text(text="Row 1, Col 3")
+    # Second data row
+    table[2, 0] = text(text="Row 2, Col 1")
+    table[2, 1] = text(text="Row 2, Col 2")
+    table[2, 2] = text(text="Row 2, Col 3")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_list_table_stub_columns_two(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with :stub-columns: 2 raises ValueError.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 1
+           :stub-columns: 2
+
+           * - Header 1
+             - Header 2
+             - Header 3
+           * - Row 1, Col 1
+             - Row 1, Col 2
+             - Row 1, Col 3
+           * - Row 2, Col 1
+             - Row 2, Col 2
+             - Row 2, Col 3
+    """
+
+    expected_message = (
+        r"Tables with more than 1 stub column are not supported. "
+        r"Found 2 stub columns.$"
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )

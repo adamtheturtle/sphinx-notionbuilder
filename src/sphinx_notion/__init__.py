@@ -75,6 +75,7 @@ class _TableStructure:
 
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
+    num_stub_columns: int
 
 
 @beartype
@@ -125,17 +126,23 @@ def _extract_table_structure(
     """
     header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
+    stub_columns = 0
 
     # In Notion, all rows must have the same number of columns.
     # Therefore there is only one ``tgroup``.
     (tgroup,) = node.children
     assert isinstance(tgroup, nodes.tgroup)
+
     for tgroup_child in tgroup.children:
-        if isinstance(tgroup_child, nodes.thead):
+        if isinstance(tgroup_child, nodes.colspec):
+            if tgroup_child.attributes.get("stub"):
+                stub_columns += 1
+        elif isinstance(tgroup_child, nodes.thead):
             for row in tgroup_child.children:
                 assert isinstance(row, nodes.row)
                 header_rows.append(row)
-        elif isinstance(tgroup_child, nodes.tbody):
+        else:
+            assert isinstance(tgroup_child, nodes.tbody)
             for row in tgroup_child.children:
                 assert isinstance(row, nodes.row)
                 body_rows.append(row)
@@ -143,6 +150,7 @@ def _extract_table_structure(
     return _TableStructure(
         header_rows=header_rows,
         body_rows=body_rows,
+        num_stub_columns=stub_columns,
     )
 
 
@@ -456,12 +464,20 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             msg = "Tables with multiple header rows are not supported."
             raise ValueError(msg)
 
+        if table_structure.num_stub_columns > 1:
+            msg = (
+                f"Tables with more than 1 stub column are not supported. "
+                f"Found {table_structure.num_stub_columns} stub columns."
+            )
+            raise ValueError(msg)
+
         rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
             n_rows=len(rows),
             # In Notion, all rows must have the same number of columns.
             n_cols=len(rows[0]),
             header_row=bool(table_structure.header_rows),
+            header_col=bool(table_structure.num_stub_columns),
         )
 
         for row_index, row in enumerate(iterable=rows):
