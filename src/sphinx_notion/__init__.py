@@ -133,7 +133,6 @@ def _extract_table_structure(
     (tgroup,) = node.children
     assert isinstance(tgroup, nodes.tgroup)
 
-    # Count stub columns from colspec nodes
     for tgroup_child in tgroup.children:
         if isinstance(tgroup_child, nodes.colspec):
             if tgroup_child.attributes.get("stub"):
