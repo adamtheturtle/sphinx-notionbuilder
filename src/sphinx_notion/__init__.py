@@ -73,7 +73,6 @@ class _TableStructure:
     Structure information extracted from a table node.
     """
 
-    n_cols: int
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
 
@@ -126,11 +125,9 @@ def _extract_table_structure(
     """
     header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
-    n_cols = 0
 
     for child in node.children:
         assert isinstance(child, nodes.tgroup)
-        n_cols = int(child.get(key="cols", failobj=0))
         for tgroup_child in child.children:
             if isinstance(tgroup_child, nodes.thead):
                 for row in tgroup_child.children:
@@ -142,7 +139,6 @@ def _extract_table_structure(
                     body_rows.append(row)
 
     return _TableStructure(
-        n_cols=n_cols,
         header_rows=header_rows,
         body_rows=body_rows,
     )
@@ -461,7 +457,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
             n_rows=len(rows),
-            n_cols=table_structure.n_cols,
+            n_cols=len(rows[0]),
             header_row=bool(table_structure.header_rows),
         )
 
