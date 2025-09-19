@@ -458,31 +458,19 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             msg = "Tables with multiple header rows are not supported."
             raise ValueError(msg)
 
-        n_rows = len(table_structure.header_rows) + len(
-            table_structure.body_rows
-        )
+        rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
-            n_rows=n_rows,
+            n_rows=len(rows),
             n_cols=table_structure.n_cols,
             header_row=bool(table_structure.header_rows),
         )
 
-        row_idx = 0
-        for header_row in table_structure.header_rows:
-            for col_idx, entry in enumerate(iterable=header_row.children):
+        for row_index, row in enumerate(iterable=rows):
+            for column_index, entry in enumerate(iterable=row.children):
                 source = _cell_source_node(entry=entry)
-                table[row_idx, col_idx] = _create_rich_text_from_children(
-                    node=source
+                table[row_index, column_index] = (
+                    _create_rich_text_from_children(node=source)
                 )
-            row_idx += 1
-
-        for body_row in table_structure.body_rows:
-            for col_idx, entry in enumerate(iterable=body_row.children):
-                source = _cell_source_node(entry=entry)
-                table[row_idx, col_idx] = _create_rich_text_from_children(
-                    node=source
-                )
-            row_idx += 1
 
         self._add_block_to_tree(block=table, parent_path=parent_path)
 
