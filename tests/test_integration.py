@@ -1826,11 +1826,7 @@ def test_list_table_header_maximum_one_allowed(
              - Cell a 2
     """
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_message = (
-        r"List table header-rows option must be 0 or 1, but got 2 "
-        rf"on line 1 in {re.escape(pattern=str(object=index_rst))}.$"
-    )
+    expected_message = r"Tables with multiple header rows are not supported.$"
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,

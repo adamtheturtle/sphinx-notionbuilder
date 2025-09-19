@@ -454,7 +454,9 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         table_structure = _extract_table_structure(node=node)
 
-        assert len(table_structure.header_rows) <= 1
+        if len(table_structure.header_rows) > 1:
+            msg = "Tables with multiple header rows are not supported."
+            raise ValueError(msg)
 
         n_rows = (
             1 + len(table_structure.body_rows)
