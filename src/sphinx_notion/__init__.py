@@ -136,13 +136,14 @@ def _extract_table_structure(
     # Count stub columns from colspec nodes
     for tgroup_child in tgroup.children:
         if isinstance(tgroup_child, nodes.colspec):
-            if tgroup_child.attributes.get("stub", 0):
+            if tgroup_child.attributes.get("stub"):
                 stub_columns += 1
         elif isinstance(tgroup_child, nodes.thead):
             for row in tgroup_child.children:
                 assert isinstance(row, nodes.row)
                 header_rows.append(row)
-        elif isinstance(tgroup_child, nodes.tbody):
+        else:
+            assert isinstance(tgroup_child, nodes.tbody)
             for row in tgroup_child.children:
                 assert isinstance(row, nodes.row)
                 body_rows.append(row)
