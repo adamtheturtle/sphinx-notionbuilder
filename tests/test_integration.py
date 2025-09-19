@@ -1740,3 +1740,97 @@ def test_comment_ignored(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_list_table_header_one_allowed(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with header-rows option other than 0 raises ValueError.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 1
+
+           * - Header 1
+             - Header 2
+           * - Cell 1
+             - Cell 2
+    """
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[1, 0] = text(text="Cell 1")
+    table[1, 1] = text(text="Cell 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_list_table_header_rows_zero_allowed(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with header-rows: 0 should be allowed and processed.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 0
+
+           * - Cell 1
+             - Cell 2
+    """
+
+    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
+    table[0, 0] = text(text="Cell 1")
+    table[0, 1] = text(text="Cell 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_list_table_header_maximum_one_allowed(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with header-rows option other than 0 or 1 raises ValueError.
+    """
+    rst_content = """
+        .. list-table::
+           :header-rows: 2
+
+           * - Header a 1
+             - Header a 2
+           * - Header b 1
+             - Header b 2
+           * - Cell a 1
+             - Cell a 2
+    """
+
+    expected_message = r"Tables with multiple header rows are not supported.$"
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
