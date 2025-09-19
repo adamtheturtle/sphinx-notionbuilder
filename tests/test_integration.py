@@ -1764,7 +1764,7 @@ def test_list_table_header_one_allowed(
     table[0, 0] = text(text="Header 1")
     table[0, 1] = text(text="Header 2")
     table[1, 0] = text(text="Cell 1")
-    table[0, 1] = text(text="Cell 2")
+    table[1, 1] = text(text="Cell 2")
 
     expected_objects: list[Block] = [table]
 
