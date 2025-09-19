@@ -108,11 +108,11 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 def _extract_table_structure(
     *,
     node: nodes.table,
-) -> tuple[int, nodes.row | None, list[nodes.row]]:
+) -> tuple[int, list[nodes.row], list[nodes.row]]:
     """
     Return (n_cols, header_row, body_rows) for a table node.
     """
-    header_row = None
+    header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
     n_cols = 0
 
@@ -123,13 +123,13 @@ def _extract_table_structure(
             if isinstance(tgroup_child, nodes.thead):
                 for row in tgroup_child.children:
                     assert isinstance(row, nodes.row)
-                    header_row = row
+                    header_rows.append(row)
             elif isinstance(tgroup_child, nodes.tbody):
                 for row in tgroup_child.children:
                     assert isinstance(row, nodes.row)
                     body_rows.append(row)
 
-    return n_cols, header_row, body_rows
+    return n_cols, header_rows, body_rows
 
 
 @beartype
@@ -436,15 +436,25 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del section_level
 
-        n_cols, header_row, body_rows = _extract_table_structure(node=node)
+        n_cols, header_rows, body_rows = _extract_table_structure(node=node)
 
-        n_rows = 1 + len(body_rows) if header_row else len(body_rows)
+        if len(header_rows) > 1:
+            msg = (
+                "List table header-rows option must be 0 or 1, but got "
+                f"{len(header_rows)} on line {node.line} in {node.source}"
+            )
+            raise ValueError(msg)
+
+        has_header_row = len(header_rows) == 1
+
+        n_rows = 1 + len(body_rows) if header_rows else len(body_rows)
         table = UnoTable(
-            n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row)
+            n_rows=n_rows, n_cols=n_cols, header_row=has_header_row
         )
 
         row_idx = 0
-        if header_row is not None:
+        if has_header_row:
+            header_row = header_rows[0]
             for col_idx, entry in enumerate(iterable=header_row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(

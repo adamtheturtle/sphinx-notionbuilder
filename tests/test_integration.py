@@ -1818,10 +1818,12 @@ def test_list_table_header_maximum_one_allowed(
         .. list-table::
            :header-rows: 2
 
-           * - Header 1
-             - Header 2
-           * - Cell 1
-             - Cell 2
+           * - Header a 1
+             - Header a 2
+           * - Header b 1
+             - Header b 2
+           * - Cell a 1
+             - Cell a 2
     """
 
     index_rst = tmp_path / "src" / "index.rst"
