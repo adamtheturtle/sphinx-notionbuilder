@@ -126,17 +126,19 @@ def _extract_table_structure(
     header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
 
-    for child in node.children:
-        assert isinstance(child, nodes.tgroup)
-        for tgroup_child in child.children:
-            if isinstance(tgroup_child, nodes.thead):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    header_rows.append(row)
-            elif isinstance(tgroup_child, nodes.tbody):
-                for row in tgroup_child.children:
-                    assert isinstance(row, nodes.row)
-                    body_rows.append(row)
+    # In Notion, all rows must have the same number of columns.
+    # Therefore there is only one ``tgroup``.
+    (tgroup,) = node.children
+    assert isinstance(tgroup, nodes.tgroup)
+    for tgroup_child in tgroup.children:
+        if isinstance(tgroup_child, nodes.thead):
+            for row in tgroup_child.children:
+                assert isinstance(row, nodes.row)
+                header_rows.append(row)
+        elif isinstance(tgroup_child, nodes.tbody):
+            for row in tgroup_child.children:
+                assert isinstance(row, nodes.row)
+                body_rows.append(row)
 
     return _TableStructure(
         header_rows=header_rows,
@@ -457,6 +459,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
             n_rows=len(rows),
+            # In Notion, all rows must have the same number of columns.
             n_cols=len(rows[0]),
             header_row=bool(table_structure.header_rows),
         )
