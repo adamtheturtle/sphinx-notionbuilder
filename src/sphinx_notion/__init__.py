@@ -74,7 +74,7 @@ class _TableStructure:
     """
 
     n_cols: int
-    header_row: nodes.row | None
+    header_rows: list[nodes.row]
     body_rows: list[nodes.row]
 
 
@@ -124,7 +124,7 @@ def _extract_table_structure(
     """
     Return table structure information for a table node.
     """
-    header_row = None
+    header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
     n_cols = 0
 
@@ -135,7 +135,7 @@ def _extract_table_structure(
             if isinstance(tgroup_child, nodes.thead):
                 for row in tgroup_child.children:
                     assert isinstance(row, nodes.row)
-                    header_row = row
+                    header_rows.append(row)
             elif isinstance(tgroup_child, nodes.tbody):
                 for row in tgroup_child.children:
                     assert isinstance(row, nodes.row)
@@ -143,7 +143,7 @@ def _extract_table_structure(
 
     return _TableStructure(
         n_cols=n_cols,
-        header_row=header_row,
+        header_rows=header_rows,
         body_rows=body_rows,
     )
 
@@ -454,22 +454,23 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         table_structure = _extract_table_structure(node=node)
 
+        assert len(table_structure.header_rows) <= 1
+
         n_rows = (
             1 + len(table_structure.body_rows)
-            if table_structure.header_row
+            if table_structure.header_rows
             else len(table_structure.body_rows)
         )
         table = UnoTable(
             n_rows=n_rows,
             n_cols=table_structure.n_cols,
-            header_row=bool(table_structure.header_row),
+            header_row=bool(table_structure.header_rows),
         )
 
         row_idx = 0
-        if table_structure.header_row is not None:
-            for col_idx, entry in enumerate(
-                iterable=table_structure.header_row.children
-            ):
+        if table_structure.header_rows:
+            (header_row,) = table_structure.header_rows
+            for col_idx, entry in enumerate(iterable=header_row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(
                     node=source
