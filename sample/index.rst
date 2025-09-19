@@ -293,6 +293,21 @@ Here's some text before the video.
 
 And here's some text after the video.
 
+Audio Examples
+--------------
+
+Simple Audio
+~~~~~~~~~~~~
+
+.. audio:: https://www.soundjay.com/misc/sounds/bell-ringing-05.wav
+
+Local Audio Example
+~~~~~~~~~~~~~~~~~~~
+
+.. audio:: _static/test-audio.mp3
+
+And here's some text after the audio.
+
 .. collapse:: Long code block
 
    .. code-block:: python
