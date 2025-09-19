@@ -468,8 +468,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         )
 
         row_idx = 0
-        if table_structure.header_rows:
-            (header_row,) = table_structure.header_rows
+        for header_row in table_structure.header_rows:
             for col_idx, entry in enumerate(iterable=header_row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(
