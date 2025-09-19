@@ -56,10 +56,12 @@ def _reconstruct_nested_structure(
     """
     Reconstruct nested structure from flattened block items.
     """
+    import copy
+
     result: list[dict[str, Any]] = []
     for item in items:
-        block = item["block"]
-        block_type = block["type"]
+        block = copy.deepcopy(item["block"])
+        block_type = copy.deepcopy(block["type"])
 
         # Handle blocks that can have children
         if block_type in {

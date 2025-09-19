@@ -17,7 +17,7 @@ from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
-from ultimate_notion.obj_api.core import Unset, UnsetType
+from ultimate_notion.obj_api.core import Unset
 
 
 class _SerializedBlockTreeNode(TypedDict):
@@ -183,8 +183,7 @@ def _sanitize_block(
     """
     Sanitize a block.
     """
-    if block.obj_ref.id and not isinstance(block.obj_ref.id, UnsetType):
-        block = session.get_block(block_ref=block.obj_ref.id)
+    return block
     block.obj_ref.created_by = Unset
     block.obj_ref.last_edited_by = Unset
     block.obj_ref.created_time = Unset
@@ -257,8 +256,6 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    for child in page.children:
-        child.delete()
     block_list = _reconstruct_nested_structure(items=blocks)
     block_obj_list = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=block))
@@ -281,29 +278,18 @@ def main(
         block_child = sanitized_block_list[index]
         if page_child != block_child:
             s1 = pprint.pformat(
-                page_child.__dict__, sort_dicts=True
+                object=page_child.obj_ref.serialize_for_api(), sort_dicts=True
             ).splitlines()
             s2 = pprint.pformat(
-                block_child.__dict__, sort_dicts=True
+                object=block_child.obj_ref.serialize_for_api(), sort_dicts=True
             ).splitlines()
 
             diff = difflib.unified_diff(s1, s2)
 
             diff_list = list(diff)
             nice_diff = "\n".join(diff)
-            breakpoint()
-    # children_obj_list = [
-    #     Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=child))
-    #     for child in children_list
-    # ]
-    # serialized_children_list = [
-    #     child.obj_ref.serialize_for_api() for child in children_list
-    # ]
-    # sanitized_serialized_children_list = [
-    #     _sanitize_serialized_block(serialized_block=serialized_block)
-    #     for serialized_block in serialized_children_list
-    # ]
     breakpoint()
+
     # for child in page.children:
     #     child.delete()
 
