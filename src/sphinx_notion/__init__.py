@@ -55,7 +55,7 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.core import Unset, UnsetType
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import Text, text
+from ultimate_notion.rich_text import RichText, Text, text
 
 type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
 
@@ -558,7 +558,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         code_text = _create_rich_text_from_children(
             node=node,
-            default_color=None,
+            default_color=Color.DEFAULT,
         )
         pygments_lang = node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
@@ -796,7 +796,9 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
 
         title_text = node.attributes["label"]
-        toggle_block = UnoToggleItem(text=text(text=title_text))
+        toggle_block = UnoToggleItem(
+            text=text(text=title_text, color=Color.DEFAULT),
+        )
         self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
 
         for child in node.children:
@@ -891,7 +893,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         code_text = _create_rich_text_from_children(
             node=literal_node,
-            default_color=None,
+            default_color=Color.DEFAULT,
         )
         pygments_lang = literal_node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(

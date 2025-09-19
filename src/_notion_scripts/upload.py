@@ -17,7 +17,6 @@ from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
-from ultimate_notion.obj_api.core import Unset
 
 
 class _SerializedBlockTreeNode(TypedDict):
@@ -158,23 +157,6 @@ def _reconstruct_nested_structure(
 
 
 @beartype
-def _sanitize_serialized_block(
-    *,
-    serialized_block: dict[str, Any],
-) -> dict[str, Any]:
-    """
-    Sanitize a serialized block.
-    """
-    return serialized_block
-    if isinstance(serialized_block, dict):
-        return {
-            key: _sanitize_serialized_block(serialized_block=value)
-            for key, value in serialized_block.items()
-        }
-    return serialized_block
-
-
-@beartype
 def _sanitize_block(
     *,
     block: Block,
@@ -183,14 +165,30 @@ def _sanitize_block(
     """
     Sanitize a block.
     """
-    block.obj_ref.created_by = Unset
-    block.obj_ref.last_edited_by = Unset
-    block.obj_ref.created_time = Unset
-    block.obj_ref.last_edited_time = Unset
-    block.obj_ref.id = Unset
-    block.obj_ref.parent = Unset
-    block.obj_ref.request_id = None
-    return block
+    # block.obj_ref.created_by = Unset
+    # block.obj_ref.last_edited_by = Unset
+    # block.obj_ref.created_time = Unset
+    # block.obj_ref.last_edited_time = Unset
+    # block.obj_ref.id = Unset
+    # block.obj_ref.parent = Unset
+    # block.obj_ref.request_id = None
+    serialized = block.obj_ref.serialize_for_api()
+    serialized.pop("created_by", None)
+    serialized.pop("last_edited_by", None)
+    serialized.pop("created_time", None)
+    serialized.pop("last_edited_time", None)
+    serialized.pop("id", None)
+    serialized.pop("parent", None)
+    serialized.pop("request_id", None)
+    if block.has_children:
+        serialized[serialized["type"]]["children"] = []
+        for child in block.children:
+            serialized[serialized["type"]]["children"].append(
+                _sanitize_block(block=child, session=session)
+            )
+    # if serialized["type"] == "callout":
+    #     serialized["in_notion"] = block.in_notion
+    return serialized
 
 
 @click.command()
@@ -278,13 +276,13 @@ def main(
         block_child = sanitized_block_list[index]
         if page_child != block_child:
             s1 = pprint.pformat(
-                object=page_child.obj_ref.serialize_for_api(), sort_dicts=True
+                object=page_child, sort_dicts=True
             ).splitlines()
             s2 = pprint.pformat(
-                object=block_child.obj_ref.serialize_for_api(), sort_dicts=True
+                object=block_child, sort_dicts=True
             ).splitlines()
 
-            diff = difflib.unified_diff(s1, s2)
+            diff = difflib.unified_diff(s1, s2, n=20)
 
             diff_list = list(diff)
             nice_diff = "\n".join(diff_list)
