@@ -458,10 +458,8 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             msg = "Tables with multiple header rows are not supported."
             raise ValueError(msg)
 
-        n_rows = (
-            1 + len(table_structure.body_rows)
-            if table_structure.header_rows
-            else len(table_structure.body_rows)
+        n_rows = len(table_structure.header_rows) + len(
+            table_structure.body_rows
         )
         table = UnoTable(
             n_rows=n_rows,
