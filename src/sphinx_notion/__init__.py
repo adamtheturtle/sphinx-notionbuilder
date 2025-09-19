@@ -3,6 +3,7 @@ Sphinx Notion Builder.
 """
 
 import json
+from dataclasses import dataclass
 from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any, TypedDict
@@ -66,6 +67,17 @@ class _SerializedBlockTreeNode(TypedDict):
     children: list["_SerializedBlockTreeNode"]
 
 
+@dataclass
+class _TableStructure:
+    """
+    Structure information extracted from a table node.
+    """
+
+    n_cols: int
+    header_row: nodes.row | None
+    body_rows: list[nodes.row]
+
+
 @beartype
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """Create Notion rich text from ``docutils`` node children.
@@ -108,9 +120,9 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 def _extract_table_structure(
     *,
     node: nodes.table,
-) -> tuple[int, nodes.row | None, list[nodes.row]]:
+) -> _TableStructure:
     """
-    Return (n_cols, header_row, body_rows) for a table node.
+    Return table structure information for a table node.
     """
     header_row = None
     body_rows: list[nodes.row] = []
@@ -129,7 +141,11 @@ def _extract_table_structure(
                     assert isinstance(row, nodes.row)
                     body_rows.append(row)
 
-    return n_cols, header_row, body_rows
+    return _TableStructure(
+        n_cols=n_cols,
+        header_row=header_row,
+        body_rows=body_rows,
+    )
 
 
 @beartype
@@ -436,23 +452,31 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del section_level
 
-        n_cols, header_row, body_rows = _extract_table_structure(node=node)
+        table_structure = _extract_table_structure(node=node)
 
-        n_rows = 1 + len(body_rows) if header_row else len(body_rows)
+        n_rows = (
+            1 + len(table_structure.body_rows)
+            if table_structure.header_row
+            else len(table_structure.body_rows)
+        )
         table = UnoTable(
-            n_rows=n_rows, n_cols=n_cols, header_row=bool(header_row)
+            n_rows=n_rows,
+            n_cols=table_structure.n_cols,
+            header_row=bool(table_structure.header_row),
         )
 
         row_idx = 0
-        if header_row is not None:
-            for col_idx, entry in enumerate(iterable=header_row.children):
+        if table_structure.header_row is not None:
+            for col_idx, entry in enumerate(
+                iterable=table_structure.header_row.children
+            ):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(
                     node=source
                 )
             row_idx += 1
 
-        for body_row in body_rows:
+        for body_row in table_structure.body_rows:
             for col_idx, entry in enumerate(iterable=body_row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_idx, col_idx] = _create_rich_text_from_children(
