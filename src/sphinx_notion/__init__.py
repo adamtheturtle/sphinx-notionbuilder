@@ -92,14 +92,17 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     for child in node.children:
         if isinstance(child, nodes.reference):
             link_url = child.attributes["refuri"]
+            assert isinstance(link_url, str)
+            link_url_with_slash = link_url.rstrip("/") + "/"
             link_text = child.attributes.get("name", link_url)
 
             new_text = text(
                 text=link_text,
-                href=link_url,
+                href=link_url_with_slash,
                 bold=False,
                 italic=False,
                 code=False,
+                color=default_color,
             )
         elif isinstance(child, nodes.target):
             continue
