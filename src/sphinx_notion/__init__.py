@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from functools import singledispatchmethod
 from pathlib import Path
+from turtle import color
 from typing import Any, TypedDict
 
 import sphinxnotes.strike
@@ -52,7 +53,8 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.enums import BGColor, CodeLang
+from ultimate_notion.obj_api.core import Unset, UnsetType
+from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.rich_text import Text, text
 
 type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
@@ -79,7 +81,11 @@ class _TableStructure:
 
 
 @beartype
-def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
+def _create_rich_text_from_children(
+    *,
+    node: nodes.Element,
+    default_color: Color | None,
+) -> Text:
     """Create Notion rich text from ``docutils`` node children.
 
     This uses ``ultimate-notion``'s rich text capabilities to
@@ -110,6 +116,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 italic=isinstance(child, nodes.emphasis),
                 code=isinstance(child, nodes.literal),
                 strikethrough=isinstance(child, strike_node),
+                color=default_color,
             )
         rich_text += new_text
 
@@ -362,7 +369,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
+        rich_text = _create_rich_text_from_children(
+            node=paragraph,
+            default_color=Color.DEFAULT,
+        )
         block = UnoBulletedItem(text=rich_text)
         self._add_block_to_tree(
             block=block,
@@ -402,7 +412,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         paragraph = node.children[0]
         assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
+        rich_text = _create_rich_text_from_children(
+            node=paragraph,
+            default_color=Color.DEFAULT,
+        )
         block = UnoNumberedItem(text=rich_text)
         self._add_block_to_tree(
             block=block,
@@ -484,7 +497,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             for column_index, entry in enumerate(iterable=row.children):
                 source = _cell_source_node(entry=entry)
                 table[row_index, column_index] = (
-                    _create_rich_text_from_children(node=source)
+                    _create_rich_text_from_children(
+                        node=source,
+                        default_color=Color.DEFAULT,
+                    )
                 )
 
         self._add_block_to_tree(block=table, parent_path=parent_path)
@@ -501,7 +517,9 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         Process paragraph nodes by creating Notion Paragraph blocks.
         """
         del section_level
-        rich_text = _create_rich_text_from_children(node=node)
+        rich_text = _create_rich_text_from_children(
+            node=node, default_color=Color.DEFAULT
+        )
         paragraph_block = UnoParagraph(text=rich_text)
         self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
 
@@ -517,7 +535,9 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         Process block quote nodes by creating Notion Quote blocks.
         """
         del section_level
-        rich_text = _create_rich_text_from_children(node=node)
+        rich_text = _create_rich_text_from_children(
+            node=node, default_color=Color.DEFAULT
+        )
         quote_block = UnoQuote(text=rich_text)
         self._add_block_to_tree(block=quote_block, parent_path=parent_path)
 
@@ -533,7 +553,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         Process literal block nodes by creating Notion Code blocks.
         """
         del section_level
-        code_text = _create_rich_text_from_children(node=node)
+        code_text = _create_rich_text_from_children(
+            node=node,
+            default_color=None,
+        )
         pygments_lang = node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
             pygments_lang=pygments_lang,
@@ -631,7 +654,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Process title nodes by creating appropriate Notion heading blocks.
         """
-        rich_text = _create_rich_text_from_children(node=node)
+        rich_text = _create_rich_text_from_children(
+            node=node,
+            default_color=Color.DEFAULT,
+        )
 
         max_heading_level = 3
         if section_level > max_heading_level:
@@ -669,7 +695,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         # Use the first child as the callout text
         first_child = node.children[0]
         if isinstance(first_child, nodes.paragraph):
-            rich_text = _create_rich_text_from_children(node=first_child)
+            rich_text = _create_rich_text_from_children(
+                node=first_child,
+                default_color=Color.DEFAULT,
+            )
             # Process remaining children as nested blocks
             children_to_process = node.children[1:]
         else:
@@ -852,9 +881,15 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert isinstance(caption_node, nodes.caption), msg
         assert isinstance(literal_node, nodes.literal_block), msg
 
-        caption_rich_text = _create_rich_text_from_children(node=caption_node)
+        caption_rich_text = _create_rich_text_from_children(
+            node=caption_node,
+            default_color=Color.DEFAULT,
+        )
 
-        code_text = _create_rich_text_from_children(node=literal_node)
+        code_text = _create_rich_text_from_children(
+            node=literal_node,
+            default_color=None,
+        )
         pygments_lang = literal_node.get(key="language", failobj="")
         language = _map_pygments_to_notion_language(
             pygments_lang=pygments_lang,

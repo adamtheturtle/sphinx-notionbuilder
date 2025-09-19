@@ -17,9 +17,7 @@ from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
-from ultimate_notion.obj_api.core import NotionEntity, Unset
-
-assert NotionEntity
+from ultimate_notion.obj_api.core import Unset
 
 
 class _SerializedBlockTreeNode(TypedDict):
