@@ -75,7 +75,7 @@ class _TableStructure:
 
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
-    stub_columns: int
+    num_stub_columns: int
 
 
 @beartype
@@ -151,7 +151,7 @@ def _extract_table_structure(
     return _TableStructure(
         header_rows=header_rows,
         body_rows=body_rows,
-        stub_columns=stub_columns,
+        num_stub_columns=stub_columns,
     )
 
 
@@ -465,11 +465,10 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             msg = "Tables with multiple header rows are not supported."
             raise ValueError(msg)
 
-        # Validate stub columns according to issue #98
-        if table_structure.stub_columns > 1:
+        if table_structure.num_stub_columns > 1:
             msg = (
                 f"Tables with more than 1 stub column are not supported. "
-                f"Found {table_structure.stub_columns} stub columns."
+                f"Found {table_structure.num_stub_columns} stub columns."
             )
             raise ValueError(msg)
 
@@ -479,7 +478,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             # In Notion, all rows must have the same number of columns.
             n_cols=len(rows[0]),
             header_row=bool(table_structure.header_rows),
-            header_col=bool(table_structure.stub_columns),
+            header_col=bool(table_structure.num_stub_columns),
         )
 
         for row_index, row in enumerate(iterable=rows):
