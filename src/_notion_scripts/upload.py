@@ -17,6 +17,9 @@ from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+from ultimate_notion.obj_api.core import NotionEntity, Unset
+
+assert NotionEntity
 
 
 class _SerializedBlockTreeNode(TypedDict):
@@ -120,6 +123,71 @@ def _upload_blocks_recursively(
             )
 
 
+@beartype
+def _reconstruct_nested_structure(
+    *,
+    items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Reconstruct nested structure from flattened block items.
+    """
+    result: list[dict[str, Any]] = []
+    for item in items:
+        block = item["block"]
+        block_type = block["type"]
+
+        # Handle blocks that can have children
+        if block_type in {
+            "paragraph",
+            "callout",
+            "bulleted_list_item",
+            "numbered_list_item",
+            "toggle",
+        }:
+            children = item.get("children", [])
+            nested_blocks = _reconstruct_nested_structure(
+                items=children,
+            )
+            block[block_type]["children"] = nested_blocks
+
+        result.append(block)
+    return result
+
+
+@beartype
+def _sanitize_serialized_block(
+    *,
+    serialized_block: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Sanitize a serialized block.
+    """
+    return serialized_block
+    if isinstance(serialized_block, dict):
+        return {
+            key: _sanitize_serialized_block(serialized_block=value)
+            for key, value in serialized_block.items()
+        }
+    return serialized_block
+
+
+@beartype
+def _sanitize_block(
+    *,
+    block: Block,
+) -> Any:
+    """
+    Sanitize a block.
+    """
+    block.obj_ref.created_by = Unset
+    block.obj_ref.last_edited_by = Unset
+    block.obj_ref.created_time = Unset
+    block.obj_ref.last_edited_time = Unset
+    block.obj_ref.id = Unset
+    block.obj_ref.parent = Unset
+    return block
+
+
 @click.command()
 @click.option(
     "--file",
@@ -183,17 +251,41 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    for child in page.children:
-        child.delete()
+    block_list = _reconstruct_nested_structure(items=blocks)
+    block_obj_list = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=block))
+        for block in block_list
+    ]
+    sanitized_block_list = [
+        _sanitize_block(block=block) for block in block_obj_list
+    ]
+    children_list = list(page.children)
+    sanitized_children_list = [
+        _sanitize_block(block=child) for child in children_list
+    ]
+    # children_obj_list = [
+    #     Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=child))
+    #     for child in children_list
+    # ]
+    # serialized_children_list = [
+    #     child.obj_ref.serialize_for_api() for child in children_list
+    # ]
+    # sanitized_serialized_children_list = [
+    #     _sanitize_serialized_block(serialized_block=serialized_block)
+    #     for serialized_block in serialized_children_list
+    # ]
+    breakpoint()
+    # for child in page.children:
+    #     child.delete()
 
-    # See https://developers.notion.com/reference/request-limits#limits-for-property-values
-    # which shows that the max number of blocks per request is 100.
-    # Without batching, we get 413 errors.
-    notion_blocks_batch_size = 100
-    _upload_blocks_recursively(
-        parent=page,
-        block_details_list=blocks,
-        session=session,
-        batch_size=notion_blocks_batch_size,
-    )
-    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
+    # # See https://developers.notion.com/reference/request-limits#limits-for-property-values
+    # # which shows that the max number of blocks per request is 100.
+    # # Without batching, we get 413 errors.
+    # notion_blocks_batch_size = 100
+    # _upload_blocks_recursively(
+    #     parent=page,
+    #     block_details_list=blocks,
+    #     session=session,
+    #     batch_size=notion_blocks_batch_size,
+    # )
+    # sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
