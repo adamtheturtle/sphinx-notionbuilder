@@ -183,13 +183,13 @@ def _sanitize_block(
     """
     Sanitize a block.
     """
-    return block
     block.obj_ref.created_by = Unset
     block.obj_ref.last_edited_by = Unset
     block.obj_ref.created_time = Unset
     block.obj_ref.last_edited_time = Unset
     block.obj_ref.id = Unset
     block.obj_ref.parent = Unset
+    block.obj_ref.request_id = None
     return block
 
 
@@ -287,7 +287,9 @@ def main(
             diff = difflib.unified_diff(s1, s2)
 
             diff_list = list(diff)
-            nice_diff = "\n".join(diff)
+            nice_diff = "\n".join(diff_list)
+            breakpoint()
+
     breakpoint()
 
     # for child in page.children:
