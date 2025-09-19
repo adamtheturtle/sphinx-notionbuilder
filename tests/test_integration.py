@@ -1790,11 +1790,7 @@ def test_list_table_header_rows_zero_allowed(
              - Cell 2
     """
 
-    # This should not raise an error and should process the table
-    # Note: The actual table processing might fail due to list-table structure,
-    # but the validation should pass
-    table = UnoTable(n_rows=3, n_cols=2, header_row=False)
-    # First data row
+    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
     table[0, 0] = text(text="Cell 1")
     table[0, 1] = text(text="Cell 2")
 
