@@ -461,7 +461,8 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         for child in node.children:
             if isinstance(child, nodes.title):
                 table_no_titles_msg = (
-                    f"Table has a title '{child.astext()}', but Notion tables "
+                    f"Table has a title '{child.astext()}' on line "
+                    f"{child.line} in {child.source}, but Notion tables "
                     "do not have titles."
                 )
                 # Ignore error which is about a type error, but we want to

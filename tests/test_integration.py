@@ -1941,7 +1941,9 @@ def test_list_table_with_title_error(
     """
 
     expected_message = (
-        r"^Table has a title 'My Table Title', but Notion tables do not "
+        r"^Table has a title 'My Table Title' on line 1 in "
+        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}, "
+        r"but Notion tables do not "
         r"have titles.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
