@@ -1919,3 +1919,35 @@ def test_list_table_stub_columns_two(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_list_table_with_title_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    List table with title raises ValueError since Notion tables do not have
+    titles.
+    """
+    rst_content = """
+        .. list-table:: My Table Title
+           :header-rows: 1
+
+           * - Header 1
+             - Header 2
+           * - Cell 1
+             - Cell 2
+    """
+
+    expected_message = (
+        r"^Table has a title 'My Table Title', but Notion tables do not "
+        r"have titles.$"
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
