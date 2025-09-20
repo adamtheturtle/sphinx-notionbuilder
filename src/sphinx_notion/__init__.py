@@ -472,17 +472,17 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         table_structure = _extract_table_structure(node=node)
 
         if len(table_structure.header_rows) > 1:
-            table_no_titles_mgs = (
+            table_multiple_header_rows_msg = (
                 "Tables with multiple header rows are not supported."
             )
-            raise ValueError(table_no_titles_mgs)
+            raise ValueError(table_multiple_header_rows_msg)
 
         if table_structure.num_stub_columns > 1:
-            table_no_titles_mgs = (
+            table_more_than_one_stub_column_msg = (
                 f"Tables with more than 1 stub column are not supported. "
                 f"Found {table_structure.num_stub_columns} stub columns."
             )
-            raise ValueError(table_no_titles_mgs)
+            raise ValueError(table_more_than_one_stub_column_msg)
 
         rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
