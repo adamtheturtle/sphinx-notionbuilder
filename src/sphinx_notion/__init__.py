@@ -473,8 +473,19 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         table_structure = _extract_table_structure(node=node)
 
         if len(table_structure.header_rows) > 1:
+            first_header_row = table_structure.header_rows[0]
+            first_header_row_entry = first_header_row.children[0]
+            first_header_row_paragraph = first_header_row_entry.children[0]
+            first_header_row_line = first_header_row_paragraph.line
+            last_header_row = table_structure.header_rows[-1]
+            last_header_row_entry = last_header_row.children[0]
+            last_header_row_paragraph = last_header_row_entry.children[0]
+            last_header_row_line = last_header_row_paragraph.line
             table_multiple_header_rows_msg = (
-                "Tables with multiple header rows are not supported."
+                "Tables with multiple header rows are not supported. "
+                f"First header row is on line {first_header_row_line} in "
+                f"{first_header_row_paragraph.source}, last header row is on "
+                f"line {last_header_row_line}"
             )
             raise ValueError(table_multiple_header_rows_msg)
 
