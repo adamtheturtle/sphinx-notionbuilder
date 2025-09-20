@@ -39,6 +39,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -1951,3 +1952,132 @@ def test_list_table_with_title_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_simple_todo(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Simple todo directive becomes Notion ToDoItem block.
+    """
+    rst_content = """
+        .. todo:: Implement the new feature.
+    """
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(
+            text=text(text="Implement the new feature."), checked=False
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.todo"),
+    )
+
+
+def test_multiple_todos(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Multiple todo directives become separate Notion ToDoItem blocks.
+    """
+    rst_content = """
+        .. todo:: First task to complete.
+
+        .. todo:: Second task with more details.
+
+        .. todo:: Third task for testing multiple todos.
+    """
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="First task to complete."), checked=False),
+        UnoToDoItem(
+            text=text(text="Second task with more details."), checked=False
+        ),
+        UnoToDoItem(
+            text=text(text="Third task for testing multiple todos."),
+            checked=False,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.todo"),
+    )
+
+
+def test_todo_with_inline_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Todo directives preserve inline formatting in rich text.
+    """
+    rst_content = """
+        .. todo:: This is **bold text** and *italic text* in a todo.
+    """
+
+    bold_text = text(text="bold text", bold=True)
+    normal_text1 = text(text="This is ")
+    normal_text2 = text(text=" and ")
+    italic_text = text(text="italic text", italic=True)
+    normal_text3 = text(text=" in a todo.")
+
+    combined_text = (
+        normal_text1 + bold_text + normal_text2 + italic_text + normal_text3
+    )
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=combined_text, checked=False),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.todo"),
+    )
+
+
+def test_todo_with_links(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Todo directives with links preserve href attributes.
+    """
+    rst_content = """
+        .. todo:: Check out `Notion API <https://notion.so>`_ for details.
+    """
+
+    normal_text1 = text(text="Check out ")
+    link_text = text(text="Notion API", href="https://notion.so")
+    normal_text2 = text(text=" for details.")
+
+    combined_text = normal_text1 + link_text + normal_text2
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=combined_text, checked=False),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.todo"),
+    )

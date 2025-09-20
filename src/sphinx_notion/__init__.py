@@ -14,6 +14,7 @@ from docutils import nodes
 from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.ext.todo import todo_node
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
@@ -47,6 +48,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -902,6 +904,33 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         del parent_path
 
+    @_process_node_to_blocks.register
+    def _(
+        self,
+        node: todo_node,
+        *,
+        section_level: int,
+        parent_path: list[tuple[Block, int]],
+    ) -> None:
+        """
+        Process todo nodes by creating Notion ToDoItem blocks.
+        """
+        del section_level
+        # Skip the title (first child) and process only the content
+        content_children = node.children[1:] if len(node.children) > 1 else []
+        if content_children:
+            # Use the first content child (typically a paragraph) as todo text
+            first_content = content_children[0]
+            if isinstance(first_content, nodes.paragraph):
+                rich_text = _create_rich_text_from_children(node=first_content)
+            else:
+                rich_text = Text.from_plain_text(text="")
+        else:
+            rich_text = Text.from_plain_text(text="")
+
+        todo_block = UnoToDoItem(text=rich_text, checked=False)
+        self._add_block_to_tree(block=todo_block, parent_path=parent_path)
+
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
@@ -1118,6 +1147,18 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         raise nodes.SkipNode
 
+    def visit_todo_node(self, node: nodes.Element) -> None:
+        """
+        Handle todo nodes by creating Notion ToDoItem blocks.
+        """
+        self._process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+            parent_path=[],
+        )
+
+        raise nodes.SkipNode
+
     def visit_document(self, node: nodes.Element) -> None:
         """
         Initialize block collection at document start.
@@ -1208,6 +1249,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_node(
         node=video_node,
         notion=(_visit_video_node_notion, _depart_video_node_notion),
+        override=True,
+    )
+    app.add_node(
+        node=todo_node,
+        notion=(NotionTranslator.visit_todo_node, None),
         override=True,
     )
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
