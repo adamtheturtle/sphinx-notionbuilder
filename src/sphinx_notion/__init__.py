@@ -458,18 +458,31 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del section_level
 
+        for child in node.children:
+            if isinstance(child, nodes.title):
+                table_no_titles_msg = (
+                    f"Table has a title '{child.astext()}', but Notion tables "
+                    "do not have titles."
+                )
+                # Ignore error which is about a type error, but we want to
+                # raise a value error because the user has not sent anything to
+                # do with types.
+                raise ValueError(table_no_titles_msg)  # noqa: TRY004
+
         table_structure = _extract_table_structure(node=node)
 
         if len(table_structure.header_rows) > 1:
-            msg = "Tables with multiple header rows are not supported."
-            raise ValueError(msg)
+            table_multiple_header_rows_msg = (
+                "Tables with multiple header rows are not supported."
+            )
+            raise ValueError(table_multiple_header_rows_msg)
 
         if table_structure.num_stub_columns > 1:
-            msg = (
+            table_more_than_one_stub_column_msg = (
                 f"Tables with more than 1 stub column are not supported. "
                 f"Found {table_structure.num_stub_columns} stub columns."
             )
-            raise ValueError(msg)
+            raise ValueError(table_more_than_one_stub_column_msg)
 
         rows = [*table_structure.header_rows, *table_structure.body_rows]
         table = UnoTable(
