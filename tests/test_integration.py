@@ -1333,7 +1333,7 @@ def test_table_cell_non_paragraph_error(
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
-        r"Notion table cells can only contain paragraph content. "
+        r"^Notion table cells can only contain paragraph content. "
         r"Found non-paragraph node: bullet_list on line 6 "
         rf"in {re.escape(pattern=str(object=index_rst))}.$"
     )
@@ -1504,7 +1504,7 @@ def test_heading_level_4_error(
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
-        r"Notion only supports heading levels 1-3, but found heading level 4 "
+        r"^Notion only supports heading levels 1-3, but found heading level 4 "
         rf"on line 11 in {re.escape(pattern=str(object=index_rst))}.$"
     )
     with pytest.raises(
@@ -1697,7 +1697,7 @@ def test_bullet_list_item_invalid_nested_child_error(
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
-        r"The only thing Notion supports within a bullet list is a "
+        r"^The only thing Notion supports within a bullet list is a "
         r"bullet list. Given paragraph on line 3 "
         rf"in {re.escape(pattern=str(object=index_rst))}$"
     )
@@ -1826,7 +1826,7 @@ def test_list_table_header_maximum_one_allowed(
              - Cell a 2
     """
 
-    expected_message = r"Tables with multiple header rows are not supported.$"
+    expected_message = r"^Tables with multiple header rows are not supported.$"
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
@@ -1909,7 +1909,7 @@ def test_list_table_stub_columns_two(
     """
 
     expected_message = (
-        r"Tables with more than 1 stub column are not supported. "
+        r"^Tables with more than 1 stub column are not supported. "
         r"Found 2 stub columns.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
