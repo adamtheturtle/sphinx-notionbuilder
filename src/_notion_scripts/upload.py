@@ -65,6 +65,116 @@ def _block_from_details(
     return block
 
 
+@beartype
+def _upload_blocks_recursively(
+    parent: ChildrenMixin[Any],
+    block_details_list: list[_SerializedBlockTreeNode],
+    session: Session,
+    batch_size: int,
+) -> None:
+    """
+    Upload blocks recursively, handling the new structure with block and
+    children.
+    """
+    first_level_blocks: list[Block] = [
+        _first_level_block_from_details(details=details, session=session)
+        for details in block_details_list
+    ]
+
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/119
+    # for removing this when Ultimate Notion supports batching.
+    for block_batch in _batch_list(
+        elements=first_level_blocks,
+        batch_size=batch_size,
+    ):
+        parent.append(blocks=block_batch)
+
+    for uploaded_block_index, uploaded_block in enumerate(
+        iterable=parent.children
+    ):
+        block_details = block_details_list[uploaded_block_index]
+        if block_details["children"]:
+            block_obj = session.get_block(block_ref=uploaded_block.id)
+            assert isinstance(block_obj, ChildrenMixin)
+            _upload_blocks_recursively(
+                parent=block_obj,
+                block_details_list=block_details["children"],
+                session=session,
+                batch_size=batch_size,
+            )
+
+
+@beartype
+def _reconstruct_nested_structure(
+    *,
+    items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Reconstruct nested structure from flattened block items.
+    """
+    result: list[dict[str, Any]] = []
+    for item in items:
+        block = item["block"]
+        block_type = block["type"]
+
+        # Handle blocks that can have children
+        if block_type in {
+            "paragraph",
+            "callout",
+            "bulleted_list_item",
+            "numbered_list_item",
+            "toggle",
+        }:
+            children = item.get("children", [])
+            nested_blocks = _reconstruct_nested_structure(
+                items=children,
+            )
+            block[block_type]["children"] = nested_blocks
+            # children = item.get("children", [])
+            # nested_blocks = _reconstruct_nested_structure(
+            #     items=children,
+            # )
+            # block[block_type]["children"] = nested_blocks
+
+        result.append(block)
+    return result
+
+
+@beartype
+def _sanitize_block(
+    *,
+    block: Block,
+    session: Session,
+) -> Any:
+    """
+    Sanitize a block.
+    """
+    # block.obj_ref.created_by = Unset
+    # block.obj_ref.last_edited_by = Unset
+    # block.obj_ref.created_time = Unset
+    # block.obj_ref.last_edited_time = Unset
+    # block.obj_ref.id = Unset
+    # block.obj_ref.parent = Unset
+    # block.obj_ref.request_id = None
+    serialized = block.obj_ref.serialize_for_api()
+    serialized.pop("created_by", None)
+    serialized.pop("last_edited_by", None)
+    serialized.pop("created_time", None)
+    serialized.pop("last_edited_time", None)
+    serialized.pop("id", None)
+    serialized.pop("parent", None)
+    serialized.pop("request_id", None)
+    if block.has_children:
+        serialized[serialized["type"]]["children"] = []
+        for child in block.children:
+            serialized[serialized["type"]]["children"].append(
+                _sanitize_block(block=child, session=session)
+            )
+    # if serialized["type"] == "callout":
+    #     serialized["in_notion"] = block.in_notion
+    return serialized
+
+
 @click.command()
 @click.option(
     "--file",
@@ -128,8 +238,20 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    for child in page.children:
-        child.delete()
+    block_list = _reconstruct_nested_structure(items=blocks)
+    block_obj_list = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=block))
+        for block in block_list
+    ]
+    sanitized_block_list = [
+        _sanitize_block(block=block, session=session)
+        for block in block_obj_list
+    ]
+    children_list = list(page.children)
+    sanitized_children_list = [
+        _sanitize_block(block=child, session=session)
+        for child in children_list
+    ]
 
     block_objs = [
         _block_from_details(details=details, session=session)
@@ -138,3 +260,38 @@ def main(
 
     page.append(blocks=block_objs)
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
+    import difflib
+    import pprint
+
+    for index, page_child in enumerate(sanitized_children_list):
+        block_child = sanitized_block_list[index]
+        if page_child != block_child:
+            s1 = pprint.pformat(
+                object=page_child, sort_dicts=True
+            ).splitlines()
+            s2 = pprint.pformat(
+                object=block_child, sort_dicts=True
+            ).splitlines()
+
+            diff = difflib.unified_diff(s1, s2, n=20)
+
+            diff_list = list(diff)
+            nice_diff = "\n".join(diff_list)
+            breakpoint()
+
+    breakpoint()
+
+    # for child in page.children:
+    #     child.delete()
+
+    # # See https://developers.notion.com/reference/request-limits#limits-for-property-values
+    # # which shows that the max number of blocks per request is 100.
+    # # Without batching, we get 413 errors.
+    # notion_blocks_batch_size = 100
+    # _upload_blocks_recursively(
+    #     parent=page,
+    #     block_details_list=blocks,
+    #     session=session,
+    #     batch_size=notion_blocks_batch_size,
+    # )
+    # sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
