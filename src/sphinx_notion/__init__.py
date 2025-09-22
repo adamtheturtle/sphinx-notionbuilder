@@ -1137,6 +1137,12 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         result: list[dict[str, Any]] = []
         for block in blocks:
             serialized_obj = block.obj_ref.serialize_for_api()
+            if isinstance(block, ChildrenMixin) and block.children:
+                serialized_obj[block.obj_ref.type]["children"] = (
+                    self._serialize_blocks(
+                        blocks=list(block.children),
+                    )
+                )
             result.append(serialized_obj)
         return result
 
