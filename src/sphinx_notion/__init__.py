@@ -316,7 +316,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self,
         *,
         block: Block,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """Add a block to the block tree.
 
@@ -328,21 +328,19 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         simplifying this (not having to build our own tree, just a list of top
         level blocks).
         """
-        if not parent_path:
+        if not parent:
             self._blocks.append(block)
             return
 
-        last_parent = parent_path[-1]
-        last_parent_block, _ = last_parent
-        if isinstance(last_parent_block, ChildrenMixin):
-            last_parent_block.append(blocks=[block])
+        if isinstance(parent, ChildrenMixin):
+            parent.append(blocks=[block])
 
     @beartype
     def _process_list_item_recursively(
         self,
         *,
         node: nodes.list_item,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Recursively process a list item node and return a BulletedItem.
@@ -353,7 +351,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         block = UnoBulletedItem(text=rich_text)
         self._add_block_to_list(
             block=block,
-            parent_path=parent_path,
+            parent=parent,
         )
 
         assert isinstance(node, nodes.list_item)
@@ -373,7 +371,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
                 assert isinstance(nested_list_item, nodes.list_item)
                 self._process_list_item_recursively(
                     node=nested_list_item,
-                    parent_path=[*parent_path, (block, id(block))],
+                    parent=block,
                 )
 
     @beartype
@@ -381,7 +379,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self,
         *,
         node: nodes.list_item,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Recursively process a numbered list item node and return a
@@ -393,7 +391,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         block = UnoNumberedItem(text=rich_text)
         self._add_block_to_list(
             block=block,
-            parent_path=parent_path,
+            parent=parent,
         )
 
         numbered_only_msg = (
@@ -411,7 +409,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
                 )
                 self._process_numbered_list_item_recursively(
                     node=nested_list_item,
-                    parent_path=[*parent_path, (block, id(block))],
+                    parent=block,
                 )
 
     @singledispatchmethod
@@ -421,13 +419,13 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.Element,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:  # pragma: no cover
         """
         Required function for ``singledispatch``.
         """
         del section_level
-        del parent_path
+        del parent
         raise NotImplementedError(node)
 
     @_process_node_to_blocks.register
@@ -436,7 +434,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.table,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """Process rST table nodes by creating Notion Table blocks.
 
@@ -499,7 +497,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
                     _create_rich_text_from_children(node=source)
                 )
 
-        self._add_block_to_list(block=table, parent_path=parent_path)
+        self._add_block_to_list(block=table, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -507,7 +505,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.paragraph,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process paragraph nodes by creating Notion Paragraph blocks.
@@ -515,7 +513,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text=rich_text)
-        self._add_block_to_list(block=paragraph_block, parent_path=parent_path)
+        self._add_block_to_list(block=paragraph_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -523,7 +521,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.block_quote,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process block quote nodes by creating Notion Quote blocks.
@@ -531,7 +529,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text=rich_text)
-        self._add_block_to_list(block=quote_block, parent_path=parent_path)
+        self._add_block_to_list(block=quote_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -539,7 +537,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.literal_block,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process literal block nodes by creating Notion Code blocks.
@@ -551,7 +549,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             pygments_lang=pygments_lang,
         )
         code_block = UnoCode(text=code_text, language=language)
-        self._add_block_to_list(block=code_block, parent_path=parent_path)
+        self._add_block_to_list(block=code_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -559,7 +557,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.bullet_list,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process bullet list nodes by creating Notion BulletedItem blocks.
@@ -569,7 +567,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             assert isinstance(list_item, nodes.list_item)
             self._process_list_item_recursively(
                 node=list_item,
-                parent_path=parent_path,
+                parent=parent,
             )
 
     @_process_node_to_blocks.register
@@ -578,7 +576,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.enumerated_list,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process enumerated list nodes by creating Notion NumberedItem blocks.
@@ -593,7 +591,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             assert isinstance(list_item, nodes.list_item), numbered_only_msg
             self._process_numbered_list_item_recursively(
                 node=list_item,
-                parent_path=parent_path,
+                parent=parent,
             )
 
     @_process_node_to_blocks.register
@@ -602,7 +600,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.topic,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process topic nodes, specifically for table of contents.
@@ -612,7 +610,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         # a callout with no icon.
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
-        self._add_block_to_list(block=toc_block, parent_path=parent_path)
+        self._add_block_to_list(block=toc_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(  # pylint: disable=no-self-use
@@ -620,14 +618,14 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.compound,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process Sphinx ``toctree`` nodes.
         """
         del node
         del section_level
-        del parent_path
+        del parent
         # There are no specific Notion blocks for ``toctree`` nodes.
         # We need to support ``toctree`` in ``index.rst``.
         # Just ignore it.
@@ -638,7 +636,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.title,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process title nodes by creating appropriate Notion heading blocks.
@@ -661,7 +659,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         }
         heading_cls = heading_levels[section_level]
         block = heading_cls(text=rich_text)
-        self._add_block_to_list(block=block, parent_path=parent_path)
+        self._add_block_to_list(block=block, parent=parent)
 
     @beartype
     def _create_admonition_callout(
@@ -670,7 +668,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.Element,
         emoji: str,
         background_color: BGColor,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """Create a Notion Callout block for admonition nodes.
 
@@ -696,13 +694,13 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             color=background_color,
         )
 
-        self._add_block_to_list(block=block, parent_path=parent_path)
+        self._add_block_to_list(block=block, parent=parent)
         # Process children as nested blocks
         for child in children_to_process:
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[*parent_path, (block, id(block))],
+                parent=block,
             )
 
     @_process_node_to_blocks.register
@@ -711,7 +709,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.note,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process note admonition nodes by creating Notion Callout blocks.
@@ -721,7 +719,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             node=node,
             emoji="📝",
             background_color=BGColor.BLUE,
-            parent_path=parent_path,
+            parent=parent,
         )
 
     @_process_node_to_blocks.register
@@ -730,7 +728,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.warning,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process warning admonition nodes by creating Notion Callout blocks.
@@ -740,7 +738,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             node=node,
             emoji="⚠️",
             background_color=BGColor.YELLOW,
-            parent_path=parent_path,
+            parent=parent,
         )
 
     @_process_node_to_blocks.register
@@ -749,7 +747,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.tip,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process tip admonition nodes by creating Notion Callout blocks.
@@ -759,7 +757,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             node=node,
             emoji="💡",
             background_color=BGColor.GREEN,
-            parent_path=parent_path,
+            parent=parent,
         )
 
     @_process_node_to_blocks.register
@@ -768,7 +766,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: CollapseNode,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process collapse nodes by creating Notion ToggleItem blocks.
@@ -777,13 +775,13 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=text(text=title_text))
-        self._add_block_to_list(block=toggle_block, parent_path=parent_path)
+        self._add_block_to_list(block=toggle_block, parent=parent)
 
         for child in node.children:
             self._process_node_to_blocks(
                 child,
                 section_level=1,
-                parent_path=[*parent_path, (toggle_block, id(toggle_block))],
+                parent=toggle_block,
             )
 
     @_process_node_to_blocks.register
@@ -792,7 +790,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.image,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process image nodes by creating Notion Image blocks.
@@ -807,7 +805,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             image_url = abs_path.as_uri()
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
-        self._add_block_to_list(block=image_block, parent_path=parent_path)
+        self._add_block_to_list(block=image_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -815,7 +813,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: video_node,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process video nodes by creating Notion Video blocks.
@@ -840,7 +838,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             file=ExternalFile(url=video_url),
             caption=caption,
         )
-        self._add_block_to_list(block=video_block, parent_path=parent_path)
+        self._add_block_to_list(block=video_block, parent=parent)
 
     @_process_node_to_blocks.register
     def _(
@@ -848,7 +846,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.container,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """
         Process container nodes, especially for ``literalinclude`` with
@@ -880,7 +878,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         self._add_block_to_list(
             block=code_block,
-            parent_path=parent_path,
+            parent=parent,
         )
 
     @_process_node_to_blocks.register
@@ -889,7 +887,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         node: nodes.comment,
         *,
         section_level: int,
-        parent_path: list[tuple[Block, int]],
+        parent: Block | None,
     ) -> None:
         """Process comment nodes by ignoring them completely.
 
@@ -899,7 +897,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert self
         del node
         del section_level
-        del parent_path
+        del parent
 
     def visit_title(self, node: nodes.Element) -> None:
         """
@@ -908,7 +906,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -934,7 +932,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -946,7 +944,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -958,7 +956,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -970,7 +968,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -982,7 +980,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -994,7 +992,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1006,7 +1004,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1018,7 +1016,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1030,7 +1028,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1042,7 +1040,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1054,7 +1052,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1066,7 +1064,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1078,7 +1076,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1090,7 +1088,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
     def visit_container(self, node: nodes.Element) -> None:
@@ -1100,7 +1098,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
@@ -1112,7 +1110,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
+            parent=None,
         )
 
         raise nodes.SkipNode
