@@ -331,9 +331,8 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         if not parent:
             self._blocks.append(block)
             return
-
-        if isinstance(parent, ChildrenMixin):
-            parent.append(blocks=[block])
+        assert isinstance(parent, ChildrenMixin)
+        parent.append(blocks=[block])
 
     @beartype
     def _process_list_item_recursively(
