@@ -422,4 +422,4 @@ section_whitelines = 1
 whitelines = 1
 
 [tool.uv.sources]
-ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", rev = "many-children" }
+ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", rev = "main" }
