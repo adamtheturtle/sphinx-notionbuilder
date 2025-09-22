@@ -348,10 +348,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
         block = UnoBulletedItem(text=rich_text)
-        self._add_block_to_list(
-            block=block,
-            parent=parent,
-        )
+        self._add_block_to_list(block=block, parent=parent)
 
         assert isinstance(node, nodes.list_item)
 
@@ -388,10 +385,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
         block = UnoNumberedItem(text=rich_text)
-        self._add_block_to_list(
-            block=block,
-            parent=parent,
-        )
+        self._add_block_to_list(block=block, parent=parent)
 
         numbered_only_msg = (
             "The only thing Notion supports within a numbered list is a "
