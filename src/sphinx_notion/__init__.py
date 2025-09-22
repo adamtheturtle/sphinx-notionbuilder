@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
 import sphinxnotes.strike
 from beartype import beartype
@@ -21,7 +21,7 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -54,17 +54,6 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
-
-type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
-
-
-class _SerializedBlockTreeNode(TypedDict):
-    """
-    A node in the block tree representing a Notion block with its children.
-    """
-
-    block: dict[str, Any]
-    children: list["_SerializedBlockTreeNode"]
 
 
 @dataclass
@@ -318,12 +307,12 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del builder
         super().__init__(document=document)
-        self._block_tree: _BlockTree = {}
+        self._blocks: list[Block] = []
         self.body: str
         self._section_level = 0
 
     @beartype
-    def _add_block_to_tree(
+    def _add_block_to_list(
         self,
         *,
         block: Block,
@@ -339,16 +328,14 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         simplifying this (not having to build our own tree, just a list of top
         level blocks).
         """
-        block_key = (block, id(block))
         if not parent_path:
-            self._block_tree[block_key] = {}
+            self._blocks.append(block)
             return
 
-        current_node = self._block_tree[parent_path[0]]
-
-        for parent_key in parent_path[1:]:
-            current_node = current_node[parent_key]
-        current_node[block_key] = {}
+        last_parent = parent_path[-1]
+        last_parent_block, _ = last_parent
+        if isinstance(last_parent_block, ChildrenMixin):
+            last_parent_block.append(blocks=[block])
 
     @beartype
     def _process_list_item_recursively(
@@ -364,7 +351,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
         block = UnoBulletedItem(text=rich_text)
-        self._add_block_to_tree(
+        self._add_block_to_list(
             block=block,
             parent_path=parent_path,
         )
@@ -404,7 +391,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         assert isinstance(paragraph, nodes.paragraph)
         rich_text = _create_rich_text_from_children(node=paragraph)
         block = UnoNumberedItem(text=rich_text)
-        self._add_block_to_tree(
+        self._add_block_to_list(
             block=block,
             parent_path=parent_path,
         )
@@ -512,7 +499,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
                     _create_rich_text_from_children(node=source)
                 )
 
-        self._add_block_to_tree(block=table, parent_path=parent_path)
+        self._add_block_to_list(block=table, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -528,7 +515,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         paragraph_block = UnoParagraph(text=rich_text)
-        self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
+        self._add_block_to_list(block=paragraph_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -544,7 +531,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del section_level
         rich_text = _create_rich_text_from_children(node=node)
         quote_block = UnoQuote(text=rich_text)
-        self._add_block_to_tree(block=quote_block, parent_path=parent_path)
+        self._add_block_to_list(block=quote_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -564,7 +551,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             pygments_lang=pygments_lang,
         )
         code_block = UnoCode(text=code_text, language=language)
-        self._add_block_to_tree(block=code_block, parent_path=parent_path)
+        self._add_block_to_list(block=code_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -625,7 +612,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         # a callout with no icon.
         assert "contents" in node["classes"]
         toc_block = UnoTableOfContents()
-        self._add_block_to_tree(block=toc_block, parent_path=parent_path)
+        self._add_block_to_list(block=toc_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(  # pylint: disable=no-self-use
@@ -674,7 +661,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         }
         heading_cls = heading_levels[section_level]
         block = heading_cls(text=rich_text)
-        self._add_block_to_tree(block=block, parent_path=parent_path)
+        self._add_block_to_list(block=block, parent_path=parent_path)
 
     @beartype
     def _create_admonition_callout(
@@ -709,7 +696,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             color=background_color,
         )
 
-        self._add_block_to_tree(block=block, parent_path=parent_path)
+        self._add_block_to_list(block=block, parent_path=parent_path)
         # Process children as nested blocks
         for child in children_to_process:
             self._process_node_to_blocks(
@@ -790,7 +777,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
 
         title_text = node.attributes["label"]
         toggle_block = UnoToggleItem(text=text(text=title_text))
-        self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
+        self._add_block_to_list(block=toggle_block, parent_path=parent_path)
 
         for child in node.children:
             self._process_node_to_blocks(
@@ -820,7 +807,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             image_url = abs_path.as_uri()
 
         image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
-        self._add_block_to_tree(block=image_block, parent_path=parent_path)
+        self._add_block_to_list(block=image_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -853,7 +840,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             file=ExternalFile(url=video_url),
             caption=caption,
         )
-        self._add_block_to_tree(block=video_block, parent_path=parent_path)
+        self._add_block_to_list(block=video_block, parent_path=parent_path)
 
     @_process_node_to_blocks.register
     def _(
@@ -891,7 +878,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
             caption=caption_rich_text,
         )
 
-        self._add_block_to_tree(
+        self._add_block_to_list(
             block=code_block,
             parent_path=parent_path,
         )
@@ -1138,28 +1125,19 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del node
 
     @beartype
-    def _convert_block_tree_to_json(
+    def _serialize_blocks(
         self,
-        *,  # `beartype` does not support recursive types, so we need to use a
-        # simpler type.
-        block_tree: dict[tuple[Block, int], Any],
-    ) -> list[_SerializedBlockTreeNode]:
+        *,
+        blocks: list[Block],
+    ) -> list[dict[str, Any]]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
         tuples.
         """
-        result: list[_SerializedBlockTreeNode] = []
-        for (block, _), subtree in block_tree.items():
+        result: list[dict[str, Any]] = []
+        for block in blocks:
             serialized_obj = block.obj_ref.serialize_for_api()
-            if block_tree[(block, id(block))]:
-                serialized_obj["has_children"] = True
-            dumped_structure: _SerializedBlockTreeNode = {
-                "block": serialized_obj,
-                "children": self._convert_block_tree_to_json(
-                    block_tree=subtree
-                ),
-            }
-            result.append(dumped_structure)
+            result.append(serialized_obj)
         return result
 
     def depart_document(self, node: nodes.Element) -> None:
@@ -1169,7 +1147,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del node
 
         json_output = json.dumps(
-            obj=self._convert_block_tree_to_json(block_tree=self._block_tree),
+            obj=self._serialize_blocks(blocks=self._blocks),
             indent=2,
             ensure_ascii=False,
         )
