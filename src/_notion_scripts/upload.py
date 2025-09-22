@@ -13,7 +13,7 @@ from urllib.request import url2pathname
 import click
 from beartype import beartype
 from ultimate_notion import Emoji, Session
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
@@ -55,6 +55,12 @@ def _block_from_details(
 
             uploaded_file.wait_until_uploaded()
             return UnoVideo(file=uploaded_file, caption=block.caption)
+
+    serialized_children = details[block.obj_ref.type].get("children", [])
+    for child in serialized_children:
+        child_block = _block_from_details(details=child, session=session)
+        assert isinstance(block, ChildrenMixin)
+        block.append(blocks=[child_block])
 
     return block
 
