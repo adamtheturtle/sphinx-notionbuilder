@@ -220,13 +220,15 @@ def main(
         },
     }
 
-    block_child = _deserialize_block_with_children(
-        details=block_child_serialized_with_children
+    block_child = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=block_child_serialized_with_children)
     )
 
-    another_block_child = _deserialize_block_with_children(
-        details=block_child_serialized_with_children
+    another_block_child = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=block_child_serialized_with_children)
     )
+
+    assert block_child == another_block_child
 
     page.append(blocks=[block_child])
 
