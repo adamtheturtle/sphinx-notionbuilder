@@ -1,9 +1,9 @@
-* First level item in note
+* A
 
-  * Second level nested in note
+  * B
 
-    * Third level nested in note (deep!)
+    * C
 
-      * Fourth level nested in note (very deep!)
+      * D
 
-        * Fifth level nested in note (extremely deep!)
+        * E
