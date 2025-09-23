@@ -3,9 +3,7 @@
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
-import difflib
 import json
-import pprint
 import sys
 from pathlib import Path
 from typing import Any
@@ -147,12 +145,37 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    block_objs = [
-        _block_from_details(details=details, session=session)
-        for details in blocks
-    ]
+    # for child in page.children:
+    #     child.delete()
+
+    # from ultimate_notion.blocks import BulletedItem, Callout
+
+    # callout = Callout(text="a")
+    # bulleted_item = BulletedItem(text="a")
+    # callout.append(blocks=[bulleted_item])
+    # new_callout = Callout(text="a")
+    # new_bulleted_item = BulletedItem(text="b")
+    # new_callout.append(blocks=[new_bulleted_item])
+    # # assert callout == new_callout
+    # page.append(blocks=[callout])
+
+    # page.reload()
+    # assert len(page.children) == 1
+    # assert isinstance(page.children[0], Callout)
+    # assert page.children[0] == callout
+
+    # # This hits an assertion error
+    # assert page.children[0] == new_callout
+
+    # sys.exit()
+    import difflib
+    import pprint
+
     for index, page_child in enumerate(iterable=page.children):
-        block_child = block_objs[index]
+        print("Comparing index", index)
+        block_child = Block.wrap_obj_ref(
+            UnoObjAPIBlock.model_validate(obj=blocks[index])
+        )
         if page_child != block_child:
             page_child_serialized_with_children = (
                 _serialize_block_with_children(block=page_child)
@@ -170,13 +193,18 @@ def main(
             diff = difflib.unified_diff(a=s1, b=s2, n=20)
 
             diff_list = list(diff)
+            print("Item at index", index, "is different")
             nice_diff = "\n".join(diff_list)
             breakpoint()
 
     breakpoint()
 
-    # for child in page.children:
-    #     child.delete()
+    for child in page.children:
+        child.delete()
 
-    # page.append(blocks=block_objs)
+    block_objs = [
+        _block_from_details(details=details, session=session)
+        for details in blocks
+    ]
+    page.append(blocks=block_objs)
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")

@@ -423,3 +423,4 @@ whitelines = 1
 
 [tool.uv.sources]
 ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", rev = "cmp-off/online-blocks" }
+# ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", rev = "main" }
