@@ -82,6 +82,26 @@ def _serialize_block_with_children(
     return serialized_obj
 
 
+@beartype
+def _deserialize_block_with_children(
+    *,
+    details: dict[str, Any],
+) -> Block:
+    """
+    Deserialize a block with its children.
+    """
+    block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+
+    return block
+    serialized_children = details[block.obj_ref.type].get("children", [])
+    for child in serialized_children:
+        child_block = _deserialize_block_with_children(details=child)
+        assert isinstance(block, ChildrenMixin)
+        block.append(blocks=[child_block])
+
+    return block
+
+
 @click.command()
 @click.option(
     "--file",
@@ -145,37 +165,85 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    # for child in page.children:
-    #     child.delete()
+    for child in page.children:
+        child.delete()
 
-    # from ultimate_notion.blocks import BulletedItem, Callout
+    block_child_serialized_with_children = {
+        "object": "block",
+        "has_children": True,
+        "in_trash": False,
+        "archived": False,
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [
+                {
+                    "type": "text",
+                    "plain_text": "A",
+                    "annotations": {
+                        "bold": False,
+                        "italic": False,
+                        "strikethrough": False,
+                        "underline": False,
+                        "code": False,
+                    },
+                    "text": {"content": "A"},
+                }
+            ],
+            "color": "default",
+            "children": [
+                {
+                    "object": "block",
+                    "has_children": False,
+                    "in_trash": False,
+                    "archived": False,
+                    "type": "bulleted_list_item",
+                    "bulleted_list_item": {
+                        "rich_text": [
+                            {
+                                "type": "text",
+                                "plain_text": "B",
+                                "annotations": {
+                                    "bold": False,
+                                    "italic": False,
+                                    "strikethrough": False,
+                                    "underline": False,
+                                    "code": False,
+                                },
+                                "text": {"content": "B"},
+                            }
+                        ],
+                        "color": "default",
+                        "children": [],
+                    },
+                }
+            ],
+        },
+    }
 
-    # callout = Callout(text="a")
-    # bulleted_item = BulletedItem(text="a")
-    # callout.append(blocks=[bulleted_item])
-    # new_callout = Callout(text="a")
-    # new_bulleted_item = BulletedItem(text="b")
-    # new_callout.append(blocks=[new_bulleted_item])
-    # # assert callout == new_callout
-    # page.append(blocks=[callout])
+    block_child = _deserialize_block_with_children(
+        details=block_child_serialized_with_children
+    )
 
-    # page.reload()
-    # assert len(page.children) == 1
-    # assert isinstance(page.children[0], Callout)
-    # assert page.children[0] == callout
+    another_block_child = _deserialize_block_with_children(
+        details=block_child_serialized_with_children
+    )
 
-    # # This hits an assertion error
-    # assert page.children[0] == new_callout
+    page.append(blocks=[block_child])
 
-    # sys.exit()
+    page.reload()
+    assert len(page.children) == 1
+    assert page.children[0] == block_child
+
+    # This hits an assertion error
+    assert page.children[0] == another_block_child
+
+    sys.exit()
     import difflib
     import pprint
 
     for index, page_child in enumerate(iterable=page.children):
         print("Comparing index", index)
-        block_child = Block.wrap_obj_ref(
-            UnoObjAPIBlock.model_validate(obj=blocks[index])
-        )
+        block_child = _deserialize_block_with_children(details=blocks[index])
         if page_child != block_child:
             page_child_serialized_with_children = (
                 _serialize_block_with_children(block=page_child)
