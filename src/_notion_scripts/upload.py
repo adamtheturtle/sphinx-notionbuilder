@@ -67,6 +67,23 @@ def _block_from_details(
     return block
 
 
+@beartype
+def _serialize_block_with_children(
+    *,
+    block: Block,
+) -> dict[str, Any]:
+    """
+    Serialize a block with its children.
+    """
+    serialized_obj = block.obj_ref.serialize_for_api()
+    if isinstance(block, ChildrenMixin) and block.children:
+        serialized_obj[block.obj_ref.type]["children"] = [
+            _serialize_block_with_children(block=child)
+            for child in block.children
+        ]
+    return serialized_obj
+
+
 @click.command()
 @click.option(
     "--file",
@@ -137,11 +154,17 @@ def main(
     for index, page_child in enumerate(iterable=page.children):
         block_child = block_objs[index]
         if page_child != block_child:
+            page_child_serialized_with_children = (
+                _serialize_block_with_children(block=page_child)
+            )
+            block_child_serialized_with_children = (
+                _serialize_block_with_children(block=block_child)
+            )
             s1 = pprint.pformat(
-                object=page_child.obj_ref.serialize_for_api(), sort_dicts=True
+                object=page_child_serialized_with_children, sort_dicts=True
             ).splitlines()
             s2 = pprint.pformat(
-                object=block_child.obj_ref.serialize_for_api(), sort_dicts=True
+                object=block_child_serialized_with_children, sort_dicts=True
             ).splitlines()
 
             diff = difflib.unified_diff(a=s1, b=s2, n=20)
