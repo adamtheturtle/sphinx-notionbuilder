@@ -82,26 +82,6 @@ def _serialize_block_with_children(
     return serialized_obj
 
 
-@beartype
-def _deserialize_block_with_children(
-    *,
-    details: dict[str, Any],
-) -> Block:
-    """
-    Deserialize a block with its children.
-    """
-    block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-
-    return block
-    serialized_children = details[block.obj_ref.type].get("children", [])
-    for child in serialized_children:
-        child_block = _deserialize_block_with_children(details=child)
-        assert isinstance(block, ChildrenMixin)
-        block.append(blocks=[child_block])
-
-    return block
-
-
 @click.command()
 @click.option(
     "--file",
@@ -165,87 +145,14 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    for child in page.children:
-        child.delete()
-
-    block_child_serialized_with_children = {
-        "object": "block",
-        "has_children": True,
-        "in_trash": False,
-        "archived": False,
-        "type": "bulleted_list_item",
-        "bulleted_list_item": {
-            "rich_text": [
-                {
-                    "type": "text",
-                    "plain_text": "A",
-                    "annotations": {
-                        "bold": False,
-                        "italic": False,
-                        "strikethrough": False,
-                        "underline": False,
-                        "code": False,
-                    },
-                    "text": {"content": "A"},
-                }
-            ],
-            "color": "default",
-            "children": [
-                {
-                    "object": "block",
-                    "has_children": False,
-                    "in_trash": False,
-                    "archived": False,
-                    "type": "bulleted_list_item",
-                    "bulleted_list_item": {
-                        "rich_text": [
-                            {
-                                "type": "text",
-                                "plain_text": "B",
-                                "annotations": {
-                                    "bold": False,
-                                    "italic": False,
-                                    "strikethrough": False,
-                                    "underline": False,
-                                    "code": False,
-                                },
-                                "text": {"content": "B"},
-                            }
-                        ],
-                        "color": "default",
-                        "children": [],
-                    },
-                }
-            ],
-        },
-    }
-
-    block_child = Block.wrap_obj_ref(
-        UnoObjAPIBlock.model_validate(obj=block_child_serialized_with_children)
-    )
-
-    another_block_child = Block.wrap_obj_ref(
-        UnoObjAPIBlock.model_validate(obj=block_child_serialized_with_children)
-    )
-
-    assert block_child == another_block_child
-
-    page.append(blocks=[block_child])
-
-    page.reload()
-    assert len(page.children) == 1
-    assert page.children[0] == block_child
-
-    # This hits an assertion error
-    assert page.children[0] == another_block_child
-
-    sys.exit()
     import difflib
     import pprint
 
     for index, page_child in enumerate(iterable=page.children):
         print("Comparing index", index)
-        block_child = _deserialize_block_with_children(details=blocks[index])
+        block_child = Block.wrap_obj_ref(
+            UnoObjAPIBlock.model_validate(obj=blocks[index])
+        )
         if page_child != block_child:
             page_child_serialized_with_children = (
                 _serialize_block_with_children(block=page_child)
@@ -265,7 +172,11 @@ def main(
             diff_list = list(diff)
             print("Item at index", index, "is different")
             nice_diff = "\n".join(diff_list)
-            breakpoint()
+            if (
+                page_child.__class__ != block_child.__class__
+                and not isinstance(block_child, (UnoImage, UnoVideo))
+            ):
+                breakpoint()
 
     breakpoint()
 
