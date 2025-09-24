@@ -172,9 +172,8 @@ def main(
             diff_list = list(diff)
             print("Item at index", index, "is different")
             nice_diff = "\n".join(diff_list)
-            if (
-                page_child.__class__ != block_child.__class__
-                and not isinstance(block_child, (UnoImage, UnoVideo))
+            if page_child.__class__ != block_child.__class__ or not isinstance(
+                block_child, (UnoImage, UnoVideo)
             ):
                 breakpoint()
 
