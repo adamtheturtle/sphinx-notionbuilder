@@ -8,16 +8,13 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
-# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
-import sphinxnotes.strike  # pyright: ignore[reportMissingTypeStubs]
+import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
 )
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
-from docutils.parsers.rst.states import Inliner
-from docutils.utils import unescape
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -25,11 +22,7 @@ from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
-
-# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
-from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
-    strike_node,
-)
+from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
@@ -1179,31 +1172,6 @@ def _depart_video_node_notion(
 
 
 @beartype
-def _override_strike_role(  # pylint: disable=too-many-positional-arguments
-    typ: str,
-    rawtext: str,
-    text: str,  # pylint: disable=redefined-outer-name
-    lineno: int,
-    inliner: Inliner,
-    options: dict[Any, Any] | None = None,
-    content: list[str] | None = None,
-) -> tuple[list[nodes.Node], list[nodes.system_message]]:
-    """The ``sphinxnotes-strike`` extension's ``strike_role`` is overridden to
-    process strike nodes into Notion blocks.
-
-    This will not be needed after ``sphinxnotes-strike`` 1.3 is released.
-    """
-    del typ
-    del lineno
-    del options
-    del content
-    env = inliner.document.settings.env
-    node = strike_node(rawtext, unescape(text=text))
-    node["docname"] = env.docname
-    return [node], []
-
-
-@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1216,10 +1184,5 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-
-    # After ``sphinxnotes-strike`` is updated to have a ``SUPPORTED_BUILDERS``
-    # attribute, we can remove this and use the default ``strike_role``,
-    # and append ``NotionBuilder`` to ``SUPPORTED_BUILDERS``.
-    sphinxnotes.strike.strike_role = _override_strike_role
-    assert sphinxnotes.strike.strike_role is not None
+    sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}
