@@ -8,10 +8,13 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
-import sphinxnotes.strike
+# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
+import sphinxnotes.strike  # pyright: ignore[reportMissingTypeStubs]
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst.states import Inliner
+from docutils.utils import unescape
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -19,7 +22,11 @@ from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
-from sphinxnotes.strike import strike_node
+
+# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
+from sphinxnotes.strike import (
+    strike_node,  # pyright: ignore[reportMissingTypeStubs]
+)
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -1128,6 +1135,24 @@ def _depart_video_node_notion(
     del node
 
 
+def _override_strike_role( # pylint: disable=dangerous-default-value
+    typ: str,
+    rawtext: str,
+    text: str,  # pylint: disable=redefined-outer-name
+    lineno: int,
+    inliner: Inliner,
+    options: dict[Any, Any] = {},
+    content: list[str] = [],
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    del typ
+    del lineno
+    del options
+    del content
+    env = inliner.document.settings.env
+    node = strike_node(rawtext, unescape(text=text))
+    node["docname"] = env.docname
+    return [node], []
+
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
@@ -1141,5 +1166,10 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-    sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
+
+    # After ``sphinxnotes-strike`` is updated to have a ``SUPPORTED_BUILDERS``
+    # attribute, we can remove this and use the default ``strike_role``,
+    # and append ``NotionBuilder`` to ``SUPPORTED_BUILDERS``.
+    sphinxnotes.strike.strike_role = _override_strike_role
+    assert sphinxnotes.strike.strike_role is not None
     return {"parallel_read_safe": True}
