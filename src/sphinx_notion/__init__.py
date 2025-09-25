@@ -4,14 +4,17 @@ Sphinx Notion Builder.
 
 import json
 from dataclasses import dataclass
-from functools import singledispatchmethod
+from functools import singledispatch
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
-import sphinxnotes.strike
+# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
+import sphinxnotes.strike  # pyright: ignore[reportMissingTypeStubs]
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst.states import Inliner
+from docutils.utils import unescape
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -19,9 +22,13 @@ from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
-from sphinxnotes.strike import strike_node
+
+# Wait for ``sphinxnotes-strike`` to release a version with type stubs.
+from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
+    strike_node,
+)
 from ultimate_notion import Emoji
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -54,17 +61,6 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
-
-type _BlockTree = dict[tuple[Block, int], "_BlockTree"]
-
-
-class _SerializedBlockTreeNode(TypedDict):
-    """
-    A node in the block tree representing a Notion block with its children.
-    """
-
-    block: dict[str, Any]
-    children: list["_SerializedBlockTreeNode"]
 
 
 @dataclass
@@ -307,6 +303,538 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 
 
 @beartype
+def _process_list_item_recursively(
+    *,
+    node: nodes.list_item,
+) -> list[Block]:
+    """
+    Recursively process a list item node and return a BulletedItem.
+    """
+    paragraph = node.children[0]
+    assert isinstance(paragraph, nodes.paragraph)
+    rich_text = _create_rich_text_from_children(node=paragraph)
+    block = UnoBulletedItem(text=rich_text)
+
+    assert isinstance(node, nodes.list_item)
+
+    for child in node.children[1:]:
+        if not isinstance(child, nodes.bullet_list):
+            bullet_only_msg = (
+                "The only thing Notion supports within a bullet list is a "
+                f"bullet list. Given {type(child).__name__} on line "
+                f"{child.line} in {child.source}"
+            )
+            # Ignore error which is about a type error, but we want to
+            # raise a value error because the user has not sent anything to
+            # do with types.
+            raise ValueError(bullet_only_msg)  # noqa: TRY004
+        for nested_list_item in child.children:
+            assert isinstance(nested_list_item, nodes.list_item)
+            block.append(
+                blocks=_process_list_item_recursively(
+                    node=nested_list_item,
+                )
+            )
+    return [block]
+
+
+@beartype
+def _process_numbered_list_item_recursively(
+    *,
+    node: nodes.list_item,
+) -> list[Block]:
+    """
+    Recursively process a numbered list item node and return a NumberedItem.
+    """
+    paragraph = node.children[0]
+    assert isinstance(paragraph, nodes.paragraph)
+    rich_text = _create_rich_text_from_children(node=paragraph)
+    block = UnoNumberedItem(text=rich_text)
+
+    numbered_only_msg = (
+        "The only thing Notion supports within a numbered list is a "
+        f"numbered list. Given {type(node).__name__} on line {node.line} "
+        f"in {node.source}"
+    )
+    assert isinstance(node, nodes.list_item)
+
+    for child in node.children[1:]:
+        assert isinstance(child, nodes.enumerated_list), numbered_only_msg
+        for nested_list_item in child.children:
+            assert isinstance(nested_list_item, nodes.list_item), (
+                numbered_only_msg
+            )
+
+            block.append(
+                blocks=_process_numbered_list_item_recursively(
+                    node=nested_list_item,
+                )
+            )
+    return [block]
+
+
+@singledispatch
+@beartype
+def _process_node_to_blocks(
+    node: nodes.Element,
+    *,
+    section_level: int,
+) -> list[Block]:  # pragma: no cover
+    """
+    Required function for ``singledispatch``.
+    """
+    del section_level
+    raise NotImplementedError(node)
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.table,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process rST table nodes by creating Notion Table blocks.
+
+    This implementation delegates small branches to helpers which keeps
+    the function body linear and easier to reason about.
+    """
+    del section_level
+
+    for child in node.children:
+        if isinstance(child, nodes.title):
+            table_no_titles_msg = (
+                f"Table has a title '{child.astext()}' on line "
+                f"{child.line} in {child.source}, but Notion tables "
+                "do not have titles."
+            )
+            # Ignore error which is about a type error, but we want to
+            # raise a value error because the user has not sent anything to
+            # do with types.
+            raise ValueError(table_no_titles_msg)  # noqa: TRY004
+
+    table_structure = _extract_table_structure(node=node)
+
+    if len(table_structure.header_rows) > 1:
+        first_header_row = table_structure.header_rows[0]
+        first_header_row_entry = first_header_row.children[0]
+        first_header_row_paragraph = first_header_row_entry.children[0]
+        first_header_row_line = first_header_row_paragraph.line
+        last_header_row = table_structure.header_rows[-1]
+        last_header_row_entry = last_header_row.children[0]
+        last_header_row_paragraph = last_header_row_entry.children[0]
+        last_header_row_line = last_header_row_paragraph.line
+        table_multiple_header_rows_msg = (
+            "Tables with multiple header rows are not supported. "
+            f"First header row is on line {first_header_row_line} in "
+            f"{first_header_row_paragraph.source}, last header row is on "
+            f"line {last_header_row_line}"
+        )
+        raise ValueError(table_multiple_header_rows_msg)
+
+    if table_structure.num_stub_columns > 1:
+        table_more_than_one_stub_column_msg = (
+            f"Tables with more than 1 stub column are not supported. "
+            f"Found {table_structure.num_stub_columns} stub columns."
+        )
+        raise ValueError(table_more_than_one_stub_column_msg)
+
+    rows = [*table_structure.header_rows, *table_structure.body_rows]
+    table = UnoTable(
+        n_rows=len(rows),
+        # In Notion, all rows must have the same number of columns.
+        n_cols=len(rows[0]),
+        header_row=bool(table_structure.header_rows),
+        header_col=bool(table_structure.num_stub_columns),
+    )
+
+    for row_index, row in enumerate(iterable=rows):
+        for column_index, entry in enumerate(iterable=row.children):
+            source = _cell_source_node(entry=entry)
+            table[row_index, column_index] = _create_rich_text_from_children(
+                node=source
+            )
+
+    return [table]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.paragraph,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process paragraph nodes by creating Notion Paragraph blocks.
+    """
+    del section_level
+    rich_text = _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=rich_text)]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.block_quote,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process block quote nodes by creating Notion Quote blocks.
+    """
+    del section_level
+    rich_text = _create_rich_text_from_children(node=node)
+    return [UnoQuote(text=rich_text)]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.literal_block,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process literal block nodes by creating Notion Code blocks.
+    """
+    del section_level
+    code_text = _create_rich_text_from_children(node=node)
+    pygments_lang = node.get(key="language", failobj="")
+    language = _map_pygments_to_notion_language(
+        pygments_lang=pygments_lang,
+    )
+    return [UnoCode(text=code_text, language=language)]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.bullet_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process bullet list nodes by creating Notion BulletedItem blocks.
+    """
+    del section_level
+    result: list[Block] = []
+    for list_item in node.children:
+        assert isinstance(list_item, nodes.list_item)
+        result.extend(
+            _process_list_item_recursively(
+                node=list_item,
+            )
+        )
+    return result
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.enumerated_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process enumerated list nodes by creating Notion NumberedItem blocks.
+    """
+    del section_level
+    result: list[Block] = []
+    numbered_only_msg = (
+        "The only thing Notion supports within a numbered list is a "
+        f"numbered list. Given {type(node).__name__} on line {node.line} "
+        f"in {node.source}"
+    )
+    for list_item in node.children:
+        assert isinstance(list_item, nodes.list_item), numbered_only_msg
+        result.extend(
+            _process_numbered_list_item_recursively(
+                node=list_item,
+            )
+        )
+    return result
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.topic,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process topic nodes, specifically for table of contents.
+    """
+    del section_level  # Not used for topics
+    # Later, we can support `.. topic::` directives, likely as
+    # a callout with no icon.
+    assert "contents" in node["classes"]
+    return [UnoTableOfContents()]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.compound,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process Sphinx ``toctree`` nodes.
+    """
+    del node
+    del section_level
+    # There are no specific Notion blocks for ``toctree`` nodes.
+    # We need to support ``toctree`` in ``index.rst``.
+    # Just ignore it.
+    return []
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.title,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process title nodes by creating appropriate Notion heading blocks.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+
+    max_heading_level = 3
+    if section_level > max_heading_level:
+        error_msg = (
+            f"Notion only supports heading levels 1-{max_heading_level}, "
+            f"but found heading level {section_level} on line {node.line} "
+            f"in {node.source}."
+        )
+        raise ValueError(error_msg)
+
+    heading_levels: dict[int, type[UnoHeading[Any]]] = {
+        1: UnoHeading1,
+        2: UnoHeading2,
+        3: UnoHeading3,
+    }
+    heading_cls = heading_levels[section_level]
+    return [heading_cls(text=rich_text)]
+
+
+@beartype
+def _create_admonition_callout(
+    *,
+    node: nodes.Element,
+    emoji: str,
+    background_color: BGColor,
+) -> list[Block]:
+    """Create a Notion Callout block for admonition nodes.
+
+    The first child (typically a paragraph) becomes the callout text,
+    and any remaining children become nested blocks within the callout.
+    """
+    # Use the first child as the callout text
+    first_child = node.children[0]
+    if isinstance(first_child, nodes.paragraph):
+        rich_text = _create_rich_text_from_children(node=first_child)
+        # Process remaining children as nested blocks
+        children_to_process = node.children[1:]
+    else:
+        # If first child is not a paragraph, use empty text
+        rich_text = Text.from_plain_text(text="")
+        # Process all children as nested blocks (including the first)
+        children_to_process = node.children
+
+    block = UnoCallout(
+        text=rich_text,
+        icon=Emoji(emoji=emoji),
+        color=background_color,
+    )
+
+    for child in children_to_process:
+        block.append(
+            blocks=_process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        )
+    return [block]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.note,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process note admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="📝",
+        background_color=BGColor.BLUE,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.warning,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process warning admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="⚠️",
+        background_color=BGColor.YELLOW,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.tip,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process tip admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="💡",
+        background_color=BGColor.GREEN,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: CollapseNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process collapse nodes by creating Notion ToggleItem blocks.
+    """
+    del section_level
+
+    title_text = node.attributes["label"]
+    toggle_block = UnoToggleItem(text=text(text=title_text))
+
+    for child in node.children:
+        toggle_block.append(
+            blocks=_process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        )
+
+    return [toggle_block]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.image,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process image nodes by creating Notion Image blocks.
+    """
+    del section_level
+
+    image_url = node.attributes["uri"]
+    assert isinstance(image_url, str)
+
+    assert node.document is not None
+    if "://" not in image_url:
+        abs_path = Path(node.document.settings.env.srcdir) / image_url
+        image_url = abs_path.as_uri()
+
+    return [UnoImage(file=ExternalFile(url=image_url), caption=None)]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: video_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process video nodes by creating Notion Video blocks.
+    """
+    del section_level
+
+    sources: list[tuple[str, str, bool]] = node.attributes["sources"]
+    assert isinstance(sources, list)
+    primary_source = sources[0]
+    video_location, _, is_remote = primary_source
+
+    if is_remote:
+        video_url = video_location
+    else:
+        assert node.document is not None
+        abs_path = Path(node.document.settings.env.srcdir) / video_location
+        video_url = abs_path.as_uri()
+
+    caption_text = node.attributes["caption"]
+    caption = text(text=caption_text) if caption_text else None
+
+    return [
+        UnoVideo(
+            file=ExternalFile(url=video_url),
+            caption=caption,
+        )
+    ]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.container,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process container nodes, especially for ``literalinclude`` with captions.
+    """
+    del section_level
+
+    caption_node, literal_node = node.children
+    msg = (
+        "The only supported container type is a literalinclude with a caption"
+    )
+    assert isinstance(caption_node, nodes.caption), msg
+    assert isinstance(literal_node, nodes.literal_block), msg
+
+    caption_rich_text = _create_rich_text_from_children(node=caption_node)
+
+    code_text = _create_rich_text_from_children(node=literal_node)
+    pygments_lang = literal_node.get(key="language", failobj="")
+    language = _map_pygments_to_notion_language(
+        pygments_lang=pygments_lang,
+    )
+
+    return [
+        UnoCode(
+            text=code_text,
+            language=language,
+            caption=caption_rich_text,
+        )
+    ]
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.comment,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process comment nodes by ignoring them completely.
+
+    Comments in reStructuredText should not appear in the final output.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
 class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
     """
     Translate ``docutils`` nodes to Notion JSON.
@@ -318,587 +846,19 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del builder
         super().__init__(document=document)
-        self._block_tree: _BlockTree = {}
+        self._blocks: list[Block] = []
         self.body: str
         self._section_level = 0
-
-    @beartype
-    def _add_block_to_tree(
-        self,
-        *,
-        block: Block,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """Add a block to the block tree.
-
-        First has to find the parent in the tree recursively.
-
-        See
-        https://github.com/ultimate-notion/ultimate-notion/issues/120
-        for
-        simplifying this (not having to build our own tree, just a list of top
-        level blocks).
-        """
-        block_key = (block, id(block))
-        if not parent_path:
-            self._block_tree[block_key] = {}
-            return
-
-        current_node = self._block_tree[parent_path[0]]
-
-        for parent_key in parent_path[1:]:
-            current_node = current_node[parent_key]
-        current_node[block_key] = {}
-
-    @beartype
-    def _process_list_item_recursively(
-        self,
-        *,
-        node: nodes.list_item,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Recursively process a list item node and return a BulletedItem.
-        """
-        paragraph = node.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoBulletedItem(text=rich_text)
-        self._add_block_to_tree(
-            block=block,
-            parent_path=parent_path,
-        )
-
-        assert isinstance(node, nodes.list_item)
-
-        for child in node.children[1:]:
-            if not isinstance(child, nodes.bullet_list):
-                bullet_only_msg = (
-                    "The only thing Notion supports within a bullet list is a "
-                    f"bullet list. Given {type(child).__name__} on line "
-                    f"{child.line} in {child.source}"
-                )
-                # Ignore error which is about a type error, but we want to
-                # raise a value error because the user has not sent anything to
-                # do with types.
-                raise ValueError(bullet_only_msg)  # noqa: TRY004
-            for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item)
-                self._process_list_item_recursively(
-                    node=nested_list_item,
-                    parent_path=[*parent_path, (block, id(block))],
-                )
-
-    @beartype
-    def _process_numbered_list_item_recursively(
-        self,
-        *,
-        node: nodes.list_item,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Recursively process a numbered list item node and return a
-        NumberedItem.
-        """
-        paragraph = node.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoNumberedItem(text=rich_text)
-        self._add_block_to_tree(
-            block=block,
-            parent_path=parent_path,
-        )
-
-        numbered_only_msg = (
-            "The only thing Notion supports within a numbered list is a "
-            f"numbered list. Given {type(node).__name__} on line {node.line} "
-            f"in {node.source}"
-        )
-        assert isinstance(node, nodes.list_item)
-
-        for child in node.children[1:]:
-            assert isinstance(child, nodes.enumerated_list), numbered_only_msg
-            for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item), (
-                    numbered_only_msg
-                )
-                self._process_numbered_list_item_recursively(
-                    node=nested_list_item,
-                    parent_path=[*parent_path, (block, id(block))],
-                )
-
-    @singledispatchmethod
-    @beartype
-    def _process_node_to_blocks(  # pylint: disable=no-self-use
-        self,
-        node: nodes.Element,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:  # pragma: no cover
-        """
-        Required function for ``singledispatch``.
-        """
-        del section_level
-        del parent_path
-        raise NotImplementedError(node)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.table,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """Process rST table nodes by creating Notion Table blocks.
-
-        This implementation delegates small branches to helpers which
-        keeps the function body linear and easier to reason about.
-        """
-        del section_level
-
-        table_structure = _extract_table_structure(node=node)
-
-        if len(table_structure.header_rows) > 1:
-            msg = "Tables with multiple header rows are not supported."
-            raise ValueError(msg)
-
-        if table_structure.num_stub_columns > 1:
-            msg = (
-                f"Tables with more than 1 stub column are not supported. "
-                f"Found {table_structure.num_stub_columns} stub columns."
-            )
-            raise ValueError(msg)
-
-        rows = [*table_structure.header_rows, *table_structure.body_rows]
-        table = UnoTable(
-            n_rows=len(rows),
-            # In Notion, all rows must have the same number of columns.
-            n_cols=len(rows[0]),
-            header_row=bool(table_structure.header_rows),
-            header_col=bool(table_structure.num_stub_columns),
-        )
-
-        for row_index, row in enumerate(iterable=rows):
-            for column_index, entry in enumerate(iterable=row.children):
-                source = _cell_source_node(entry=entry)
-                table[row_index, column_index] = (
-                    _create_rich_text_from_children(node=source)
-                )
-
-        self._add_block_to_tree(block=table, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.paragraph,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process paragraph nodes by creating Notion Paragraph blocks.
-        """
-        del section_level
-        rich_text = _create_rich_text_from_children(node=node)
-        paragraph_block = UnoParagraph(text=rich_text)
-        self._add_block_to_tree(block=paragraph_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.block_quote,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process block quote nodes by creating Notion Quote blocks.
-        """
-        del section_level
-        rich_text = _create_rich_text_from_children(node=node)
-        quote_block = UnoQuote(text=rich_text)
-        self._add_block_to_tree(block=quote_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.literal_block,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process literal block nodes by creating Notion Code blocks.
-        """
-        del section_level
-        code_text = _create_rich_text_from_children(node=node)
-        pygments_lang = node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-        )
-        code_block = UnoCode(text=code_text, language=language)
-        self._add_block_to_tree(block=code_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.bullet_list,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process bullet list nodes by creating Notion BulletedItem blocks.
-        """
-        del section_level
-        for list_item in node.children:
-            assert isinstance(list_item, nodes.list_item)
-            self._process_list_item_recursively(
-                node=list_item,
-                parent_path=parent_path,
-            )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.enumerated_list,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process enumerated list nodes by creating Notion NumberedItem blocks.
-        """
-        del section_level
-        numbered_only_msg = (
-            "The only thing Notion supports within a numbered list is a "
-            f"numbered list. Given {type(node).__name__} on line {node.line} "
-            f"in {node.source}"
-        )
-        for list_item in node.children:
-            assert isinstance(list_item, nodes.list_item), numbered_only_msg
-            self._process_numbered_list_item_recursively(
-                node=list_item,
-                parent_path=parent_path,
-            )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.topic,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process topic nodes, specifically for table of contents.
-        """
-        del section_level  # Not used for topics
-        # Later, we can support `.. topic::` directives, likely as
-        # a callout with no icon.
-        assert "contents" in node["classes"]
-        toc_block = UnoTableOfContents()
-        self._add_block_to_tree(block=toc_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(  # pylint: disable=no-self-use
-        self,
-        node: nodes.compound,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process Sphinx ``toctree`` nodes.
-        """
-        del node
-        del section_level
-        del parent_path
-        # There are no specific Notion blocks for ``toctree`` nodes.
-        # We need to support ``toctree`` in ``index.rst``.
-        # Just ignore it.
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.title,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process title nodes by creating appropriate Notion heading blocks.
-        """
-        rich_text = _create_rich_text_from_children(node=node)
-
-        max_heading_level = 3
-        if section_level > max_heading_level:
-            error_msg = (
-                f"Notion only supports heading levels 1-{max_heading_level}, "
-                f"but found heading level {section_level} on line {node.line} "
-                f"in {node.source}."
-            )
-            raise ValueError(error_msg)
-
-        heading_levels: dict[int, type[UnoHeading[Any]]] = {
-            1: UnoHeading1,
-            2: UnoHeading2,
-            3: UnoHeading3,
-        }
-        heading_cls = heading_levels[section_level]
-        block = heading_cls(text=rich_text)
-        self._add_block_to_tree(block=block, parent_path=parent_path)
-
-    @beartype
-    def _create_admonition_callout(
-        self,
-        *,
-        node: nodes.Element,
-        emoji: str,
-        background_color: BGColor,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """Create a Notion Callout block for admonition nodes.
-
-        The first child (typically a paragraph) becomes the callout
-        text, and any remaining children become nested blocks within the
-        callout.
-        """
-        # Use the first child as the callout text
-        first_child = node.children[0]
-        if isinstance(first_child, nodes.paragraph):
-            rich_text = _create_rich_text_from_children(node=first_child)
-            # Process remaining children as nested blocks
-            children_to_process = node.children[1:]
-        else:
-            # If first child is not a paragraph, use empty text
-            rich_text = Text.from_plain_text(text="")
-            # Process all children as nested blocks (including the first)
-            children_to_process = node.children
-
-        block = UnoCallout(
-            text=rich_text,
-            icon=Emoji(emoji=emoji),
-            color=background_color,
-        )
-
-        self._add_block_to_tree(block=block, parent_path=parent_path)
-        # Process children as nested blocks
-        for child in children_to_process:
-            self._process_node_to_blocks(
-                child,
-                section_level=1,
-                parent_path=[*parent_path, (block, id(block))],
-            )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.note,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process note admonition nodes by creating Notion Callout blocks.
-        """
-        del section_level
-        self._create_admonition_callout(
-            node=node,
-            emoji="📝",
-            background_color=BGColor.BLUE,
-            parent_path=parent_path,
-        )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.warning,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process warning admonition nodes by creating Notion Callout blocks.
-        """
-        del section_level
-        self._create_admonition_callout(
-            node=node,
-            emoji="⚠️",
-            background_color=BGColor.YELLOW,
-            parent_path=parent_path,
-        )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.tip,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process tip admonition nodes by creating Notion Callout blocks.
-        """
-        del section_level
-        self._create_admonition_callout(
-            node=node,
-            emoji="💡",
-            background_color=BGColor.GREEN,
-            parent_path=parent_path,
-        )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: CollapseNode,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process collapse nodes by creating Notion ToggleItem blocks.
-        """
-        del section_level
-
-        title_text = node.attributes["label"]
-        toggle_block = UnoToggleItem(text=text(text=title_text))
-        self._add_block_to_tree(block=toggle_block, parent_path=parent_path)
-
-        for child in node.children:
-            self._process_node_to_blocks(
-                child,
-                section_level=1,
-                parent_path=[*parent_path, (toggle_block, id(toggle_block))],
-            )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.image,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process image nodes by creating Notion Image blocks.
-        """
-        del section_level
-
-        image_url = node.attributes["uri"]
-        assert isinstance(image_url, str)
-
-        if "://" not in image_url:
-            abs_path = Path(self.document.settings.env.srcdir) / image_url
-            image_url = abs_path.as_uri()
-
-        image_block = UnoImage(file=ExternalFile(url=image_url), caption=None)
-        self._add_block_to_tree(block=image_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: video_node,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process video nodes by creating Notion Video blocks.
-        """
-        del section_level
-
-        sources: list[tuple[str, str, bool]] = node.attributes["sources"]
-        assert isinstance(sources, list)
-        primary_source = sources[0]
-        video_location, _, is_remote = primary_source
-
-        if is_remote:
-            video_url = video_location
-        else:
-            abs_path = Path(self.document.settings.env.srcdir) / video_location
-            video_url = abs_path.as_uri()
-
-        caption_text = node.attributes["caption"]
-        caption = text(text=caption_text) if caption_text else None
-
-        video_block = UnoVideo(
-            file=ExternalFile(url=video_url),
-            caption=caption,
-        )
-        self._add_block_to_tree(block=video_block, parent_path=parent_path)
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.container,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """
-        Process container nodes, especially for ``literalinclude`` with
-        captions.
-        """
-        del section_level
-
-        caption_node, literal_node = node.children
-        msg = (
-            "The only supported container type is a literalinclude with "
-            "a caption"
-        )
-        assert isinstance(caption_node, nodes.caption), msg
-        assert isinstance(literal_node, nodes.literal_block), msg
-
-        caption_rich_text = _create_rich_text_from_children(node=caption_node)
-
-        code_text = _create_rich_text_from_children(node=literal_node)
-        pygments_lang = literal_node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-        )
-
-        code_block = UnoCode(
-            text=code_text,
-            language=language,
-            caption=caption_rich_text,
-        )
-
-        self._add_block_to_tree(
-            block=code_block,
-            parent_path=parent_path,
-        )
-
-    @_process_node_to_blocks.register
-    def _(
-        self,
-        node: nodes.comment,
-        *,
-        section_level: int,
-        parent_path: list[tuple[Block, int]],
-    ) -> None:
-        """Process comment nodes by ignoring them completely.
-
-        Comments in reStructuredText should not appear in the final
-        output.
-        """
-        assert self
-        del node
-        del section_level
-        del parent_path
 
     def visit_title(self, node: nodes.Element) -> None:
         """
         Handle title nodes by creating appropriate Notion heading blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_section(self, node: nodes.Element) -> None:
@@ -919,23 +879,22 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle paragraph nodes by creating Notion Paragraph blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_block_quote(self, node: nodes.Element) -> None:
         """
         Handle block quote nodes by creating Notion Quote blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -943,71 +902,66 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle literal block nodes by creating Notion Code blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_bullet_list(self, node: nodes.Element) -> None:
         """
         Handle bullet list nodes by processing each list item.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_enumerated_list(self, node: nodes.Element) -> None:
         """
         Handle enumerated list nodes by processing each list item.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_topic(self, node: nodes.Element) -> None:
         """
         Handle topic nodes, specifically for table of contents.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_note(self, node: nodes.Element) -> None:
         """
         Handle note admonition nodes by creating Notion Callout blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
-
+        self._blocks.extend(blocks)
         raise nodes.SkipNode
 
     def visit_warning(self, node: nodes.Element) -> None:
         """
         Handle warning admonition nodes by creating Notion Callout blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1015,11 +969,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1027,11 +981,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle table nodes by creating Notion Table blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1039,11 +993,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle compound admonition nodes by creating a table of contents block.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1051,11 +1005,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle collapse nodes by creating Notion ToggleItem blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1063,11 +1017,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle image nodes by creating Notion Image blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1075,21 +1029,21 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Process a video node into Notion blocks.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
     def visit_container(self, node: nodes.Element) -> None:
         """
         Handle container nodes.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1097,11 +1051,11 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         Handle comment nodes by ignoring them completely.
         """
-        self._process_node_to_blocks(
+        blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
-            parent_path=[],
         )
+        self._blocks.extend(blocks)
 
         raise nodes.SkipNode
 
@@ -1113,28 +1067,25 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del node
 
     @beartype
-    def _convert_block_tree_to_json(
+    def _serialize_blocks(
         self,
-        *,  # `beartype` does not support recursive types, so we need to use a
-        # simpler type.
-        block_tree: dict[tuple[Block, int], Any],
-    ) -> list[_SerializedBlockTreeNode]:
+        *,
+        blocks: list[Block],
+    ) -> list[dict[str, Any]]:
         """
         Convert the block tree to a JSON-serializable format, ignoring IDs from
         tuples.
         """
-        result: list[_SerializedBlockTreeNode] = []
-        for (block, _), subtree in block_tree.items():
+        result: list[dict[str, Any]] = []
+        for block in blocks:
             serialized_obj = block.obj_ref.serialize_for_api()
-            if block_tree[(block, id(block))]:
-                serialized_obj["has_children"] = True
-            dumped_structure: _SerializedBlockTreeNode = {
-                "block": serialized_obj,
-                "children": self._convert_block_tree_to_json(
-                    block_tree=subtree
-                ),
-            }
-            result.append(dumped_structure)
+            if isinstance(block, ChildrenMixin) and block.children:
+                serialized_obj[block.obj_ref.type]["children"] = (
+                    self._serialize_blocks(
+                        blocks=list(block.children),
+                    )
+                )
+            result.append(serialized_obj)
         return result
 
     def depart_document(self, node: nodes.Element) -> None:
@@ -1144,7 +1095,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         del node
 
         json_output = json.dumps(
-            obj=self._convert_block_tree_to_json(block_tree=self._block_tree),
+            obj=self._serialize_blocks(blocks=self._blocks),
             indent=2,
             ensure_ascii=False,
         )
@@ -1185,6 +1136,31 @@ def _depart_video_node_notion(
 
 
 @beartype
+def _override_strike_role(  # pylint: disable=too-many-positional-arguments
+    typ: str,
+    rawtext: str,
+    text: str,  # pylint: disable=redefined-outer-name
+    lineno: int,
+    inliner: Inliner,
+    options: dict[Any, Any] | None = None,
+    content: list[str] | None = None,
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """The ``sphinxnotes-strike`` extension's ``strike_role`` is overridden to
+    process strike nodes into Notion blocks.
+
+    This will not be needed after ``sphinxnotes-strike`` 1.3 is released.
+    """
+    del typ
+    del lineno
+    del options
+    del content
+    env = inliner.document.settings.env
+    node = strike_node(rawtext, unescape(text=text))
+    node["docname"] = env.docname
+    return [node], []
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1197,5 +1173,10 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-    sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
+
+    # After ``sphinxnotes-strike`` is updated to have a ``SUPPORTED_BUILDERS``
+    # attribute, we can remove this and use the default ``strike_role``,
+    # and append ``NotionBuilder`` to ``SUPPORTED_BUILDERS``.
+    sphinxnotes.strike.strike_role = _override_strike_role
+    assert sphinxnotes.strike.strike_role is not None
     return {"parallel_read_safe": True}
