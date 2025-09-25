@@ -14,7 +14,7 @@ import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -49,34 +49,19 @@ from ultimate_notion.rich_text import text
 
 
 @beartype
-def _reconstruct_nested_structure(
+def _details_from_block(
     *,
-    items: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
+    block: Block,
+) -> dict[str, Any]:
     """
-    Reconstruct nested structure from flattened block items.
+    Create a serialized block details from a Block.
     """
-    result: list[dict[str, Any]] = []
-    for item in items:
-        block = item["block"]
-        block_type = block["type"]
-
-        # Handle blocks that can have children
-        if block_type in {
-            "paragraph",
-            "callout",
-            "bulleted_list_item",
-            "numbered_list_item",
-            "toggle",
-        }:
-            children = item.get("children", [])
-            nested_blocks = _reconstruct_nested_structure(
-                items=children,
-            )
-            block[block_type]["children"] = nested_blocks
-
-        result.append(block)
-    return result
+    serialized_obj = block.obj_ref.serialize_for_api()
+    if isinstance(block, ChildrenMixin) and block.children:
+        serialized_obj[block.obj_ref.type]["children"] = [
+            _details_from_block(block=child) for child in block.children
+        ]
+    return serialized_obj
 
 
 @beartype
@@ -113,19 +98,12 @@ def _assert_rst_converts_to_notion_objects(
     with output_file.open(encoding="utf-8") as f:
         generated_json: list[dict[str, Any]] = json.load(fp=f)
 
-    generated_json_un_flattened = _reconstruct_nested_structure(
-        items=generated_json
-    )
+    expected_json: list[dict[str, Any]] = [
+        _details_from_block(block=expected_object)
+        for expected_object in expected_objects
+    ]
 
-    expected_json: list[dict[str, Any]] = []
-    for notion_object in expected_objects:
-        dumped_block = notion_object.obj_ref.serialize_for_api()
-        expected_json.append(dumped_block)
-
-    assert generated_json_un_flattened == expected_json, (
-        generated_json_un_flattened,
-        expected_json,
-    )
+    assert generated_json == expected_json
 
 
 def test_single_paragraph(
