@@ -24,8 +24,8 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
 )
 
 # Wait for ``sphinxnotes-strike`` to release a version with type stubs.
-from sphinxnotes.strike import (
-    strike_node,  # pyright: ignore[reportMissingTypeStubs]
+from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
+    strike_node,
 )
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Block, ChildrenMixin
@@ -1135,15 +1135,21 @@ def _depart_video_node_notion(
     del node
 
 
-def _override_strike_role( # pylint: disable=dangerous-default-value
+@beartype
+def _override_strike_role(
     typ: str,
     rawtext: str,
     text: str,  # pylint: disable=redefined-outer-name
     lineno: int,
     inliner: Inliner,
-    options: dict[Any, Any] = {},
-    content: list[str] = [],
+    options: dict[Any, Any] | None = None,
+    content: list[str] | None = None,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """The ``sphinxnotes-strike`` extension's ``strike_role`` is overridden to
+    process strike nodes into Notion blocks.
+
+    This will not be needed after ``sphinxnotes-strike`` 1.3 is released.
+    """
     del typ
     del lineno
     del options
@@ -1152,6 +1158,7 @@ def _override_strike_role( # pylint: disable=dangerous-default-value
     node = strike_node(rawtext, unescape(text=text))
     node["docname"] = env.docname
     return [node], []
+
 
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
