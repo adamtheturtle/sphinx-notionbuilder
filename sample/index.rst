@@ -321,7 +321,7 @@ Audio Examples
 Simple Audio
 ~~~~~~~~~~~~
 
-.. audio:: https://www.soundjay.com/misc/sounds/bell-ringing-05.wav
+.. audio:: https://file-examples.com/wp-content/storage/2017/11/file_example_WAV_1MG.wav
 
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
