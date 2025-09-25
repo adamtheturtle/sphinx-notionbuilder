@@ -14,6 +14,7 @@ import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
@@ -1615,6 +1616,64 @@ def test_local_video_file(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib.video"),
+    )
+
+
+def test_simple_audio(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``audio`` directives become Notion Audio blocks with URL.
+    """
+    rst_content = """
+        .. audio:: https://www.example.com/path/to/audio.mp3
+    """
+
+    expected_objects: list[Block] = [
+        UnoAudio(
+            file=ExternalFile(url="https://www.example.com/path/to/audio.mp3")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "atsphinx.audioplayer"),
+    )
+
+
+def test_local_audio_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Local audio files are converted to file:// URLs in the JSON output.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_audio_path = srcdir / "test_audio.mp3"
+    # Create a minimal MP3 file (just some dummy data)
+    test_audio_path.write_bytes(data=b"fake mp3 content")
+
+    rst_content = """
+        .. audio:: test_audio.mp3
+    """
+
+    expected_objects: list[Block] = [
+        UnoAudio(file=ExternalFile(url=test_audio_path.as_uri())),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "atsphinx.audioplayer"),
     )
 
 

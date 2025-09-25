@@ -10,6 +10,9 @@ from typing import Any
 
 # Wait for ``sphinxnotes-strike`` to release a version with type stubs.
 import sphinxnotes.strike  # pyright: ignore[reportMissingTypeStubs]
+from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
+    audio as audio_node,
+)
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
@@ -28,6 +31,7 @@ from sphinxnotes.strike import (  # pyright: ignore[reportMissingTypeStubs]
     strike_node,
 )
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
@@ -786,6 +790,28 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
+    node: audio_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process audio nodes by creating Notion Audio blocks.
+    """
+    del section_level
+
+    audio_url = node.attributes["uri"]
+    assert isinstance(audio_url, str)
+
+    assert node.document is not None
+    if "://" not in audio_url:
+        abs_path = Path(node.document.settings.env.srcdir) / audio_url
+        audio_url = abs_path.as_uri()
+
+    return [UnoAudio(file=ExternalFile(url=audio_url))]
+
+
+@_process_node_to_blocks.register
+def _(
     node: nodes.container,
     *,
     section_level: int,
@@ -1064,6 +1090,23 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         Initialize block collection at document start.
         """
         assert self
+        del node
+
+    def visit_audio(self, node: nodes.Element) -> None:
+        """
+        Handle audio nodes by creating Notion Audio blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+    @staticmethod
+    def depart_audio(node: nodes.Element) -> None:
+        """
+        Depart from audio nodes.
+        """
         del node
 
     @beartype

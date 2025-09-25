@@ -315,6 +315,21 @@ Here's some text before the video.
 
 And here's some text after the video.
 
+Audio Examples
+--------------
+
+Simple Audio
+~~~~~~~~~~~~
+
+.. audio:: https://voiceage.com/wbsamples/in_mono/Chorus.wav
+
+Local Audio Example
+~~~~~~~~~~~~~~~~~~~
+
+Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127.
+
+.. .. audio:: _static/test-audio.wav
+
 .. collapse:: Long code block
 
    .. code-block:: python
