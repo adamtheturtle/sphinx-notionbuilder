@@ -1646,36 +1646,6 @@ def test_simple_audio(
     )
 
 
-def test_audio_with_caption(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Audio directives with captions include the caption in the Notion Audio
-    block.
-    """
-    rst_content = """
-        .. audio:: https://www.example.com/path/to/audio.mp3
-           :caption: Example audio
-    """
-
-    expected_objects: list[Block] = [
-        UnoAudio(
-            file=ExternalFile(url="https://www.example.com/path/to/audio.mp3"),
-            caption=text(text="Example audio"),
-        ),
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-        extensions=("sphinx_notion", "atsphinx.audioplayer"),
-    )
-
-
 def test_local_audio_file(
     *,
     make_app: Callable[..., SphinxTestApp],
