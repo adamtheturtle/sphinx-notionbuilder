@@ -318,10 +318,11 @@ And here's some text after the video.
 Audio Examples
 --------------
 
-Simple Audio
-~~~~~~~~~~~~
+.. Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127
+.. Simple Audio
+.. ~~~~~~~~~~~~
 
-.. audio:: https://file-examples.com/wp-content/storage/2017/11/file_example_WAV_1MG.wav
+.. .. audio:: https://file-examples.com/wp-content/storage/2017/11/file_example_WAV_1MG.wav
 
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
