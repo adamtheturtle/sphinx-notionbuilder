@@ -7,4 +7,5 @@ extensions = [
     "sphinxnotes.strike",
     "sphinx_notion",
     "sphinx_toolbox.collapse",
+    "atsphinx.audioplayer",
 ]
