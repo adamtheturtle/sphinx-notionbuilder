@@ -38,7 +38,7 @@ dependencies = [
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=1.3a1",
-    "ultimate-notion>=0.9",
+    "ultimate-notion>=0.9.2",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
@@ -420,6 +420,3 @@ exclude = [ ".venv" ]
 [tool.yamlfix]
 section_whitelines = 1
 whitelines = 1
-
-[tool.uv.sources]
-ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", rev = "main" }
