@@ -1136,7 +1136,7 @@ def _depart_video_node_notion(
 
 
 @beartype
-def _override_strike_role(
+def _override_strike_role(  # pylint: disable=too-many-positional-arguments
     typ: str,
     rawtext: str,
     text: str,  # pylint: disable=redefined-outer-name
