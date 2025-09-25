@@ -17,7 +17,32 @@ from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+
+
+@beartype
+def _upload_local_file(
+    *,
+    url: str,
+    session: Session,
+) -> UploadedFile | None:
+    """
+    Upload a local file and return the uploaded file object.
+    """
+    parsed = urlparse(url=url)
+    if parsed.scheme != "file":
+        return None
+
+    file_path = Path(url2pathname(pathname=parsed.path))
+    with file_path.open(mode="rb") as f:
+        uploaded_file = session.upload(
+            file=f,
+            file_name=file_path.name,
+        )
+
+    uploaded_file.wait_until_uploaded()
+    return uploaded_file
 
 
 @beartype
@@ -32,42 +57,10 @@ def _block_from_details(
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, UnoImage):
-        parsed = urlparse(url=block.url)
-        if parsed.scheme == "file":
-            file_path = Path(url2pathname(pathname=parsed.path))
-            with file_path.open(mode="rb") as f:
-                uploaded_file = session.upload(
-                    file=f,
-                    file_name=file_path.name,
-                )
-
-            uploaded_file.wait_until_uploaded()
-            return UnoImage(file=uploaded_file, caption=block.caption)
-    elif isinstance(block, UnoVideo):
-        parsed = urlparse(url=block.url)
-        if parsed.scheme == "file":
-            file_path = Path(url2pathname(pathname=parsed.path))
-            with file_path.open(mode="rb") as f:
-                uploaded_file = session.upload(
-                    file=f,
-                    file_name=file_path.name,
-                )
-
-            uploaded_file.wait_until_uploaded()
-            return UnoVideo(file=uploaded_file, caption=block.caption)
-    elif isinstance(block, UnoAudio):
-        parsed = urlparse(url=block.url)
-        if parsed.scheme == "file":
-            file_path = Path(url2pathname(pathname=parsed.path))
-            with file_path.open(mode="rb") as f:
-                uploaded_file = session.upload(
-                    file=f,
-                    file_name=file_path.name,
-                )
-
-            uploaded_file.wait_until_uploaded()
-            return UnoAudio(file=uploaded_file, caption=block.caption)
+    if isinstance(block, (UnoImage, UnoVideo, UnoAudio)):
+        uploaded_file = _upload_local_file(url=block.url, session=session)
+        if uploaded_file is not None:
+            return block.__class__(file=uploaded_file, caption=block.caption)
 
     return block
 
