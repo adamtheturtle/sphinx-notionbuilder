@@ -318,18 +318,17 @@ And here's some text after the video.
 Audio Examples
 --------------
 
-.. Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127
-.. Simple Audio
-.. ~~~~~~~~~~~~
+Simple Audio
+~~~~~~~~~~~~
 
-.. .. audio:: https://file-examples.com/wp-content/storage/2017/11/file_example_WAV_1MG.wav
+.. audio:: https://voiceage.com/wbsamples/in_mono/Chorus.wav
 
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
 
-.. audio:: _static/test-audio.mp3
+Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127.
 
-And here's some text after the audio.
+.. .. audio:: _static/test-audio.wav
 
 .. collapse:: Long code block
 
