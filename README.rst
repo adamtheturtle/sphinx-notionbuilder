@@ -57,6 +57,17 @@ For strikethrough text support, also add the `sphinxnotes-strike <https://github
        "sphinx_notion",
    ]
 
+For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphinx/atsphinx-audioplayer>`_ extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "atsphinx.audioplayer",
+       "sphinx_notion",
+   ]
+
 Supported markup
 ----------------
 
@@ -71,10 +82,24 @@ The following syntax is supported:
 - Collapsible sections (using sphinx-toolbox collapse directive)
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
+- Audio (with URLs or local paths)
 - Tables
 - Strikethrough text
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
+
+Using Audio
+-----------
+
+Audio files can be embedded using the ``audio`` directive. Both remote URLs and local file paths are supported:
+
+.. code-block:: rst
+
+   .. audio:: https://www.example.com/audio.mp3
+
+   .. audio:: _static/local-audio.mp3
+
+The audio will be rendered as an audio player in the generated Notion page.
 
 Uploading Documentation to Notion
 ----------------------------------
