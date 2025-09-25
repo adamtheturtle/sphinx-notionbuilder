@@ -1102,7 +1102,8 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         )
         self._blocks.extend(blocks)
 
-    def depart_audio(self, node: nodes.Element) -> None:
+    @staticmethod
+    def depart_audio(node: nodes.Element) -> None:
         """
         Depart from audio nodes.
         """
