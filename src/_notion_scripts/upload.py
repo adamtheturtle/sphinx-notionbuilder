@@ -57,18 +57,10 @@ def _block_from_details(
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, UnoImage):
+    if isinstance(block, (UnoImage, UnoVideo, UnoAudio)):
         uploaded_file = _upload_local_file(url=block.url, session=session)
         if uploaded_file is not None:
-            return UnoImage(file=uploaded_file, caption=block.caption)
-    elif isinstance(block, UnoVideo):
-        uploaded_file = _upload_local_file(url=block.url, session=session)
-        if uploaded_file is not None:
-            return UnoVideo(file=uploaded_file, caption=block.caption)
-    elif isinstance(block, UnoAudio):
-        uploaded_file = _upload_local_file(url=block.url, session=session)
-        if uploaded_file is not None:
-            return UnoAudio(file=uploaded_file, caption=block.caption)
+            return block.__class__(file=uploaded_file, caption=block.caption)
 
     return block
 
