@@ -13,6 +13,7 @@ from urllib.request import url2pathname
 import click
 from beartype import beartype
 from ultimate_notion import Emoji, Session
+from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
@@ -55,6 +56,18 @@ def _block_from_details(
 
             uploaded_file.wait_until_uploaded()
             return UnoVideo(file=uploaded_file, caption=block.caption)
+    elif isinstance(block, UnoAudio):
+        parsed = urlparse(url=block.url)
+        if parsed.scheme == "file":
+            file_path = Path(url2pathname(pathname=parsed.path))
+            with file_path.open(mode="rb") as f:
+                uploaded_file = session.upload(
+                    file=f,
+                    file_name=file_path.name,
+                )
+
+            uploaded_file.wait_until_uploaded()
+            return UnoAudio(file=uploaded_file, caption=block.caption)
 
     return block
 
