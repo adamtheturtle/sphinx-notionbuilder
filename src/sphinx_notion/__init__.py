@@ -1142,10 +1142,6 @@ def _notion_register_pdf_include_directive(
             name="pdf-include",
             directive=_NotionPdfIncludeDirective,
         )
-    # We ignore coverage here but we do have a ``pre-commit`` hook that checks
-    # for the HTML builder at least passing.
-    else:  # pragma: no cover
-        pass
 
 
 @beartype
