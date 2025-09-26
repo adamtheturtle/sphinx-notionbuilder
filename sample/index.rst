@@ -339,13 +339,6 @@ Simple PDF
 
 .. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
 
-PDF with Options
-~~~~~~~~~~~~~~~~
-
-.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
-   :width: 50%
-   :height: 300px
-
 Local PDF Example
 ~~~~~~~~~~~~~~~~
 
