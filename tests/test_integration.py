@@ -2023,7 +2023,7 @@ def test_simple_pdf(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinx_simplepdf"),
+        extensions=("sphinx_notion",),
     )
 
 
@@ -2054,7 +2054,7 @@ def test_pdf_with_options(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinx_simplepdf"),
+        extensions=("sphinx_notion",),
     )
 
 
@@ -2085,5 +2085,5 @@ def test_local_pdf_file(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinx_simplepdf"),
+        extensions=("sphinx_notion",),
     )

@@ -68,16 +68,7 @@ For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphi
        "sphinx_notion",
    ]
 
-For PDF support, also add the `sphinx-simplepdf <https://github.com/useblocks/sphinx-simplepdf>`_ extension:
-
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   extensions = [
-       "sphinx_simplepdf",
-       "sphinx_notion",
-   ]
+PDF support is included by default with the sphinx-notionbuilder extension.
 
 Supported markup
 ----------------
