@@ -67,6 +67,26 @@ if TYPE_CHECKING:
     from _typeshed import Incomplete
 
 
+@beartype
+def _serialize_block_with_children(
+    *,
+    block: Block,
+) -> dict[str, Any]:
+    """
+    Convert the block tree to a JSON-serializable format, ignoring IDs from
+    tuples.
+    """
+    serialized_obj = block.obj_ref.serialize_for_api()
+    if isinstance(block, ChildrenMixin) and block.children:
+        serialized_obj[block.obj_ref.type]["children"] = [
+            _serialize_block_with_children(
+                block=child,
+            )
+            for child in block.children
+        ]
+    return serialized_obj
+
+
 class PdfNode(nodes.Element):
     """
     Custom PDF node for Notion PDF blocks.
@@ -1069,28 +1089,6 @@ class NotionTranslator(NodeVisitor):
         del node
         self._section_level -= 1
 
-    @beartype
-    def _serialize_blocks(
-        self,
-        *,
-        blocks: list[Block],
-    ) -> list[dict[str, Any]]:
-        """
-        Convert the block tree to a JSON-serializable format, ignoring IDs from
-        tuples.
-        """
-        result: list[dict[str, Any]] = []
-        for block in blocks:
-            serialized_obj = block.obj_ref.serialize_for_api()
-            if isinstance(block, ChildrenMixin) and block.children:
-                serialized_obj[block.obj_ref.type]["children"] = (
-                    self._serialize_blocks(
-                        blocks=list(block.children),
-                    )
-                )
-            result.append(serialized_obj)
-        return result
-
     def depart_document(self, node: nodes.Element) -> None:
         """
         Output collected block tree as JSON at document end.
@@ -1098,7 +1096,10 @@ class NotionTranslator(NodeVisitor):
         del node
 
         json_output = json.dumps(
-            obj=self._serialize_blocks(blocks=self._blocks),
+            obj=[
+                _serialize_block_with_children(block=block)
+                for block in self._blocks
+            ],
             indent=2,
             ensure_ascii=False,
         )
