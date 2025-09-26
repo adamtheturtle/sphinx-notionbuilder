@@ -319,7 +319,15 @@ repos:
 
       - id: docs
         name: Build Documentation
-        entry: uv run sphinx-build -W -b notion sample build-sample/
+        entry: uv run sphinx-build -W -b notion sample build-sample/notion
+        language: python
+        stages: [manual]
+        pass_filenames: false
+        additional_dependencies: [uv==0.6.3]
+
+      - id: docs-as-html
+        name: Build Documentation as HTML
+        entry: uv run sphinx-build -W -b html sample build-sample/html
         language: python
         stages: [manual]
         pass_filenames: false
