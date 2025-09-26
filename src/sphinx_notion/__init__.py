@@ -74,10 +74,8 @@ class PdfNode(nodes.Element):
 
 
 class NotionPdfIncludeDirective(Directive):
-    """Custom PDF include directive that creates Notion PDF blocks.
-
-    This extends sphinx-simplepdf's PdfIncludeDirective to create
-    Notion-compatible PDF blocks instead of HTML iframes.
+    """
+    PDF include directive that creates Notion PDF blocks.
     """
 
     has_content = False
@@ -93,7 +91,7 @@ class NotionPdfIncludeDirective(Directive):
 
     def run(self) -> list[PdfNode]:
         """
-        Create a Notion PDF block instead of HTML iframe.
+        Create a Notion PDF block.
         """
         (pdf_file,) = self.arguments
         node = PdfNode()
@@ -1165,7 +1163,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
 
-    def visit_PdfNode(self, node: nodes.Element) -> None:  # noqa: N802
+    def visit_PdfNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
         """
         Handle PDF nodes by creating Notion PDF blocks.
         """
@@ -1176,7 +1174,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._blocks.extend(blocks)
 
     @staticmethod
-    def depart_PdfNode(node: nodes.Element) -> None:  # noqa: N802
+    def depart_PdfNode(node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
         """
         Depart from PDF nodes.
         """
@@ -1263,8 +1261,8 @@ def _notion_register_pdf_include_directive(
             name="pdf-include",
             directive=NotionPdfIncludeDirective,
         )
-    # We ignore coverage here but we do have a pre-commit hook that checks for
-    # the HTML builder at least passing.
+    # We ignore coverage here but we do have a ``pre-commit`` hook that checks
+    # for the HTML builder at least passing.
     else:  # pragma: no cover
         pass
 
