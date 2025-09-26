@@ -87,13 +87,15 @@ def _serialize_block_with_children(
     return serialized_obj
 
 
-class PdfNode(nodes.Element):
+@beartype
+class _PdfNode(nodes.Element):
     """
     Custom PDF node for Notion PDF blocks.
     """
 
 
-class NotionPdfIncludeDirective(Directive):
+@beartype
+class _NotionPdfIncludeDirective(Directive):
     """
     PDF include directive that creates Notion PDF blocks.
     """
@@ -109,12 +111,12 @@ class NotionPdfIncludeDirective(Directive):
         "toolbar": directives.nonnegative_int,
     }
 
-    def run(self) -> list[PdfNode]:
+    def run(self) -> list[_PdfNode]:
         """
         Create a Notion PDF block.
         """
         (pdf_file,) = self.arguments
-        node = PdfNode()
+        node = _PdfNode()
         node.attributes["uri"] = pdf_file
         return [node]
 
@@ -966,7 +968,7 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
-    node: PdfNode,
+    node: _PdfNode,
     *,
     section_level: int,
 ) -> list[Block]:
@@ -1126,7 +1128,7 @@ def _notion_register_pdf_include_directive(
     if isinstance(app.builder, NotionBuilder):
         sphinx_docutils.register_directive(
             name="pdf-include",
-            directive=NotionPdfIncludeDirective,
+            directive=_NotionPdfIncludeDirective,
         )
     # We ignore coverage here but we do have a ``pre-commit`` hook that checks
     # for the HTML builder at least passing.
