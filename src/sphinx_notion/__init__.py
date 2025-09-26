@@ -3,10 +3,11 @@ Sphinx Notion Builder.
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
@@ -15,6 +16,7 @@ from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStu
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import Directive, directives
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util.typing import ExtensionMetadata
@@ -61,6 +63,9 @@ from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
+if TYPE_CHECKING:
+    from _typeshed import Incomplete
+
 
 class PdfNode(nodes.Element):
     """
@@ -68,27 +73,31 @@ class PdfNode(nodes.Element):
     """
 
 
-class NotionPdfIncludeDirective(PdfIncludeDirective):
+class NotionPdfIncludeDirective(Directive):
     """Custom PDF include directive that creates Notion PDF blocks.
 
     This extends sphinx-simplepdf's PdfIncludeDirective to create
     Notion-compatible PDF blocks instead of HTML iframes.
     """
 
-    def run(self):
+    has_content = False
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec: ClassVar[dict[str, Callable[[str], "Incomplete"]] | None] = {
+        "width": directives.length_or_percentage_or_unitless,
+        "height": directives.length_or_percentage_or_unitless,
+        "page": directives.positive_int,
+        "toolbar": directives.nonnegative_int,
+    }
+
+    def run(self) -> list[PdfNode]:
         """
         Create a Notion PDF block instead of HTML iframe.
         """
-        pdf_file = self.arguments[0]
-
-        # Create a custom PDF node that will be processed by our translator
+        (pdf_file,) = self.arguments
         node = PdfNode()
         node["pdf_url"] = pdf_file
-        node["width"] = self.options.get("width", "100%")
-        node["height"] = self.options.get("height", "400px")
-        node["page"] = self.options.get("page", None)
-        node["toolbar"] = self.options.get("toolbar", None)
-
         return [node]
 
 
@@ -847,7 +856,7 @@ def _(
     """
     del section_level
 
-    pdf_url = node.get("pdf_url")
+    pdf_url = node.get(key="pdf_url")
     if not pdf_url:
         return []
 
@@ -1288,7 +1297,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
 
     # Register our custom PDF directive
-    app.add_directive("pdf-include", NotionPdfIncludeDirective, override=True)
+    app.add_directive(
+        name="pdf-include",
+        cls=NotionPdfIncludeDirective,
+        override=True,
+    )
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}

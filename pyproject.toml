@@ -414,6 +414,13 @@ ignore_names = [
     "_",
     # CLI entry point
     "main",
+    # Sphinx variables
+    "has_content",
+    "required_arguments",
+    "optional_arguments",
+    "final_argument_whitespace",
+    "option_spec",
+    "run",
 ]
 
 # Duplicate some of .gitignore
