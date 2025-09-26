@@ -856,9 +856,7 @@ def _(
     """
     del section_level
 
-    pdf_url = node.get(key="pdf_url")
-    if not pdf_url:
-        return []
+    pdf_url = node["pdf_url"]
 
     # Handle relative URLs
     if "://" not in pdf_url:
