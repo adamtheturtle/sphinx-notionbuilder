@@ -95,6 +95,8 @@ def _assert_rst_converts_to_notion_objects(
         confoverrides={"extensions": list(extensions)},
     )
     app.build()
+    assert app.statuscode == 0
+    assert not app.warning.getvalue()
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
@@ -2122,6 +2124,7 @@ def test_pdf_with_html(
     )
     app.build()
     assert app.statuscode == 0
+    assert not app.warning.getvalue()
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
     expected_iframe = (
         "<iframe "
