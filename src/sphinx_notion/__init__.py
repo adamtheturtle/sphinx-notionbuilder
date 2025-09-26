@@ -24,6 +24,7 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import PDF as UnoPDF
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -805,6 +806,45 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
+    node: nodes.raw,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process PDF raw nodes by creating Notion PDF blocks.
+
+    This handles nodes created by sphinx-simplepdf's pdf-include
+    directive.
+    """
+    del section_level
+
+    # Check if this is a PDF iframe node from sphinx-simplepdf
+    if node.get("format") != "html" or not node.astext().startswith("<iframe"):
+        return []
+
+    # Extract PDF URL from iframe src attribute
+    import re
+
+    iframe_html = node.astext()
+    src_match = re.search(r'src="([^"]+)"', iframe_html)
+    if not src_match:
+        return []
+
+    pdf_url = src_match.group(1)
+
+    # Remove any query parameters from the URL (like page, toolbar specs)
+    pdf_url = pdf_url.split("?")[0]
+
+    # Handle relative URLs
+    if "://" not in pdf_url:
+        assert node.document is not None
+        abs_path = Path(node.document.settings.env.srcdir) / pdf_url
+        pdf_url = abs_path.as_uri()
+
+    return [UnoPDF(file=ExternalFile(url=pdf_url))]
+
+
+@_process_node_to_blocks.register
+def _(
     node: nodes.container,
     *,
     section_level: int,
@@ -1099,6 +1139,28 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
     def depart_audio(node: nodes.Element) -> None:
         """
         Depart from audio nodes.
+        """
+        del node
+
+    def visit_raw(self, node: nodes.Element) -> None:
+        """
+        Handle raw nodes, including PDF iframe nodes from sphinx-simplepdf.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+        # Skip visiting children for PDF iframe nodes
+        if node.get("format") == "html" and node.astext().startswith(
+            "<iframe"
+        ):
+            raise nodes.SkipNode
+
+    @staticmethod
+    def depart_raw(node: nodes.Element) -> None:
+        """
+        Depart from raw nodes.
         """
         del node
 

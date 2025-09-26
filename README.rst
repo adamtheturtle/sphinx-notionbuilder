@@ -68,6 +68,17 @@ For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphi
        "sphinx_notion",
    ]
 
+For PDF support, also add the `sphinx-simplepdf <https://github.com/useblocks/sphinx-simplepdf>`_ extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_simplepdf",
+       "sphinx_notion",
+   ]
+
 Supported markup
 ----------------
 
@@ -83,6 +94,7 @@ The following syntax is supported:
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
+- PDFs (with URLs or local paths)
 - Tables
 - Strikethrough text
 
@@ -100,6 +112,21 @@ Audio files can be embedded using the ``audio`` directive. Both remote URLs and 
    .. audio:: _static/local-audio.mp3
 
 The audio will be rendered as an audio player in the generated Notion page.
+
+Using PDFs
+----------
+
+PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported. The directive supports options for ``width``, ``height``, ``page``, and ``toolbar``:
+
+.. code-block:: rst
+
+   .. pdf-include:: https://www.example.com/document.pdf
+
+   .. pdf-include:: _static/local-document.pdf
+       :width: 50%
+       :height: 300px
+
+The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
 
 Uploading Documentation to Notion
 ----------------------------------
