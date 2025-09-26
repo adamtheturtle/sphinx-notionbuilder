@@ -97,7 +97,7 @@ class NotionPdfIncludeDirective(Directive):
         """
         (pdf_file,) = self.arguments
         node = PdfNode()
-        node["pdf_url"] = pdf_file
+        node.attributes["uri"] = pdf_file
         return [node]
 
 
@@ -856,9 +856,8 @@ def _(
     """
     del section_level
 
-    pdf_url = node["pdf_url"]
+    pdf_url = node.attributes["uri"]
 
-    # Handle relative URLs
     if "://" not in pdf_url:
         assert node.document is not None
         abs_path = Path(node.document.settings.env.srcdir) / pdf_url
