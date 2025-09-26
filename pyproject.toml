@@ -72,7 +72,6 @@ optional-dependencies.dev = [
     "shfmt-py==3.12.0.2",
     "sphinx-lint==1.0.0",
     "sphinx-pyproject==0.3.0",
-    "sphinx-simplepdf==1.6.0",
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
     "types-docutils==0.22.2.20250924",
@@ -80,6 +79,10 @@ optional-dependencies.dev = [
     "yamlfix==1.18.0",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
+optional-dependencies.sample = [
+    # Needed for PDF support in the sample for HTML only.
+    "sphinx-simplepdf==1.6.0",
+]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 
 scripts.notion-upload = "_notion_scripts.upload:main"
@@ -315,6 +318,7 @@ ignore = [
 pep621_dev_dependency_groups = [
     "dev",
     "release",
+    "sample",
 ]
 
 [tool.pyproject-fmt]
