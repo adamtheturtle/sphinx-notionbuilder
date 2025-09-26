@@ -2006,10 +2006,19 @@ def test_list_table_with_title_error(
         )
 
 
+@pytest.mark.parametrize(
+    argnames="extensions",
+    argvalues=[
+        ("sphinx_notion",),
+        ("sphinx_notion", "sphinx_simplepdf"),
+        ("sphinx_simplepdf", "sphinx_notion"),
+    ],
+)
 def test_simple_pdf(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    extensions: tuple[str, ...],
 ) -> None:
     """
     ``pdf-include`` directives become Notion PDF blocks with URL.
@@ -2031,7 +2040,7 @@ def test_simple_pdf(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion",),
+        extensions=extensions,
     )
 
 
@@ -2097,10 +2106,18 @@ def test_local_pdf_file(
     )
 
 
+@pytest.mark.parametrize(
+    argnames="extensions",
+    argvalues=[
+        ("sphinx_notion", "sphinx_simplepdf"),
+        ("sphinx_simplepdf", "sphinx_notion"),
+    ],
+)
 def test_pdf_with_html(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    extensions: tuple[str, ...],
 ) -> None:
     """
     PDF directives with HTML output are processed correctly.
@@ -2115,7 +2132,6 @@ def test_pdf_with_html(
     # Create a minimal PDF file (just some dummy data)
     test_pdf_path.write_bytes(data=b"fake pdf content")
     (srcdir / "index.rst").write_text(data=rst_content)
-    extensions = ("sphinx_notion", "sphinx_simplepdf")
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
