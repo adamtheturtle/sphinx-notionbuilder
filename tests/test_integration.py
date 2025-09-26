@@ -744,6 +744,12 @@ def test_bullet_list_with_inline_formatting(
         ("note", "📝", BGColor.BLUE, "This is an important note."),
         ("warning", "⚠️", BGColor.YELLOW, "This is a warning message."),
         ("tip", "💡", BGColor.GREEN, "This is a helpful tip."),
+        ("attention", "👀", BGColor.YELLOW, "This requires your attention."),
+        ("caution", "⚠️", BGColor.YELLOW, "This is a caution message."),
+        ("danger", "🚨", BGColor.RED, "This is a danger message."),
+        ("error", "❌", BGColor.RED, "This is an error message."),
+        ("hint", "💡", BGColor.GREEN, "This is a helpful hint."),
+        ("important", "❗", BGColor.RED, "This is important information."),
     ],
 )
 def test_admonition_single_line(
