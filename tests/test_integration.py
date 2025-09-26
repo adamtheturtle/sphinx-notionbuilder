@@ -2093,3 +2093,40 @@ def test_local_pdf_file(
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
     )
+
+
+def test_pdf_with_html(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    PDF directives with HTML output are processed correctly.
+    """
+    rst_content = """
+        .. pdf-include:: https://www.example.com/path/to/document.pdf
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    test_pdf_path = srcdir / "test_document.pdf"
+    # Create a minimal PDF file (just some dummy data)
+    test_pdf_path.write_bytes(data=b"fake pdf content")
+    (srcdir / "index.rst").write_text(data=rst_content)
+    extensions = ("sphinx_notion", "sphinx_simplepdf")
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": list(extensions)},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_iframe = (
+        "<iframe "
+        'src="https://www.example.com/path/to/document.pdf" '
+        'style="height: 400px; width: 100%">'
+        "</iframe>"
+    )
+    assert expected_iframe in index_html
