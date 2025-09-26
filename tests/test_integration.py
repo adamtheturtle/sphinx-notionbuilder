@@ -16,7 +16,7 @@ from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ChildrenMixin
+from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -59,7 +59,7 @@ def _details_from_block(
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ChildrenMixin) and block.children:
+    if isinstance(block, ParentBlock) and block.children:
         serialized_obj[block.obj_ref.type]["children"] = [
             _details_from_block(block=child) for child in block.children
         ]

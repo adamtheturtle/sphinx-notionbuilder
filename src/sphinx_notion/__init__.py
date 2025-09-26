@@ -29,7 +29,7 @@ from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ChildrenMixin
+from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -67,13 +67,35 @@ if TYPE_CHECKING:
     from _typeshed import Incomplete
 
 
-class PdfNode(nodes.Element):
+@beartype
+def _serialize_block_with_children(
+    *,
+    block: Block,
+) -> dict[str, Any]:
+    """
+    Convert the block tree to a JSON-serializable format, ignoring IDs from
+    tuples.
+    """
+    serialized_obj = block.obj_ref.serialize_for_api()
+    if isinstance(block, ParentBlock) and block.children:
+        serialized_obj[block.obj_ref.type]["children"] = [
+            _serialize_block_with_children(
+                block=child,
+            )
+            for child in block.children
+        ]
+    return serialized_obj
+
+
+@beartype
+class _PdfNode(nodes.Element):
     """
     Custom PDF node for Notion PDF blocks.
     """
 
 
-class NotionPdfIncludeDirective(Directive):
+@beartype
+class _NotionPdfIncludeDirective(Directive):
     """
     PDF include directive that creates Notion PDF blocks.
     """
@@ -89,12 +111,12 @@ class NotionPdfIncludeDirective(Directive):
         "toolbar": directives.nonnegative_int,
     }
 
-    def run(self) -> list[PdfNode]:
+    def run(self) -> list[_PdfNode]:
         """
         Create a Notion PDF block.
         """
         (pdf_file,) = self.arguments
-        node = PdfNode()
+        node = _PdfNode()
         node.attributes["uri"] = pdf_file
         return [node]
 
@@ -423,6 +445,7 @@ def _process_node_to_blocks(
     raise NotImplementedError(node)
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.table,
@@ -493,6 +516,7 @@ def _(
     return [table]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.paragraph,
@@ -507,6 +531,7 @@ def _(
     return [UnoParagraph(text=rich_text)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.block_quote,
@@ -521,6 +546,7 @@ def _(
     return [UnoQuote(text=rich_text)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.literal_block,
@@ -539,6 +565,7 @@ def _(
     return [UnoCode(text=code_text, language=language)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.bullet_list,
@@ -560,6 +587,7 @@ def _(
     return result
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.enumerated_list,
@@ -586,6 +614,7 @@ def _(
     return result
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.topic,
@@ -602,6 +631,7 @@ def _(
     return [UnoTableOfContents()]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.compound,
@@ -619,6 +649,7 @@ def _(
     return []
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.title,
@@ -688,6 +719,7 @@ def _create_admonition_callout(
     return [block]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.note,
@@ -705,6 +737,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.warning,
@@ -722,6 +755,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.tip,
@@ -739,6 +773,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.attention,
@@ -756,6 +791,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.caution,
@@ -773,6 +809,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.danger,
@@ -790,6 +827,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.error,
@@ -807,6 +845,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.hint,
@@ -824,6 +863,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.important,
@@ -841,6 +881,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: CollapseNode,
@@ -866,6 +907,7 @@ def _(
     return [toggle_block]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.image,
@@ -888,6 +930,7 @@ def _(
     return [UnoImage(file=ExternalFile(url=image_url), caption=None)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: video_node,
@@ -922,6 +965,7 @@ def _(
     ]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: audio_node,
@@ -944,9 +988,10 @@ def _(
     return [UnoAudio(file=ExternalFile(url=audio_url))]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
-    node: PdfNode,
+    node: _PdfNode,
     *,
     section_level: int,
 ) -> list[Block]:
@@ -966,6 +1011,7 @@ def _(
     return [UnoPDF(file=ExternalFile(url=pdf_url))]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.container,
@@ -1001,6 +1047,7 @@ def _(
     ]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.comment,
@@ -1016,6 +1063,7 @@ def _(
     return []
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.document,
@@ -1069,28 +1117,6 @@ class NotionTranslator(NodeVisitor):
         del node
         self._section_level -= 1
 
-    @beartype
-    def _serialize_blocks(
-        self,
-        *,
-        blocks: list[Block],
-    ) -> list[dict[str, Any]]:
-        """
-        Convert the block tree to a JSON-serializable format, ignoring IDs from
-        tuples.
-        """
-        result: list[dict[str, Any]] = []
-        for block in blocks:
-            serialized_obj = block.obj_ref.serialize_for_api()
-            if isinstance(block, ChildrenMixin) and block.children:
-                serialized_obj[block.obj_ref.type]["children"] = (
-                    self._serialize_blocks(
-                        blocks=list(block.children),
-                    )
-                )
-            result.append(serialized_obj)
-        return result
-
     def depart_document(self, node: nodes.Element) -> None:
         """
         Output collected block tree as JSON at document end.
@@ -1098,7 +1124,10 @@ class NotionTranslator(NodeVisitor):
         del node
 
         json_output = json.dumps(
-            obj=self._serialize_blocks(blocks=self._blocks),
+            obj=[
+                _serialize_block_with_children(block=block)
+                for block in self._blocks
+            ],
             indent=2,
             ensure_ascii=False,
         )
@@ -1125,7 +1154,7 @@ def _notion_register_pdf_include_directive(
     if isinstance(app.builder, NotionBuilder):
         sphinx_docutils.register_directive(
             name="pdf-include",
-            directive=NotionPdfIncludeDirective,
+            directive=_NotionPdfIncludeDirective,
         )
     # We ignore coverage here but we do have a ``pre-commit`` hook that checks
     # for the HTML builder at least passing.
