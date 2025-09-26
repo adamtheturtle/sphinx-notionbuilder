@@ -1022,9 +1022,8 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process comment nodes by ignoring them completely.
-
-    Comments in reStructuredText should not appear in the final output.
+    """
+    Process document nodes by ignoring them completely.
     """
     del node
     del section_level
