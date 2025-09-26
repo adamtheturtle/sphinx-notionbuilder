@@ -445,6 +445,7 @@ def _process_node_to_blocks(
     raise NotImplementedError(node)
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.table,
@@ -515,6 +516,7 @@ def _(
     return [table]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.paragraph,
@@ -529,6 +531,7 @@ def _(
     return [UnoParagraph(text=rich_text)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.block_quote,
@@ -543,6 +546,7 @@ def _(
     return [UnoQuote(text=rich_text)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.literal_block,
@@ -561,6 +565,7 @@ def _(
     return [UnoCode(text=code_text, language=language)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.bullet_list,
@@ -582,6 +587,7 @@ def _(
     return result
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.enumerated_list,
@@ -608,6 +614,7 @@ def _(
     return result
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.topic,
@@ -624,6 +631,7 @@ def _(
     return [UnoTableOfContents()]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.compound,
@@ -641,6 +649,7 @@ def _(
     return []
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.title,
@@ -710,6 +719,7 @@ def _create_admonition_callout(
     return [block]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.note,
@@ -727,6 +737,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.warning,
@@ -744,6 +755,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.tip,
@@ -761,6 +773,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.attention,
@@ -778,6 +791,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.caution,
@@ -795,6 +809,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.danger,
@@ -812,6 +827,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.error,
@@ -829,6 +845,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.hint,
@@ -846,6 +863,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.important,
@@ -863,6 +881,7 @@ def _(
     )
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: CollapseNode,
@@ -888,6 +907,7 @@ def _(
     return [toggle_block]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.image,
@@ -910,6 +930,7 @@ def _(
     return [UnoImage(file=ExternalFile(url=image_url), caption=None)]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: video_node,
@@ -944,6 +965,7 @@ def _(
     ]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: audio_node,
@@ -966,6 +988,7 @@ def _(
     return [UnoAudio(file=ExternalFile(url=audio_url))]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: _PdfNode,
@@ -988,6 +1011,7 @@ def _(
     return [UnoPDF(file=ExternalFile(url=pdf_url))]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.container,
@@ -1023,6 +1047,7 @@ def _(
     ]
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.comment,
@@ -1038,6 +1063,7 @@ def _(
     return []
 
 
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.document,
