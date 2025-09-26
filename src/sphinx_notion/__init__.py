@@ -1354,6 +1354,13 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
 
+    @staticmethod
+    def depart_video_node(node: nodes.Element) -> None:
+        """
+        Depart from video nodes.
+        """
+        del node
+
     @beartype
     def _serialize_blocks(
         self,
@@ -1412,18 +1419,6 @@ def _visit_video_node_notion(
 
 
 @beartype
-def _depart_video_node_notion(
-    translator: NotionTranslator,
-    node: video_node,
-) -> None:
-    """
-    Depart from a video node (no action needed).
-    """
-    del translator
-    del node
-
-
-@beartype
 def _notion_register_pdf_include_directive(
     app: Sphinx,
 ) -> None:
@@ -1451,7 +1446,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     app.add_node(
         node=video_node,
-        notion=(_visit_video_node_notion, _depart_video_node_notion),
+        notion=(_visit_video_node_notion, None),
         override=True,
     )
     app.connect(
