@@ -1049,7 +1049,7 @@ class NotionTranslator(NodeVisitor):
 
     def dispatch_visit(self, node: nodes.Node) -> None:
         """
-        Handle title nodes by creating appropriate Notion heading blocks.
+        Handle nodes by creating appropriate Notion heading blocks.
         """
         if isinstance(node, nodes.section):
             self._section_level += 1
