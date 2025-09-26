@@ -85,7 +85,7 @@ def _serialize_block_with_children(
 
 
 @beartype
-class _PdfNode(nodes.raw):
+class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
     """
     Custom PDF node for Notion PDF blocks.
     """
