@@ -13,7 +13,7 @@ from urllib.request import url2pathname
 import click
 from beartype import beartype
 from ultimate_notion import Emoji, Session
-from ultimate_notion.blocks import PDF as UnoPDF
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
