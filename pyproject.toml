@@ -412,6 +412,7 @@ ignore_names = [
     "templates_path",
     "warning_is_error",
     # Docutils translator
+    "dispatch_visit",
     "depart_*",
     "visit_*",
     # Singledispatch functions

@@ -1016,8 +1016,22 @@ def _(
     return []
 
 
+@_process_node_to_blocks.register
+def _(
+    node: nodes.document,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process document nodes by ignoring them completely.
+    """
+    del node
+    del section_level
+    return []
+
+
 @beartype
-class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
+class NotionTranslator(NodeVisitor):
     """
     Translate ``docutils`` nodes to Notion JSON.
     """
@@ -1032,23 +1046,21 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self.body: str
         self._section_level = 0
 
-    def visit_title(self, node: nodes.Element) -> None:
+    def dispatch_visit(self, node: nodes.Node) -> None:
         """
-        Handle title nodes by creating appropriate Notion heading blocks.
+        Handle nodes by creating appropriate Notion heading blocks.
         """
+        if isinstance(node, nodes.section):
+            self._section_level += 1
+            return
+
         blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
         self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_section(self, node: nodes.Element) -> None:
-        """
-        Handle section nodes by increasing the section level.
-        """
-        del node
-        self._section_level += 1
+        if not isinstance(node, nodes.document):
+            raise nodes.SkipNode
 
     def depart_section(self, node: nodes.Element) -> None:
         """
@@ -1056,310 +1068,6 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
         self._section_level -= 1
-
-    def visit_paragraph(self, node: nodes.Element) -> None:
-        """
-        Handle paragraph nodes by creating Notion Paragraph blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_block_quote(self, node: nodes.Element) -> None:
-        """
-        Handle block quote nodes by creating Notion Quote blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_literal_block(self, node: nodes.Element) -> None:
-        """
-        Handle literal block nodes by creating Notion Code blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_bullet_list(self, node: nodes.Element) -> None:
-        """
-        Handle bullet list nodes by processing each list item.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_enumerated_list(self, node: nodes.Element) -> None:
-        """
-        Handle enumerated list nodes by processing each list item.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_topic(self, node: nodes.Element) -> None:
-        """
-        Handle topic nodes, specifically for table of contents.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_note(self, node: nodes.Element) -> None:
-        """
-        Handle note admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-        raise nodes.SkipNode
-
-    def visit_warning(self, node: nodes.Element) -> None:
-        """
-        Handle warning admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_tip(self, node: nodes.Element) -> None:
-        """
-        Handle tip admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_attention(self, node: nodes.Element) -> None:
-        """
-        Handle attention admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_caution(self, node: nodes.Element) -> None:
-        """
-        Handle caution admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_danger(self, node: nodes.Element) -> None:
-        """
-        Handle danger admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_error(self, node: nodes.Element) -> None:
-        """
-        Handle error admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_hint(self, node: nodes.Element) -> None:
-        """
-        Handle hint admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_important(self, node: nodes.Element) -> None:
-        """
-        Handle important admonition nodes by creating Notion Callout blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_table(self, node: nodes.Element) -> None:
-        """
-        Handle table nodes by creating Notion Table blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_compound(self, node: nodes.Element) -> None:
-        """
-        Handle compound admonition nodes by creating a table of contents block.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_CollapseNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
-        """
-        Handle collapse nodes by creating Notion ToggleItem blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_image(self, node: nodes.Element) -> None:
-        """
-        Handle image nodes by creating Notion Image blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_video(self, node: nodes.Element) -> None:
-        """
-        Process a video node into Notion blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-    def visit_container(self, node: nodes.Element) -> None:
-        """
-        Handle container nodes.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_comment(self, node: nodes.Element) -> None:
-        """
-        Handle comment nodes by ignoring them completely.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-        raise nodes.SkipNode
-
-    def visit_document(self, node: nodes.Element) -> None:
-        """
-        Initialize block collection at document start.
-        """
-        assert self
-        del node
-
-    def visit_audio(self, node: nodes.Element) -> None:
-        """
-        Handle audio nodes by creating Notion Audio blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-    @staticmethod
-    def depart_audio(node: nodes.Element) -> None:
-        """
-        Depart from audio nodes.
-        """
-        del node
-
-    def visit_PdfNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
-        """
-        Handle PDF nodes by creating Notion PDF blocks.
-        """
-        blocks = _process_node_to_blocks(
-            node,
-            section_level=self._section_level,
-        )
-        self._blocks.extend(blocks)
-
-    @staticmethod
-    def depart_PdfNode(node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
-        """
-        Depart from PDF nodes.
-        """
-        del node
-
-    @staticmethod
-    def depart_video_node(node: nodes.Element) -> None:
-        """
-        Depart from video nodes.
-        """
-        del node
 
     @beartype
     def _serialize_blocks(
@@ -1408,17 +1116,6 @@ class NotionBuilder(TextBuilder):
 
 
 @beartype
-def _visit_video_node_notion(
-    translator: NotionTranslator,
-    node: video_node,
-) -> None:
-    """
-    Visit a video node and process it into Notion blocks.
-    """
-    translator.visit_video(node=node)
-
-
-@beartype
 def _notion_register_pdf_include_directive(
     app: Sphinx,
 ) -> None:
@@ -1444,11 +1141,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
-    app.add_node(
-        node=video_node,
-        notion=(_visit_video_node_notion, None),
-        override=True,
-    )
     app.connect(
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
