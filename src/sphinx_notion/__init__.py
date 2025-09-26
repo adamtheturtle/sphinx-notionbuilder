@@ -62,6 +62,12 @@ from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
 
+class PdfNode(nodes.Element):
+    """
+    Custom PDF node for Notion PDF blocks.
+    """
+
+
 class NotionPdfIncludeDirective(PdfIncludeDirective):
     """Custom PDF include directive that creates Notion PDF blocks.
 
@@ -75,8 +81,8 @@ class NotionPdfIncludeDirective(PdfIncludeDirective):
         """
         pdf_file = self.arguments[0]
 
-        # Create a custom node that will be processed by our translator
-        node = nodes.raw("", "", format="notion-pdf")
+        # Create a custom PDF node that will be processed by our translator
+        node = PdfNode()
         node["pdf_url"] = pdf_file
         node["width"] = self.options.get("width", "100%")
         node["height"] = self.options.get("height", "400px")
@@ -831,19 +837,15 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
-    node: nodes.raw,
+    node: PdfNode,
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process PDF raw nodes by creating Notion PDF blocks.
+    """Process PDF nodes by creating Notion PDF blocks.
 
     This handles nodes created by our custom NotionPdfIncludeDirective.
     """
     del section_level
-
-    # Check if this is our custom PDF node
-    if node.get("format") != "notion-pdf":
-        return []
 
     pdf_url = node.get("pdf_url")
     if not pdf_url:
@@ -1157,23 +1159,20 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
 
-    def visit_raw(self, node: nodes.Element) -> None:
+    def visit_pdf(self, node: nodes.Element) -> None:
         """
-        Handle raw nodes, including our custom PDF nodes.
+        Handle PDF nodes by creating Notion PDF blocks.
         """
         blocks = _process_node_to_blocks(
             node,
             section_level=self._section_level,
         )
         self._blocks.extend(blocks)
-        # Skip visiting children for our custom PDF nodes
-        if node.get("format") == "notion-pdf":
-            raise nodes.SkipNode
 
     @staticmethod
-    def depart_raw(node: nodes.Element) -> None:
+    def depart_pdf(node: nodes.Element) -> None:
         """
-        Depart from raw nodes.
+        Depart from PDF nodes.
         """
         del node
 
@@ -1247,6 +1246,29 @@ def _depart_video_node_notion(
 
 
 @beartype
+def _visit_pdf_node_notion(
+    translator: NotionTranslator,
+    node: PdfNode,
+) -> None:
+    """
+    Visit a PDF node and process it into Notion blocks.
+    """
+    translator.visit_pdf(node=node)
+
+
+@beartype
+def _depart_pdf_node_notion(
+    translator: NotionTranslator,
+    node: PdfNode,
+) -> None:
+    """
+    Depart from a PDF node (no action needed).
+    """
+    del translator
+    del node
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1257,6 +1279,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_node(
         node=video_node,
         notion=(_visit_video_node_notion, _depart_video_node_notion),
+        override=True,
+    )
+    app.add_node(
+        node=PdfNode,
+        notion=(_visit_pdf_node_notion, _depart_pdf_node_notion),
         override=True,
     )
 
