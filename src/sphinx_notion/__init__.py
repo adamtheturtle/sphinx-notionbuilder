@@ -3,11 +3,10 @@ Sphinx Notion Builder.
 """
 
 import json
-from collections.abc import Callable
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any
 
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
@@ -16,11 +15,11 @@ from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStu
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
-from docutils.parsers.rst import Directive, directives
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_simplepdf.directives.pdfinclude import PdfIncludeDirective
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
@@ -63,9 +62,6 @@ from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-if TYPE_CHECKING:
-    from _typeshed import Incomplete
-
 
 @beartype
 def _serialize_block_with_children(
@@ -87,30 +83,19 @@ def _serialize_block_with_children(
 
 
 @beartype
-class _PdfNode(nodes.Element):
+class _PdfNode(nodes.raw):
     """
     Custom PDF node for Notion PDF blocks.
     """
 
 
 @beartype
-class _NotionPdfIncludeDirective(Directive):
+class _NotionPdfIncludeDirective(PdfIncludeDirective):
     """
     PDF include directive that creates Notion PDF blocks.
     """
 
-    has_content = False
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = True
-    option_spec: ClassVar[dict[str, Callable[[str], "Incomplete"]] | None] = {
-        "width": directives.length_or_percentage_or_unitless,
-        "height": directives.length_or_percentage_or_unitless,
-        "page": directives.positive_int,
-        "toolbar": directives.nonnegative_int,
-    }
-
-    def run(self) -> list[_PdfNode]:
+    def run(self) -> list[nodes.raw]:
         """
         Create a Notion PDF block.
         """
