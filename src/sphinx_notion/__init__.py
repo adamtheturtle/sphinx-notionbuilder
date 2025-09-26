@@ -3,10 +3,11 @@ Sphinx Notion Builder.
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
@@ -15,8 +16,10 @@ from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStu
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import Directive, directives
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.util import docutils as sphinx_docutils
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
@@ -24,6 +27,7 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -58,6 +62,41 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
+
+if TYPE_CHECKING:
+    from _typeshed import Incomplete
+
+
+class PdfNode(nodes.Element):
+    """
+    Custom PDF node for Notion PDF blocks.
+    """
+
+
+class NotionPdfIncludeDirective(Directive):
+    """
+    PDF include directive that creates Notion PDF blocks.
+    """
+
+    has_content = False
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec: ClassVar[dict[str, Callable[[str], "Incomplete"]] | None] = {
+        "width": directives.length_or_percentage_or_unitless,
+        "height": directives.length_or_percentage_or_unitless,
+        "page": directives.positive_int,
+        "toolbar": directives.nonnegative_int,
+    }
+
+    def run(self) -> list[PdfNode]:
+        """
+        Create a Notion PDF block.
+        """
+        (pdf_file,) = self.arguments
+        node = PdfNode()
+        node.attributes["uri"] = pdf_file
+        return [node]
 
 
 @dataclass
@@ -805,6 +844,28 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
+    node: PdfNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process PDF nodes by creating Notion PDF blocks.
+
+    This handles nodes created by our custom NotionPdfIncludeDirective.
+    """
+    del section_level
+
+    pdf_url = node.attributes["uri"]
+
+    if "://" not in pdf_url:
+        assert node.document is not None
+        abs_path = Path(node.document.settings.env.srcdir) / pdf_url
+        pdf_url = abs_path.as_uri()
+
+    return [UnoPDF(file=ExternalFile(url=pdf_url))]
+
+
+@_process_node_to_blocks.register
+def _(
     node: nodes.container,
     *,
     section_level: int,
@@ -1102,6 +1163,23 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
 
+    def visit_PdfNode(self, node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
+        """
+        Handle PDF nodes by creating Notion PDF blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+    @staticmethod
+    def depart_PdfNode(node: nodes.Element) -> None:  # pylint: disable=invalid-name  # noqa: N802
+        """
+        Depart from PDF nodes.
+        """
+        del node
+
     @beartype
     def _serialize_blocks(
         self,
@@ -1172,6 +1250,24 @@ def _depart_video_node_notion(
 
 
 @beartype
+def _notion_register_pdf_include_directive(
+    app: Sphinx,
+) -> None:
+    """
+    Register the PDF include directive.
+    """
+    if isinstance(app.builder, NotionBuilder):
+        sphinx_docutils.register_directive(
+            name="pdf-include",
+            directive=NotionPdfIncludeDirective,
+        )
+    # We ignore coverage here but we do have a ``pre-commit`` hook that checks
+    # for the HTML builder at least passing.
+    else:  # pragma: no cover
+        pass
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1184,5 +1280,10 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_pdf_include_directive,
+    )
+
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}

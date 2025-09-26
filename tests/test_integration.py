@@ -14,6 +14,7 @@ import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -1995,3 +1996,94 @@ def test_list_table_with_title_error(
             make_app=make_app,
             tmp_path=tmp_path,
         )
+
+
+def test_simple_pdf(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``pdf-include`` directives become Notion PDF blocks with URL.
+    """
+    rst_content = """
+        .. pdf-include:: https://www.example.com/path/to/document.pdf
+    """
+
+    expected_objects: list[Block] = [
+        UnoPDF(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.pdf"
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion",),
+    )
+
+
+def test_pdf_with_options(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    PDF directives with options (width, height) are processed correctly.
+    """
+    rst_content = """
+        .. pdf-include:: https://www.example.com/path/to/document.pdf
+           :width: 50%
+           :height: 300px
+    """
+
+    expected_objects: list[Block] = [
+        UnoPDF(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.pdf"
+            ),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion",),
+    )
+
+
+def test_local_pdf_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Local PDF files are converted to file:// URLs in the JSON output.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_pdf_path = srcdir / "test_document.pdf"
+    # Create a minimal PDF file (just some dummy data)
+    test_pdf_path.write_bytes(data=b"fake pdf content")
+
+    rst_content = """
+        .. pdf-include:: test_document.pdf
+    """
+
+    expected_objects: list[Block] = [
+        UnoPDF(file=ExternalFile(url=test_pdf_path.as_uri())),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion",),
+    )

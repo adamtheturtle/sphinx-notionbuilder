@@ -13,6 +13,7 @@ from urllib.request import url2pathname
 import click
 from beartype import beartype
 from ultimate_notion import Emoji, Session
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
@@ -57,7 +58,7 @@ def _block_from_details(
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, (UnoImage, UnoVideo, UnoAudio)):
+    if isinstance(block, (UnoImage, UnoVideo, UnoAudio, UnoPDF)):
         uploaded_file = _upload_local_file(url=block.url, session=session)
         if uploaded_file is not None:
             return block.__class__(file=uploaded_file, caption=block.caption)

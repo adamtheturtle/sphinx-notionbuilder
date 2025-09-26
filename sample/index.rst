@@ -162,6 +162,7 @@ Some key features 👍:
 * Now supports note, warning, and tip admonitions!
 * Supports images with URLs
 * Supports videos with URLs and local files
+* Supports PDFs with URLs and local files
 
 Numbered Lists
 ~~~~~~~~~~~~~~
@@ -329,6 +330,25 @@ Local Audio Example
 Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127.
 
 .. .. audio:: _static/test-audio.wav
+
+PDF Support
+~~~~~~~~~~~~
+
+Simple PDF
+~~~~~~~~~~
+
+.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+
+Local PDF Example
+~~~~~~~~~~~~~~~~~
+
+.. pdf-include:: _static/test.pdf
+
+Here's some text before the PDF.
+
+.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+
+And here's some text after the PDF.
 
 .. collapse:: Long code block
 

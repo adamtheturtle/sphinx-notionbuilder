@@ -72,6 +72,7 @@ optional-dependencies.dev = [
     "shfmt-py==3.12.0.2",
     "sphinx-lint==1.0.0",
     "sphinx-pyproject==0.3.0",
+    "sphinx-simplepdf==1.6.0",
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
     "types-docutils==0.22.2.20250924",
@@ -413,6 +414,13 @@ ignore_names = [
     "_",
     # CLI entry point
     "main",
+    # Sphinx variables
+    "has_content",
+    "required_arguments",
+    "optional_arguments",
+    "final_argument_whitespace",
+    "option_spec",
+    "run",
 ]
 
 # Duplicate some of .gitignore
