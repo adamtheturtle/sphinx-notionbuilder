@@ -80,7 +80,7 @@ The following syntax is supported:
 - Code blocks
 - Table of contents
 - Block quotes
-- Note, warning, and tip admonitions
+- All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
 - Collapsible sections (using sphinx-toolbox collapse directive)
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)

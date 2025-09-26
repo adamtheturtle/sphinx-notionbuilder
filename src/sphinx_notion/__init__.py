@@ -741,6 +741,108 @@ def _(
 
 @_process_node_to_blocks.register
 def _(
+    node: nodes.attention,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process attention admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="👀",
+        background_color=BGColor.YELLOW,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.caution,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process caution admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="⚠️",
+        background_color=BGColor.YELLOW,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.danger,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process danger admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="🚨",
+        background_color=BGColor.RED,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.error,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process error admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="❌",
+        background_color=BGColor.RED,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.hint,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process hint admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="💡",
+        background_color=BGColor.GREEN,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
+    node: nodes.important,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process important admonition nodes by creating Notion Callout blocks.
+    """
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="❗",
+        background_color=BGColor.RED,
+    )
+
+
+@_process_node_to_blocks.register
+def _(
     node: CollapseNode,
     *,
     section_level: int,
@@ -1048,6 +1150,78 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
     def visit_tip(self, node: nodes.Element) -> None:
         """
         Handle tip admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_attention(self, node: nodes.Element) -> None:
+        """
+        Handle attention admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_caution(self, node: nodes.Element) -> None:
+        """
+        Handle caution admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_danger(self, node: nodes.Element) -> None:
+        """
+        Handle danger admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_error(self, node: nodes.Element) -> None:
+        """
+        Handle error admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_hint(self, node: nodes.Element) -> None:
+        """
+        Handle hint admonition nodes by creating Notion Callout blocks.
+        """
+        blocks = _process_node_to_blocks(
+            node,
+            section_level=self._section_level,
+        )
+        self._blocks.extend(blocks)
+
+        raise nodes.SkipNode
+
+    def visit_important(self, node: nodes.Element) -> None:
+        """
+        Handle important admonition nodes by creating Notion Callout blocks.
         """
         blocks = _process_node_to_blocks(
             node,

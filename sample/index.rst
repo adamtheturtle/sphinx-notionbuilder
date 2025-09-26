@@ -79,6 +79,30 @@ This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
    This is a helpful tip that demonstrates the tip admonition support.
 
+.. attention::
+
+   This is an attention admonition that requires your attention.
+
+.. caution::
+
+   This is a caution admonition that warns about potential issues.
+
+.. danger::
+
+   This is a danger admonition that indicates a dangerous situation.
+
+.. error::
+
+   This is an error admonition that shows error information.
+
+.. hint::
+
+   This is a hint admonition that provides helpful hints.
+
+.. important::
+
+   This is an important admonition that highlights important information.
+
 .. collapse:: Click to expand this section
 
    This content is hidden by default and can be expanded by clicking the toggle.
