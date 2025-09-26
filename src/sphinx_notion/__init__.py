@@ -19,15 +19,15 @@ from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import Directive, directives
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.util import docutils as sphinx_docutils
 from sphinx.util.typing import ExtensionMetadata
-from sphinx_simplepdf.directives.pdfinclude import PdfIncludeDirective
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
-from ultimate_notion.blocks import PDF as UnoPDF
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildrenMixin
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -1166,7 +1166,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         """
         del node
 
-    def visit_pdf(self, node: nodes.Element) -> None:
+    def visit_PdfNode(self, node: nodes.Element) -> None:  # noqa: N802
         """
         Handle PDF nodes by creating Notion PDF blocks.
         """
@@ -1177,7 +1177,7 @@ class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
         self._blocks.extend(blocks)
 
     @staticmethod
-    def depart_pdf(node: nodes.Element) -> None:
+    def depart_PdfNode(node: nodes.Element) -> None:  # noqa: N802
         """
         Depart from PDF nodes.
         """
@@ -1253,26 +1253,17 @@ def _depart_video_node_notion(
 
 
 @beartype
-def _visit_pdf_node_notion(
-    translator: NotionTranslator,
-    node: PdfNode,
+def _notion_register_pdf_include_directive(
+    app: Sphinx,
 ) -> None:
     """
-    Visit a PDF node and process it into Notion blocks.
+    Register the PDF include directive.
     """
-    translator.visit_pdf(node=node)
-
-
-@beartype
-def _depart_pdf_node_notion(
-    translator: NotionTranslator,
-    node: PdfNode,
-) -> None:
-    """
-    Depart from a PDF node (no action needed).
-    """
-    del translator
-    del node
+    if isinstance(app.builder, NotionBuilder):
+        sphinx_docutils.register_directive(
+            name="pdf-include",
+            directive=NotionPdfIncludeDirective,
+        )
 
 
 @beartype
@@ -1288,17 +1279,9 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         notion=(_visit_video_node_notion, _depart_video_node_notion),
         override=True,
     )
-    app.add_node(
-        node=PdfNode,
-        notion=(_visit_pdf_node_notion, _depart_pdf_node_notion),
-        override=True,
-    )
-
-    # Register our custom PDF directive
-    app.add_directive(
-        name="pdf-include",
-        cls=NotionPdfIncludeDirective,
-        override=True,
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_pdf_include_directive,
     )
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)

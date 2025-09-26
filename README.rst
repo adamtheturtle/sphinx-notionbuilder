@@ -117,6 +117,23 @@ PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs 
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
 
+To make this work in HTML output, you need to install the sphinx-simplepdf extension:
+
+.. code-block:: console
+
+   $ pip install sphinx-simplepdf
+
+and add it to your ``conf.py`` file:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_simplepdf",
+       "sphinx_notion",
+   ]
+
 Uploading Documentation to Notion
 ----------------------------------
 
