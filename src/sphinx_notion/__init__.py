@@ -1032,7 +1032,7 @@ def _(
 
 
 @beartype
-class NotionTranslator(NodeVisitor):  # pylint: disable=too-many-public-methods
+class NotionTranslator(NodeVisitor):
     """
     Translate ``docutils`` nodes to Notion JSON.
     """
