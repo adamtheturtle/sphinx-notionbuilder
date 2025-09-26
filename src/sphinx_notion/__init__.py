@@ -73,8 +73,7 @@ def _serialize_block_with_children(
     block: Block,
 ) -> dict[str, Any]:
     """
-    Convert the block tree to a JSON-serializable format, ignoring IDs from
-    tuples.
+    Convert a block to a JSON-serializable format which includes its children.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.children:
