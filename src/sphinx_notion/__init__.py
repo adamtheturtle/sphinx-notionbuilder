@@ -19,7 +19,9 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util.typing import ExtensionMetadata
-from sphinx_simplepdf.directives.pdfinclude import PdfIncludeDirective
+from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
+    PdfIncludeDirective,
+)
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
