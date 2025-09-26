@@ -116,15 +116,13 @@ The audio will be rendered as an audio player in the generated Notion page.
 Using PDFs
 ----------
 
-PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported. The directive supports options for ``width``, ``height``, ``page``, and ``toolbar``:
+PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported.
 
 .. code-block:: rst
 
    .. pdf-include:: https://www.example.com/document.pdf
 
    .. pdf-include:: _static/local-document.pdf
-       :width: 50%
-       :height: 300px
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
 
