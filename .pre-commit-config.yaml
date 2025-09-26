@@ -301,7 +301,7 @@ repos:
 
       - id: linkcheck
         name: linkcheck
-        entry: uv run sphinx-build -W -b linkcheck sample build-sample/
+        entry: uv run --extra=sample sphinx-build -W -b linkcheck sample build-sample/
         language: python
         types_or: [rst]
         stages: [manual]
@@ -310,7 +310,7 @@ repos:
 
       - id: spelling
         name: spelling
-        entry: uv run sphinx-build -W -b spelling sample build-sample/
+        entry: uv run --extra=sample sphinx-build -W -b spelling sample build-sample/
         language: python
         types_or: [rst]
         stages: [manual]
@@ -319,7 +319,7 @@ repos:
 
       - id: docs
         name: Build Documentation
-        entry: uv run sphinx-build -W -b notion sample build-sample/notion
+        entry: uv run --extra=sample sphinx-build -W -b notion sample build-sample/notion
         language: python
         stages: [manual]
         pass_filenames: false
@@ -327,7 +327,7 @@ repos:
 
       - id: docs-as-html
         name: Build Documentation as HTML
-        entry: uv run sphinx-build -W -b html sample build-sample/html
+        entry: uv run --extra=sample sphinx-build -W -b html sample build-sample/html
         language: python
         stages: [manual]
         pass_filenames: false
