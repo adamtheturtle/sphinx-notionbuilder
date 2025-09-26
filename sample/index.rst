@@ -351,9 +351,7 @@ Simple Audio
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
 
-Blocked on https://github.com/ultimate-notion/ultimate-notion/issues/127.
-
-.. .. audio:: _static/test-audio.wav
+.. audio:: _static/test-audio.wav
 
 PDF Support
 ~~~~~~~~~~~~
