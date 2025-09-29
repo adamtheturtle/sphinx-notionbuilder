@@ -5,8 +5,9 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import json
 import sys
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -20,6 +21,10 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+
+if TYPE_CHECKING:
+    from ultimate_notion.database import Database
+    from ultimate_notion.page import Page
 
 
 @beartype
@@ -66,6 +71,16 @@ def _block_from_details(
     return block
 
 
+@beartype
+class _ParentType(Enum):
+    """
+    Type of parent that new page will live under.
+    """
+
+    PAGE = "page"
+    DATABASE = "database"
+
+
 @click.command()
 @click.option(
     "--file",
@@ -84,6 +99,12 @@ def _block_from_details(
     required=True,
 )
 @click.option(
+    "--parent-type",
+    help="Parent type",
+    required=True,
+    type=click.Choice(choices=_ParentType, case_sensitive=False),
+)
+@click.option(
     "--title",
     help="Title of the page to update (or create if it does not exist)",
     required=True,
@@ -97,7 +118,8 @@ def _block_from_details(
 def main(
     *,
     file: Path,
-    parent_page_id: str,
+    parent_id: str,
+    parent_type: _ParentType,
     title: str,
     icon: str | None = None,
 ) -> None:
@@ -108,11 +130,17 @@ def main(
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
-    parent_page = session.get_page(page_ref=parent_page_id)
+    parent: Page | Database
+    match parent_type:
+        case _ParentType.PAGE:
+            parent = session.get_page(page_ref=parent_id)
+            subpages = parent.subpages
+        case _ParentType.DATABASE:
+            parent = session.get_db(db_ref=parent_id)
+            subpages = parent.get_all_pages().to_pages()
+
     pages_matching_title = [
-        child_page
-        for child_page in parent_page.subpages
-        if child_page.title == title
+        child_page for child_page in subpages if child_page.title == title
     ]
 
     if pages_matching_title:
@@ -123,7 +151,7 @@ def main(
         assert len(pages_matching_title) == 1, msg
         (page,) = pages_matching_title
     else:
-        page = session.create_page(parent=parent_page, title=title)
+        page = session.create_page(parent=parent, title=title)
         sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
 
     if icon:
