@@ -1,5 +1,5 @@
-Heading 1 with *bold2*
-======================
+Heading 1 with *bold*
+=====================
 
 .. contents::
 
