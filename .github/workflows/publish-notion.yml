@@ -30,8 +30,10 @@ jobs:
       - name: Publish to Notion
         run: |
           uv run --all-extras notion-upload \
-            --parent-page-id "${{ vars.NOTION_SAMPLE_PAGE_ID }}" \
+            --parent-id "${{ vars.NOTION_SAMPLE_PAGE_ID }}" \
+            --parent-type "page" \
             --file "./build-sample/index.json" \
-            --title "Sphinx-Notionbuilder Sample"
+            --title "Sphinx-Notionbuilder Sample" \
+            --icon "🐍"
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
