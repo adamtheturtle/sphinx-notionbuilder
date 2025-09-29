@@ -79,8 +79,8 @@ def _block_from_details(
     ),
 )
 @click.option(
-    "--parent-page-id",
-    help="Parent page ID (integration connected)",
+    "--parent-id",
+    help="Parent page or database ID (integration connected)",
     required=True,
 )
 @click.option(
