@@ -25,7 +25,7 @@ jobs:
       - name: Build documentation
         run: |
           rm -rf ./build-sample
-          uv run sphinx-build -W -b notion sample ./build-sample
+          uv run --extra=sample sphinx-build -W -b notion sample ./build-sample
 
       - name: Publish to Notion
         run: |
