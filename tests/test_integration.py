@@ -2325,20 +2325,25 @@ def test_individual_colors(
     )
 
 
-def test_inline_with_unsupported_class(
+def test_text_styles_non_color(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Inline nodes with unsupported classes are handled gracefully.
+    Non-color text styles (like underline) emit a warning.
     """
     rst_content = """
         This is :text-underline:`underlined text`.
     """
 
+    expected_warning = (
+        "Unsupported text style classes: text-underline. "
+        "Text will be rendered without styling."
+    )
+
     normal_text = text(text="This is ")
-    underline_text = text(text="underlined text", color=None)
+    underline_text = text(text="underlined text")
     normal_text2 = text(text=".")
 
     combined_text = normal_text + underline_text + normal_text2
@@ -2353,4 +2358,48 @@ def test_inline_with_unsupported_class(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=[expected_warning],
+    )
+
+
+def test_inline_node_without_classes(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Inline nodes without classes are handled as plain text.
+    """
+    # Using a custom role to create an inline node without classes
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    app.add_role(
+        'custom',
+        lambda name, rawtext, text, lineno, inliner, options={}, content=[]:
+            ([nodes.inline(rawtext, text)], [])
+    )
+    """
+
+    rst_content = """
+        This is :custom:`custom text`.
+    """
+
+    normal_text = text(text="This is ")
+    custom_text = text(text="custom text")
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + custom_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
     )

@@ -177,10 +177,22 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             # Handle colored text from sphinxcontrib-text-styles
             classes = child.attributes.get("classes", [])
             color = _color_from_class(classes=classes)
-            new_text = text(
-                text=child.astext(),
-                color=color,
-            )
+            if color is not None:
+                new_text = text(
+                    text=child.astext(),
+                    color=color,
+                )
+            else:
+                # Not a recognized color, warn and treat as plain text
+                if classes:
+                    unsupported_styles = ", ".join(classes)
+                    warning_msg = (
+                        "Unsupported text style classes: "
+                        f"{unsupported_styles}. "
+                        "Text will be rendered without styling."
+                    )
+                    _LOGGER.warning(msg=warning_msg, location=child)
+                new_text = text(text=child.astext())
         else:
             new_text = text(
                 text=child.astext(),
