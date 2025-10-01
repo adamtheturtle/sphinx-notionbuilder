@@ -3,6 +3,7 @@ Sphinx Notion Builder.
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -18,7 +19,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
-from sphinx.util import logging
+from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -62,37 +63,10 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
+from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-_LOGGER = logging.getLogger(name=__name__)
-
-
-@beartype
-def _color_from_class(*, classes: list[str]) -> Color | None:
-    """Extract Notion color from CSS classes.
-
-    sphinxcontrib-text-styles creates classes like 'text-red', 'text-
-    blue', etc.
-    """
-    color_mapping: dict[str, Color] = {
-        "text-red": Color.RED,
-        "text-blue": Color.BLUE,
-        "text-green": Color.GREEN,
-        "text-yellow": Color.YELLOW,
-        "text-orange": Color.ORANGE,
-        "text-purple": Color.PURPLE,
-        "text-pink": Color.PINK,
-        "text-brown": Color.BROWN,
-        "text-gray": Color.GRAY,
-        "text-grey": Color.GRAY,
-    }
-
-    for css_class in classes:
-        if css_class in color_mapping:
-            return color_mapping[css_class]
-
-    return None
+_LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
 @beartype
@@ -173,26 +147,6 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             )
         elif isinstance(child, nodes.target):
             continue
-        elif isinstance(child, nodes.inline):
-            # Handle colored text from sphinxcontrib-text-styles
-            classes = child.attributes.get("classes", [])
-            color = _color_from_class(classes=classes)
-            if color is not None:
-                new_text = text(
-                    text=child.astext(),
-                    color=color,
-                )
-            else:
-                # Not a recognized color, warn and treat as plain text
-                if classes:
-                    unsupported_styles = ", ".join(classes)
-                    warning_msg = (
-                        "Unsupported text style classes: "
-                        f"{unsupported_styles}. "
-                        "Text will be rendered without styling."
-                    )
-                    _LOGGER.warning(msg=warning_msg, location=child)
-                new_text = text(text=child.astext())
         else:
             new_text = text(
                 text=child.astext(),
@@ -220,10 +174,8 @@ def _extract_table_structure(
 
     # In Notion, all rows must have the same number of columns.
     # Therefore there is only one ``tgroup``.
-    tgroups = [
-        child for child in node.children if isinstance(child, nodes.tgroup)
-    ]
-    (tgroup,) = tgroups
+    (tgroup,) = node.children
+    assert isinstance(tgroup, nodes.tgroup)
 
     for tgroup_child in tgroup.children:
         if isinstance(tgroup_child, nodes.colspec):
@@ -1245,6 +1197,14 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
     )
+
+    class _UlemAlreadyIncludedFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            msg = record.getMessage()
+            return msg not in ("latex package 'ulem' already included",)
+
+    logger = logging.getLogger(name="sphinx.sphinx.registry")
+    logger.addFilter(filter=_UlemAlreadyIncludedFilter())
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}
