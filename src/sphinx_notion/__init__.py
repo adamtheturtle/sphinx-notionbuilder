@@ -870,6 +870,46 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.admonition,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process generic admonition nodes by creating Notion Callout blocks.
+
+    Generic admonitions have a title as the first child, followed by
+    content. The title becomes the callout text, and all content becomes
+    nested blocks.
+    """
+    del section_level
+
+    # Extract the title from the first child (admonitions always have title
+    # as first child)
+    title_node = node.children[0]
+    assert isinstance(title_node, nodes.title)
+    title_text = title_node.astext()
+    # All remaining children become nested blocks
+    content_children = node.children[1:]
+
+    block = UnoCallout(
+        text=text(text=title_text),
+        icon=Emoji(emoji="💬"),
+        color=BGColor.GRAY,
+    )
+
+    for child in content_children:
+        block.append(
+            blocks=_process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        )
+
+    return [block]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: CollapseNode,
     *,
     section_level: int,

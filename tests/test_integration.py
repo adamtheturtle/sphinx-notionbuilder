@@ -979,6 +979,52 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_generic_admonition(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Generic admonitions set callout text to the first line of the callout.
+
+    Generic admonitions require a title so are different from other
+    admonitions.
+    """
+    rst_content = """
+        .. admonition:: Important Information
+
+           This is the first paragraph.
+
+           This is the second paragraph.
+    """
+
+    callout = UnoCallout(
+        text=text(text="Important Information"),
+        icon=Emoji(emoji="💬"),
+        color=BGColor.GRAY,
+    )
+
+    nested_paragraph1 = UnoParagraph(
+        text=text(text="This is the first paragraph.")
+    )
+    nested_paragraph2 = UnoParagraph(
+        text=text(text="This is the second paragraph.")
+    )
+
+    callout.append(blocks=[nested_paragraph1])
+    callout.append(blocks=[nested_paragraph2])
+
+    expected_objects: list[Block] = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_nested_bullet_list(
     *,
     make_app: Callable[..., SphinxTestApp],
