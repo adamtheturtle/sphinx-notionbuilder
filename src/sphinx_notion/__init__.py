@@ -1231,6 +1231,20 @@ def _notion_register_pdf_include_directive(
 
 
 @beartype
+def _filter_ulem(record: logging.LogRecord) -> bool:
+    """Filter out the warning about the `ulem package already being included`.
+
+    This warning is emitted by ``sphinxcontrib-text-styles`` or
+    ``sphinxnotes.strike`` when the ``ulem`` package is already included.
+
+    Our users may use both of these extensions, so we filter out the
+    warning.
+    """
+    msg = record.getMessage()
+    return msg != "latex package 'ulem' already included"
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1243,13 +1257,8 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_pdf_include_directive,
     )
 
-    class _UlemAlreadyIncludedFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            msg = record.getMessage()
-            return msg != "latex package 'ulem' already included"
-
     logger = logging.getLogger(name="sphinx.sphinx.registry")
-    logger.addFilter(filter=_UlemAlreadyIncludedFilter())
+    logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
     return {"parallel_read_safe": True}
