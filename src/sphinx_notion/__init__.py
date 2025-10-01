@@ -93,6 +93,9 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
     for css_class in classes:
         if css_class in color_mapping:
             return color_mapping[css_class]
+
+        # This warning being here assumes that only color classes,
+        # and only classes from ``sphinxcontrib-text-styles``, are used.
         _LOGGER.warning(
             "Unsupported text style classes: %s. "
             "Text will be rendered without styling.",
