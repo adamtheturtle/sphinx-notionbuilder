@@ -82,6 +82,9 @@ optional-dependencies.dev = [
     "yamlfix==1.18.0",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
+optional-dependencies.sample = [
+    "sphinxcontrib-text-styles==0.2.0",
+]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 
 scripts.notion-upload = "_notion_scripts.upload:main"
