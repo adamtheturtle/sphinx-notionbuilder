@@ -62,10 +62,37 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.enums import BGColor, CodeLang
+from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.rich_text import Text, text
 
 _LOGGER = logging.getLogger(name=__name__)
+
+
+@beartype
+def _color_from_class(*, classes: list[str]) -> Color | None:
+    """Extract Notion color from CSS classes.
+
+    sphinxcontrib-text-styles creates classes like 'text-red', 'text-
+    blue', etc.
+    """
+    color_mapping: dict[str, Color] = {
+        "text-red": Color.RED,
+        "text-blue": Color.BLUE,
+        "text-green": Color.GREEN,
+        "text-yellow": Color.YELLOW,
+        "text-orange": Color.ORANGE,
+        "text-purple": Color.PURPLE,
+        "text-pink": Color.PINK,
+        "text-brown": Color.BROWN,
+        "text-gray": Color.GRAY,
+        "text-grey": Color.GRAY,
+    }
+
+    for css_class in classes:
+        if css_class in color_mapping:
+            return color_mapping[css_class]
+
+    return None
 
 
 @beartype
@@ -146,6 +173,14 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             )
         elif isinstance(child, nodes.target):
             continue
+        elif isinstance(child, nodes.inline):
+            # Handle colored text from sphinxcontrib-text-styles
+            classes = child.attributes.get("classes", [])
+            color = _color_from_class(classes=classes)
+            new_text = text(
+                text=child.astext(),
+                color=color,
+            )
         else:
             new_text = text(
                 text=child.astext(),

@@ -16,6 +16,13 @@ This is **bold** and *italic* and ``inline code``.
 
 This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
+Colored Text
+~~~~~~~~~~~~
+
+The builder supports colored text using sphinxcontrib-text-styles:
+
+This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
+
 .. note::
 
    This is an important note that demonstrates the note admonition support.

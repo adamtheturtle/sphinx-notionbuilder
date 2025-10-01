@@ -46,7 +46,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.enums import BGColor, CodeLang
+from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.rich_text import text
 
 
@@ -2232,3 +2232,140 @@ def test_pdf_with_html(
         "</iframe>"
     )
     assert expected_iframe in index_html
+
+
+def test_colored_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Colored text from sphinxcontrib-text-styles becomes rich text.
+    """
+    rst_content = """
+        This is :text-red:`red text` and :text-blue:`blue text` \
+and :text-green:`green text`.
+    """
+
+    conf_py_content = """
+extensions = ["sphinxcontrib_text_styles"]
+    """
+
+    normal_text = text(text="This is ")
+    red_text = text(text="red text", color=Color.RED)
+    normal_text2 = text(text=" and ")
+    blue_text = text(text="blue text", color=Color.BLUE)
+    normal_text3 = text(text=" and ")
+    green_text = text(text="green text", color=Color.GREEN)
+    normal_text4 = text(text=".")
+
+    combined_text = (
+        normal_text
+        + red_text
+        + normal_text2
+        + blue_text
+        + normal_text3
+        + green_text
+        + normal_text4
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        conf_py_content=conf_py_content,
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("color_name", "expected_color"),
+    argvalues=[
+        ("red", Color.RED),
+        ("blue", Color.BLUE),
+        ("green", Color.GREEN),
+        ("yellow", Color.YELLOW),
+        ("orange", Color.ORANGE),
+        ("purple", Color.PURPLE),
+        ("pink", Color.PINK),
+        ("brown", Color.BROWN),
+        ("gray", Color.GRAY),
+    ],
+)
+def test_individual_colors(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    color_name: str,
+    expected_color: Color,
+) -> None:
+    """
+    Each supported color is converted correctly.
+    """
+    rst_content = f"""
+        This is :text-{color_name}:`{color_name} text`.
+    """
+
+    conf_py_content = """
+extensions = ["sphinxcontrib_text_styles"]
+    """
+
+    normal_text = text(text="This is ")
+    colored_text = text(text=f"{color_name} text", color=expected_color)
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + colored_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        conf_py_content=conf_py_content,
+    )
+
+
+def test_inline_with_unsupported_class(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Inline nodes with unsupported classes are handled gracefully.
+    """
+    rst_content = """
+        This is :text-underline:`underlined text`.
+    """
+
+    conf_py_content = """
+extensions = ["sphinxcontrib_text_styles"]
+    """
+
+    normal_text = text(text="This is ")
+    underline_text = text(text="underlined text", color=None)
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + underline_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        conf_py_content=conf_py_content,
+    )
