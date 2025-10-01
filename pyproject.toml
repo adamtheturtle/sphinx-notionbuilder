@@ -44,6 +44,7 @@ dependencies = [
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.7.23",
+    "anstrip==0.2.2",
     "check-manifest==0.50",
     "deptry==0.23.1",
     "doc8==2.0.0",
@@ -75,7 +76,6 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
-    "strip-ansi==0.1.1",
     "types-docutils==0.22.2.20250924",
     "vulture==2.14",
     "yamlfix==1.18.0",

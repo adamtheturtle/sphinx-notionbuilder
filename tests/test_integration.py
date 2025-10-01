@@ -10,8 +10,8 @@ from collections.abc import Callable, Collection
 from pathlib import Path
 from typing import Any
 
+import anstrip
 import pytest
-import strip_ansi
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
@@ -100,7 +100,7 @@ def _assert_rst_converts_to_notion_objects(
     assert app.statuscode == 0
 
     warning_output = app.warning.getvalue()
-    ansi_stripped_warning_output = strip_ansi.strip_ansi(o=warning_output)
+    ansi_stripped_warning_output = anstrip.strip(string=warning_output)
     warnings = [
         item.strip()
         for item in ansi_stripped_warning_output.split(sep="WARNING: ")
