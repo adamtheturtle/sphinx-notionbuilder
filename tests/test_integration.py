@@ -979,6 +979,121 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_generic_admonition_single_paragraph(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Generic admonition directive with custom title becomes Notion Callout.
+    """
+    rst_content = """
+        .. admonition:: Custom Title
+
+           This is the content of the custom admonition.
+    """
+
+    callout = UnoCallout(
+        text=text(text="This is the content of the custom admonition."),
+        icon=Emoji(emoji="💬"),
+        color=BGColor.GRAY,
+    )
+
+    expected_objects: list[Block] = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_generic_admonition_multiple_paragraphs(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Generic admonition with multiple paragraphs creates nested blocks.
+    """
+    rst_content = """
+        .. admonition:: Important Information
+
+           This is the first paragraph.
+
+           This is the second paragraph.
+    """
+
+    callout = UnoCallout(
+        text=text(text="This is the first paragraph."),
+        icon=Emoji(emoji="💬"),
+        color=BGColor.GRAY,
+    )
+
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is the second paragraph.")
+    )
+
+    callout.append(blocks=[nested_paragraph])
+
+    expected_objects: list[Block] = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_generic_admonition_with_code_block_first(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Generic admonition with code block as first child creates empty callout
+    text.
+    """
+    rst_content = """
+        .. admonition:: Code Example
+
+           .. code-block:: python
+
+              def hello():
+                  print("Hello!")
+    """
+
+    callout = UnoCallout(
+        text=text(text=""),
+        icon=Emoji(emoji="💬"),
+        color=BGColor.GRAY,
+    )
+
+    nested_code_block = UnoCode(
+        text=text(text='def hello():\n    print("Hello!")'),
+        language=CodeLang.PYTHON,
+    )
+
+    callout.append(blocks=[nested_code_block])
+
+    expected_objects: list[Block] = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_nested_bullet_list(
     *,
     make_app: Callable[..., SphinxTestApp],
