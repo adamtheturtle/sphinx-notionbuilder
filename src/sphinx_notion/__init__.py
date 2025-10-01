@@ -1239,6 +1239,11 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
     Our users may use both of these extensions, so we filter out the
     warning.
+
+    See:
+
+    * https://github.com/sphinx-notes/strike/pull/10
+    * https://github.com/martinpriestley/sphinxcontrib-text-styles/pull/1
     """
     msg = record.getMessage()
     return msg != "latex package 'ulem' already included"
