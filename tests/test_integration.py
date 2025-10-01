@@ -2422,14 +2422,13 @@ def test_text_styles_and_strike(
     conflicted with each other.
     """
     rst_content = """
-        This is :text-red:`red text` and
-        :strike:`strikethrough text`.
+        This is :text-red:`red text` and :strike:`strikethrough text`.
     """
 
     normal_text = text(text="This is ")
     red_text = text(text="red text", color=Color.RED)
     normal_text2 = text(text=" and ")
-    strikethrough_text = text(text="strikethrough text")
+    strikethrough_text = text(text="strikethrough text", strikethrough=True)
     normal_text3 = text(text=".")
 
     combined_text = (
