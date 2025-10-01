@@ -80,9 +80,7 @@ def _serialize_block_with_children(
     serialized_obj = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.children:
         serialized_obj[block.obj_ref.type]["children"] = [
-            _serialize_block_with_children(
-                block=child,
-            )
+            _serialize_block_with_children(block=child)
             for child in block.children
         ]
     return serialized_obj
