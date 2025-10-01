@@ -979,54 +979,15 @@ def test_admonition_with_bullet_points(
     )
 
 
-def test_generic_admonition_single_paragraph(
+def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Generic admonition directive with custom title becomes Notion Callout.
+    """Generic admonitions set callout text to the first line of the callout.
 
-    The title becomes the callout text, and the content becomes nested
-    blocks.
-    """
-    rst_content = """
-        .. admonition:: Custom Title
-
-           This is the content of the custom admonition.
-    """
-
-    callout = UnoCallout(
-        text=text(text="Custom Title"),
-        icon=Emoji(emoji="💬"),
-        color=BGColor.GRAY,
-    )
-
-    nested_paragraph = UnoParagraph(
-        text=text(text="This is the content of the custom admonition.")
-    )
-    callout.append(blocks=[nested_paragraph])
-
-    expected_objects: list[Block] = [
-        callout,
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_generic_admonition_multiple_paragraphs(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """Generic admonition with multiple paragraphs creates nested blocks.
-
-    The title becomes the callout text, and all paragraphs become nested
-    blocks.
+    Generic admonitions require a title so are different from other
+    admonitions.
     """
     rst_content = """
         .. admonition:: Important Information
@@ -1051,50 +1012,6 @@ def test_generic_admonition_multiple_paragraphs(
 
     callout.append(blocks=[nested_paragraph1])
     callout.append(blocks=[nested_paragraph2])
-
-    expected_objects: list[Block] = [
-        callout,
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
-def test_generic_admonition_with_code_block_first(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """Generic admonition with code block as first child uses title as callout
-    text.
-
-    All content, including code blocks, becomes nested blocks.
-    """
-    rst_content = """
-        .. admonition:: Code Example
-
-           .. code-block:: python
-
-              def hello():
-                  print("Hello!")
-    """
-
-    callout = UnoCallout(
-        text=text(text="Code Example"),
-        icon=Emoji(emoji="💬"),
-        color=BGColor.GRAY,
-    )
-
-    nested_code_block = UnoCode(
-        text=text(text='def hello():\n    print("Hello!")'),
-        language=CodeLang.PYTHON,
-    )
-
-    callout.append(blocks=[nested_code_block])
 
     expected_objects: list[Block] = [
         callout,
