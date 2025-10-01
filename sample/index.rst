@@ -19,7 +19,7 @@ This text has :strike:`strike` formatting and :del:`deleted text` as well.
 Colored Text
 ~~~~~~~~~~~~
 
-The builder supports colored text using sphinxcontrib-text-styles:
+The builder supports colored text using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
 This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
 
