@@ -33,7 +33,7 @@ jobs:
 
       - name: Build sample
         run: |
-          uv run --python=${{ matrix.python-version }} sphinx-build -W -b notion sample/ build-sample/
+          uv run --extra=sample --python=${{ matrix.python-version }} sphinx-build -W -b notion sample/ build-sample/
 
       - name: Run lint
         run: |

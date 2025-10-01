@@ -47,7 +47,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.enums import BGColor, CodeLang
+from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.rich_text import text
 
 
@@ -2238,3 +2238,219 @@ def test_pdf_with_html(
         "</iframe>"
     )
     assert expected_iframe in index_html
+
+
+def test_colored_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Colored text from ``sphinxcontrib-text-styles`` becomes rich text.
+    """
+    rst_content = """
+        This is :text-red:`red text` and :text-blue:`blue text` \
+and :text-green:`green text`.
+    """
+
+    normal_text = text(text="This is ")
+    red_text = text(text="red text", color=Color.RED)
+    normal_text2 = text(text=" and ")
+    blue_text = text(text="blue text", color=Color.BLUE)
+    normal_text3 = text(text=" and ")
+    green_text = text(text="green text", color=Color.GREEN)
+    normal_text4 = text(text=".")
+
+    combined_text = (
+        normal_text
+        + red_text
+        + normal_text2
+        + blue_text
+        + normal_text3
+        + green_text
+        + normal_text4
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("color_name", "expected_color"),
+    argvalues=[
+        ("red", Color.RED),
+        ("blue", Color.BLUE),
+        ("green", Color.GREEN),
+        ("yellow", Color.YELLOW),
+        ("orange", Color.ORANGE),
+        ("purple", Color.PURPLE),
+        ("pink", Color.PINK),
+        ("brown", Color.BROWN),
+        ("gray", Color.GRAY),
+    ],
+)
+def test_individual_colors(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    color_name: str,
+    expected_color: Color,
+) -> None:
+    """
+    Each supported color is converted correctly.
+    """
+    rst_content = f"""
+        This is :text-{color_name}:`{color_name} text`.
+    """
+
+    normal_text = text(text="This is ")
+    colored_text = text(text=f"{color_name} text", color=expected_color)
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + colored_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+    )
+
+
+def test_text_styles_non_color(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Non-color text styles (like underline) emit a warning.
+    """
+    rst_content = """
+        This is :text-underline:`underlined text`.
+    """
+
+    expected_warning = (
+        "Unsupported text style classes: text-underline. "
+        "Text will be rendered without styling."
+    )
+
+    normal_text = text(text="This is ")
+    underline_text = text(text="underlined text")
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + underline_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=[expected_warning],
+    )
+
+
+def test_inline_node_without_classes(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Inline nodes without classes are handled as plain text.
+    """
+    # Using a custom role to create an inline node without classes
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    app.add_role(
+        'custom',
+        lambda name, rawtext, text, lineno, inliner, options={}, content=[]:
+            ([nodes.inline(rawtext, text)], [])
+    )
+    """
+
+    rst_content = """
+        This is :custom:`custom text`.
+    """
+
+    normal_text = text(text="This is ")
+    custom_text = text(text="custom text")
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text + custom_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+    )
+
+
+def test_text_styles_and_strike(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """There is no warning when using text styles and strike.
+
+    This demonstrates a workaround for an issue where the extensions
+    conflicted with each other.
+    """
+    rst_content = """
+        This is :text-red:`red text` and :strike:`strikethrough text`.
+    """
+
+    normal_text = text(text="This is ")
+    red_text = text(text="red text", color=Color.RED)
+    normal_text2 = text(text=" and ")
+    strikethrough_text = text(text="strikethrough text", strikethrough=True)
+    normal_text3 = text(text=".")
+
+    combined_text = (
+        normal_text
+        + red_text
+        + normal_text2
+        + strikethrough_text
+        + normal_text3
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx_notion",
+            "sphinxcontrib_text_styles",
+            "sphinxnotes.strike",
+        ),
+    )
