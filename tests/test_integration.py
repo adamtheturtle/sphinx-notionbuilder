@@ -2246,7 +2246,7 @@ def test_colored_text(
     tmp_path: Path,
 ) -> None:
     """
-    Colored text from sphinxcontrib-text-styles becomes rich text.
+    Colored text from ``sphinxcontrib-text-styles`` becomes rich text.
     """
     rst_content = """
         This is :text-red:`red text` and :text-blue:`blue text` \
