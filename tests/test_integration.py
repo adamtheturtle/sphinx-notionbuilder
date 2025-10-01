@@ -2247,10 +2247,6 @@ def test_colored_text(
 and :text-green:`green text`.
     """
 
-    conf_py_content = """
-extensions = ["sphinxcontrib_text_styles"]
-    """
-
     normal_text = text(text="This is ")
     red_text = text(text="red text", color=Color.RED)
     normal_text2 = text(text=" and ")
@@ -2279,7 +2275,6 @@ extensions = ["sphinxcontrib_text_styles"]
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
-        conf_py_content=conf_py_content,
     )
 
 
@@ -2311,10 +2306,6 @@ def test_individual_colors(
         This is :text-{color_name}:`{color_name} text`.
     """
 
-    conf_py_content = """
-extensions = ["sphinxcontrib_text_styles"]
-    """
-
     normal_text = text(text="This is ")
     colored_text = text(text=f"{color_name} text", color=expected_color)
     normal_text2 = text(text=".")
@@ -2331,7 +2322,6 @@ extensions = ["sphinxcontrib_text_styles"]
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
-        conf_py_content=conf_py_content,
     )
 
 
@@ -2345,10 +2335,6 @@ def test_inline_with_unsupported_class(
     """
     rst_content = """
         This is :text-underline:`underlined text`.
-    """
-
-    conf_py_content = """
-extensions = ["sphinxcontrib_text_styles"]
     """
 
     normal_text = text(text="This is ")
@@ -2367,5 +2353,4 @@ extensions = ["sphinxcontrib_text_styles"]
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
-        conf_py_content=conf_py_content,
     )
