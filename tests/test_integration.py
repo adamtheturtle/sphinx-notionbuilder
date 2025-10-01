@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import strip_ansi
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
@@ -99,8 +100,13 @@ def _assert_rst_converts_to_notion_objects(
     assert app.statuscode == 0
 
     warning_output = app.warning.getvalue()
-    for expected_warning in expected_warnings:
-        assert expected_warning in warning_output
+    ansi_stripped_warning_output = strip_ansi.strip_ansi(o=warning_output)
+    warnings = [
+        item.strip()
+        for item in ansi_stripped_warning_output.split(sep="WARNING: ")
+        if item.strip()
+    ]
+    assert list(expected_warnings) == warnings
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
