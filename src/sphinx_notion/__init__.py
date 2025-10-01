@@ -17,6 +17,7 @@ from docutils import nodes
 from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.errors import SphinxWarning
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
@@ -453,9 +454,9 @@ def _(
                 "do not have titles."
             )
             # Ignore error which is about a type error, but we want to
-            # raise a value error because the user has not sent anything to
+            # raise a warning because the user has not sent anything to
             # do with types.
-            raise ValueError(table_no_titles_msg)  # noqa: TRY004
+            raise SphinxWarning(table_no_titles_msg)
 
     table_structure = _extract_table_structure(node=node)
 
@@ -474,14 +475,14 @@ def _(
             f"{first_header_row_paragraph.source}, last header row is on "
             f"line {last_header_row_line}"
         )
-        raise ValueError(table_multiple_header_rows_msg)
+        raise SphinxWarning(table_multiple_header_rows_msg)
 
     if table_structure.num_stub_columns > 1:
         table_more_than_one_stub_column_msg = (
             f"Tables with more than 1 stub column are not supported. "
             f"Found {table_structure.num_stub_columns} stub columns."
         )
-        raise ValueError(table_more_than_one_stub_column_msg)
+        raise SphinxWarning(table_more_than_one_stub_column_msg)
 
     rows = [*table_structure.header_rows, *table_structure.body_rows]
     table = UnoTable(

@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 from beartype import beartype
+from sphinx.errors import SphinxWarning
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
@@ -1904,7 +1905,7 @@ def test_list_table_header_maximum_one_allowed(
     tmp_path: Path,
 ) -> None:
     """
-    List table with header-rows option other than 0 or 1 raises ValueError.
+    List table with header-rows option other than 0 or 1 raises SphinxWarning.
     """
     rst_content = """
         .. list-table::
@@ -1924,7 +1925,10 @@ def test_list_table_header_maximum_one_allowed(
         rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}, "
         r"last header row is on line 6"
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
+    with pytest.raises(
+        expected_exception=SphinxWarning,
+        match=expected_message,
+    ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_objects=[],
@@ -1987,7 +1991,7 @@ def test_list_table_stub_columns_two(
     tmp_path: Path,
 ) -> None:
     """
-    List table with :stub-columns: 2 raises ValueError.
+    List table with :stub-columns: 2 raises SphinxWarning.
     """
     rst_content = """
         .. list-table::
@@ -2009,7 +2013,10 @@ def test_list_table_stub_columns_two(
         r"^Tables with more than 1 stub column are not supported. "
         r"Found 2 stub columns.$"
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
+    with pytest.raises(
+        expected_exception=SphinxWarning,
+        match=expected_message,
+    ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_objects=[],
@@ -2024,7 +2031,7 @@ def test_list_table_with_title_error(
     tmp_path: Path,
 ) -> None:
     """
-    List table with title raises ValueError since Notion tables do not have
+    List table with title raises SphinxWarning since Notion tables do not have
     titles.
     """
     rst_content = """
@@ -2043,7 +2050,9 @@ def test_list_table_with_title_error(
         r"but Notion tables do not "
         r"have titles.$"
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
+    with pytest.raises(
+        expected_exception=SphinxWarning, match=expected_message
+    ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_objects=[],
