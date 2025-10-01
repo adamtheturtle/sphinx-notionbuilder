@@ -1246,7 +1246,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     class _UlemAlreadyIncludedFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
             msg = record.getMessage()
-            return msg not in ("latex package 'ulem' already included",)
+            return msg != "latex package 'ulem' already included"
 
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_UlemAlreadyIncludedFilter())
