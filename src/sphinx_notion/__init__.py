@@ -18,7 +18,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
-from sphinx.util import logging
+from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -65,7 +65,7 @@ from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
 
-_LOGGER = logging.getLogger(name=__name__)
+_LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
 @beartype
