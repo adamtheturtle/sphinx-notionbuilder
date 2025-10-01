@@ -325,6 +325,9 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "graphql": CodeLang.GRAPHQL,
         "groovy": CodeLang.GROOVY,
         "haskell": CodeLang.HASKELL,
+        # This is not a perfect match, but at least JSON within the
+        # HTTP definition will be highlighted.
+        "http": CodeLang.JSON,
         "html": CodeLang.HTML,
         "java": CodeLang.JAVA,
         "javascript": CodeLang.JAVASCRIPT,
