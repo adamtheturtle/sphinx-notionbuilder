@@ -5,7 +5,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import json
 import sys
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -13,6 +12,10 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
+from click_option_group import (
+    RequiredMutuallyExclusiveOptionGroup,
+    optgroup,
+)
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -71,16 +74,6 @@ def _block_from_details(
     return block
 
 
-@beartype
-class _ParentType(Enum):
-    """
-    Type of parent that new page will live under.
-    """
-
-    PAGE = "page"
-    DATABASE = "database"
-
-
 @click.command()
 @click.option(
     "--file",
@@ -93,16 +86,17 @@ class _ParentType(Enum):
         dir_okay=False,
     ),
 )
-@click.option(
-    "--parent-id",
-    help="Parent page or database ID (integration connected)",
-    required=True,
+@optgroup.group(
+    name="Parent location",
+    cls=RequiredMutuallyExclusiveOptionGroup,
 )
-@click.option(
-    "--parent-type",
-    help="Parent type",
-    required=True,
-    type=click.Choice(choices=_ParentType, case_sensitive=False),
+@optgroup.option(
+    "--parent-page-id",
+    help="Parent page ID (integration connected)",
+)
+@optgroup.option(
+    "--parent-database-id",
+    help="Parent database ID (integration connected)",
 )
 @click.option(
     "--title",
@@ -118,8 +112,8 @@ class _ParentType(Enum):
 def main(
     *,
     file: Path,
-    parent_id: str,
-    parent_type: _ParentType,
+    parent_page_id: str | None,
+    parent_database_id: str | None,
     title: str,
     icon: str | None = None,
 ) -> None:
@@ -131,13 +125,13 @@ def main(
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     parent: Page | Database
-    match parent_type:
-        case _ParentType.PAGE:
-            parent = session.get_page(page_ref=parent_id)
-            subpages = parent.subpages
-        case _ParentType.DATABASE:
-            parent = session.get_db(db_ref=parent_id)
-            subpages = parent.get_all_pages().to_pages()
+    if parent_page_id:
+        parent = session.get_page(page_ref=parent_page_id)
+        subpages = parent.subpages
+    else:
+        assert parent_database_id is not None
+        parent = session.get_db(db_ref=parent_database_id)
+        subpages = parent.get_all_pages().to_pages()
 
     pages_matching_title = [
         child_page for child_page in subpages if child_page.title == title
