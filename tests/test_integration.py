@@ -2409,3 +2409,49 @@ def setup(app):
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
     )
+
+
+def test_text_styles_and_strike(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """There is no warning when using text styles and strike.
+
+    This demonstrates a workaround for an issue where the extensions
+    conflicted with each other.
+    """
+    rst_content = """
+        This is :text-red:`red text` and
+        :strike:`strikethrough text`.
+    """
+
+    normal_text = text(text="This is ")
+    red_text = text(text="red text", color=Color.RED)
+    normal_text2 = text(text=" and ")
+    strikethrough_text = text(text="strikethrough text")
+    normal_text3 = text(text=".")
+
+    combined_text = (
+        normal_text
+        + red_text
+        + normal_text2
+        + strikethrough_text
+        + normal_text3
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx_notion",
+            "sphinxcontrib_text_styles",
+            "sphinxnotes.strike",
+        ),
+    )
