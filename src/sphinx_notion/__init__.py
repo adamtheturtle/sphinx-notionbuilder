@@ -877,36 +877,26 @@ def _(
     """Process generic admonition nodes by creating Notion Callout blocks.
 
     Generic admonitions have a title as the first child, followed by
-    content. The title is used as part of the callout's main text, and
-    the remaining content becomes nested blocks.
+    content. The title becomes the callout text, and all content becomes
+    nested blocks.
     """
     del section_level
 
-    # Skip the title node and process remaining children
-    # The title is provided by the user but not displayed separately in Notion
-    children_to_process = [
-        child for child in node.children if not isinstance(child, nodes.title)
-    ]
-
-    # Use the first paragraph as the callout text if available
-    if children_to_process and isinstance(
-        children_to_process[0], nodes.paragraph
-    ):
-        first_child = children_to_process[0]
-        rich_text = _create_rich_text_from_children(node=first_child)
-        remaining_children = children_to_process[1:]
-    else:
-        # If no paragraph, use empty text
-        rich_text = Text.from_plain_text(text="")
-        remaining_children = children_to_process
+    # Extract the title from the first child (admonitions always have title
+    # as first child)
+    title_node = node.children[0]
+    assert isinstance(title_node, nodes.title)
+    title_text = title_node.astext()
+    # All remaining children become nested blocks
+    content_children = node.children[1:]
 
     block = UnoCallout(
-        text=rich_text,
+        text=text(text=title_text),
         icon=Emoji(emoji="💬"),
         color=BGColor.GRAY,
     )
 
-    for child in remaining_children:
+    for child in content_children:
         block.append(
             blocks=_process_node_to_blocks(
                 child,

@@ -103,6 +103,17 @@ This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
    This is an important admonition that highlights important information.
 
+.. admonition:: Custom Admonition Title
+
+   This is a generic admonition with a custom title. You can use this for
+   any type of callout that doesn't fit the standard admonition types.
+
+   It supports all the same features:
+
+   * Bullet points
+   * **Bold text** and *italic text*
+   * ``Code snippets``
+
 .. collapse:: Click to expand this section
 
    This content is hidden by default and can be expanded by clicking the toggle.
