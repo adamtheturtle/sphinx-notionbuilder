@@ -18,6 +18,7 @@ from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
+from sphinx.util import logging
 from sphinx.util.typing import ExtensionMetadata
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -63,6 +64,8 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang
 from ultimate_notion.rich_text import Text, text
+
+_LOGGER = logging.getLogger(name=__name__)
 
 
 @beartype
@@ -170,8 +173,10 @@ def _extract_table_structure(
 
     # In Notion, all rows must have the same number of columns.
     # Therefore there is only one ``tgroup``.
-    (tgroup,) = node.children
-    assert isinstance(tgroup, nodes.tgroup)
+    tgroups = [
+        child for child in node.children if isinstance(child, nodes.tgroup)
+    ]
+    (tgroup,) = tgroups
 
     for tgroup_child in tgroup.children:
         if isinstance(tgroup_child, nodes.colspec):
@@ -452,10 +457,7 @@ def _(
                 f"{child.line} in {child.source}, but Notion tables "
                 "do not have titles."
             )
-            # Ignore error which is about a type error, but we want to
-            # raise a value error because the user has not sent anything to
-            # do with types.
-            raise ValueError(table_no_titles_msg)  # noqa: TRY004
+            _LOGGER.warning(msg=table_no_titles_msg)
 
     table_structure = _extract_table_structure(node=node)
 
@@ -474,14 +476,14 @@ def _(
             f"{first_header_row_paragraph.source}, last header row is on "
             f"line {last_header_row_line}"
         )
-        raise ValueError(table_multiple_header_rows_msg)
+        _LOGGER.warning(msg=table_multiple_header_rows_msg)
 
     if table_structure.num_stub_columns > 1:
         table_more_than_one_stub_column_msg = (
             f"Tables with more than 1 stub column are not supported. "
             f"Found {table_structure.num_stub_columns} stub columns."
         )
-        raise ValueError(table_more_than_one_stub_column_msg)
+        _LOGGER.warning(msg=table_more_than_one_stub_column_msg)
 
     rows = [*table_structure.header_rows, *table_structure.body_rows]
     table = UnoTable(

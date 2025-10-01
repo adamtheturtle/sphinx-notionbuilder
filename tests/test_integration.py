@@ -6,7 +6,7 @@ import base64
 import json
 import re
 import textwrap
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
 from typing import Any
 
@@ -75,7 +75,8 @@ def _assert_rst_converts_to_notion_objects(
     tmp_path: Path,
     extensions: tuple[str, ...] = ("sphinx_notion",),
     conf_py_content: str = "",
-) -> None:
+    expected_warnings: Collection[str] = (),
+) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via Sphinx
     build process.
@@ -96,7 +97,10 @@ def _assert_rst_converts_to_notion_objects(
     )
     app.build()
     assert app.statuscode == 0
-    assert not app.warning.getvalue()
+
+    warning_output = app.warning.getvalue()
+    for expected_warning in expected_warnings:
+        assert expected_warning in warning_output
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
@@ -108,6 +112,7 @@ def _assert_rst_converts_to_notion_objects(
     ]
 
     assert generated_json == expected_json
+    return app
 
 
 def test_single_paragraph(
@@ -1904,7 +1909,7 @@ def test_list_table_header_maximum_one_allowed(
     tmp_path: Path,
 ) -> None:
     """
-    List table with header-rows option other than 0 or 1 raises ValueError.
+    List table with header-rows option other than 0 or 1 emits a warning.
     """
     rst_content = """
         .. list-table::
@@ -1918,19 +1923,29 @@ def test_list_table_header_maximum_one_allowed(
              - Cell a 2
     """
 
-    expected_message = (
-        r"^Tables with multiple header rows are not supported. "
-        r"First header row is on line 4 in "
-        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}, "
-        r"last header row is on line 6"
+    expected_warning = (
+        "Tables with multiple header rows are not supported. "
+        f"First header row is on line 4 in {tmp_path / 'src' / 'index.rst'}, "
+        "last header row is on line 6"
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
+
+    table = UnoTable(n_rows=3, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Header a 1")
+    table[0, 1] = text(text="Header a 2")
+    table[1, 0] = text(text="Header b 1")
+    table[1, 1] = text(text="Header b 2")
+    table[2, 0] = text(text="Cell a 1")
+    table[2, 1] = text(text="Cell a 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[expected_warning],
+    )
 
 
 def test_list_table_stub_columns_one(
@@ -1987,7 +2002,7 @@ def test_list_table_stub_columns_two(
     tmp_path: Path,
 ) -> None:
     """
-    List table with :stub-columns: 2 raises ValueError.
+    List table with :stub-columns: 2 emits a warning.
     """
     rst_content = """
         .. list-table::
@@ -2005,17 +2020,31 @@ def test_list_table_stub_columns_two(
              - Row 2, Col 3
     """
 
-    expected_message = (
-        r"^Tables with more than 1 stub column are not supported. "
-        r"Found 2 stub columns.$"
+    expected_warning = (
+        "Tables with more than 1 stub column are not supported. "
+        "Found 2 stub columns."
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
+
+    table = UnoTable(n_rows=3, n_cols=3, header_row=True, header_col=True)
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[0, 2] = text(text="Header 3")
+    table[1, 0] = text(text="Row 1, Col 1")
+    table[1, 1] = text(text="Row 1, Col 2")
+    table[1, 2] = text(text="Row 1, Col 3")
+    table[2, 0] = text(text="Row 2, Col 1")
+    table[2, 1] = text(text="Row 2, Col 2")
+    table[2, 2] = text(text="Row 2, Col 3")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[expected_warning],
+    )
 
 
 def test_list_table_with_title_error(
@@ -2024,7 +2053,7 @@ def test_list_table_with_title_error(
     tmp_path: Path,
 ) -> None:
     """
-    List table with title raises ValueError since Notion tables do not have
+    List table with title emits a warning since Notion tables do not have
     titles.
     """
     rst_content = """
@@ -2037,19 +2066,27 @@ def test_list_table_with_title_error(
              - Cell 2
     """
 
-    expected_message = (
-        r"^Table has a title 'My Table Title' on line 1 in "
-        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}, "
-        r"but Notion tables do not "
-        r"have titles.$"
+    expected_warning = (
+        f"Table has a title 'My Table Title' on line 1 in "
+        f"{tmp_path / 'src' / 'index.rst'}, "
+        "but Notion tables do not have titles."
     )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Header 1")
+    table[0, 1] = text(text="Header 2")
+    table[1, 0] = text(text="Cell 1")
+    table[1, 1] = text(text="Cell 2")
+
+    expected_objects: list[Block] = [table]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[expected_warning],
+    )
 
 
 @pytest.mark.parametrize(
