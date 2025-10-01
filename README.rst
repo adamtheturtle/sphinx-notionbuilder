@@ -88,6 +88,7 @@ The following syntax is supported:
 - PDFs (with URLs or local paths)
 - Tables
 - Strikethrough text
+- Colored text
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 
@@ -116,6 +117,34 @@ PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs 
    .. pdf-include:: _static/local-document.pdf
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
+
+Using Colored Text
+------------------
+
+Colored text can be added using the `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ extension. First, install the extension:
+
+.. code-block:: console
+
+   $ pip install sphinxcontrib-text-styles
+
+Then add it to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinxcontrib_text_styles",
+       "sphinx_notion",
+   ]
+
+You can then use colored text in your reStructuredText documents:
+
+.. code-block:: rst
+
+   This is :text-red:`red text`, :text-blue:`blue text`, and :text-green:`green text`.
+
+The following colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
 
 Uploading Documentation to Notion
 ----------------------------------
