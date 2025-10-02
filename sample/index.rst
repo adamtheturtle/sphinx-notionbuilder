@@ -272,6 +272,32 @@ The builder now supports numbered lists:
 
 4. Fourth top-level item
 
+Task Lists
+~~~~~~~~~~
+
+The builder supports task lists with checkboxes:
+
+.. task-list::
+
+    1. [x] Task A
+    2. [ ] Task B
+
+       .. task-list::
+           :clickable:
+
+           * [x] Task B1
+           * [x] Task B2
+           * [] Task B3
+
+           A rogue paragraph with a reference to
+           the `parent task_list <task_list_example>`.
+
+           - A list item without a checkbox.
+           - [ ] Another bullet point.
+
+    3. [ ] Task C
+
+
 Heading 2 with *italic*
 -----------------------
 
@@ -1516,3 +1542,30 @@ And here's some text after the PDF.
    * List item
    * List item
    * List item
+
+
+
+Task Lists
+~~~~~~~~~~
+
+The builder supports task lists with checkboxes:
+
+.. task-list::
+
+    1. [x] Task A
+    2. [ ] Task B
+
+       .. task-list::
+           :clickable:
+
+           * [x] Task B1
+           * [x] Task B2
+           * [] Task B3
+
+           A rogue paragraph with a reference to
+           the `parent task_list <task_list_example>`.
+
+           - A list item without a checkbox.
+           - [ ] Another bullet point.
+
+    3. [ ] Task C

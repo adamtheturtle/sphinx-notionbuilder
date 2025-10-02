@@ -36,6 +36,7 @@ dependencies = [
     "click>=8.0.0",
     "docutils>=0.21",
     "sphinx>=8.2.3",
+    "sphinx-immaterial>=0.13.6",
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",

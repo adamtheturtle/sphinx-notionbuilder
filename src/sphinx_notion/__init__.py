@@ -21,6 +21,9 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_immaterial.task_lists import (  # pyright: ignore[reportMissingTypeStubs]
+    checkbox_label,
+)
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
 )
@@ -58,6 +61,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -542,18 +546,37 @@ def _(
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        paragraph = list_item.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoBulletedItem(text=rich_text)
+        first_child = list_item.children[0]
+        if isinstance(first_child, nodes.paragraph):
+            paragraph = first_child
+            rich_text = _create_rich_text_from_children(node=paragraph)
+            bulleted_item_block = UnoBulletedItem(text=rich_text)
 
-        for child in list_item.children[1:]:
-            child_blocks = _process_node_to_blocks(
-                child,
-                section_level=section_level,
+            for child in list_item.children[1:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                bulleted_item_block.append(blocks=child_blocks)
+            result.append(bulleted_item_block)
+        else:
+            assert isinstance(first_child, checkbox_label)
+            label_text_node = list_item.children[1]
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
+            assert isinstance(label_text_node, nodes.paragraph)
+            rich_text = _create_rich_text_from_children(
+                node=label_text_node,
             )
-            block.append(blocks=child_blocks)
-        result.append(block)
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
+
+            for child in list_item.children[2:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                todo_item_block.append(blocks=child_blocks)
+            result.append(todo_item_block)
     return result
 
 
@@ -565,24 +588,43 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process enumerated list nodes by creating Notion NumberedItem blocks.
+    Process enumerated list nodes by creating Notion NumberedItem or ToDoItem
+    blocks.
     """
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        paragraph = list_item.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoNumberedItem(text=rich_text)
+        first_child = list_item.children[0]
+        if isinstance(first_child, nodes.paragraph):
+            paragraph = first_child
+            rich_text = _create_rich_text_from_children(node=paragraph)
+            block = UnoNumberedItem(text=rich_text)
 
-        for child in list_item.children[1:]:
-            child_blocks = _process_node_to_blocks(
-                child,
-                section_level=section_level,
+            for child in list_item.children[1:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                block.append(blocks=child_blocks)
+            result.append(block)
+        else:
+            assert isinstance(first_child, checkbox_label)
+            label_text_node = list_item.children[1]
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
+            assert isinstance(label_text_node, nodes.paragraph)
+            rich_text = _create_rich_text_from_children(
+                node=label_text_node,
             )
-            block.append(blocks=child_blocks)
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
 
-        result.append(block)
+            for child in list_item.children[2:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                todo_item_block.append(blocks=child_blocks)
+            result.append(todo_item_block)
     return result
 
 
@@ -1033,30 +1075,38 @@ def _(
     """
     Process container nodes, especially for ``literalinclude`` with captions.
     """
-    del section_level
+    num_children_for_captioned_literalinclude = 2
+    if (
+        len(node.children) == num_children_for_captioned_literalinclude
+        and isinstance(node.children[0], nodes.caption)
+        and isinstance(node.children[1], nodes.literal_block)
+    ):
+        caption_node, literal_node = node.children
+        assert isinstance(caption_node, nodes.caption)
+        assert isinstance(literal_node, nodes.literal_block)
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
-    caption_node, literal_node = node.children
-    msg = (
-        "The only supported container type is a literalinclude with a caption"
-    )
-    assert isinstance(caption_node, nodes.caption), msg
-    assert isinstance(literal_node, nodes.literal_block), msg
-
-    caption_rich_text = _create_rich_text_from_children(node=caption_node)
-
-    code_text = _create_rich_text_from_children(node=literal_node)
-    pygments_lang = literal_node.get(key="language", failobj="")
-    language = _map_pygments_to_notion_language(
-        pygments_lang=pygments_lang,
-    )
-
-    return [
-        UnoCode(
-            text=code_text,
-            language=language,
-            caption=caption_rich_text,
+        code_text = _create_rich_text_from_children(node=literal_node)
+        pygments_lang = literal_node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
         )
-    ]
+
+        return [
+            UnoCode(
+                text=code_text,
+                language=language,
+                caption=caption_rich_text,
+            )
+        ]
+
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
 
 
 @beartype

@@ -10,4 +10,5 @@ extensions = [
     "sphinx_simplepdf",
     "sphinx_toolbox.collapse",
     "atsphinx.audioplayer",
+    "sphinx_immaterial.task_lists",
 ]

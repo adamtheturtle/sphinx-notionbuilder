@@ -42,6 +42,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -2425,6 +2426,41 @@ def test_text_styles_and_strike(
     )
 
 
+def test_flat_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Flat task lists become separate Notion ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Unchecked task item
+           - [x] Checked task item
+           - [ ] Another unchecked task with **bold text**
+    """
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Unchecked task item"), checked=False),
+        UnoToDoItem(text=text(text="Checked task item"), checked=True),
+        UnoToDoItem(
+            text=(
+                text(text="Another unchecked task with ", bold=False)
+                + text(text="bold text", bold=True)
+            ),
+            checked=False,
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
 def test_bullet_list_with_nested_content(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2470,11 +2506,165 @@ def test_bullet_list_with_nested_content(
         first_bullet,
         second_bullet,
     ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_task_list_with_nested_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Task lists with nested content should create ToDoItem blocks with nested
+    children.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Task with nested content
+
+             This is a paragraph nested within the task item.
+
+             * A bullet point nested within the task item.
+    """
+
+    # Create the main task item
+    task_item = UnoToDoItem(
+        text=text(text="Task with nested content"), checked=False
+    )
+
+    # Add nested paragraph
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a paragraph nested within the task item.")
+    )
+    task_item.append(blocks=[nested_paragraph])
+
+    # Add nested bullet list
+    nested_bullet = UnoBulletedItem(
+        text=text(text="A bullet point nested within the task item.")
+    )
+    task_item.append(blocks=[nested_bullet])
+
+    expected_objects: list[Block] = [task_item]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion",),
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_nested_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Nested task lists should create nested ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           1. [x] Task A
+           2. [ ] Task B
+
+              .. task-list::
+
+                  * [x] Task B1
+                  * [x] Task B2
+                  * [ ] Task B3
+
+              A rogue paragraph with a reference to
+              the `parent task_list <task_list_example>`.
+
+              - A list item without a checkbox.
+              - [ ] Another bullet point.
+
+           3. [ ] Task C
+    """
+    # Create Task B with nested children (including the rogue paragraph)
+    task_b = UnoToDoItem(text=text(text="Task B"), checked=False)
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B1"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B2"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B3"), checked=False)]
+    )
+    # The rogue paragraph is nested within Task B
+    # Note: The actual output has the text split across multiple rich text
+    # segments
+    rogue_paragraph = UnoParagraph(
+        text=text(text="A rogue paragraph with a reference to\nthe ")
+        + text(text="parent task_list <task_list_example>")
+        + text(text=".")
+    )
+    task_b.append(blocks=[rogue_paragraph])
+
+    # Regular bullet list items should be nested within Task B as bullet items
+    regular_bullet = UnoBulletedItem(
+        text=text(text="A list item without a checkbox.")
+    )
+    task_b.append(blocks=[regular_bullet])
+
+    # Another bullet item (has "[ ]" but should be treated as a bullet)
+    another_bullet = UnoBulletedItem(
+        text=text(text="[ ] Another bullet point.")
+    )
+    task_b.append(blocks=[another_bullet])
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        task_b,
+        UnoToDoItem(text=text(text="Task C"), checked=False),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_task_list_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    A quote can exist within a task list.
+    """
+    rst_content = """
+    .. task-list::
+
+        1. [x] Task A
+        2. [ ] Task B
+
+          foo
+    """
+
+    # The actual processing creates a flat structure where the quote
+    # becomes a separate quote block
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        UnoToDoItem(text=text(text="Task B"), checked=False),
+        UnoQuote(text=text(text="foo")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
     )

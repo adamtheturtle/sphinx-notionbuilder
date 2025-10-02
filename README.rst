@@ -68,6 +68,17 @@ For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphi
        "sphinx_notion",
    ]
 
+For TODO list support, also add the `sphinx-immaterial <https://github.com/jbms/sphinx-immaterial>`_ task lists extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_immaterial.task_lists",
+       "sphinx_notion",
+   ]
+
 PDF support is included by default with the sphinx-notionbuilder extension.
 
 Supported markup
@@ -77,6 +88,7 @@ The following syntax is supported:
 
 - Headers
 - Bulleted lists
+- TODO lists (with checkboxes)
 - Code blocks
 - Table of contents
 - Block quotes
@@ -145,6 +157,24 @@ You can then use colored text in your reStructuredText documents:
    This is :text-red:`red text`, :text-blue:`blue text`, and :text-green:`green text`.
 
 The following colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
+
+Using TODO Lists
+----------------
+
+TODO lists with checkboxes can be created using the ``sphinx-immaterial.task_lists`` extension. Both bulleted and numbered lists support checkboxes:
+
+.. code-block:: rst
+
+   .. task-list::
+
+       1. [x] Completed task
+       2. [ ] Incomplete task
+       3. [ ] Another task
+
+   * [x] Bulleted completed task
+   * [ ] Bulleted incomplete task
+
+The checkboxes will be rendered as interactive TODO items in the generated Notion page, with completed tasks showing as checked and incomplete tasks as unchecked.
 
 Uploading Documentation to Notion
 ----------------------------------
