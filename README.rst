@@ -176,6 +176,24 @@ TODO lists with checkboxes can be created using the ``sphinx-immaterial.task_lis
 
 The checkboxes will be rendered as interactive TODO items in the generated Notion page, with completed tasks showing as checked and incomplete tasks as unchecked.
 
+Unsupported Notion Block Types
+------------------------------
+
+- Bookmark
+- Breadcrumb
+- Child database
+- Child page
+- Column and column list
+- Divider
+- Embed
+- Equation
+- File
+- Link preview
+- Mention
+- Synced block
+- Template
+- Heading with ``is_toggleable`` set to ``True``
+
 Uploading Documentation to Notion
 ----------------------------------
 
