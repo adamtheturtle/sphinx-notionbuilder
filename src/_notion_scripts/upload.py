@@ -3,15 +3,18 @@
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
+import hashlib
 import json
 import sys
 from enum import Enum
+from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
+import requests
 from beartype import beartype
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
@@ -19,7 +22,7 @@ from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
-from ultimate_notion.file import UploadedFile
+from ultimate_notion.file import ExternalFile, UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 if TYPE_CHECKING:
@@ -28,13 +31,27 @@ if TYPE_CHECKING:
 
 
 @beartype
+def _calculate_file_sha(*, file_path: Path) -> str:
+    """
+    Calculate SHA-256 hash of a file.
+    """
+    sha256_hash = hashlib.sha256()
+    with file_path.open(mode="rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
+@beartype
 def _upload_local_file(
     *,
     url: str,
     session: Session,
-) -> UploadedFile | None:
-    """
-    Upload a local file and return the uploaded file object.
+    sha_mapping: dict[str, str],
+) -> UploadedFile | ExternalFile | None:
+    """Upload a local file and return the uploaded file object.
+
+    Check SHA mapping first to avoid re-uploading files.
     """
     parsed = urlparse(url=url)
     if parsed.scheme != "file":
@@ -43,6 +60,24 @@ def _upload_local_file(
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+
+    file_sha = _calculate_file_sha(file_path=file_path)
+
+    if file_sha in sha_mapping:
+        notion_url = sha_mapping[file_sha]
+        # Validate that the Notion URL is still accessible
+        if (
+            requests.head(url=notion_url, timeout=10).status_code
+            == HTTPStatus.OK
+        ):
+            sys.stdout.write(
+                f"Using existing file from SHA mapping: {notion_url}\n"
+            )
+            return ExternalFile(url=notion_url)
+        sys.stdout.write(
+            f"Notion URL in mapping is no longer accessible: {notion_url}\n"
+        )
+    # Upload the file normally
     with file_path.open(mode="rb") as f:
         uploaded_file = session.upload(
             file=f,
@@ -58,6 +93,7 @@ def _block_from_details(
     *,
     details: dict[str, Any],
     session: Session,
+    sha_mapping: dict[str, str],
 ) -> Block:
     """Create a Block from a serialized block details.
 
@@ -66,7 +102,11 @@ def _block_from_details(
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
     if isinstance(block, (UnoImage, UnoVideo, UnoAudio, UnoPDF)):
-        uploaded_file = _upload_local_file(url=block.url, session=session)
+        uploaded_file = _upload_local_file(
+            url=block.url,
+            session=session,
+            sha_mapping=sha_mapping,
+        )
         if uploaded_file is not None:
             return block.__class__(file=uploaded_file, caption=block.caption)
 
@@ -116,6 +156,17 @@ class _ParentType(Enum):
     help="Icon of the page",
     required=False,
 )
+@click.option(
+    "--sha-mapping",
+    help="JSON file mapping file SHAs to Notion URLs to avoid re-uploading",
+    required=False,
+    type=click.Path(
+        exists=True,
+        path_type=Path,
+        file_okay=True,
+        dir_okay=False,
+    ),
+)
 @beartype
 def main(
     *,
@@ -124,11 +175,24 @@ def main(
     parent_type: _ParentType,
     title: str,
     icon: str | None = None,
+    sha_mapping: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
     """
     session = Session()
+
+    sha_mapping_dict: dict[str, str] = {}
+    if sha_mapping is not None:
+        sha_mapping_dict = dict(
+            json.loads(
+                s=sha_mapping.read_text(encoding="utf-8"),
+            )
+        )
+
+        sys.stdout.write(
+            f"Loaded SHA mapping with {len(sha_mapping_dict)} entries\n"
+        )
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
@@ -160,7 +224,11 @@ def main(
         page.icon = Emoji(emoji=icon)
 
     block_objs = [
-        _block_from_details(details=details, session=session)
+        _block_from_details(
+            details=details,
+            session=session,
+            sha_mapping=sha_mapping_dict,
+        )
         for details in blocks
     ]
 
