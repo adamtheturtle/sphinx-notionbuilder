@@ -154,7 +154,7 @@ def main(
         (page,) = pages_matching_title
     else:
         page = session.create_page(parent=parent, title=title)
-        sys.stdout.write(f"Created new page: {title} ({page.url})\n")
+        sys.stdout.write(f"Created new page: '{title}' ({page.url})\n")
 
     if icon:
         page.icon = Emoji(emoji=icon)
@@ -164,8 +164,18 @@ def main(
         for details in blocks
     ]
 
-    for child in page.children:
-        child.delete()
+    match_until_index = 0
+    for index, existing_page_block in enumerate(iterable=page.children):
+        if index < len(blocks) and existing_page_block == block_objs[index]:
+            match_until_index = index
+        else:
+            break
 
-    page.append(blocks=block_objs)
-    sys.stdout.write(f"Updated existing page: {title} ({page.url})\n")
+    sys.stdout.write(
+        f"Matching blocks until index {match_until_index} for page '{title}'\n"
+    )
+    for existing_page_block in page.children[match_until_index + 1 :]:
+        existing_page_block.delete()
+
+    page.append(blocks=block_objs[match_until_index + 1 :])
+    sys.stdout.write(f"Updated existing page: '{title}' ({page.url})\n")
