@@ -154,7 +154,7 @@ def main(
         (page,) = pages_matching_title
     else:
         page = session.create_page(parent=parent, title=title)
-        sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
+        sys.stdout.write(f"Created new page: {title} ({page.url})\n")
 
     if icon:
         page.icon = Emoji(emoji=icon)
