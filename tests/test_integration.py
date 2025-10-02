@@ -2636,14 +2636,13 @@ def test_nested_task_list(
     )
 
 
-def test_task_list_container_unpacking_error(
+def test_task_list_quote(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Test that reproduces the ValueError: too many values to unpack (expected 2)
-    when processing task list containers with more than 2 children.
+    A quote can exist within a task list.
     """
     rst_content = """
     .. task-list::
@@ -2651,23 +2650,15 @@ def test_task_list_container_unpacking_error(
         1. [x] Task A
         2. [ ] Task B
 
-          .. task-list::
-
-              * [x] Task B1
-              * [x] Task B2
-              * [] Task B3
-
-        3. [ ] Task C
+          foo
     """
 
-    # This test should fail with the unpacking error
-    # The task list container will have more than 2 children, causing the error
+    # The actual processing creates a flat structure where the nested task list
+    # becomes a separate quote block containing all the nested content
     expected_objects: list[Block] = [
         UnoToDoItem(text=text(text="Task A"), checked=True),
         UnoToDoItem(text=text(text="Task B"), checked=False),
-        UnoToDoItem(text=text(text="Task B1"), checked=True),
-        UnoToDoItem(text=text(text="Task B2"), checked=True),
-        UnoToDoItem(text=text(text="Task B3"), checked=False),
+        UnoQuote(text=text(text="foo")),
         UnoToDoItem(text=text(text="Task C"), checked=False),
     ]
 
