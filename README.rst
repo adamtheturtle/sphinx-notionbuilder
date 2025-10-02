@@ -159,35 +159,6 @@ You can then use colored text in your reStructuredText documents:
 
 The following colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
 
-Using Anchor Links
--------------------
-
-Anchor links allow you to create internal links within the same page. You can define anchor points and link to them:
-
-.. code-block:: rst
-
-   Introduction
-   ============
-
-   This is the introduction section.
-
-   .. _section1:
-
-   First Section
-   -------------
-
-   This is the first section with some content.
-
-   Second Section
-   --------------
-
-   This is the second section. You can link to `First Section <#section1>`_
-   or to the `Introduction <#introduction>`_.
-
-   You can also use `anonymous links <#section1>`_ to the first section.
-
-The anchor links will be converted to internal Notion links. Note that the actual Notion page URLs and block IDs are only available after the page is created in Notion, so the builder uses placeholder URLs that should be resolved during the upload process.
-
 Using TODO Lists
 ----------------
 
