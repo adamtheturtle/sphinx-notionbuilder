@@ -174,6 +174,10 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             link_url = child.attributes["refuri"]
             link_text = child.attributes.get("name", link_url)
 
+            # Convert internal anchor links to custom anchor:// scheme
+            if link_url.startswith("#"):
+                link_url = f"anchor://{link_url[1:]}"
+
             new_text = text(
                 text=link_text,
                 href=link_url,

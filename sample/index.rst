@@ -7,6 +7,29 @@ Heading 1 with *bold*
 
    other
 
+Anchor Links Example
+====================
+
+This demonstrates anchor link support. You can create internal links within the same page:
+
+.. _getting-started:
+
+Getting Started
+---------------
+
+This is the getting started section with some content.
+
+.. _advanced-features:
+
+Advanced Features
+-----------------
+
+This is the advanced features section. You can link to the `Getting Started <#getting-started>`_ section or to the `Introduction <#introduction>`_.
+
+You can also use `anonymous links <#getting-started>`_ to the getting started section.
+
+This demonstrates how anchor links work in the sphinx-notionbuilder.
+
 .. This is a comment that demonstrates comment support.
    Comments should not appear in the final output.
 

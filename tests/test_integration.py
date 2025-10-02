@@ -2704,12 +2704,12 @@ def test_anchor_links(
     """
 
     # Create rich text with internal links
-    # Note: The href format uses https:///#anchor as a placeholder
+    # Note: The href format uses anchor:// as a custom scheme
     # that should be converted to proper Notion block URLs during upload
     normal_text1 = text(text="This is the second section. You can link to ")
-    link_text1 = text(text="First Section", href="https:///#section1")
+    link_text1 = text(text="First Section", href="anchor://section1")
     normal_text2 = text(text="\nor to the ")
-    link_text2 = text(text="Introduction", href="https:///#introduction")
+    link_text2 = text(text="Introduction", href="anchor://introduction")
     normal_text3 = text(text=".")
 
     combined_text1 = (
@@ -2717,7 +2717,7 @@ def test_anchor_links(
     )
 
     normal_text4 = text(text="You can also use ")
-    link_text3 = text(text="anonymous links", href="https:///#section1")
+    link_text3 = text(text="anonymous links", href="anchor://section1")
     normal_text5 = text(text=" to the first section.")
 
     combined_text2 = normal_text4 + link_text3 + normal_text5
