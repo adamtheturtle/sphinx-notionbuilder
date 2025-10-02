@@ -9,7 +9,6 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
-import sphinx_immaterial.task_lists
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -59,7 +58,6 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
-from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -400,194 +398,6 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
-@beartype
-def _process_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a list item node and return a BulletedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoBulletedItem(text=rich_text)
-
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        if not isinstance(child, nodes.bullet_list):
-            bullet_only_msg = (
-                "The only thing Notion supports within a bullet list is a "
-                f"bullet list. Given {type(child).__name__} on line "
-                f"{child.line} in {child.source}"
-            )
-            # Ignore error which is about a type error, but we want to
-            # raise a value error because the user has not sent anything to
-            # do with types.
-            raise ValueError(bullet_only_msg)  # noqa: TRY004
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item)
-            block.append(
-                blocks=_process_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
-@beartype
-def _process_task_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a task list item node and return a ToDoItem.
-    """
-    # Find the checkbox_label node to determine if it's checked
-    checked = False
-    main_paragraph = None
-
-    # First pass: find checkbox and main paragraph
-    for child in node.children:
-        if (
-            hasattr(child, "__class__")
-            and child.__class__.__name__ == "checkbox_label"
-        ):
-            # Extract checked status from the checkbox_label node
-            if hasattr(child, "attributes"):
-                checked = child.attributes.get("checked", False)
-        elif isinstance(child, nodes.paragraph):
-            # Take the first paragraph as the main task text
-            if main_paragraph is None:
-                main_paragraph = child
-
-    if main_paragraph is None:
-        msg = "Task list item must contain a paragraph"
-        raise ValueError(msg)
-
-    rich_text = _create_rich_text_from_children(node=main_paragraph)
-    block = UnoToDoItem(text=rich_text, checked=checked)
-
-    # Process all nested content (task lists, paragraphs, etc.)
-    for child in node.children:
-        if isinstance(child, nodes.bullet_list):
-            # Process nested bullet lists - check if items are task items or regular bullet items
-            for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item)
-                # Check if this is a task list item by looking for checkbox_label with valid content
-                has_valid_checkbox = False
-                for item_child in nested_list_item.children:
-                    if (
-                        hasattr(item_child, "__class__")
-                        and item_child.__class__.__name__ == "checkbox_label"
-                    ):
-                        # Check if the checkbox_label has valid checkbox content
-                        # by looking at the paragraph text for [x] or [ ] patterns
-                        for paragraph_child in nested_list_item.children:
-                            if isinstance(paragraph_child, nodes.paragraph):
-                                paragraph_text = paragraph_child.astext()
-                                print(
-                                    f"DEBUG: paragraph_text = '{paragraph_text}'"
-                                )
-                                if paragraph_text.startswith(
-                                    "[x]"
-                                ) or paragraph_text.startswith("[ ]"):
-                                    has_valid_checkbox = True
-                                    print(
-                                        f"DEBUG: Found valid checkbox: {paragraph_text}"
-                                    )
-                                    break
-                        break
-
-                if has_valid_checkbox:
-                    # This is a task list item, process as task
-                    block.append(
-                        blocks=_process_task_list_item_recursively(
-                            node=nested_list_item,
-                        )
-                    )
-                else:
-                    # This is a regular bullet list item, process as bullet
-                    bullet_blocks = _process_list_item_recursively(
-                        node=nested_list_item,
-                    )
-                    block.append(blocks=bullet_blocks)
-        elif isinstance(child, nodes.paragraph) and child != main_paragraph:
-            # Process additional paragraphs as children
-            paragraph_text = _create_rich_text_from_children(node=child)
-            paragraph_block = UnoParagraph(text=paragraph_text)
-            block.append(blocks=[paragraph_block])
-        elif isinstance(child, nodes.container):
-            # Process containers (like nested task lists)
-            container_blocks = _process_node_to_blocks(
-                child,
-                section_level=1,
-            )
-            block.append(blocks=container_blocks)
-        elif isinstance(child, nodes.enumerated_list):
-            # Process enumerated lists
-            for list_item in child.children:
-                assert isinstance(list_item, nodes.list_item)
-                # Check if this is a task list item
-                classes = list_item.attributes.get("classes", [])
-                if "task-list-item" in classes:
-                    block.append(
-                        blocks=_process_task_list_item_recursively(
-                            node=list_item,
-                        )
-                    )
-                else:
-                    # Process as regular numbered list item
-                    numbered_blocks = _process_numbered_list_item_recursively(
-                        node=list_item,
-                    )
-                    block.append(blocks=numbered_blocks)
-
-    return [block]
-
-
-@beartype
-def _process_numbered_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a numbered list item node and return a NumberedItem.
-    """
-    # Check if this is a task list item
-    classes = node.attributes.get("classes", [])
-    if "task-list-item" in classes:
-        # This is a task list item, use the task list processing
-        return _process_task_list_item_recursively(node=node)
-
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoNumberedItem(text=rich_text)
-
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        assert isinstance(child, nodes.enumerated_list), numbered_only_msg
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item), (
-                numbered_only_msg
-            )
-
-            block.append(
-                blocks=_process_numbered_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -729,32 +539,21 @@ def _(
     """
     Process bullet list nodes by creating Notion BulletedItem blocks.
     """
-    del section_level
     result: list[Block] = []
-
-    # Check if this is a task list by looking for task-list-item classes
-    is_task_list = False
-    for list_item in node.children:
-        if isinstance(list_item, nodes.list_item):
-            classes = list_item.attributes.get("classes", [])
-            if "task-list-item" in classes:
-                is_task_list = True
-                break
-
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        if is_task_list:
-            result.extend(
-                _process_task_list_item_recursively(
-                    node=list_item,
-                )
+        paragraph = list_item.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text=rich_text)
+
+        for child in list_item.children[1:]:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
             )
-        else:
-            result.extend(
-                _process_list_item_recursively(
-                    node=list_item,
-                )
-            )
+            block.append(blocks=child_blocks)
+        result.append(block)
     return result
 
 
@@ -768,20 +567,22 @@ def _(
     """
     Process enumerated list nodes by creating Notion NumberedItem blocks.
     """
-    del section_level
     result: list[Block] = []
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
     for list_item in node.children:
-        assert isinstance(list_item, nodes.list_item), numbered_only_msg
-        result.extend(
-            _process_numbered_list_item_recursively(
-                node=list_item,
+        assert isinstance(list_item, nodes.list_item)
+        paragraph = list_item.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoNumberedItem(text=rich_text)
+
+        for child in list_item.children[1:]:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
             )
-        )
+            block.append(blocks=child_blocks)
+
+        result.append(block)
     return result
 
 
@@ -1225,6 +1026,42 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.container,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process container nodes, especially for ``literalinclude`` with captions.
+    """
+    del section_level
+
+    caption_node, literal_node = node.children
+    msg = (
+        "The only supported container type is a literalinclude with a caption"
+    )
+    assert isinstance(caption_node, nodes.caption), msg
+    assert isinstance(literal_node, nodes.literal_block), msg
+
+    caption_rich_text = _create_rich_text_from_children(node=caption_node)
+
+    code_text = _create_rich_text_from_children(node=literal_node)
+    pygments_lang = literal_node.get(key="language", failobj="")
+    language = _map_pygments_to_notion_language(
+        pygments_lang=pygments_lang,
+    )
+
+    return [
+        UnoCode(
+            text=code_text,
+            language=language,
+            caption=caption_rich_text,
+        )
+    ]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.comment,
     *,
     section_level: int,
@@ -1232,84 +1069,6 @@ def _(
     """Process comment nodes by ignoring them completely.
 
     Comments in reStructuredText should not appear in the final output.
-    """
-    del node
-    del section_level
-    return []
-
-
-@beartype
-@_process_node_to_blocks.register
-def _(
-    node: nodes.container,
-    *,
-    section_level: int,
-) -> list[Block]:
-    """
-    Process container nodes, especially for task lists and literalinclude with
-    captions.
-    """
-    del section_level
-
-    # Handle task list containers
-    classes = node.attributes.get("classes", [])
-    if "task-list" in classes:
-        # This is a task list container, process its children
-        result: list[Block] = []
-        for child in node.children:
-            result.extend(
-                _process_node_to_blocks(
-                    child,
-                    section_level=1,
-                )
-            )
-        return result
-
-    # Handle literalinclude with captions (existing logic)
-    if len(node.children) == 2:
-        caption_node, literal_node = node.children
-        msg = "The only supported container type is a literalinclude with a caption"
-        assert isinstance(caption_node, nodes.caption), msg
-        assert isinstance(literal_node, nodes.literal_block), msg
-
-        caption_rich_text = _create_rich_text_from_children(node=caption_node)
-
-        code_text = _create_rich_text_from_children(node=literal_node)
-        pygments_lang = literal_node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-        )
-
-        return [
-            UnoCode(
-                text=code_text,
-                language=language,
-                caption=caption_rich_text,
-            )
-        ]
-
-    # For other containers, process children normally
-    container_result: list[Block] = []
-    for child in node.children:
-        container_result.extend(
-            _process_node_to_blocks(
-                child,
-                section_level=1,
-            )
-        )
-    return container_result
-
-
-@beartype
-@_process_node_to_blocks.register
-def _(
-    node: sphinx_immaterial.task_lists.checkbox_label,
-    *,
-    section_level: int,
-) -> list[Block]:
-    """Process checkbox_label nodes by ignoring them completely.
-
-    The checked status is extracted in the task list item processing.
     """
     del node
     del section_level
