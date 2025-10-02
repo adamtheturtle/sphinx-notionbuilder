@@ -21,9 +21,7 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
-from sphinx_immaterial.task_lists import (  # pyright: ignore[reportMissingTypeStubs]
-    checkbox_label,
-)
+from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
 )
