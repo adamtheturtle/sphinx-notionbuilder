@@ -1110,6 +1110,23 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.target,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process target nodes by ignoring them completely.
+
+    Target nodes (anchor links) in reStructuredText are used for
+    creating internal links but don't produce visible content in Notion.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.comment,
     *,
     section_level: int,

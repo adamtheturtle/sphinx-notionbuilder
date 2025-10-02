@@ -2668,3 +2668,75 @@ def test_task_list_quote(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
     )
+
+
+def test_anchor_links(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Anchor links in reStructuredText should be converted to internal links in
+    Notion.
+    """
+    rst_content = """
+        Introduction
+        ============
+
+        This is the introduction section.
+
+        .. _section1:
+
+        First Section
+        -------------
+
+        This is the first section with some content.
+
+        .. _section2:
+
+        Second Section
+        --------------
+
+        This is the second section. You can link to `First Section <#section1>`_
+        or to the `Introduction <#introduction>`_.
+
+        You can also use `anonymous links <#section1>`_ to the first section.
+    """
+
+    # Create rich text with internal links
+    # Note: The href format uses https:///#anchor as a placeholder
+    # that should be converted to proper Notion block URLs during upload
+    normal_text1 = text(text="This is the second section. You can link to ")
+    link_text1 = text(text="First Section", href="https:///#section1")
+    normal_text2 = text(text="\nor to the ")
+    link_text2 = text(text="Introduction", href="https:///#introduction")
+    normal_text3 = text(text=".")
+
+    combined_text1 = (
+        normal_text1 + link_text1 + normal_text2 + link_text2 + normal_text3
+    )
+
+    normal_text4 = text(text="You can also use ")
+    link_text3 = text(text="anonymous links", href="https:///#section1")
+    normal_text5 = text(text=" to the first section.")
+
+    combined_text2 = normal_text4 + link_text3 + normal_text5
+
+    expected_objects: list[Block] = [
+        UnoHeading1(text=text(text="Introduction")),
+        UnoParagraph(text=text(text="This is the introduction section.")),
+        UnoHeading2(text=text(text="First Section")),
+        UnoParagraph(
+            text=text(text="This is the first section with some content.")
+        ),
+        UnoHeading2(text=text(text="Second Section")),
+        UnoParagraph(text=combined_text1),
+        UnoParagraph(text=combined_text2),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
