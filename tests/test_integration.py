@@ -42,6 +42,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -2453,4 +2454,39 @@ def test_text_styles_and_strike(
             "sphinxcontrib_text_styles",
             "sphinxnotes.strike",
         ),
+    )
+
+
+def test_flat_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Flat task lists become separate Notion ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Unchecked task item
+           - [x] Checked task item
+           - [ ] Another unchecked task with **bold text**
+    """
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Unchecked task item"), checked=False),
+        UnoToDoItem(text=text(text="Checked task item"), checked=True),
+        UnoToDoItem(
+            text=(
+                text(text="Another unchecked task with ", bold=False)
+                + text(text="bold text", bold=True)
+            ),
+            checked=False,
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
     )
