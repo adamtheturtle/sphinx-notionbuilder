@@ -159,13 +159,13 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    for child in page.children:
-        child.delete()
-
     block_objs = [
         _block_from_details(details=details, session=session)
         for details in blocks
     ]
+
+    for child in page.children:
+        child.delete()
 
     page.append(blocks=block_objs)
     sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
