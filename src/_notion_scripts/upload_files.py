@@ -12,6 +12,13 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
+from ultimate_notion import Session
+from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
+from ultimate_notion.blocks import Audio as UnoAudio
+from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
 @beartype
@@ -27,44 +34,17 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _extract_file_urls_from_blocks(*, blocks: list[dict]) -> set[str]:
+def _extract_file_urls_from_blocks(*, blocks: list[Block]) -> set[str]:
     """
     Extract file URLs from blocks that contain files.
     """
-    file_urls = set()
+    file_urls: set[str] = set()
 
     for block in blocks:
-        # Check for image blocks with file URLs
-        if block.get("type") == "image" and "image" in block:
-            image_data = block["image"]
-            if "file" in image_data and "url" in image_data["file"]:
-                url = image_data["file"]["url"]
-                if url and url.startswith("file://"):
-                    file_urls.add(url)
-
-        # Check for video blocks with file URLs
-        elif block.get("type") == "video" and "video" in block:
-            video_data = block["video"]
-            if "file" in video_data and "url" in video_data["file"]:
-                url = video_data["file"]["url"]
-                if url and url.startswith("file://"):
-                    file_urls.add(url)
-
-        # Check for audio blocks with file URLs
-        elif block.get("type") == "audio" and "audio" in block:
-            audio_data = block["audio"]
-            if "file" in audio_data and "url" in audio_data["file"]:
-                url = audio_data["file"]["url"]
-                if url and url.startswith("file://"):
-                    file_urls.add(url)
-
-        # Check for PDF blocks with file URLs
-        elif block.get("type") == "pdf" and "pdf" in block:
-            pdf_data = block["pdf"]
-            if "file" in pdf_data and "url" in pdf_data["file"]:
-                url = pdf_data["file"]["url"]
-                if url and url.startswith("file://"):
-                    file_urls.add(url)
+        if isinstance(
+            block, (UnoImage, UnoVideo, UnoAudio, UnoPDF)
+        ) and block.url.startswith("file://"):
+            file_urls.add(block.url)
 
     return file_urls
 
@@ -90,12 +70,8 @@ def _process_file_url(
     if not file_path.exists():
         return "", None
 
-    # Calculate SHA
     file_sha = _calculate_file_sha(file_path=file_path)
-
-    # Check if mapped
     notion_url = sha_mapping.get(file_sha)
-
     return file_sha, notion_url
 
 
@@ -135,11 +111,16 @@ def main(
     sha_mapping = dict(json.loads(s=mapping_file_content))
 
     build_content = build_file.read_text(encoding="utf-8")
-    blocks = json.loads(s=build_content)
+    block_details = json.loads(s=build_content)
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in block_details
+    ]
 
     file_urls = _extract_file_urls_from_blocks(blocks=blocks)
 
     referenced_shas: set[str] = set()
+    session: Session | None = None
 
     for file_url in file_urls:
         file_sha, notion_url = _process_file_url(
@@ -150,18 +131,48 @@ def main(
             referenced_shas.add(file_sha)
 
             if notion_url is None:
-                # File is referenced but not mapped - we need to upload it
-                # For now, we'll just note this
-                click.echo(message=f"File needs upload: {file_sha[:16]}...")
-                # TODO: Actually upload the file and get the Notion URL
-                # For now, we'll skip this case
+                if session is None:
+                    session = Session()
+
+                parsed = urlparse(url=file_url)
+                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+
+                with file_path.open(mode="rb") as file_stream:
+                    uploaded_file = session.upload(
+                        file=file_stream,
+                        file_name=file_path.name,
+                    )
+
+                uploaded_file.wait_until_uploaded()
+
+                uploaded_url = getattr(uploaded_file, "url", None)
+                if uploaded_url is None and hasattr(uploaded_file, "get_url"):
+                    uploaded_url = uploaded_file.get_url()  # type: ignore[assignment]
+                if uploaded_url is None and hasattr(
+                    uploaded_file, "get_file_url"
+                ):
+                    uploaded_url = uploaded_file.get_file_url()  # type: ignore[assignment]
+                if uploaded_url is None:
+                    raise RuntimeError(
+                        f"Unable to determine Notion URL for uploaded file: {file_path}"
+                    )
+
+                notion_url = str(uploaded_url)
+                sha_mapping[file_sha] = notion_url
+                click.echo(
+                    message=f"Uploaded file: {file_path.name} ({file_sha[:16]}...)"
+                )
             else:
                 click.echo(message=f"File already mapped: {file_sha[:16]}...")
 
     for sha in list(sha_mapping.keys()):
         if sha not in referenced_shas:
             notion_url = sha_mapping.pop(sha)
+            click.echo(
+                message=f"Removed unused mapping: {sha[:16]}... -> {notion_url}"
+            )
 
+    # Save updated mapping
     mapping_file.parent.mkdir(parents=True, exist_ok=True)
     mapping_file.write_text(
         data=json.dumps(obj=sha_mapping, indent=2, sort_keys=True),
