@@ -40,7 +40,9 @@ def _upload_local_file(
     if parsed.scheme != "file":
         return None
 
-    file_path = Path(url2pathname(pathname=parsed.path))
+    # Ignore ``mypy`` error as the keyword arguments are different across
+    # Python versions and platforms.
+    file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
     with file_path.open(mode="rb") as f:
         uploaded_file = session.upload(
             file=f,

@@ -19,6 +19,7 @@ jobs:
       matrix:
         python-version: ['3.12', '3.13']
         platform: [ubuntu-latest, windows-latest]
+        lint-stage: [pre-commit, pre-push, manual]
 
     runs-on: ${{ matrix.platform }}
 
@@ -37,9 +38,7 @@ jobs:
 
       - name: Run lint
         run: |
-          uv run --extra=dev --python=${{ matrix.python-version }} pre-commit run --all-files --hook-stage pre-commit --verbose
-          uv run --extra=dev --python=${{ matrix.python-version }} pre-commit run --all-files --hook-stage pre-push --verbose
-          uv run --extra=dev --python=${{ matrix.python-version }} pre-commit run --all-files --hook-stage manual --verbose
+          uv run --extra=dev --python=${{ matrix.python-version }} pre-commit run --all-files --hook-stage ${{ matrix.lint-stage }} --verbose
 
       - name: Run tests
         run: |
