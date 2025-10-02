@@ -1098,9 +1098,7 @@ def _(
             )
         ]
 
-    # Handle all other containers (task lists, quotes, etc.)
-    # Process all children and flatten the results
-    blocks = []
+    blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
             child, section_level=section_level
