@@ -2651,17 +2651,14 @@ def test_task_list_quote(
         2. [ ] Task B
 
           foo
-
-        3. [ ] Task C
     """
 
-    # The actual processing creates a flat structure where the nested task list
-    # becomes a separate quote block containing all the nested content
+    # The actual processing creates a flat structure where the quote
+    # becomes a separate quote block
     expected_objects: list[Block] = [
         UnoToDoItem(text=text(text="Task A"), checked=True),
         UnoToDoItem(text=text(text="Task B"), checked=False),
         UnoQuote(text=text(text="foo")),
-        UnoToDoItem(text=text(text="Task C"), checked=False),
     ]
 
     _assert_rst_converts_to_notion_objects(

@@ -1073,22 +1073,15 @@ def _(
     """
     Process container nodes, especially for ``literalinclude`` with captions.
     """
-    task_list_container_length = 1
-    literalinclude_container_length = 2
-
-    if len(node.children) == task_list_container_length:
-        (child,) = node.children
-        return _process_node_to_blocks(child, section_level=section_level)
-
-    if len(node.children) == literalinclude_container_length:
+    num_children_for_captioned_literalinclude = 2
+    if (
+        len(node.children) == num_children_for_captioned_literalinclude
+        and isinstance(node.children[0], nodes.caption)
+        and isinstance(node.children[1], nodes.literal_block)
+    ):
         caption_node, literal_node = node.children
-        msg = (
-            "The only supported container type with two children is a "
-            "literalinclude with a caption"
-        )
-        assert isinstance(caption_node, nodes.caption), msg
-        assert isinstance(literal_node, nodes.literal_block), msg
-
+        assert isinstance(caption_node, nodes.caption)
+        assert isinstance(literal_node, nodes.literal_block)
         caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
         code_text = _create_rich_text_from_children(node=literal_node)
@@ -1105,7 +1098,7 @@ def _(
             )
         ]
 
-    # Handle containers with more than 2 children (e.g., complex task lists)
+    # Handle all other containers (task lists, quotes, etc.)
     # Process all children and flatten the results
     blocks = []
     for child in node.children:
