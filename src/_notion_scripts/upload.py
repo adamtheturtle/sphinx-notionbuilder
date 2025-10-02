@@ -182,17 +182,15 @@ def main(
     """
     session = Session()
 
-    sha_mapping_dict: dict[str, str] = {}
-    if sha_mapping is not None:
-        sha_mapping_dict = dict(
+    sha_mapping_dict = (
+        dict(
             json.loads(
                 s=sha_mapping.read_text(encoding="utf-8"),
             )
         )
-
-        sys.stdout.write(
-            f"Loaded SHA mapping with {len(sha_mapping_dict)} entries\n"
-        )
+        if sha_mapping is not None
+        else {}
+    )
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 

@@ -34,6 +34,10 @@ jobs:
             --parent-type "page" \
             --file "./build-sample/index.json" \
             --title "Sphinx-Notionbuilder Sample" \
+            --sha-mapping "./sample/notion-sha-mapping.json" \
             --icon "🐍"
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+
+      - name: Show SHA mapping
+        run: cat "./sample/notion-sha-mapping.json"
