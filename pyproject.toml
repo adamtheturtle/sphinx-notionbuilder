@@ -91,6 +91,7 @@ optional-dependencies.sample = [
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 
 scripts.notion-upload = "_notion_scripts.upload:main"
+scripts.notion-sha-mapping = "_notion_scripts.update_sha_mapping:cli"
 
 [tool.setuptools]
 zip-safe = false
