@@ -2514,6 +2514,53 @@ def test_bullet_list_with_nested_content(
     )
 
 
+def test_task_list_with_nested_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Task lists with nested content should create ToDoItem blocks with nested
+    children.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Task with nested content
+
+             This is a paragraph nested within the task item.
+
+             * A bullet point nested within the task item.
+    """
+
+    # Create the main task item
+    task_item = UnoToDoItem(
+        text=text(text="Task with nested content"), checked=False
+    )
+
+    # Add nested paragraph
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a paragraph nested within the task item.")
+    )
+    task_item.append(blocks=[nested_paragraph])
+
+    # Add nested bullet list
+    nested_bullet = UnoBulletedItem(
+        text=text(text="A bullet point nested within the task item.")
+    )
+    task_item.append(blocks=[nested_bullet])
+
+    expected_objects: list[Block] = [task_item]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
 def test_nested_task_list(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2554,7 +2601,8 @@ def test_nested_task_list(
         blocks=[UnoToDoItem(text=text(text="Task B3"), checked=False)]
     )
     # The rogue paragraph is nested within Task B
-    # Note: The actual output has the text split across multiple rich text segments
+    # Note: The actual output has the text split across multiple rich text
+    # segments
     rogue_paragraph = UnoParagraph(
         text=text(text="A rogue paragraph with a reference to\nthe ")
         + text(text="parent task_list <task_list_example>")
