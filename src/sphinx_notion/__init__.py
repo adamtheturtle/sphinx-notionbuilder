@@ -9,6 +9,7 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
+import sphinx_immaterial.task_lists
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -58,6 +59,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
@@ -435,6 +437,57 @@ def _process_list_item_recursively(
 
 
 @beartype
+def _process_task_list_item_recursively(
+    *,
+    node: nodes.list_item,
+) -> list[Block]:
+    """
+    Recursively process a task list item node and return a ToDoItem.
+    """
+    # Find the checkbox_label node to determine if it's checked
+    checked = False
+    paragraph = None
+
+    for child in node.children:
+        if (
+            hasattr(child, "__class__")
+            and child.__class__.__name__ == "checkbox_label"
+        ):
+            # Extract checked status from the checkbox_label node
+            if hasattr(child, "attributes"):
+                checked = child.attributes.get("checked", False)
+        elif isinstance(child, nodes.paragraph):
+            paragraph = child
+
+    if paragraph is None:
+        # Fallback: look for any paragraph in the node
+        for child in node.children:
+            if isinstance(child, nodes.paragraph):
+                paragraph = child
+                break
+
+    if paragraph is None:
+        msg = "Task list item must contain a paragraph"
+        raise ValueError(msg)
+
+    rich_text = _create_rich_text_from_children(node=paragraph)
+    block = UnoToDoItem(text=rich_text, checked=checked)
+
+    # Process nested task lists
+    for child in node.children:
+        if isinstance(child, nodes.bullet_list):
+            for nested_list_item in child.children:
+                assert isinstance(nested_list_item, nodes.list_item)
+                block.append(
+                    blocks=_process_task_list_item_recursively(
+                        node=nested_list_item,
+                    )
+                )
+
+    return [block]
+
+
+@beartype
 def _process_numbered_list_item_recursively(
     *,
     node: nodes.list_item,
@@ -612,13 +665,30 @@ def _(
     """
     del section_level
     result: list[Block] = []
+
+    # Check if this is a task list by looking for task-list-item classes
+    is_task_list = False
+    for list_item in node.children:
+        if isinstance(list_item, nodes.list_item):
+            classes = list_item.attributes.get("classes", [])
+            if "task-list-item" in classes:
+                is_task_list = True
+                break
+
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        result.extend(
-            _process_list_item_recursively(
-                node=list_item,
+        if is_task_list:
+            result.extend(
+                _process_task_list_item_recursively(
+                    node=list_item,
+                )
             )
-        )
+        else:
+            result.extend(
+                _process_list_item_recursively(
+                    node=list_item,
+                )
+            )
     return result
 
 
@@ -1089,42 +1159,6 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
-    node: nodes.container,
-    *,
-    section_level: int,
-) -> list[Block]:
-    """
-    Process container nodes, especially for ``literalinclude`` with captions.
-    """
-    del section_level
-
-    caption_node, literal_node = node.children
-    msg = (
-        "The only supported container type is a literalinclude with a caption"
-    )
-    assert isinstance(caption_node, nodes.caption), msg
-    assert isinstance(literal_node, nodes.literal_block), msg
-
-    caption_rich_text = _create_rich_text_from_children(node=caption_node)
-
-    code_text = _create_rich_text_from_children(node=literal_node)
-    pygments_lang = literal_node.get(key="language", failobj="")
-    language = _map_pygments_to_notion_language(
-        pygments_lang=pygments_lang,
-    )
-
-    return [
-        UnoCode(
-            text=code_text,
-            language=language,
-            caption=caption_rich_text,
-        )
-    ]
-
-
-@beartype
-@_process_node_to_blocks.register
-def _(
     node: nodes.comment,
     *,
     section_level: int,
@@ -1132,6 +1166,84 @@ def _(
     """Process comment nodes by ignoring them completely.
 
     Comments in reStructuredText should not appear in the final output.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.container,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process container nodes, especially for task lists and literalinclude with
+    captions.
+    """
+    del section_level
+
+    # Handle task list containers
+    classes = node.attributes.get("classes", [])
+    if "task-list" in classes:
+        # This is a task list container, process its children
+        result: list[Block] = []
+        for child in node.children:
+            result.extend(
+                _process_node_to_blocks(
+                    child,
+                    section_level=1,
+                )
+            )
+        return result
+
+    # Handle literalinclude with captions (existing logic)
+    if len(node.children) == 2:
+        caption_node, literal_node = node.children
+        msg = "The only supported container type is a literalinclude with a caption"
+        assert isinstance(caption_node, nodes.caption), msg
+        assert isinstance(literal_node, nodes.literal_block), msg
+
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
+
+        code_text = _create_rich_text_from_children(node=literal_node)
+        pygments_lang = literal_node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
+        )
+
+        return [
+            UnoCode(
+                text=code_text,
+                language=language,
+                caption=caption_rich_text,
+            )
+        ]
+
+    # For other containers, process children normally
+    container_result: list[Block] = []
+    for child in node.children:
+        container_result.extend(
+            _process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+        )
+    return container_result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: sphinx_immaterial.task_lists.checkbox_label,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process checkbox_label nodes by ignoring them completely.
+
+    The checked status is extracted in the task list item processing.
     """
     del node
     del section_level
