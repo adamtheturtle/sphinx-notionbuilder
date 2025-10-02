@@ -30,7 +30,7 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
 from sphinxnotes.strike import strike_node
-from ultimate_notion import BulletedItem, Emoji
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -560,14 +560,13 @@ def _(
         else:
             assert isinstance(first_child, checkbox_label)
             label_text_node = list_item.children[1]
-            # TODO: This should be based on something.
-            # See https://raw.githubusercontent.com/jbms/sphinx-immaterial/4ee01ec2e967187e00ca19df30866dca100efe87/sphinx_immaterial/task_lists.py.
-            checked = True
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
             assert isinstance(label_text_node, nodes.paragraph)
             rich_text = _create_rich_text_from_children(
                 node=label_text_node,
             )
-            todo_item_block = UnoToDoItem(text=rich_text, checked=True)
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
 
             for child in list_item.children[2:]:
                 child_blocks = _process_node_to_blocks(
@@ -587,24 +586,43 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process enumerated list nodes by creating Notion NumberedItem blocks.
+    Process enumerated list nodes by creating Notion NumberedItem or ToDoItem
+    blocks.
     """
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        paragraph = list_item.children[0]
-        assert isinstance(paragraph, nodes.paragraph)
-        rich_text = _create_rich_text_from_children(node=paragraph)
-        block = UnoNumberedItem(text=rich_text)
+        first_child = list_item.children[0]
+        if isinstance(first_child, nodes.paragraph):
+            paragraph = first_child
+            rich_text = _create_rich_text_from_children(node=paragraph)
+            block = UnoNumberedItem(text=rich_text)
 
-        for child in list_item.children[1:]:
-            child_blocks = _process_node_to_blocks(
-                child,
-                section_level=section_level,
+            for child in list_item.children[1:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                block.append(blocks=child_blocks)
+            result.append(block)
+        else:
+            assert isinstance(first_child, checkbox_label)
+            label_text_node = list_item.children[1]
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
+            assert isinstance(label_text_node, nodes.paragraph)
+            rich_text = _create_rich_text_from_children(
+                node=label_text_node,
             )
-            block.append(blocks=child_blocks)
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
 
-        result.append(block)
+            for child in list_item.children[2:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                todo_item_block.append(blocks=child_blocks)
+            result.append(todo_item_block)
     return result
 
 
@@ -1053,9 +1071,10 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process enumerated list nodes by creating Notion NumberedItem blocks.
+    Process checkbox_label nodes by ignoring them (handled in bullet_list).
     """
-    breakpoint()
+    del node
+    del section_level
     return []
 
 
@@ -1076,7 +1095,10 @@ def _(
         return _process_node_to_blocks(child, section_level=section_level)
 
     caption_node, literal_node = node.children
-    msg = "The only supported container type with two children is a literalinclude with a caption"
+    msg = (
+        "The only supported container type with two children is a "
+        "literalinclude with a caption"
+    )
     assert isinstance(caption_node, nodes.caption), msg
     assert isinstance(literal_node, nodes.literal_block), msg
 
