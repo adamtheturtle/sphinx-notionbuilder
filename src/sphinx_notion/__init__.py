@@ -398,77 +398,6 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
-@beartype
-def _process_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a list item node and return a BulletedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoBulletedItem(text=rich_text)
-
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        if not isinstance(child, nodes.bullet_list):
-            bullet_only_msg = (
-                "The only thing Notion supports within a bullet list is a "
-                f"bullet list. Given {type(child).__name__} on line "
-                f"{child.line} in {child.source}"
-            )
-            # Ignore error which is about a type error, but we want to
-            # raise a value error because the user has not sent anything to
-            # do with types.
-            raise ValueError(bullet_only_msg)  # noqa: TRY004
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item)
-            block.append(
-                blocks=_process_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
-@beartype
-def _process_numbered_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a numbered list item node and return a NumberedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoNumberedItem(text=rich_text)
-
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        assert isinstance(child, nodes.enumerated_list), numbered_only_msg
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item), (
-                numbered_only_msg
-            )
-
-            block.append(
-                blocks=_process_numbered_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -610,15 +539,21 @@ def _(
     """
     Process bullet list nodes by creating Notion BulletedItem blocks.
     """
-    del section_level
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        result.extend(
-            _process_list_item_recursively(
-                node=list_item,
+        paragraph = list_item.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text=rich_text)
+
+        for child in list_item.children[1:]:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
             )
-        )
+            block.append(blocks=child_blocks)
+        result.append(block)
     return result
 
 
@@ -632,20 +567,22 @@ def _(
     """
     Process enumerated list nodes by creating Notion NumberedItem blocks.
     """
-    del section_level
     result: list[Block] = []
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
     for list_item in node.children:
-        assert isinstance(list_item, nodes.list_item), numbered_only_msg
-        result.extend(
-            _process_numbered_list_item_recursively(
-                node=list_item,
+        assert isinstance(list_item, nodes.list_item)
+        paragraph = list_item.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoNumberedItem(text=rich_text)
+
+        for child in list_item.children[1:]:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
             )
-        )
+            block.append(blocks=child_blocks)
+
+        result.append(block)
     return result
 
 
