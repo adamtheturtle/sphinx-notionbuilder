@@ -54,6 +54,100 @@ def _upload_local_file(
 
 
 @beartype
+def _convert_anchor_links_in_rich_text(
+    *,
+    rich_text: list[dict[str, Any]],
+    anchor_to_block_id_map: dict[str, str],
+) -> list[dict[str, Any]]:
+    """Convert anchor:// links in rich text to proper Notion block URLs.
+
+    This function processes rich text content and replaces anchor://
+    links with proper Notion internal links using the provided mapping.
+    """
+    converted_rich_text = []
+
+    for text_segment in rich_text:
+        if text_segment.get("type") == "text" and "href" in text_segment:
+            href = text_segment["href"]
+            if href.startswith("anchor://"):
+                anchor_name = href[9:]  # Remove "anchor://" prefix
+                if anchor_name in anchor_to_block_id_map:
+                    # Convert to proper Notion internal link format
+                    block_id = anchor_to_block_id_map[anchor_name]
+                    text_segment["href"] = f"https://www.notion.so/{block_id}"
+
+        converted_rich_text.append(text_segment)
+
+    return converted_rich_text
+
+
+@beartype
+def _convert_anchor_links_in_block(
+    *,
+    block_details: dict[str, Any],
+    anchor_to_block_id_map: dict[str, str],
+) -> dict[str, Any]:
+    """Convert anchor:// links in a block to proper Notion block URLs.
+
+    This function recursively processes block content to convert
+    anchor:// links to proper Notion internal links.
+    """
+    converted_block = block_details.copy()
+
+    # Process rich text content in various block types
+    for block_data in converted_block.values():
+        if isinstance(block_data, dict):
+            # Handle rich text content
+            if "rich_text" in block_data and isinstance(
+                block_data["rich_text"], list
+            ):
+                block_data["rich_text"] = _convert_anchor_links_in_rich_text(
+                    rich_text=block_data["rich_text"],
+                    anchor_to_block_id_map=anchor_to_block_id_map,
+                )
+
+            # Handle children blocks recursively
+            if "children" in block_data and isinstance(
+                block_data["children"], list
+            ):
+                block_data["children"] = [
+                    _convert_anchor_links_in_block(
+                        block_details=child,
+                        anchor_to_block_id_map=anchor_to_block_id_map,
+                    )
+                    for child in block_data["children"]
+                ]
+
+    return converted_block
+
+
+@beartype
+def _build_anchor_to_block_id_mapping(
+    *,
+    blocks: list[dict[str, Any]],
+) -> dict[str, str]:
+    """Build a mapping from anchor names to Notion block IDs.
+
+    This function scans all blocks to find anchor definitions and maps
+    them to their corresponding Notion block IDs.
+    """
+    # This is a placeholder implementation
+    # In a real implementation, you would need to:
+    # 1. Scan all blocks for anchor definitions
+    # 2. Extract anchor names and their corresponding block IDs
+    # 3. Build the mapping dictionary
+
+    # For now, we'll return an empty mapping
+    # A full implementation would require:
+    # - Parsing block content for anchor definitions
+    # - Extracting block IDs from Notion blocks
+    # - Building the mapping between anchor names and block IDs
+
+    del blocks  # Unused for now
+    return {}
+
+
+@beartype
 def _block_from_details(
     *,
     details: dict[str, Any],
@@ -132,6 +226,16 @@ def main(
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
+    # Convert anchor:// links to proper Notion block URLs
+    anchor_mapping = _build_anchor_to_block_id_mapping(blocks=blocks)
+    converted_blocks = [
+        _convert_anchor_links_in_block(
+            block_details=block,
+            anchor_to_block_id_map=anchor_mapping,
+        )
+        for block in blocks
+    ]
+
     parent: Page | Database
     match parent_type:
         case _ParentType.PAGE:
@@ -161,12 +265,15 @@ def main(
 
     block_objs = [
         _block_from_details(details=details, session=session)
-        for details in blocks
+        for details in converted_blocks
     ]
 
     match_until_index = 0
     for index, existing_page_block in enumerate(iterable=page.children):
-        if index < len(blocks) and existing_page_block == block_objs[index]:
+        if (
+            index < len(converted_blocks)
+            and existing_page_block == block_objs[index]
+        ):
             match_until_index = index
         else:
             break

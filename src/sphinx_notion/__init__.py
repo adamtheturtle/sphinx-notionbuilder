@@ -210,6 +210,33 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
 
 @beartype
+def convert_anchor_links_in_document(
+    *,
+    blocks: list[Block],
+) -> list[Block]:
+    """Convert all anchor:// links in a document to proper Notion block URLs.
+
+    This is the main function that orchestrates the anchor link
+    conversion process. It builds the anchor-to-block-ID mapping and
+    then converts all anchor links.
+    """
+    # This is a placeholder implementation
+    # In a real implementation, you would need to:
+    # 1. Build the mapping from anchor names to block IDs
+    # 2. Convert all anchor:// links to proper Notion block URLs
+    # 3. Return the converted blocks
+
+    # For now, we'll just return the blocks unchanged
+    # A full implementation would require:
+    # - Parsing block content for anchor definitions
+    # - Extracting block IDs from Notion blocks
+    # - Building the mapping between anchor names and block IDs
+    # - Converting anchor:// links to proper Notion URLs
+
+    return blocks
+
+
+@beartype
 def _extract_table_structure(
     *,
     node: nodes.table,
