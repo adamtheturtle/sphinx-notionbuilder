@@ -2529,7 +2529,6 @@ def test_nested_task_list(
            2. [ ] Task B
 
               .. task-list::
-                  :clickable:
 
                   * [x] Task B1
                   * [x] Task B2

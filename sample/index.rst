@@ -278,8 +278,6 @@ Task Lists
 The builder supports task lists with checkboxes:
 
 .. task-list::
-    :name: task_list_example
-    :custom:
 
     1. [x] Task A
     2. [ ] Task B
@@ -1553,8 +1551,6 @@ Task Lists
 The builder supports task lists with checkboxes:
 
 .. task-list::
-    :name: task_list_example
-    :custom:
 
     1. [x] Task A
     2. [ ] Task B
