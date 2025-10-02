@@ -495,6 +495,12 @@ def _process_numbered_list_item_recursively(
     """
     Recursively process a numbered list item node and return a NumberedItem.
     """
+    # Check if this is a task list item
+    classes = node.attributes.get("classes", [])
+    if "task-list-item" in classes:
+        # This is a task list item, use the task list processing
+        return _process_task_list_item_recursively(node=node)
+
     paragraph = node.children[0]
     assert isinstance(paragraph, nodes.paragraph)
     rich_text = _create_rich_text_from_children(node=paragraph)
