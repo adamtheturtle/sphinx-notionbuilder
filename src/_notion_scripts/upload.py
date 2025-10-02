@@ -154,18 +154,18 @@ def main(
         (page,) = pages_matching_title
     else:
         page = session.create_page(parent=parent, title=title)
-        sys.stdout.write(f"Created new page: {title} (ID: {page.id})\n")
+        sys.stdout.write(f"Created new page: {title} ({page.url})\n")
 
     if icon:
         page.icon = Emoji(emoji=icon)
-
-    for child in page.children:
-        child.delete()
 
     block_objs = [
         _block_from_details(details=details, session=session)
         for details in blocks
     ]
 
+    for child in page.children:
+        child.delete()
+
     page.append(blocks=block_objs)
-    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
+    sys.stdout.write(f"Updated existing page: {title} ({page.url})\n")
