@@ -4,7 +4,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
 import json
-import sys
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -154,7 +153,7 @@ def main(
         (page,) = pages_matching_title
     else:
         page = session.create_page(parent=parent, title=title)
-        sys.stdout.write(f"Created new page: '{title}' ({page.url})\n")
+        click.echo(message=f"Created new page: '{title}' ({page.url})")
 
     if icon:
         page.icon = Emoji(emoji=icon)
@@ -171,11 +170,14 @@ def main(
         else:
             break
 
-    sys.stdout.write(
-        f"Matching blocks until index {match_until_index} for page '{title}'\n"
+    click.echo(
+        message=(
+            f"Matching blocks until index {match_until_index} for page "
+            f"'{title}'"
+        ),
     )
     for existing_page_block in page.children[match_until_index + 1 :]:
         existing_page_block.delete()
 
     page.append(blocks=block_objs[match_until_index + 1 :])
-    sys.stdout.write(f"Updated existing page: '{title}' ({page.url})\n")
+    click.echo(message=f"Updated existing page: '{title}' ({page.url})")
