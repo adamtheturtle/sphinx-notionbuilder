@@ -1066,21 +1066,6 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
-    node: checkbox_label,
-    *,
-    section_level: int,
-) -> list[Block]:
-    """
-    Process checkbox_label nodes by ignoring them (handled in bullet_list).
-    """
-    del node
-    del section_level
-    return []
-
-
-@beartype
-@_process_node_to_blocks.register
-def _(
     node: nodes.container,
     *,
     section_level: int,
