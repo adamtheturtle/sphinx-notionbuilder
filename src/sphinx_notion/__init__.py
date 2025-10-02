@@ -399,29 +399,6 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 
 
 @beartype
-def _process_list_item_recursively(
-    *,
-    node: nodes.list_item,
-    section_level: int,
-) -> list[Block]:
-    """
-    Recursively process a list item node and return a BulletedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoBulletedItem(text=rich_text)
-
-    for child in node.children[1:]:
-        child_blocks = _process_node_to_blocks(
-            child,
-            section_level=section_level,
-        )
-        block.append(blocks=child_blocks)
-    return [block]
-
-
-@beartype
 def _process_numbered_list_item_recursively(
     *,
     node: nodes.list_item,
@@ -600,12 +577,18 @@ def _(
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        result.extend(
-            _process_list_item_recursively(
-                node=list_item,
+        paragraph = list_item.children[0]
+        assert isinstance(paragraph, nodes.paragraph)
+        rich_text = _create_rich_text_from_children(node=paragraph)
+        block = UnoBulletedItem(text=rich_text)
+
+        for child in list_item.children[1:]:
+            child_blocks = _process_node_to_blocks(
+                child,
                 section_level=section_level,
             )
-        )
+            block.append(blocks=child_blocks)
+        result.append(block)
     return result
 
 
