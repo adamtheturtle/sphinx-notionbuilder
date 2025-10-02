@@ -168,4 +168,4 @@ def main(
         child.delete()
 
     page.append(blocks=block_objs)
-    sys.stdout.write(f"Updated existing page: {title} (ID: {page.id})\n")
+    sys.stdout.write(f"Updated existing page: {title} ({page.url})\n")
