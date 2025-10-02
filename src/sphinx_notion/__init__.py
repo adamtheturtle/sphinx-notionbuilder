@@ -402,6 +402,7 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
 def _process_list_item_recursively(
     *,
     node: nodes.list_item,
+    section_level: int,
 ) -> list[Block]:
     """
     Recursively process a list item node and return a BulletedItem.
@@ -411,25 +412,12 @@ def _process_list_item_recursively(
     rich_text = _create_rich_text_from_children(node=paragraph)
     block = UnoBulletedItem(text=rich_text)
 
-    assert isinstance(node, nodes.list_item)
-
     for child in node.children[1:]:
-        if isinstance(child, nodes.bullet_list):
-            # Handle nested bullet lists
-            for nested_list_item in child.children:
-                assert isinstance(nested_list_item, nodes.list_item)
-                block.append(
-                    blocks=_process_list_item_recursively(
-                        node=nested_list_item,
-                    )
-                )
-        else:
-            # Handle other content types (paragraphs, images, etc.)
-            child_blocks = _process_node_to_blocks(
-                child,
-                section_level=1,
-            )
-            block.append(blocks=child_blocks)
+        child_blocks = _process_node_to_blocks(
+            child,
+            section_level=section_level,
+        )
+        block.append(blocks=child_blocks)
     return [block]
 
 
@@ -609,13 +597,13 @@ def _(
     """
     Process bullet list nodes by creating Notion BulletedItem blocks.
     """
-    del section_level
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
         result.extend(
             _process_list_item_recursively(
                 node=list_item,
+                section_level=section_level,
             )
         )
     return result
