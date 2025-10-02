@@ -2651,6 +2651,8 @@ def test_task_list_quote(
         2. [ ] Task B
 
           foo
+
+        3. [ ] Task C
     """
 
     # The actual processing creates a flat structure where the nested task list
