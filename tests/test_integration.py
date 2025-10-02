@@ -2634,3 +2634,47 @@ def test_nested_task_list(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
     )
+
+
+def test_task_list_container_unpacking_error(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that reproduces the ValueError: too many values to unpack (expected 2)
+    when processing task list containers with more than 2 children.
+    """
+    rst_content = """
+    .. task-list::
+
+        1. [x] Task A
+        2. [ ] Task B
+
+          .. task-list::
+
+              * [x] Task B1
+              * [x] Task B2
+              * [] Task B3
+
+        3. [ ] Task C
+    """
+
+    # This test should fail with the unpacking error
+    # The task list container will have more than 2 children, causing the error
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        UnoToDoItem(text=text(text="Task B"), checked=False),
+        UnoToDoItem(text=text(text="Task B1"), checked=True),
+        UnoToDoItem(text=text(text="Task B2"), checked=True),
+        UnoToDoItem(text=text(text="Task B3"), checked=False),
+        UnoToDoItem(text=text(text="Task C"), checked=False),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
