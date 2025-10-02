@@ -446,8 +446,9 @@ def _process_task_list_item_recursively(
     """
     # Find the checkbox_label node to determine if it's checked
     checked = False
-    paragraph = None
+    main_paragraph = None
 
+    # First pass: find checkbox and main paragraph
     for child in node.children:
         if (
             hasattr(child, "__class__")
@@ -457,25 +458,21 @@ def _process_task_list_item_recursively(
             if hasattr(child, "attributes"):
                 checked = child.attributes.get("checked", False)
         elif isinstance(child, nodes.paragraph):
-            paragraph = child
+            # Take the first paragraph as the main task text
+            if main_paragraph is None:
+                main_paragraph = child
 
-    if paragraph is None:
-        # Fallback: look for any paragraph in the node
-        for child in node.children:
-            if isinstance(child, nodes.paragraph):
-                paragraph = child
-                break
-
-    if paragraph is None:
+    if main_paragraph is None:
         msg = "Task list item must contain a paragraph"
         raise ValueError(msg)
 
-    rich_text = _create_rich_text_from_children(node=paragraph)
+    rich_text = _create_rich_text_from_children(node=main_paragraph)
     block = UnoToDoItem(text=rich_text, checked=checked)
 
-    # Process nested task lists
+    # Process all nested content (task lists, paragraphs, etc.)
     for child in node.children:
         if isinstance(child, nodes.bullet_list):
+            # Process nested task lists
             for nested_list_item in child.children:
                 assert isinstance(nested_list_item, nodes.list_item)
                 block.append(
@@ -483,6 +480,36 @@ def _process_task_list_item_recursively(
                         node=nested_list_item,
                     )
                 )
+        elif isinstance(child, nodes.paragraph) and child != main_paragraph:
+            # Process additional paragraphs as children
+            paragraph_text = _create_rich_text_from_children(node=child)
+            paragraph_block = UnoParagraph(text=paragraph_text)
+            block.append(blocks=[paragraph_block])
+        elif isinstance(child, nodes.container):
+            # Process containers (like nested task lists)
+            container_blocks = _process_node_to_blocks(
+                child,
+                section_level=1,
+            )
+            block.append(blocks=container_blocks)
+        elif isinstance(child, nodes.enumerated_list):
+            # Process enumerated lists
+            for list_item in child.children:
+                assert isinstance(list_item, nodes.list_item)
+                # Check if this is a task list item
+                classes = list_item.attributes.get("classes", [])
+                if "task-list-item" in classes:
+                    block.append(
+                        blocks=_process_task_list_item_recursively(
+                            node=list_item,
+                        )
+                    )
+                else:
+                    # Process as regular numbered list item
+                    numbered_blocks = _process_numbered_list_item_recursively(
+                        node=list_item,
+                    )
+                    block.append(blocks=numbered_blocks)
 
     return [block]
 

@@ -2490,3 +2490,63 @@ def test_flat_task_list(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
     )
+
+
+def test_nested_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Nested task lists should create nested ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           1. [x] Task A
+           2. [ ] Task B
+
+              .. task-list::
+                  :clickable:
+
+                  * [x] Task B1
+                  * [x] Task B2
+                  * [ ] Task B3
+
+              A rogue paragraph with a reference to
+              the `parent task_list <task_list_example>`.
+
+           3. [ ] Task C
+    """
+    # Create Task B with nested children (including the rogue paragraph)
+    task_b = UnoToDoItem(text=text(text="Task B"), checked=False)
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B1"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B2"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B3"), checked=False)]
+    )
+    # The rogue paragraph is nested within Task B
+    # Note: The actual output has the text split across multiple rich text segments
+    rogue_paragraph = UnoParagraph(
+        text=text(text="A rogue paragraph with a reference to\nthe ")
+        + text(text="parent task_list <task_list_example>")
+        + text(text=".")
+    )
+    task_b.append(blocks=[rogue_paragraph])
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        task_b,
+        UnoToDoItem(text=text(text="Task C"), checked=False),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
