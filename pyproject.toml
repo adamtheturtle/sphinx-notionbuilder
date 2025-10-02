@@ -359,6 +359,12 @@ enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
 
+[tool.mypy_strict_kwargs]
+ignore_names = [
+    # Ignore this function as the keyword arguments are different across Python versions and platforms.
+    "urllib.request.url2pathname",
+]
+
 [tool.interrogate]
 fail-under = 100
 omit-covered-files = true
