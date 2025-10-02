@@ -83,6 +83,7 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
 optional-dependencies.sample = [
+    "sphinx-immaterial>=0.7.3",
     "sphinxcontrib-text-styles==0.2.0",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
