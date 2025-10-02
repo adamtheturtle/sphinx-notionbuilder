@@ -206,6 +206,53 @@ Some key features 👍:
 * Supports videos with URLs and local files
 * Supports PDFs with URLs and local files
 
+Nested Content in Bullet Lists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This demonstrates the new support for nesting various content types within bullet lists:
+
+* First bullet point with **bold text**
+
+  This is a paragraph nested within a bullet list item. It should work now!
+
+  .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+     :alt: Nested image in bullet list
+
+  * Nested bullet point
+  * Another nested bullet
+
+    * Deeply nested bullet
+
+* Second bullet point with *italic text*
+
+  Here's some code nested within a bullet list:
+
+  .. code-block:: python
+
+      """Python code."""
+
+      import sys
+
+      sys.stdout.write("Hello, world!")
+
+  And here's a note admonition nested within the bullet list:
+
+  .. note::
+
+     This is a note that's nested within a bullet list item. This should work now!
+
+* Third bullet point
+
+  This bullet point contains a table:
+
+  +----------+----------+
+  | Header 1 | Header 2 |
+  +==========+==========+
+  | Cell 1   | Cell 2   |
+  +----------+----------+
+  | Cell 3   | Cell 4   |
+  +----------+----------+
+
 Numbered Lists
 ~~~~~~~~~~~~~~
 

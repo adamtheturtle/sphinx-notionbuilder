@@ -1782,37 +1782,6 @@ def test_strikethrough_text(
     )
 
 
-def test_bullet_list_item_invalid_nested_child_error(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Bullet list items with invalid nested children raise a clear error message.
-    """
-    rst_content = """
-        * First bullet point
-
-          Some paragraph that should not be here
-
-          * Nested bullet
-    """
-
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_message = (
-        r"^The only thing Notion supports within a bullet list is a "
-        r"bullet list. Given paragraph on line 3 "
-        rf"in {re.escape(pattern=str(object=index_rst))}$"
-    )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
-
-
 def test_comment_ignored(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2453,4 +2422,112 @@ def test_text_styles_and_strike(
             "sphinxcontrib_text_styles",
             "sphinxnotes.strike",
         ),
+    )
+
+
+def test_bullet_list_with_nested_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that bullet lists can contain nested content like paragraphs, images,
+    code blocks, etc. This test should initially fail and then pass after
+    implementing the fix.
+    """
+    rst_content = """
+        * First bullet point with **bold text**
+
+          This is a paragraph nested within a bullet list item.
+
+          .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+             :alt: Nested image in bullet list
+
+          * Nested bullet point
+          * Another nested bullet
+
+        * Second bullet point with *italic text*
+
+          Here is some code nested within a bullet list:
+
+          .. code-block:: python
+
+             def nested_function():
+                 return This code is nested
+
+          .. note::
+
+             This is a note that is nested within a bullet list item.
+    """
+
+    # Expected structure:
+    # - First bullet with paragraph, image, and nested bullets
+    # - Second bullet with code block and note admonition
+
+    # Create rich text with proper formatting
+    first_bullet_text = text(text="First bullet point with ") + text(
+        text="bold text", bold=True
+    )
+    first_bullet = UnoBulletedItem(text=first_bullet_text)
+
+    # Add nested paragraph
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a paragraph nested within a bullet list item.")
+    )
+    first_bullet.append(blocks=[nested_paragraph])
+
+    # Add nested image
+    nested_image = UnoImage(
+        file=ExternalFile(
+            url="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
+        )
+    )
+    first_bullet.append(blocks=[nested_image])
+
+    # Add nested bullets
+    nested_bullet_1 = UnoBulletedItem(text=text(text="Nested bullet point"))
+    nested_bullet_2 = UnoBulletedItem(text=text(text="Another nested bullet"))
+    first_bullet.append(blocks=[nested_bullet_1])
+    first_bullet.append(blocks=[nested_bullet_2])
+
+    # Create rich text with proper formatting
+    second_bullet_text = text(text="Second bullet point with ") + text(
+        text="italic text", italic=True
+    )
+    second_bullet = UnoBulletedItem(text=second_bullet_text)
+
+    # Add the extra paragraph that appears in the actual output
+    extra_paragraph = UnoParagraph(
+        text=text(text="Here is some code nested within a bullet list:")
+    )
+    second_bullet.append(blocks=[extra_paragraph])
+
+    # Add nested code block
+    nested_code = UnoCode(
+        text="def nested_function():\n    return This code is nested",
+        language=CodeLang.PYTHON,
+    )
+    second_bullet.append(blocks=[nested_code])
+
+    # Add nested note admonition with correct styling
+    nested_note = UnoCallout(
+        text=text(
+            text="This is a note that is nested within a bullet list item."
+        ),
+        icon="📝",
+        color=BGColor.BLUE,
+    )
+    second_bullet.append(blocks=[nested_note])
+
+    expected_objects: list[Block] = [
+        first_bullet,
+        second_bullet,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
     )
