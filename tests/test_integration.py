@@ -2516,6 +2516,9 @@ def test_nested_task_list(
               A rogue paragraph with a reference to
               the `parent task_list <task_list_example>`.
 
+              - A list item without a checkbox.
+              - [ ] Another bullet point.
+
            3. [ ] Task C
     """
     # Create Task B with nested children (including the rogue paragraph)
@@ -2537,6 +2540,18 @@ def test_nested_task_list(
         + text(text=".")
     )
     task_b.append(blocks=[rogue_paragraph])
+
+    # Regular bullet list items should be nested within Task B as bullet items
+    regular_bullet = UnoBulletedItem(
+        text=text(text="A list item without a checkbox.")
+    )
+    task_b.append(blocks=[regular_bullet])
+
+    # Another bullet item (has "[ ]" but should be treated as a bullet)
+    another_bullet = UnoBulletedItem(
+        text=text(text="[ ] Another bullet point.")
+    )
+    task_b.append(blocks=[another_bullet])
 
     expected_objects: list[Block] = [
         UnoToDoItem(text=text(text="Task A"), checked=True),

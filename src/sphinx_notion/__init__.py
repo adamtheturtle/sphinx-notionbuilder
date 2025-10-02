@@ -472,14 +472,47 @@ def _process_task_list_item_recursively(
     # Process all nested content (task lists, paragraphs, etc.)
     for child in node.children:
         if isinstance(child, nodes.bullet_list):
-            # Process nested task lists
+            # Process nested bullet lists - check if items are task items or regular bullet items
             for nested_list_item in child.children:
                 assert isinstance(nested_list_item, nodes.list_item)
-                block.append(
-                    blocks=_process_task_list_item_recursively(
+                # Check if this is a task list item by looking for checkbox_label with valid content
+                has_valid_checkbox = False
+                for item_child in nested_list_item.children:
+                    if (
+                        hasattr(item_child, "__class__")
+                        and item_child.__class__.__name__ == "checkbox_label"
+                    ):
+                        # Check if the checkbox_label has valid checkbox content
+                        # by looking at the paragraph text for [x] or [ ] patterns
+                        for paragraph_child in nested_list_item.children:
+                            if isinstance(paragraph_child, nodes.paragraph):
+                                paragraph_text = paragraph_child.astext()
+                                print(
+                                    f"DEBUG: paragraph_text = '{paragraph_text}'"
+                                )
+                                if paragraph_text.startswith(
+                                    "[x]"
+                                ) or paragraph_text.startswith("[ ]"):
+                                    has_valid_checkbox = True
+                                    print(
+                                        f"DEBUG: Found valid checkbox: {paragraph_text}"
+                                    )
+                                    break
+                        break
+
+                if has_valid_checkbox:
+                    # This is a task list item, process as task
+                    block.append(
+                        blocks=_process_task_list_item_recursively(
+                            node=nested_list_item,
+                        )
+                    )
+                else:
+                    # This is a regular bullet list item, process as bullet
+                    bullet_blocks = _process_list_item_recursively(
                         node=nested_list_item,
                     )
-                )
+                    block.append(blocks=bullet_blocks)
         elif isinstance(child, nodes.paragraph) and child != main_paragraph:
             # Process additional paragraphs as children
             paragraph_text = _create_rich_text_from_children(node=child)
