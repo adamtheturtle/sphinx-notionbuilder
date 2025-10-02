@@ -120,59 +120,37 @@ def main(
     file_urls = _extract_file_urls_from_blocks(blocks=blocks)
 
     referenced_shas: set[str] = set()
-    session: Session | None = None
+    session = Session()
 
     for file_url in file_urls:
         file_sha, notion_url = _process_file_url(
-            url=file_url, sha_mapping=sha_mapping
+            url=file_url,
+            sha_mapping=sha_mapping,
         )
 
         if file_sha:
             referenced_shas.add(file_sha)
 
-            if notion_url is None:
-                if session is None:
-                    session = Session()
+            parsed = urlparse(url=file_url)
+            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-                parsed = urlparse(url=file_url)
-                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-
-                with file_path.open(mode="rb") as file_stream:
-                    uploaded_file = session.upload(
-                        file=file_stream,
-                        file_name=file_path.name,
-                    )
-
-                uploaded_file.wait_until_uploaded()
-
-                uploaded_url = getattr(uploaded_file, "url", None)
-                if uploaded_url is None and hasattr(uploaded_file, "get_url"):
-                    uploaded_url = uploaded_file.get_url()  # type: ignore[assignment]
-                if uploaded_url is None and hasattr(
-                    uploaded_file, "get_file_url"
-                ):
-                    uploaded_url = uploaded_file.get_file_url()  # type: ignore[assignment]
-                if uploaded_url is None:
-                    raise RuntimeError(
-                        f"Unable to determine Notion URL for uploaded file: {file_path}"
-                    )
-
-                notion_url = str(uploaded_url)
-                sha_mapping[file_sha] = notion_url
-                click.echo(
-                    message=f"Uploaded file: {file_path.name} ({file_sha[:16]}...)"
+            with file_path.open(mode="rb") as file_stream:
+                uploaded_file = session.upload(
+                    file=file_stream,
+                    file_name=file_path.name,
                 )
-            else:
-                click.echo(message=f"File already mapped: {file_sha[:16]}...")
+
+            uploaded_file.wait_until_uploaded()
+
+            breakpoint()
+            uploaded_url = uploaded_file.url
+            notion_url = str(object=uploaded_url)
+            sha_mapping[file_sha] = notion_url
 
     for sha in list(sha_mapping.keys()):
         if sha not in referenced_shas:
             notion_url = sha_mapping.pop(sha)
-            click.echo(
-                message=f"Removed unused mapping: {sha[:16]}... -> {notion_url}"
-            )
 
-    # Save updated mapping
     mapping_file.parent.mkdir(parents=True, exist_ok=True)
     mapping_file.write_text(
         data=json.dumps(obj=sha_mapping, indent=2, sort_keys=True),
