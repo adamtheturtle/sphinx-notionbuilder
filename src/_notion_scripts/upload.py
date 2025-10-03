@@ -276,8 +276,12 @@ def main(
                 file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
                 file_sha = _calculate_file_sha(file_path=file_path)
                 sha_to_block_id[file_sha] = str(object=uploaded_block.id)
-                msg = f"Updated SHA mapping for {file_path.name}: {uploaded_block.id}"
-                click.echo(message=msg)
+                click.echo(
+                    message=(
+                        f"Updated SHA mapping for {file_path.name}:"
+                        f"{uploaded_block.id}"
+                    )
+                )
 
     sha_mapping.write_text(
         data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True) + "\n",
