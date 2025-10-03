@@ -437,7 +437,7 @@ Audio Examples
 Simple Audio
 ~~~~~~~~~~~~
 
-.. audio:: https://voiceage.com/wbsamples/in_mono/Chorus.wav
+.. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
 
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
