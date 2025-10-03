@@ -258,20 +258,32 @@ def main(
     ]
     page.append(blocks=block_objs_to_upload)
 
-    for block in block_objs_to_upload:
-        if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
-            "file://"
-        ):
-            parsed = urlparse(url=block.url)
-            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            file_sha = _calculate_file_sha(file_path=file_path)
-            sha_to_block_id[file_sha] = str(object=block.id)
-            msg = f"Updated SHA mapping for {file_path.name}: {block.id}"
-            click.echo(message=msg)
+    for uploaded_block_index, uploaded_block in enumerate(
+        iterable=block_objs_to_upload
+    ):
+        if isinstance(uploaded_block, _FILE_BLOCK_TYPES):
+            pre_uploaded_block_details = blocks[
+                delete_start_index + uploaded_block_index
+            ]
+            pre_uploaded_block = Block.wrap_obj_ref(
+                UnoObjAPIBlock.model_validate(obj=pre_uploaded_block_details)
+            )
+            assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
+            click.echo(
+                message=f"Pre-uploaded block URL: {pre_uploaded_block.url}"
+            )
 
-        sha_mapping.write_text(
-            data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
+            if pre_uploaded_block.url.startswith("file://"):
+                parsed = urlparse(url=pre_uploaded_block.url)
+                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+                file_sha = _calculate_file_sha(file_path=file_path)
+                sha_to_block_id[file_sha] = str(object=uploaded_block.id)
+                msg = f"Updated SHA mapping for {file_path.name}: {uploaded_block.id}"
+                click.echo(message=msg)
+
+    sha_mapping.write_text(
+        data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
