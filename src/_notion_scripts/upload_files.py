@@ -6,11 +6,14 @@ based on what files are actually used in the build.
 
 import hashlib
 import json
+import sys
+from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
+import requests
 from beartype import beartype
 from ultimate_notion import Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
@@ -31,6 +34,16 @@ def _calculate_file_sha(*, file_path: Path) -> str:
         for chunk in iter(lambda: f.read(4096), b""):
             sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
+
+
+@beartype
+def _validate_file_upload_id(*, file_id: str) -> bool:
+    """
+    Validate that a file upload ID is still valid by checking the Notion API.
+    """
+    url = f"https://api.notion.com/v1/file-uploads/{file_id}"
+    response = requests.head(url=url, timeout=10)
+    return response.status_code == HTTPStatus.OK
 
 
 @beartype
@@ -55,7 +68,7 @@ def _process_file_url(
     url: str,
     sha_mapping: dict[str, str],
 ) -> tuple[str, str | None]:
-    """Process a file URL and return (sha, notion_url).
+    """Process a file URL and return (sha, file_id).
 
     Returns (sha, None) if the file is not mapped.
     """
@@ -71,8 +84,8 @@ def _process_file_url(
         return "", None
 
     file_sha = _calculate_file_sha(file_path=file_path)
-    notion_url = sha_mapping.get(file_sha)
-    return file_sha, notion_url
+    file_id = sha_mapping.get(file_sha)
+    return file_sha, file_id
 
 
 @click.command()
@@ -123,7 +136,7 @@ def main(
     session = Session()
 
     for file_url in file_urls:
-        file_sha, notion_url = _process_file_url(
+        file_sha, file_id = _process_file_url(
             url=file_url,
             sha_mapping=sha_mapping,
         )
@@ -131,25 +144,30 @@ def main(
         if file_sha:
             referenced_shas.add(file_sha)
 
-            parsed = urlparse(url=file_url)
-            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            # Only upload if not already mapped or if mapped file is invalid
+            if file_id is None or not _validate_file_upload_id(
+                file_id=file_id
+            ):
+                if file_id is not None:
+                    sys.stdout.write(
+                        f"File upload ID is no longer valid: {file_id}\n"
+                    )
+                parsed = urlparse(url=file_url)
+                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-            with file_path.open(mode="rb") as file_stream:
-                uploaded_file = session.upload(
-                    file=file_stream,
-                    file_name=file_path.name,
-                )
+                with file_path.open(mode="rb") as file_stream:
+                    uploaded_file = session.upload(
+                        file=file_stream,
+                        file_name=file_path.name,
+                    )
 
-            uploaded_file.wait_until_uploaded()
-
-            breakpoint()
-            uploaded_url = uploaded_file.url
-            notion_url = str(object=uploaded_url)
-            sha_mapping[file_sha] = notion_url
+                uploaded_file.wait_until_uploaded()
+                file_id = uploaded_file.id.hex
+                sha_mapping[file_sha] = file_id
 
     for sha in list(sha_mapping.keys()):
         if sha not in referenced_shas:
-            notion_url = sha_mapping.pop(sha)
+            sha_mapping.pop(sha)
 
     mapping_file.parent.mkdir(parents=True, exist_ok=True)
     mapping_file.write_text(

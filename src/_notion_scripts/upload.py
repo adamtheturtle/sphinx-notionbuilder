@@ -7,14 +7,12 @@ import hashlib
 import json
 import sys
 from enum import Enum
-from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
-import requests
 from beartype import beartype
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
@@ -22,7 +20,7 @@ from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
-from ultimate_notion.file import ExternalFile, UploadedFile
+from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 if TYPE_CHECKING:
@@ -43,15 +41,15 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _upload_local_file(
+def _get_uploaded_file(
     *,
     url: str,
     session: Session,
     sha_mapping: dict[str, str],
-) -> UploadedFile | ExternalFile | None:
-    """Upload a local file and return the uploaded file object.
+) -> UploadedFile | None:
+    """Get an uploaded file from SHA mapping.
 
-    Check SHA mapping first to avoid re-uploading files.
+    Assumes all files are already uploaded and mapped.
     """
     parsed = urlparse(url=url)
     if parsed.scheme != "file":
@@ -64,28 +62,15 @@ def _upload_local_file(
     file_sha = _calculate_file_sha(file_path=file_path)
 
     if file_sha in sha_mapping:
-        notion_url = sha_mapping[file_sha]
-        # Validate that the Notion URL is still accessible
-        if (
-            requests.head(url=notion_url, timeout=10).status_code
-            == HTTPStatus.OK
-        ):
-            sys.stdout.write(
-                f"Using existing file from SHA mapping: {notion_url}\n"
-            )
-            return ExternalFile(url=notion_url)
-        sys.stdout.write(
-            f"Notion URL in mapping is no longer accessible: {notion_url}\n"
-        )
-    # Upload the file normally
-    with file_path.open(mode="rb") as f:
-        uploaded_file = session.upload(
-            file=f,
-            file_name=file_path.name,
-        )
+        file_id = sha_mapping[file_sha]
+        sys.stdout.write(f"Using file from SHA mapping: {file_id}\n")
+        # Retrieve the uploaded file by ID
+        file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
+        return UploadedFile.from_file_upload(file_upload=file_upload_obj)
 
-    uploaded_file.wait_until_uploaded()
-    return uploaded_file
+    # File not found in mapping - this should not happen if upload_files.py ran first
+    sys.stderr.write(f"File not found in SHA mapping: {file_path}\n")
+    return None
 
 
 @beartype
@@ -97,12 +82,12 @@ def _block_from_details(
 ) -> Block:
     """Create a Block from a serialized block details.
 
-    Upload any required local files.
+    Get any required local files from SHA mapping.
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
     if isinstance(block, (UnoImage, UnoVideo, UnoAudio, UnoPDF)):
-        uploaded_file = _upload_local_file(
+        uploaded_file = _get_uploaded_file(
             url=block.url,
             session=session,
             sha_mapping=sha_mapping,
@@ -158,8 +143,8 @@ class _ParentType(Enum):
 )
 @click.option(
     "--sha-mapping",
-    help="JSON file mapping file SHAs to Notion URLs to avoid re-uploading",
-    required=False,
+    help="JSON file mapping file SHAs to Notion file IDs (required)",
+    required=True,
     type=click.Path(
         exists=True,
         path_type=Path,
@@ -175,21 +160,15 @@ def main(
     parent_type: _ParentType,
     title: str,
     icon: str | None = None,
-    sha_mapping: Path | None = None,
+    sha_mapping: Path,
 ) -> None:
     """
     Upload documentation to Notion.
     """
     session = Session()
 
-    sha_mapping_dict = (
-        dict(
-            json.loads(
-                s=sha_mapping.read_text(encoding="utf-8"),
-            )
-        )
-        if sha_mapping is not None
-        else {}
+    sha_mapping_dict = dict(
+        json.loads(s=sha_mapping.read_text(encoding="utf-8"))
     )
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
