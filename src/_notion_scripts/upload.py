@@ -269,10 +269,6 @@ def main(
                 UnoObjAPIBlock.model_validate(obj=pre_uploaded_block_details)
             )
             assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
-            click.echo(
-                message=f"Pre-uploaded block URL: {pre_uploaded_block.url}"
-            )
-
             if pre_uploaded_block.url.startswith("file://"):
                 parsed = urlparse(url=pre_uploaded_block.url)
                 file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
