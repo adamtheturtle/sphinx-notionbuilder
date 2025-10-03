@@ -60,7 +60,6 @@ def _get_uploaded_file(
     file_sha = _calculate_file_sha(file_path=file_path)
     mapping_entry = sha_mapping[file_sha]
     file_id = mapping_entry["file_id"]
-    click.echo(message=f"Using file from SHA mapping: {file_id}")
     file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
     return UploadedFile.from_file_upload(file_upload=file_upload_obj)
 

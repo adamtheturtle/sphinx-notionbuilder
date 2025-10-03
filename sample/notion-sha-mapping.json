@@ -1,6 +1,18 @@
 {
-  "10be79a09f2b92602ce383a0455f9fe6268f6792decba9383ddce53fded08137": "2819ce7b-60a4-81bf-8edb-00b2c00adc2a",
-  "822e7aef5ac028d8cf5565420b59a1f3286a0af6fa17d6f0c617151a1f386507": "2819ce7b-60a4-81c1-8cfd-00b2be7b8fa6",
-  "cd765602a4632f5abb325a66ce59aef506e84fdb6e4fe5590c634f4db567ef2c": "2819ce7b-60a4-816a-918a-00b20c160975",
-  "eeeca6a7b26d982c4de616bc3bf36b9f40fb090938081cb828709920613dae72": "2819ce7b-60a4-8132-8f82-00b2f0c1d670"
+  "10be79a09f2b92602ce383a0455f9fe6268f6792decba9383ddce53fded08137": {
+    "file_id": "2819ce7b-60a4-81af-840a-00b2ed86333e",
+    "file_name": "test-image.png"
+  },
+  "822e7aef5ac028d8cf5565420b59a1f3286a0af6fa17d6f0c617151a1f386507": {
+    "file_id": "2819ce7b-60a4-819d-911e-00b2e03c2059",
+    "file_name": "test-audio.wav"
+  },
+  "cd765602a4632f5abb325a66ce59aef506e84fdb6e4fe5590c634f4db567ef2c": {
+    "file_id": "2819ce7b-60a4-8177-ab59-00b28fbe2a91",
+    "file_name": "test-video.mp4"
+  },
+  "eeeca6a7b26d982c4de616bc3bf36b9f40fb090938081cb828709920613dae72": {
+    "file_id": "2819ce7b-60a4-812d-ad5d-00b2dd38f5cf",
+    "file_name": "test.pdf"
+  }
 }
