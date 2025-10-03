@@ -252,14 +252,13 @@ def main(
     for existing_page_block in page.children[delete_start_index:]:
         existing_page_block.delete()
 
-    # Append new blocks and get updated block objects with IDs
-    new_blocks = [
+    block_objs_to_upload = [
         _block_from_details(details=details, session=session)
         for details in blocks[delete_start_index:]
     ]
-    page.append(blocks=new_blocks)
+    page.append(blocks=block_objs_to_upload)
 
-    for block in new_blocks:
+    for block in block_objs_to_upload:
         if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
             "file://"
         ):
