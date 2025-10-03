@@ -186,7 +186,7 @@ def main(
     for sha, block_id_str in sha_to_block_id.items():
         block_id = UUID(hex=block_id_str)
         try:
-            block = session.api.blocks.retrieve(block=block_id)
+            session.api.blocks.retrieve(block=block_id)
         except APIResponseError:
             deleted_block_shas.add(sha)
             msg = f"Block {block_id} does not exist, removing from SHA mapping"
