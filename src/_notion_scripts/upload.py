@@ -21,10 +21,13 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+from ultimate_notion.obj_api.objects import UploadedFile as UploadedFileObjAPI
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
     from ultimate_notion.page import Page
+
+_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
 
 
 @beartype
@@ -77,7 +80,7 @@ def _block_from_details(
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, (UnoImage, UnoVideo, UnoAudio, UnoPDF)):
+    if isinstance(block, _FILE_BLOCK_TYPES):
         uploaded_file = _get_uploaded_file(
             url=block.url,
             session=session,
@@ -87,6 +90,19 @@ def _block_from_details(
             return block.__class__(file=uploaded_file, caption=block.caption)
 
     return block
+
+
+@beartype
+def _equal_blocks(*, existing_page_block: Block, local_block: Block) -> bool:
+    """
+    Check if two blocks are equal.
+    """
+    return (
+        isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+        and existing_page_block.__class__ == local_block.__class__
+        and isinstance(local_block.obj_ref.value, UploadedFileObjAPI)
+        and existing_page_block.id == local_block.obj_ref.value.file_upload.id
+    ) or existing_page_block == local_block
 
 
 @beartype
@@ -202,9 +218,13 @@ def main(
 
     last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=page.children):
-        if index < len(blocks) and existing_page_block == block_objs[index]:
+        if index < len(blocks) and _equal_blocks(
+            existing_page_block=existing_page_block,
+            local_block=block_objs[index],
+        ):
             last_matching_index = index
         else:
+            breakpoint()
             break
 
     click.echo(
