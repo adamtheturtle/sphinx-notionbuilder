@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
+from uuid import UUID
 
 import click
 from beartype import beartype
@@ -180,6 +181,17 @@ def main(
     else:
         sha_to_block_id = {}
 
+    deleted_block_shas: set[str] = set()
+    for sha, block_id_str in sha_to_block_id.items():
+        block_id = UUID(hex=block_id_str)
+        block = session.api.blocks.retrieve(block=block_id)
+        deleted_block_shas.add(sha)
+        msg = f"Block {block_id} does not exist, removing from SHA mapping"
+        click.echo(message=msg)
+
+    for deleted_block_sha in deleted_block_shas:
+        del sha_to_block_id[deleted_block_sha]
+
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     parent: Page | Database
@@ -242,20 +254,18 @@ def main(
         _block_from_details(details=details, session=session)
         for details in blocks[delete_start_index:]
     ]
-    if new_blocks:
-        page.append(blocks=new_blocks)
+    page.append(blocks=new_blocks)
 
-        # Update SHA mapping with new block IDs
-        for block in new_blocks:
-            if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
-                "file://"
-            ):
-                parsed = urlparse(url=block.url)
-                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-                file_sha = _calculate_file_sha(file_path=file_path)
-                sha_to_block_id[file_sha] = str(object=block.id)
-                msg = f"Updated SHA mapping for {file_path.name}: {block.id}"
-                click.echo(message=msg)
+    for block in new_blocks:
+        if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
+            "file://"
+        ):
+            parsed = urlparse(url=block.url)
+            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            file_sha = _calculate_file_sha(file_path=file_path)
+            sha_to_block_id[file_sha] = str(object=block.id)
+            msg = f"Updated SHA mapping for {file_path.name}: {block.id}"
+            click.echo(message=msg)
 
         sha_mapping.write_text(
             data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True),

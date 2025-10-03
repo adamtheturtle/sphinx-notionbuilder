@@ -1,18 +1,3 @@
 {
-  "10be79a09f2b92602ce383a0455f9fe6268f6792decba9383ddce53fded08137": {
-    "file_id": "2819ce7b-60a4-81af-840a-00b2ed86333e",
-    "file_name": "test-image.png"
-  },
-  "822e7aef5ac028d8cf5565420b59a1f3286a0af6fa17d6f0c617151a1f386507": {
-    "file_id": "2819ce7b-60a4-819d-911e-00b2e03c2059",
-    "file_name": "test-audio.wav"
-  },
-  "cd765602a4632f5abb325a66ce59aef506e84fdb6e4fe5590c634f4db567ef2c": {
-    "file_id": "2819ce7b-60a4-8177-ab59-00b28fbe2a91",
-    "file_name": "test-video.mp4"
-  },
-  "eeeca6a7b26d982c4de616bc3bf36b9f40fb090938081cb828709920613dae72": {
-    "file_id": "2819ce7b-60a4-812d-ad5d-00b2dd38f5cf",
-    "file_name": "test.pdf"
-  }
+  "foo": "2819ce7b-60a4-81ae-883a-f68abce103b0"
 }
