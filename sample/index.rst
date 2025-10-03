@@ -9,9 +9,5 @@ Task Lists
        .. task-list::
            :clickable:
 
-           * [x] Task B1
-           * [x] Task B2
-           * [] Task B3
-
            A rogue paragraph with a reference to
            the `parent task_list <task_list_example>`.
