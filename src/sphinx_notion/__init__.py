@@ -193,7 +193,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 color=_color_from_node(node=child),
             )
         elif isinstance(child, nodes.title_reference):
-            # We match the behaviour of the HTML builder here.
+            # We match the behavior of the HTML builder here.
             # If you render ``A `B``` in HTML, it will render as
             # ``A <i>B</i>``.
             new_text = text(

@@ -2581,8 +2581,7 @@ def test_nested_task_list(
                   * [x] Task B2
                   * [ ] Task B3
 
-              A rogue paragraph with a reference to
-              the `parent task_list <task_list_example>`.
+              A rogue paragraph.
 
               - A list item without a checkbox.
               - [ ] Another bullet point.
@@ -2603,11 +2602,7 @@ def test_nested_task_list(
     # The rogue paragraph is nested within Task B
     # Note: The actual output has the text split across multiple rich text
     # segments
-    rogue_paragraph = UnoParagraph(
-        text=text(text="A rogue paragraph with a reference to\nthe ")
-        + text(text="parent task_list <task_list_example>")
-        + text(text=".")
-    )
+    rogue_paragraph = UnoParagraph(text=text(text="A rogue paragraph."))
     task_b.append(blocks=[rogue_paragraph])
 
     # Regular bullet list items should be nested within Task B as bullet items

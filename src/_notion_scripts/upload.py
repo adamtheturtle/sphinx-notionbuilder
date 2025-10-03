@@ -200,65 +200,11 @@ def main(
         for details in blocks
     ]
 
-    # from ultimate_notion.blocks import BulletedItem, Paragraph, ToDoItem
-
-    # for page_block in page.children:
-    #     page_block.delete()
-
-    # original_task_b = ToDoItem(text="Task B", checked=False)
-    # original_task_b1 = ToDoItem(text="Task B1", checked=True)
-    # original_task_b2 = ToDoItem(text="Task B2", checked=True)
-    # original_task_b3 = ToDoItem(text="Task B3", checked=False)
-    # original_paragraph = Paragraph(
-    #     text="A rogue paragraph with a reference to\nthe parent task_list <task_list_example>."
-    # )
-    # original_bullet = BulletedItem(text="Bullet")
-    # original_task_another_bullet = ToDoItem(
-    #     text="Another bullet", checked=False
-    # )
-    # original_task_b.append(blocks=[original_task_b1])
-    # original_task_b.append(blocks=[original_task_b2])
-    # original_task_b.append(blocks=[original_task_b3])
-    # original_task_b.append(blocks=[original_paragraph])
-    # original_task_b.append(blocks=[original_bullet])
-    # original_task_b.append(blocks=[original_task_another_bullet])
-
-    # new_task_b = ToDoItem(text="Task B", checked=False)
-    # new_task_b1 = ToDoItem(text="Task B1", checked=True)
-    # new_task_b2 = ToDoItem(text="Task B2", checked=True)
-    # new_task_b3 = ToDoItem(text="Task B3", checked=False)
-    # new_paragraph = Paragraph(
-    #     text="A rogue paragraph with a reference to\nthe parent task_list <task_list_example>."
-    # )
-    # new_bullet = BulletedItem(text="Bullet")
-    # new_task_another_bullet = ToDoItem(text="Another bullet", checked=False)
-    # new_task_b.append(blocks=[new_task_b1])
-    # new_task_b.append(blocks=[new_task_b2])
-    # new_task_b.append(blocks=[new_task_b3])
-    # new_task_b.append(blocks=[new_paragraph])
-    # new_task_b.append(blocks=[new_bullet])
-    # new_task_b.append(blocks=[new_task_another_bullet])
-
-    # block_child = original_task_b
-    # another_block_child = new_task_b
-    # assert block_child == another_block_child
-
-    # page.append(blocks=[block_child])
-
-    # page.reload()
-    # assert len(page.children) == 1
-    # assert page.children[0] == block_child
-
-    # # This hits an assertion error
-    # assert page.children[0] == another_block_child
-
     last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=page.children):
         if index < len(blocks) and existing_page_block == block_objs[index]:
             last_matching_index = index
-            print("MATCHED", existing_page_block.to_markdown())
         else:
-            breakpoint()
             break
 
     click.echo(
