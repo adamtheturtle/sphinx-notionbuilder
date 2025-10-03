@@ -245,7 +245,6 @@ def main(
         ):
             last_matching_index = index
         else:
-            breakpoint()
             break
 
     click.echo(
