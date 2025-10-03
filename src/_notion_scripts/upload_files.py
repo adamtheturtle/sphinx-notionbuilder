@@ -6,6 +6,7 @@ based on what files are actually used in the build.
 
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
@@ -22,6 +23,17 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 
+@dataclass
+class FileProcessingResult:
+    """
+    Result of processing a file URL.
+    """
+
+    sha: str
+    file_id: str | None
+    file_name: str
+
+
 @beartype
 def _calculate_file_sha(*, file_path: Path) -> str:
     """
@@ -35,15 +47,18 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _validate_file_upload_id(*, file_id: str, session: Session) -> bool:
+def _validate_file_upload_id(
+    *, file_id: str, file_name: str, session: Session
+) -> bool:
     """
-    Validate that a file upload ID is still valid by checking the Notion API.
+    Validate that a file upload ID is still valid and has the correct filename.
     """
     try:
-        session.api.uploads.retrieve(upload_id=file_id)
+        upload_info = session.api.uploads.retrieve(upload_id=file_id)
     except APIResponseError:
         return False
-    return True
+    else:
+        return upload_info.filename == file_name
 
 
 @beartype
@@ -66,26 +81,30 @@ def _extract_file_urls_from_blocks(*, blocks: list[Block]) -> set[str]:
 def _process_file_url(
     *,
     url: str,
-    sha_mapping: dict[str, str],
-) -> tuple[str, str | None]:
-    """Process a file URL and return (sha, file_id).
+    sha_mapping: dict[str, dict[str, str]],
+) -> FileProcessingResult:
+    """Process a file URL and return file processing result.
 
-    Returns (sha, None) if the file is not mapped.
+    Returns empty result if file is not mapped or doesn't exist.
     """
     parsed = urlparse(url=url)
     if parsed.scheme != "file":
-        return "", None
+        return FileProcessingResult(sha="", file_id=None, file_name="")
 
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
     if not file_path.exists():
-        return "", None
+        return FileProcessingResult(sha="", file_id=None, file_name="")
 
     file_sha = _calculate_file_sha(file_path=file_path)
-    file_id = sha_mapping.get(file_sha)
-    return file_sha, file_id
+    file_name = file_path.name
+    mapping_entry = sha_mapping.get(file_sha)
+    file_id = mapping_entry.get("file_id") if mapping_entry else None
+    return FileProcessingResult(
+        sha=file_sha, file_id=file_id, file_name=file_name
+    )
 
 
 @click.command()
@@ -121,7 +140,9 @@ def main(
     Upload files to Notion and update the SHA mapping.
     """
     mapping_file_content = mapping_file.read_text(encoding="utf-8")
-    sha_mapping = dict(json.loads(s=mapping_file_content))
+    sha_mapping: dict[str, dict[str, str]] = dict(
+        json.loads(s=mapping_file_content)
+    )
 
     build_content = build_file.read_text(encoding="utf-8")
     block_details = json.loads(s=build_content)
@@ -136,23 +157,26 @@ def main(
     session = Session()
 
     for file_url in file_urls:
-        file_sha, file_id = _process_file_url(
+        result = _process_file_url(
             url=file_url,
             sha_mapping=sha_mapping,
         )
 
-        if file_sha:
-            referenced_shas.add(file_sha)
+        if result.sha:
+            referenced_shas.add(result.sha)
 
             # Only upload if not already mapped or if mapped file is invalid
-            if file_id is None or not _validate_file_upload_id(
-                file_id=file_id,
+            if result.file_id is None or not _validate_file_upload_id(
+                file_id=result.file_id,
+                file_name=result.file_name,
                 session=session,
             ):
-                if file_id is not None:
+                if result.file_id is not None:
                     click.echo(
-                        message=f"File upload ID '{file_id}' no longer exists "
-                        "on Notion",
+                        message=(
+                            f"File upload ID '{result.file_id}' no longer "
+                            "exists on Notion or filename mismatch"
+                        ),
                     )
                 parsed = urlparse(url=file_url)
                 file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
@@ -165,7 +189,10 @@ def main(
 
                 uploaded_file.wait_until_uploaded()
                 file_id = str(object=uploaded_file.id)
-                sha_mapping[file_sha] = file_id
+                sha_mapping[result.sha] = {
+                    "file_id": file_id,
+                    "file_name": result.file_name,
+                }
 
     for sha in list(sha_mapping.keys()):
         if sha not in referenced_shas:

@@ -44,7 +44,7 @@ def _get_uploaded_file(
     *,
     url: str,
     session: Session,
-    sha_mapping: dict[str, str],
+    sha_mapping: dict[str, dict[str, str]],
 ) -> UploadedFile | None:
     """Get an uploaded file from SHA mapping.
 
@@ -58,7 +58,8 @@ def _get_uploaded_file(
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
     file_sha = _calculate_file_sha(file_path=file_path)
-    file_id = sha_mapping[file_sha]
+    mapping_entry = sha_mapping[file_sha]
+    file_id = mapping_entry["file_id"]
     click.echo(message=f"Using file from SHA mapping: {file_id}")
     file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
     return UploadedFile.from_file_upload(file_upload=file_upload_obj)
@@ -69,7 +70,7 @@ def _block_from_details(
     *,
     details: dict[str, Any],
     session: Session,
-    sha_mapping: dict[str, str],
+    sha_mapping: dict[str, dict[str, str]],
 ) -> Block:
     """Create a Block from a serialized block details.
 
@@ -158,7 +159,7 @@ def main(
     """
     session = Session()
 
-    sha_mapping_dict = dict(
+    sha_mapping_dict: dict[str, dict[str, str]] = dict(
         json.loads(s=sha_mapping.read_text(encoding="utf-8"))
     )
 
