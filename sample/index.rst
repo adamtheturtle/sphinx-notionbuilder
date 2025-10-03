@@ -289,8 +289,7 @@ The builder supports task lists with checkboxes:
            * [x] Task B2
            * [] Task B3
 
-           A rogue paragraph with a reference to
-           the `parent task_list <task_list_example>`.
+           A rogue paragraph.
 
            - A list item without a checkbox.
            - [ ] Another bullet point.
@@ -1562,8 +1561,7 @@ The builder supports task lists with checkboxes:
            * [x] Task B2
            * [] Task B3
 
-           A rogue paragraph with a reference to
-           the `parent task_list <task_list_example>`.
+           A rogue paragraph.
 
            - A list item without a checkbox.
            - [ ] Another bullet point.
