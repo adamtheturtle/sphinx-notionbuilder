@@ -13,7 +13,6 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
-from notion_client.errors import APIResponseError
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from ultimate_notion.page import Page
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
+_FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
 
 
 @beartype
@@ -42,51 +42,27 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _validate_block_id(
-    *, block_id: str, file_name: str, session: Session
-) -> bool:
+def _file_block_exists(*, block_id: str, session: Session) -> bool:
     """
-    Validate that a block ID is still valid and has the correct filename.
+    Validate that a block ID still exists and is a file block.
     """
-    try:
-        block = session.api.blocks.retrieve(block=block_id)
-        # Check if it's a file block and has the correct filename
-        block_types = ["image", "video", "audio", "pdf"]
-        if not (hasattr(block, "type") and block.type in block_types):
-            return False
-        if not hasattr(block, block.type):
-            return False
-        file_info = getattr(block, block.type)
-        return (
-            hasattr(file_info, "file")
-            and hasattr(file_info.file, "name")
-            and file_info.file.name == file_name
-        )
-    except APIResponseError:
-        return False
+    block = session.api.blocks.retrieve(block=block_id)
+    return isinstance(block, _FILE_BLOCK_TYPES)
 
 
 @beartype
 def _upload_file_and_get_block(
     *,
-    url: str,
+    block: _FileBlock,
     session: Session,
 ) -> Block:
     """
     Upload a file and return the corresponding block.
     """
-    parsed = urlparse(url=url)
-    if parsed.scheme != "file":
-        msg = f"Expected file URL, got: {url}"
-        raise ValueError(msg)
-
+    parsed = urlparse(url=block.url)
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-
-    if not file_path.exists():
-        msg = f"File not found: {file_path}"
-        raise FileNotFoundError(msg)
 
     with file_path.open(mode="rb") as file_stream:
         uploaded_file = session.upload(
@@ -96,56 +72,33 @@ def _upload_file_and_get_block(
 
     uploaded_file.wait_until_uploaded()
 
-    # Create the appropriate block type based on file extension
-    file_ext = file_path.suffix.lower()
-    if file_ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
-        return UnoImage(file=uploaded_file)
-    if file_ext in [".mp4", ".webm", ".mov"]:
-        return UnoVideo(file=uploaded_file)
-    if file_ext in [".mp3", ".wav", ".ogg"]:
-        return UnoAudio(file=uploaded_file)
-    if file_ext == ".pdf":
-        return UnoPDF(file=uploaded_file)
-    msg = f"Unsupported file type: {file_ext}"
-    raise ValueError(msg)
+    return block.__class__(file=uploaded_file, caption=block.caption)
 
 
 @beartype
 def _get_or_upload_file_block(
     *,
-    url: str,
+    block: _FileBlock,
     session: Session,
     sha_mapping: dict[str, str],
 ) -> Block:
     """
     Get an existing file block from SHA mapping or upload and create new.
     """
-    parsed = urlparse(url=url)
-    if parsed.scheme != "file":
-        msg = f"Expected file URL, got: {url}"
-        raise ValueError(msg)
+    parsed = urlparse(url=block.url)
 
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
     file_sha = _calculate_file_sha(file_path=file_path)
-    file_name = file_path.name
 
-    # Check if we have a mapping for this file
     if file_sha in sha_mapping:
         block_id = sha_mapping[file_sha]
-        # Validate that the block still exists and has the correct filename
-        if _validate_block_id(
-            block_id=block_id,
-            file_name=file_name,
-            session=session,
-        ):
-            # Get the existing block and wrap it
+        if _file_block_exists(block_id=block_id, session=session):
             block_obj = session.api.blocks.retrieve(block=block_id)
             return Block.wrap_obj_ref(block_obj)
 
-    # Upload new file and create block
-    return _upload_file_and_get_block(url=url, session=session)
+    return _upload_file_and_get_block(block=block, session=session)
 
 
 @beartype
@@ -165,7 +118,7 @@ def _block_from_details(
         "file://"
     ):
         return _get_or_upload_file_block(
-            url=block.url,
+            block=block,
             session=session,
             sha_mapping=sha_mapping,
         )
