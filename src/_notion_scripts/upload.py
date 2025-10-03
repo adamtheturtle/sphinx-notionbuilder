@@ -280,7 +280,7 @@ def main(
                 click.echo(message=msg)
 
     sha_mapping.write_text(
-        data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True),
+        data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
 
