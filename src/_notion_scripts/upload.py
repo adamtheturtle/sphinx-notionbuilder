@@ -200,29 +200,22 @@ def main(
         for details in blocks
     ]
 
-    blocks_match_until_and_including_index = -1
+    last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=page.children):
         if index < len(blocks) and existing_page_block == block_objs[index]:
-            blocks_match_until_and_including_index = index
+            last_matching_index = index
         else:
             break
 
     click.echo(
         message=(
-            f"Matching blocks until index "
-            f"{blocks_match_until_and_including_index}"
-            f" for page '{title}'"
+            f"Matching blocks until index {last_matching_index} for page "
+            f"'{title}'"
         ),
     )
-    for existing_page_block in page.children[
-        blocks_match_until_and_including_index + 1 :
-    ]:
+    delete_start_index = (last_matching_index or -1) + 1
+    for existing_page_block in page.children[delete_start_index:]:
         existing_page_block.delete()
 
-    page.append(
-        blocks=block_objs[blocks_match_until_and_including_index + 1 :]
-    )
-    page.append(
-        blocks=block_objs[blocks_match_until_and_including_index + 1 :]
-    )
+    page.append(blocks=block_objs[delete_start_index:])
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
