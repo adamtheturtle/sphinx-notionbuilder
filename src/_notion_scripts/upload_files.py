@@ -12,7 +12,7 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
-from notion_client.client import APIResponseError
+from notion_client.errors import APIResponseError
 from ultimate_notion import Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
