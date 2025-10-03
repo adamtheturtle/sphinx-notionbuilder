@@ -27,15 +27,6 @@ jobs:
           rm -rf ./build-sample
           uv run --extra=sample sphinx-build -W -b notion sample ./build-sample
 
-      - name: Upload files to Notion
-        run: |
-          uv run upload-files \
-            --mapping-file "./sample/notion-sha-mapping.json" \
-            --build-file "./build-sample/index.json"
-
-      - name: Show SHA mapping
-        run: cat "./sample/notion-sha-mapping.json"
-
       - name: Publish to Notion
         run: |
           uv run --all-extras notion-upload \

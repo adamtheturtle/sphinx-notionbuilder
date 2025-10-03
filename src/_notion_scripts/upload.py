@@ -13,15 +13,14 @@ from urllib.request import url2pathname
 
 import click
 from beartype import beartype
+from notion_client.errors import APIResponseError
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
-from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
-from ultimate_notion.obj_api.objects import UploadedFile as UploadedFileObjAPI
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
@@ -43,28 +42,110 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _get_uploaded_file(
+def _validate_block_id(
+    *, block_id: str, file_name: str, session: Session
+) -> bool:
+    """
+    Validate that a block ID is still valid and has the correct filename.
+    """
+    try:
+        block = session.api.blocks.retrieve(block=block_id)
+        # Check if it's a file block and has the correct filename
+        block_types = ["image", "video", "audio", "pdf"]
+        if not (hasattr(block, "type") and block.type in block_types):
+            return False
+        if not hasattr(block, block.type):
+            return False
+        file_info = getattr(block, block.type)
+        return (
+            hasattr(file_info, "file")
+            and hasattr(file_info.file, "name")
+            and file_info.file.name == file_name
+        )
+    except APIResponseError:
+        return False
+
+
+@beartype
+def _upload_file_and_get_block(
     *,
     url: str,
     session: Session,
-    sha_mapping: dict[str, dict[str, str]],
-) -> UploadedFile | None:
-    """Get an uploaded file from SHA mapping.
-
-    Assumes all files are already uploaded and mapped.
+) -> Block:
+    """
+    Upload a file and return the corresponding block.
     """
     parsed = urlparse(url=url)
     if parsed.scheme != "file":
-        return None
+        msg = f"Expected file URL, got: {url}"
+        raise ValueError(msg)
+
+    # Ignore ``mypy`` error as the keyword arguments are different across
+    # Python versions and platforms.
+    file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+
+    if not file_path.exists():
+        msg = f"File not found: {file_path}"
+        raise FileNotFoundError(msg)
+
+    with file_path.open(mode="rb") as file_stream:
+        uploaded_file = session.upload(
+            file=file_stream,
+            file_name=file_path.name,
+        )
+
+    uploaded_file.wait_until_uploaded()
+
+    # Create the appropriate block type based on file extension
+    file_ext = file_path.suffix.lower()
+    if file_ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+        return UnoImage(file=uploaded_file)
+    if file_ext in [".mp4", ".webm", ".mov"]:
+        return UnoVideo(file=uploaded_file)
+    if file_ext in [".mp3", ".wav", ".ogg"]:
+        return UnoAudio(file=uploaded_file)
+    if file_ext == ".pdf":
+        return UnoPDF(file=uploaded_file)
+    msg = f"Unsupported file type: {file_ext}"
+    raise ValueError(msg)
+
+
+@beartype
+def _get_or_upload_file_block(
+    *,
+    url: str,
+    session: Session,
+    sha_mapping: dict[str, str],
+) -> Block:
+    """
+    Get an existing file block from SHA mapping or upload and create new.
+    """
+    parsed = urlparse(url=url)
+    if parsed.scheme != "file":
+        msg = f"Expected file URL, got: {url}"
+        raise ValueError(msg)
 
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
     file_sha = _calculate_file_sha(file_path=file_path)
-    mapping_entry = sha_mapping[file_sha]
-    file_id = mapping_entry["file_id"]
-    file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
-    return UploadedFile.from_file_upload(file_upload=file_upload_obj)
+    file_name = file_path.name
+
+    # Check if we have a mapping for this file
+    if file_sha in sha_mapping:
+        block_id = sha_mapping[file_sha]
+        # Validate that the block still exists and has the correct filename
+        if _validate_block_id(
+            block_id=block_id,
+            file_name=file_name,
+            session=session,
+        ):
+            # Get the existing block and wrap it
+            block_obj = session.api.blocks.retrieve(block=block_id)
+            return Block.wrap_obj_ref(block_obj)
+
+    # Upload new file and create block
+    return _upload_file_and_get_block(url=url, session=session)
 
 
 @beartype
@@ -72,22 +153,22 @@ def _block_from_details(
     *,
     details: dict[str, Any],
     session: Session,
-    sha_mapping: dict[str, dict[str, str]],
+    sha_mapping: dict[str, str],
 ) -> Block:
     """Create a Block from a serialized block details.
 
-    Get any required local files from SHA mapping.
+    Get any required local files from SHA mapping or upload them.
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, _FILE_BLOCK_TYPES):
-        uploaded_file = _get_uploaded_file(
+    if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
+        "file://"
+    ):
+        return _get_or_upload_file_block(
             url=block.url,
             session=session,
             sha_mapping=sha_mapping,
         )
-        if uploaded_file is not None:
-            return block.__class__(file=uploaded_file, caption=block.caption)
 
     return block
 
@@ -97,12 +178,7 @@ def _equal_blocks(*, existing_page_block: Block, local_block: Block) -> bool:
     """
     Check if two blocks are equal.
     """
-    return (
-        isinstance(existing_page_block, _FILE_BLOCK_TYPES)
-        and existing_page_block.__class__ == local_block.__class__
-        and isinstance(local_block.obj_ref.value, UploadedFileObjAPI)
-        and existing_page_block.id == local_block.obj_ref.value.file_upload.id
-    ) or existing_page_block == local_block
+    return existing_page_block == local_block
 
 
 @beartype
@@ -150,7 +226,7 @@ class _ParentType(Enum):
 )
 @click.option(
     "--sha-mapping",
-    help="JSON file mapping file SHAs to Notion file IDs (required)",
+    help="JSON file mapping file SHAs to Notion block IDs (required)",
     required=True,
     type=click.Path(
         exists=True,
@@ -174,9 +250,14 @@ def main(
     """
     session = Session()
 
-    sha_mapping_dict: dict[str, dict[str, str]] = dict(
-        json.loads(s=sha_mapping.read_text(encoding="utf-8"))
-    )
+    # Load SHA mapping (format: {sha: block_id})
+    sha_mapping_content = sha_mapping.read_text(encoding="utf-8")
+    if sha_mapping_content.strip():
+        sha_mapping_dict: dict[str, str] = dict(
+            json.loads(s=sha_mapping_content)
+        )
+    else:
+        sha_mapping_dict = {}
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
@@ -224,7 +305,6 @@ def main(
         ):
             last_matching_index = index
         else:
-            breakpoint()
             break
 
     click.echo(
@@ -237,5 +317,35 @@ def main(
     for existing_page_block in page.children[delete_start_index:]:
         existing_page_block.delete()
 
-    page.append(blocks=block_objs[delete_start_index:])
+    # Append new blocks and get updated block objects with IDs
+    new_blocks = block_objs[delete_start_index:]
+    if new_blocks:
+        page.append(blocks=new_blocks)
+
+        # Update SHA mapping with new block IDs
+        for block in new_blocks:
+            if (
+                isinstance(block, _FILE_BLOCK_TYPES)
+                and hasattr(block, "url")
+                and block.url.startswith("file://")
+            ):
+                parsed = urlparse(url=block.url)
+                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+                file_sha = _calculate_file_sha(file_path=file_path)
+                # The block should now have an ID after being appended
+                if hasattr(block, "id") and block.id:
+                    block_id_str = str(object=block.id)
+                    sha_mapping_dict[file_sha] = block_id_str
+                    msg = (
+                        f"Updated SHA mapping for {file_path.name}: "
+                        f"{block_id_str}"
+                    )
+                    click.echo(message=msg)
+
+        # Write updated SHA mapping back to file
+        sha_mapping.write_text(
+            data=json.dumps(obj=sha_mapping_dict, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
