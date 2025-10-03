@@ -65,7 +65,10 @@ def _is_existing_equivalent(
         file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
         file_sha = _calculate_file_sha(file_path=file_path)
         existing_page_block_id_with_file_sha = sha_to_block_id.get(file_sha)
-        if existing_page_block_id_with_file_sha == existing_page_block.id:
+        if (
+            UUID(hex=existing_page_block_id_with_file_sha)
+            == existing_page_block.id
+        ):
             return True
 
     return False
@@ -240,6 +243,7 @@ def main(
         ):
             last_matching_index = index
         else:
+            breakpoint()
             break
 
     click.echo(
