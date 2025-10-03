@@ -262,12 +262,9 @@ def main(
         iterable=block_objs_to_upload
     ):
         if isinstance(uploaded_block, _FILE_BLOCK_TYPES):
-            pre_uploaded_block_details = blocks[
+            pre_uploaded_block = block_objs[
                 delete_start_index + uploaded_block_index
             ]
-            pre_uploaded_block = Block.wrap_obj_ref(
-                UnoObjAPIBlock.model_validate(obj=pre_uploaded_block_details)
-            )
             assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
             if pre_uploaded_block.url.startswith("file://"):
                 parsed = urlparse(url=pre_uploaded_block.url)
