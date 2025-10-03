@@ -6,7 +6,6 @@ based on what files are actually used in the build.
 
 import hashlib
 import json
-import sys
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
@@ -151,8 +150,9 @@ def main(
                 session=session,
             ):
                 if file_id is not None:
-                    sys.stdout.write(
-                        f"File upload ID is no longer valid: {file_id}\n"
+                    click.echo(
+                        message=f"File upload ID '{file_id}' no longer exists "
+                        "on Notion",
                     )
                 parsed = urlparse(url=file_url)
                 file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
