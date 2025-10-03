@@ -37,7 +37,7 @@ dependencies = [
     "docutils>=0.21",
     "notion-client>=2.5.0",
     "sphinx>=8.2.3",
-    "sphinx-immaterial>=0.13.6",
+    "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
@@ -63,12 +63,12 @@ optional-dependencies.dev = [
     "pylint[spelling]==3.3.8",
     "pylint-per-file-ignores==2.0.3",
     "pyproject-fmt==2.7.0",
-    "pyright==1.1.405",
+    "pyright==1.1.406",
     "pyroma==5.0",
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
     "pyyaml==6.0.3",
-    "ruff==0.13.2",
+    "ruff==0.13.3",
     # We add shellcheck-py not only for shell scripts and shell code blocks,
     # but also because having it installed means that ``actionlint-py`` will
     # use it to lint shell commands in GitHub workflow files.
