@@ -2581,8 +2581,7 @@ def test_nested_task_list(
                   * [x] Task B2
                   * [ ] Task B3
 
-              A rogue paragraph with a reference to
-              the `parent task_list <task_list_example>`.
+              A rogue paragraph.
 
               - A list item without a checkbox.
               - [ ] Another bullet point.
@@ -2603,11 +2602,7 @@ def test_nested_task_list(
     # The rogue paragraph is nested within Task B
     # Note: The actual output has the text split across multiple rich text
     # segments
-    rogue_paragraph = UnoParagraph(
-        text=text(text="A rogue paragraph with a reference to\nthe ")
-        + text(text="parent task_list <task_list_example>")
-        + text(text=".")
-    )
+    rogue_paragraph = UnoParagraph(text=text(text="A rogue paragraph."))
     task_b.append(blocks=[rogue_paragraph])
 
     # Regular bullet list items should be nested within Task B as bullet items
@@ -2667,4 +2662,26 @@ def test_task_list_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_inline_single_backticks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Reproduces a bug where we got confused by mismatching blocks.
+    """
+    rst_content = """
+        A `B`
+    """
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="A ") + text(text="B", italic=True)),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
