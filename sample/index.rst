@@ -5,7 +5,5 @@ Task Lists
 
     1. [ ] Task A
 
-       .. task-list::
-
-           A rogue paragraph with a reference to
-           the `parent task_list <task_list_example>`.
+   A rogue paragraph with a reference to
+   the `parent task_list <task_list_example>`.
