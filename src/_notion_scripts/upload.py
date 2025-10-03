@@ -15,6 +15,7 @@ from uuid import UUID
 
 import click
 from beartype import beartype
+from notion_client.errors import APIResponseError
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -184,10 +185,12 @@ def main(
     deleted_block_shas: set[str] = set()
     for sha, block_id_str in sha_to_block_id.items():
         block_id = UUID(hex=block_id_str)
-        block = session.api.blocks.retrieve(block=block_id)
-        deleted_block_shas.add(sha)
-        msg = f"Block {block_id} does not exist, removing from SHA mapping"
-        click.echo(message=msg)
+        try:
+            block = session.api.blocks.retrieve(block=block_id)
+        except APIResponseError:
+            deleted_block_shas.add(sha)
+            msg = f"Block {block_id} does not exist, removing from SHA mapping"
+            click.echo(message=msg)
 
     for deleted_block_sha in deleted_block_shas:
         del sha_to_block_id[deleted_block_sha]
