@@ -65,6 +65,8 @@ def _is_existing_equivalent(
         file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
         file_sha = _calculate_file_sha(file_path=file_path)
         existing_page_block_id_with_file_sha = sha_to_block_id.get(file_sha)
+        if not existing_page_block_id_with_file_sha:
+            return False
         if (
             UUID(hex=existing_page_block_id_with_file_sha)
             == existing_page_block.id
