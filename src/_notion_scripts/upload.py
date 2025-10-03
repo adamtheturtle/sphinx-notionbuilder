@@ -58,19 +58,11 @@ def _get_uploaded_file(
     # Ignore ``mypy`` error as the keyword arguments are different across
     # Python versions and platforms.
     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-
     file_sha = _calculate_file_sha(file_path=file_path)
-
-    if file_sha in sha_mapping:
-        file_id = sha_mapping[file_sha]
-        sys.stdout.write(f"Using file from SHA mapping: {file_id}\n")
-        # Retrieve the uploaded file by ID
-        file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
-        return UploadedFile.from_file_upload(file_upload=file_upload_obj)
-
-    # File not found in mapping - this should not happen if upload_files.py ran first
-    sys.stderr.write(f"File not found in SHA mapping: {file_path}\n")
-    return None
+    file_id = sha_mapping[file_sha]
+    click.echo(message=f"Using file from SHA mapping: {file_id}")
+    file_upload_obj = session.api.uploads.retrieve(upload_id=file_id)
+    return UploadedFile.from_file_upload(file_upload=file_upload_obj)
 
 
 @beartype
