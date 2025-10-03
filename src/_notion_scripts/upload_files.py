@@ -7,14 +7,13 @@ based on what files are actually used in the build.
 import hashlib
 import json
 import sys
-from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
-import requests
 from beartype import beartype
+from notion_client.client import APIResponseError
 from ultimate_notion import Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -37,13 +36,15 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _validate_file_upload_id(*, file_id: str) -> bool:
+def _validate_file_upload_id(*, file_id: str, session: Session) -> bool:
     """
     Validate that a file upload ID is still valid by checking the Notion API.
     """
-    url = f"https://api.notion.com/v1/file-uploads/{file_id}"
-    response = requests.head(url=url, timeout=10)
-    return response.status_code == HTTPStatus.OK
+    try:
+        session.api.uploads.retrieve(upload_id=file_id)
+    except APIResponseError:
+        return False
+    return True
 
 
 @beartype
@@ -146,7 +147,8 @@ def main(
 
             # Only upload if not already mapped or if mapped file is invalid
             if file_id is None or not _validate_file_upload_id(
-                file_id=file_id
+                file_id=file_id,
+                session=session,
             ):
                 if file_id is not None:
                     sys.stdout.write(
@@ -162,7 +164,7 @@ def main(
                     )
 
                 uploaded_file.wait_until_uploaded()
-                file_id = uploaded_file.id.hex
+                file_id = str(object=uploaded_file.id)
                 sha_mapping[file_sha] = file_id
 
     for sha in list(sha_mapping.keys()):
