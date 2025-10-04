@@ -210,7 +210,7 @@ class _ParentType(Enum):
     "--sha-mapping",
     help=(
         "JSON file mapping file SHAs to Notion block IDs "
-        "(use one file per document)",
+        "(use one file per document)"
     ),
     required=False,
     type=click.Path(
