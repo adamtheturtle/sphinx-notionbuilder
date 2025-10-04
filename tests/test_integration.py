@@ -49,7 +49,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import text
+from ultimate_notion.rich_text import Text, text
 
 
 @beartype
@@ -2315,28 +2315,28 @@ def test_individual_colors(
     )
 
 
-def test_text_styles_non_color(
+def test_text_styles_unsupported_color(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Non-color text styles (like underline) emit a warning.
+    Unsupported colors from ``sphinxcontrib-text-styles`` emit warnings.
     """
     rst_content = """
-        This is :text-underline:`underlined text`.
+        This is :text-cyan:`cyan text`.
     """
 
     expected_warning = (
-        "Unsupported text style classes: text-underline. "
+        "Unsupported text style classes: text-cyan. "
         "Text will be rendered without styling."
     )
 
     normal_text = text(text="This is ")
-    underline_text = text(text="underlined text")
+    cyan_text = text(text="cyan text")
     normal_text2 = text(text=".")
 
-    combined_text = normal_text + underline_text + normal_text2
+    combined_text = normal_text + cyan_text + normal_text2
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
@@ -2437,6 +2437,49 @@ def test_text_styles_and_strike(
             "sphinxcontrib_text_styles",
             "sphinxnotes.strike",
         ),
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("role", "expected_text"),
+    argvalues=[
+        ("text-bold", text(text="text-bold text", bold=True)),
+        ("text-italic", text(text="text-italic text", italic=True)),
+        ("text-mono", text(text="text-mono text", code=True)),
+        ("text-strike", text(text="text-strike text", strikethrough=True)),
+        ("text-underline", text(text="text-underline text", underline=True)),
+    ],
+)
+def test_additional_text_styles(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    role: str,
+    expected_text: Text,
+) -> None:
+    """
+    Additional text styles from the ``sphinxcontrib_text_styles`` extension are
+    supported.
+    """
+    rst_content = f"""
+        This is :{role}:`{role} text`.
+    """
+
+    normal_text1 = text(text="This is ")
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text1 + expected_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
     )
 
 

@@ -30,6 +30,11 @@ The builder also supports background colors using `sphinxcontrib-text-styles <ht
 
 This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
 
+Other Text Styles
+~~~~~~~~~~~~~~~~~~
+
+The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
+
 .. note::
 
    This is an important note that demonstrates the note admonition support.
