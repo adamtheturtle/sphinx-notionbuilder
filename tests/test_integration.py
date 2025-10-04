@@ -2255,35 +2255,49 @@ and :text-green:`green text`.
 
 
 @pytest.mark.parametrize(
-    argnames=("color_name", "expected_color"),
+    argnames=("role", "expected_color"),
     argvalues=[
-        ("red", Color.RED),
-        ("blue", Color.BLUE),
-        ("green", Color.GREEN),
-        ("yellow", Color.YELLOW),
-        ("orange", Color.ORANGE),
-        ("purple", Color.PURPLE),
-        ("pink", Color.PINK),
-        ("brown", Color.BROWN),
-        ("gray", Color.GRAY),
+        ("text-red", Color.RED),
+        ("text-blue", Color.BLUE),
+        ("text-green", Color.GREEN),
+        ("text-yellow", Color.YELLOW),
+        ("text-orange", Color.ORANGE),
+        ("text-purple", Color.PURPLE),
+        ("text-pink", Color.PINK),
+        ("text-brown", Color.BROWN),
+        ("text-gray", Color.GRAY),
+        ("bg-red", BGColor.RED),
+        ("bg-blue", BGColor.BLUE),
+        ("bg-green", BGColor.GREEN),
+        ("bg-yellow", BGColor.YELLOW),
+        ("bg-orange", BGColor.ORANGE),
+        ("bg-purple", BGColor.PURPLE),
+        ("bg-pink", BGColor.PINK),
+        ("bg-brown", BGColor.BROWN),
+        ("bg-gray", BGColor.GRAY),
     ],
 )
 def test_individual_colors(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    color_name: str,
-    expected_color: Color,
+    role: str,
+    expected_color: Color | BGColor,
 ) -> None:
     """
     Each supported color is converted correctly.
     """
     rst_content = f"""
-        This is :text-{color_name}:`{color_name} text`.
+        This is :{role}:`{role} text`.
     """
 
     normal_text = text(text="This is ")
-    colored_text = text(text=f"{color_name} text", color=expected_color)
+    colored_text = text(
+        text=f"{role} text",
+        # We ignore the type check here because Ultimate Notion has
+        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
+        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
     normal_text2 = text(text=".")
 
     combined_text = normal_text + colored_text + normal_text2

@@ -72,14 +72,11 @@ _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
 @beartype
-def _color_from_node(*, node: nodes.inline) -> Color | None:
-    """Extract Notion color from CSS classes.
-
-    ``sphinxcontrib-text-styles`` creates classes like 'text-red', 'text-
-    blue', etc.
+def _get_text_color_mapping() -> dict[str, Color]:
     """
-    classes = node.attributes.get("classes", [])
-    color_mapping: dict[str, Color] = {
+    Get the mapping from CSS classes to Notion colors.
+    """
+    return {
         "text-red": Color.RED,
         "text-blue": Color.BLUE,
         "text-green": Color.GREEN,
@@ -92,17 +89,65 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
         "text-grey": Color.GRAY,
     }
 
+
+@beartype
+def _get_background_color_classes() -> set[str]:
+    """
+    Get the set of supported background color classes.
+    """
+    return {
+        "bg-red",
+        "bg-blue",
+        "bg-green",
+        "bg-yellow",
+        "bg-orange",
+        "bg-purple",
+        "bg-pink",
+        "bg-brown",
+        "bg-gray",
+        "bg-grey",
+    }
+
+
+@beartype
+def _color_from_node(*, node: nodes.inline) -> Color | None:
+    """Extract Notion color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
+    """
+    classes = node.attributes.get("classes", [])
+    color_mapping = _get_text_color_mapping()
+
     for css_class in classes:
         if css_class in color_mapping:
             return color_mapping[css_class]
 
-        # This warning being here assumes that only color classes,
-        # and only classes from ``sphinxcontrib-text-styles``, are used.
-        _LOGGER.warning(
-            "Unsupported text style classes: %s. "
-            "Text will be rendered without styling.",
-            css_class,
-        )
+    return None
+
+
+@beartype
+def _background_color_from_node(*, node: nodes.inline) -> BGColor | None:
+    """Extract Notion background color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
+    """
+    classes = node.attributes.get("classes", [])
+    bg_color_mapping: dict[str, BGColor] = {
+        "bg-red": BGColor.RED,
+        "bg-blue": BGColor.BLUE,
+        "bg-green": BGColor.GREEN,
+        "bg-yellow": BGColor.YELLOW,
+        "bg-orange": BGColor.ORANGE,
+        "bg-purple": BGColor.PURPLE,
+        "bg-pink": BGColor.PINK,
+        "bg-brown": BGColor.BROWN,
+        "bg-gray": BGColor.GRAY,
+        "bg-grey": BGColor.GRAY,
+    }
+
+    for css_class in classes:
+        if css_class in bg_color_mapping:
+            return bg_color_mapping[css_class]
 
     return None
 
@@ -184,13 +229,34 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         elif isinstance(child, nodes.target):
             continue
         elif isinstance(child, nodes.inline):
+            bg_color = _background_color_from_node(node=child)
+            text_color = _color_from_node(node=child)
+
+            classes = child.attributes.get("classes", [])
+            color_mapping = _get_text_color_mapping()
+            bg_color_classes = _get_background_color_classes()
+
+            for css_class in classes:
+                if (
+                    css_class not in color_mapping
+                    and css_class not in bg_color_classes
+                ):
+                    _LOGGER.warning(
+                        "Unsupported text style classes: %s. "
+                        "Text will be rendered without styling.",
+                        css_class,
+                    )
+
+            color: BGColor | Color | None = bg_color or text_color
             new_text = text(
                 text=child.astext(),
                 bold=isinstance(child, nodes.strong),
                 italic=isinstance(child, nodes.emphasis),
                 code=isinstance(child, nodes.literal),
                 strikethrough=isinstance(child, strike_node),
-                color=_color_from_node(node=child),
+                # Ignore the type check here because Ultimate Notion has
+                # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
+                color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
             )
         elif isinstance(child, nodes.title_reference):
             # We match the behavior of the HTML builder here.
