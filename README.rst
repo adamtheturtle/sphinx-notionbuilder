@@ -214,7 +214,7 @@ Usage
 
 .. code-block:: console
 
-   $ notion-upload -f path/to/output.json -p parent_page_id -t "Page Title"
+   $ notion-upload --file path/to/output.json --parent-id parent_page_id --parent-type page --title "Page Title" --sha-mapping notion-sha-mapping.json
 
 Arguments:
 
@@ -222,6 +222,7 @@ Arguments:
 - ``--parent-id``: The ID of the parent page or database in Notion (must be shared with your integration)
 - ``--parent-type``: "page" or "database"
 - ``--title``: Title for the new page in Notion
+- ``--sha-mapping``: Optional JSON file mapping file SHAs to Notion block IDs for efficient file re-uploads (use one file per document). The command will update this file.
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
