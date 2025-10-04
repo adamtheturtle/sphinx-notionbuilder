@@ -46,6 +46,77 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
+def _clean_deleted_blocks_from_mapping(
+    *,
+    sha_to_block_id: dict[str, str],
+    session: Session,
+) -> dict[str, str]:
+    """Remove deleted blocks from SHA mapping.
+
+    Returns a new dictionary with only existing blocks.
+    """
+    cleaned_mapping = sha_to_block_id.copy()
+    deleted_block_shas: set[str] = set()
+
+    for sha, block_id_str in sha_to_block_id.items():
+        block_id = UUID(hex=block_id_str)
+        try:
+            session.api.blocks.retrieve(block=block_id)
+        except APIResponseError:
+            deleted_block_shas.add(sha)
+            msg = f"Block {block_id} does not exist, removing from SHA mapping"
+            click.echo(message=msg)
+
+    for deleted_block_sha in deleted_block_shas:
+        del cleaned_mapping[deleted_block_sha]
+
+    return cleaned_mapping
+
+
+@beartype
+def _create_block_objects_from_json(
+    *,
+    blocks_json: list[dict[str, Any]],
+) -> list[Block]:
+    """Create Block objects from JSON data.
+
+    This is a pure function that converts JSON block data to Block
+    objects without any side effects.
+    """
+    return [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in blocks_json
+    ]
+
+
+@beartype
+def _find_last_matching_block_index(
+    *,
+    existing_blocks: list[Block] | tuple[Block, ...],
+    local_blocks: list[Block],
+    sha_to_block_id: dict[str, str],
+) -> int | None:
+    """Find the last index where existing blocks match local blocks.
+
+    Returns the last index where blocks are equivalent, or None if no
+    blocks match.
+    """
+    last_matching_index: int | None = None
+    for index, existing_page_block in enumerate(iterable=existing_blocks):
+        if index < len(local_blocks) and (
+            _is_existing_equivalent(
+                existing_page_block=existing_page_block,
+                local_block=local_blocks[index],
+                sha_to_block_id=sha_to_block_id,
+            )
+        ):
+            last_matching_index = index
+        else:
+            break
+    return last_matching_index
+
+
+@beartype
 def _is_existing_equivalent(
     *,
     existing_page_block: Block,
@@ -187,18 +258,10 @@ def main(
     else:
         sha_to_block_id = {}
 
-    deleted_block_shas: set[str] = set()
-    for sha, block_id_str in sha_to_block_id.items():
-        block_id = UUID(hex=block_id_str)
-        try:
-            session.api.blocks.retrieve(block=block_id)
-        except APIResponseError:
-            deleted_block_shas.add(sha)
-            msg = f"Block {block_id} does not exist, removing from SHA mapping"
-            click.echo(message=msg)
-
-    for deleted_block_sha in deleted_block_shas:
-        del sha_to_block_id[deleted_block_sha]
+    sha_to_block_id = _clean_deleted_blocks_from_mapping(
+        sha_to_block_id=sha_to_block_id,
+        session=session,
+    )
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
@@ -229,23 +292,13 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    block_objs = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in blocks
-    ]
+    block_objs = _create_block_objects_from_json(blocks_json=blocks)
 
-    last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=page.children):
-        if index < len(blocks) and (
-            _is_existing_equivalent(
-                existing_page_block=existing_page_block,
-                local_block=block_objs[index],
-                sha_to_block_id=sha_to_block_id,
-            )
-        ):
-            last_matching_index = index
-        else:
-            break
+    last_matching_index = _find_last_matching_block_index(
+        existing_blocks=page.children,
+        local_blocks=block_objs,
+        sha_to_block_id=sha_to_block_id,
+    )
 
     click.echo(
         message=(
