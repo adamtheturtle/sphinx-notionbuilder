@@ -111,9 +111,9 @@ def _get_background_color_classes() -> set[str]:
 
 @beartype
 def _color_from_node(*, node: nodes.inline) -> Color | None:
-    """
-    Extract Notion color from CSS classes created by ``sphinxcontrib-text-
-    styles``.
+    """Extract Notion color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
     """
     classes = node.attributes.get("classes", [])
     color_mapping = _get_text_color_mapping()
@@ -127,9 +127,9 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
 
 @beartype
 def _background_color_from_node(*, node: nodes.inline) -> BGColor | None:
-    """
-    Extract Notion background color from CSS classes created by
-    ``sphinxcontrib-text-styles``.
+    """Extract Notion background color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
     """
     classes = node.attributes.get("classes", [])
     bg_color_mapping: dict[str, BGColor] = {
