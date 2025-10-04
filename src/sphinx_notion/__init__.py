@@ -286,10 +286,12 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             )
         else:
             unsupported_child_type_msg = (
-                f"Unsupported child type: {type(child).__name__} on line "
-                f"{child.line} in {child.source}."
+                f"Unsupported child type: {type(child).__name__}."
             )
-            raise ValueError(unsupported_child_type_msg)
+            # We use ``TRY004`` here because we want to raise a
+            # ``ValueError`` if the child type is unsupported, not a
+            # ``TypeError`` as the user has not directly provided any type.
+            raise ValueError(unsupported_child_type_msg)  # noqa: TRY004
 
         rich_text += new_text
 

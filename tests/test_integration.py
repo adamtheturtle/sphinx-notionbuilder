@@ -2725,9 +2725,7 @@ def setup(app):
 
     app.add_role('footnote', footnote_role)
     """
-    expected_message = (
-        r"^Unsupported child type: footnote_reference on line None in None\.$"
-    )
+    expected_message = r"^Unsupported child type: footnote_reference\.$"
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
