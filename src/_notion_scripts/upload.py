@@ -209,7 +209,10 @@ class _ParentType(Enum):
 )
 @click.option(
     "--sha-mapping",
-    help="JSON file mapping file SHAs to Notion block IDs",
+    help=(
+        "JSON file mapping file SHAs to Notion block IDs "
+        "(use one file per document)",
+    ),
     required=False,
     type=click.Path(
         exists=True,
@@ -299,29 +302,34 @@ def main(
     ]
     page.append(blocks=block_objs_to_upload)
 
-    for uploaded_block_index, uploaded_block in enumerate(
-        iterable=block_objs_to_upload
-    ):
-        if isinstance(uploaded_block, _FILE_BLOCK_TYPES):
-            pre_uploaded_block = block_objs[
-                delete_start_index + uploaded_block_index
-            ]
-            assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
-            if pre_uploaded_block.url.startswith("file://"):
-                parsed = urlparse(url=pre_uploaded_block.url)
-                file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-                file_sha = _calculate_file_sha(file_path=file_path)
-                sha_to_block_id[file_sha] = str(object=uploaded_block.id)
-                click.echo(
-                    message=(
-                        f"Updated SHA mapping for {file_path.name}:"
-                        f"{uploaded_block.id}"
-                    )
-                )
+    if sha_mapping:
+        for uploaded_block_index, uploaded_block in enumerate(
+            iterable=block_objs_to_upload
+        ):
+            if isinstance(uploaded_block, _FILE_BLOCK_TYPES):
+                pre_uploaded_block = block_objs[
+                    delete_start_index + uploaded_block_index
+                ]
+                assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
+                if pre_uploaded_block.url.startswith("file://"):
+                    parsed = urlparse(url=pre_uploaded_block.url)
+                    file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+                    file_sha = _calculate_file_sha(file_path=file_path)
+                    sha_to_block_id[file_sha] = str(object=uploaded_block.id)
 
-    sha_mapping.write_text(
-        data=json.dumps(obj=sha_to_block_id, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+                    sha_mapping.write_text(
+                        data=json.dumps(
+                            obj=sha_to_block_id, indent=2, sort_keys=True
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+
+                    click.echo(
+                        message=(
+                            f"Updated SHA mapping for {file_path.name}:"
+                            f"{uploaded_block.id}"
+                        )
+                    )
 
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
