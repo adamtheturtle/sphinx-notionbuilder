@@ -23,22 +23,12 @@ The builder supports colored text using `sphinxcontrib-text-styles <https://sphi
 
 This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
 
-Additional Text Colors
-~~~~~~~~~~~~~~~~~~~~~~
-
-The builder also supports additional colors: :text-cyan:`cyan`, :text-magenta:`magenta`, :text-black:`black`, :text-white:`white`, :text-darkgray:`dark gray`, :text-lightgray:`light gray`, :text-lime:`lime`, :text-olive:`olive`, :text-teal:`teal`, and :text-violet:`violet`.
-
 Background Colors
 ~~~~~~~~~~~~~~~~~~
 
 The builder also supports background colors using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
 This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
-
-Additional Background Colors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The builder also supports additional background colors: :bg-cyan:`cyan`, :bg-magenta:`magenta`, :bg-black:`black`, :bg-white:`white`, :bg-darkgray:`dark gray`, :bg-lightgray:`light gray`, :bg-lime:`lime`, :bg-olive:`olive`, :bg-teal:`teal`, and :bg-violet:`violet`.
 
 Other Text Styles
 ~~~~~~~~~~~~~~~~~~
