@@ -249,22 +249,20 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             )
             is_underline = "text-underline" in classes
 
-            # Check for unsupported styles
-            unsupported_styles = []
-            for css_class in classes:
-                if (
-                    css_class not in color_mapping
-                    and css_class not in bg_color_classes
-                    and css_class
-                    not in {
-                        "text-bold",
-                        "text-italic",
-                        "text-mono",
-                        "text-strike",
-                        "text-underline",
-                    }
-                ):
-                    unsupported_styles.append(css_class)
+            supported_style_classes = {
+                "text-bold",
+                "text-italic",
+                "text-mono",
+                "text-strike",
+                "text-underline",
+                *color_mapping.keys(),
+                *bg_color_classes,
+            }
+            unsupported_styles = [
+                css_class
+                for css_class in classes
+                if css_class not in supported_style_classes
+            ]
 
             if unsupported_styles:
                 _LOGGER.warning(
