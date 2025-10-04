@@ -79,6 +79,17 @@ For TODO list support, also add the `sphinx-immaterial <https://github.com/jbms/
        "sphinx_notion",
    ]
 
+For mathematical equation support, also add the ``sphinx.ext.mathjax`` extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx.ext.mathjax",
+       "sphinx_notion",
+   ]
+
 PDF support is included by default with the sphinx-notionbuilder extension.
 
 Supported markup
@@ -101,6 +112,7 @@ The following syntax is supported:
 - Tables
 - Strikethrough text
 - Colored text and text styles (bold, italic, monospace)
+- Mathematical equations (inline and block-level)
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 
@@ -117,7 +129,7 @@ Audio files can be embedded using the ``audio`` directive. Both remote URLs and 
 
 The audio will be rendered as an audio player in the generated Notion page.
 
-Using PDFs
+Using PDF
 ----------
 
 PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported.
@@ -202,6 +214,45 @@ TODO lists with checkboxes can be created using the ``sphinx-immaterial.task_lis
 
 The checkboxes will be rendered as interactive TODO items in the generated Notion page, with completed tasks showing as checked and incomplete tasks as unchecked.
 
+Using Mathematical Equations
+-----------------------------
+
+Mathematical equations can be embedded using the ``sphinx.ext.mathjax`` extension.
+Both inline and block-level equations are supported:
+
+Inline Equations
+~~~~~~~~~~~~~~~~
+
+Inline equations can be written using the ``:math:`` role:
+
+.. code-block:: rst
+
+   This is an inline equation :math:`E = mc^2` in your text.
+
+   Here are some more examples:
+
+   - The quadratic formula: :math:`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
+   - Euler's identity: :math:`e^{i\pi} + 1 = 0`
+
+Block Equations
+~~~~~~~~~~~~~~~
+
+Block-level equations can be written using the ``.. math::`` directive:
+
+.. code-block:: rst
+
+   .. math::
+
+      E = mc^2
+
+   The Schrödinger equation:
+
+   .. math::
+
+      i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+
+The equations will be rendered as proper mathematical notation in the generated Notion page, with inline equations appearing within the text flow and block equations appearing as separate equation blocks.
+
 Unsupported Notion Block Types
 ------------------------------
 
@@ -212,7 +263,6 @@ Unsupported Notion Block Types
 - Column and column list
 - Divider
 - Embed
-- Equation
 - File
 - Link preview
 - Mention
