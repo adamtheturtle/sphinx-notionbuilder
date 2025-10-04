@@ -370,11 +370,12 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
     ]
 
     if unsupported_styles:
-        _LOGGER.warning(
-            "Unsupported text style classes: %s. "
-            "Text will be rendered without styling.",
-            ", ".join(unsupported_styles),
+        unsupported_style_msg = (
+            "Unsupported text style classes: "
+            f"{', '.join(unsupported_styles)}. "
+            "Text will be rendered without styling."
         )
+        _LOGGER.warning(unsupported_style_msg)
 
     color: BGColor | Color | None = bg_color or text_color
     return text(
