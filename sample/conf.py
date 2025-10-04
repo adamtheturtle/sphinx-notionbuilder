@@ -11,5 +11,5 @@ extensions = [
     "sphinx_toolbox.collapse",
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
-    "sphinxcontrib.jsmath",
+    "sphinx.ext.mathjax",
 ]

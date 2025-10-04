@@ -2853,7 +2853,7 @@ def test_inline_equation(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.jsmath"),
+        extensions=("sphinx_notion", "sphinx.ext.mathjax"),
     )
 
 
@@ -2880,5 +2880,5 @@ def test_block_equation(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.jsmath"),
+        extensions=("sphinx_notion", "sphinx.ext.mathjax"),
     )

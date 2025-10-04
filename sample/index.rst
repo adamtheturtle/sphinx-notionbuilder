@@ -477,7 +477,7 @@ And here's some text after the PDF.
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The builder supports mathematical equations using the ``sphinxcontrib.jsmath`` extension.
+The builder supports mathematical equations using the ``sphinx.ext.mathjax`` extension.
 
 Inline Equations
 ~~~~~~~~~~~~~~~~
