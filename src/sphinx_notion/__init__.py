@@ -110,12 +110,11 @@ def _get_background_color_classes() -> set[str]:
 
 
 @beartype
-def _color_from_node(*, node: nodes.inline) -> Color | None:
+def _color_from_css_classes(*, classes: list[str]) -> Color | None:
     """Extract Notion color from CSS classes.
 
     Classes created by ``sphinxcontrib-text-styles``.
     """
-    classes = node.attributes.get("classes", [])
     color_mapping = _get_text_color_mapping()
 
     for css_class in classes:
@@ -126,12 +125,13 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
 
 
 @beartype
-def _background_color_from_node(*, node: nodes.inline) -> BGColor | None:
+def _background_color_from_css_classes(
+    *, classes: list[str]
+) -> BGColor | None:
     """Extract Notion background color from CSS classes.
 
     Classes created by ``sphinxcontrib-text-styles``.
     """
-    classes = node.attributes.get("classes", [])
     bg_color_mapping: dict[str, BGColor] = {
         "bg-red": BGColor.RED,
         "bg-blue": BGColor.BLUE,
@@ -228,15 +228,31 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             )
         elif isinstance(child, nodes.target):
             continue
-        elif isinstance(child, nodes.inline):
-            bg_color = _background_color_from_node(node=child)
-            text_color = _color_from_node(node=child)
-
+        elif isinstance(child, nodes.title_reference):
+            # We match the behavior of the HTML builder here.
+            # If you render ``A `B``` in HTML, it will render as
+            # ``A <i>B</i>``.
+            new_text = text(text=child.astext(), italic=True)
+        elif isinstance(child, nodes.Text):
+            new_text = text(text=child.astext())
+        elif isinstance(
+            child,
+            (
+                nodes.inline,
+                nodes.strong,
+                nodes.emphasis,
+                nodes.literal,
+                strike_node,
+                nodes.paragraph,
+            ),
+        ):
             classes = child.attributes.get("classes", [])
+            bg_color = _background_color_from_css_classes(classes=classes)
+            text_color = _color_from_css_classes(classes=classes)
+
             color_mapping = _get_text_color_mapping()
             bg_color_classes = _get_background_color_classes()
 
-            # Check for additional text styles
             is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
             is_italic = (
                 isinstance(child, nodes.emphasis) or "text-italic" in classes
@@ -282,46 +298,6 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 # Ignore the type check here because Ultimate Notion has
                 # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
                 color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-            )
-        elif isinstance(child, nodes.title_reference):
-            # We match the behavior of the HTML builder here.
-            # If you render ``A `B``` in HTML, it will render as
-            # ``A <i>B</i>``.
-            new_text = text(
-                text=child.astext(),
-                italic=True,
-            )
-        elif isinstance(child, nodes.Text):
-            new_text = text(text=child.astext())
-        elif isinstance(
-            child,
-            (
-                nodes.strong,
-                nodes.emphasis,
-                nodes.literal,
-                strike_node,
-                nodes.paragraph,
-            ),
-        ):
-            classes = child.attributes.get("classes", [])
-            is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
-            is_italic = (
-                isinstance(child, nodes.emphasis) or "text-italic" in classes
-            )
-            is_code = (
-                isinstance(child, nodes.literal) or "text-mono" in classes
-            )
-            is_strikethrough = (
-                isinstance(child, strike_node) or "text-strike" in classes
-            )
-            is_underline = "text-underline" in classes
-            new_text = text(
-                text=child.astext(),
-                bold=is_bold,
-                italic=is_italic,
-                code=is_code,
-                strikethrough=is_strikethrough,
-                underline=is_underline,
             )
         else:
             unsupported_child_type_msg = (
