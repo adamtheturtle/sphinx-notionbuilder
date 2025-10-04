@@ -74,22 +74,6 @@ def _clean_deleted_blocks_from_mapping(
 
 
 @beartype
-def _create_block_objects_from_json(
-    *,
-    blocks_json: list[dict[str, Any]],
-) -> list[Block]:
-    """Create Block objects from JSON data.
-
-    This is a pure function that converts JSON block data to Block
-    objects without any side effects.
-    """
-    return [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in blocks_json
-    ]
-
-
-@beartype
 def _find_last_matching_block_index(
     *,
     existing_blocks: list[Block] | tuple[Block, ...],
@@ -249,7 +233,6 @@ def main(
     """
     session = Session()
 
-    # Load SHA mapping (format: {sha: block_id})
     sha_mapping_content = sha_mapping.read_text(encoding="utf-8")
     if sha_mapping_content.strip():
         sha_to_block_id: dict[str, str] = dict(
@@ -292,7 +275,10 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    block_objs = _create_block_objects_from_json(blocks_json=blocks)
+    block_objs = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in blocks
+    ]
 
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
