@@ -266,7 +266,17 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 text=child.astext(),
                 italic=True,
             )
-        else:
+        elif isinstance(
+            child,
+            (
+                nodes.Text,
+                nodes.strong,
+                nodes.emphasis,
+                nodes.literal,
+                strike_node,
+                nodes.paragraph,
+            ),
+        ):
             new_text = text(
                 text=child.astext(),
                 bold=isinstance(child, nodes.strong),
@@ -274,6 +284,15 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 code=isinstance(child, nodes.literal),
                 strikethrough=isinstance(child, strike_node),
             )
+        else:
+            unsupported_child_type_msg = (
+                f"Unsupported child type: {type(child).__name__}."
+            )
+            # We use ``TRY004`` here because we want to raise a
+            # ``ValueError`` if the child type is unsupported, not a
+            # ``TypeError`` as the user has not directly provided any type.
+            raise ValueError(unsupported_child_type_msg)  # noqa: TRY004
+
         rich_text += new_text
 
     return rich_text
