@@ -138,9 +138,8 @@ def _block_from_details(
     details: dict[str, Any],
     session: Session,
 ) -> Block:
-    """Create a Block from a serialized block details.
-
-    Get any required local files from SHA mapping or upload them.
+    """
+    Create a Block from a serialized block details.
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
