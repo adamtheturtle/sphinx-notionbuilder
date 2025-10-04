@@ -198,7 +198,6 @@ Uploading Documentation to Notion
 ----------------------------------
 
 After building your documentation with the Notion builder, you can upload it to Notion using the included command-line tool.
-The upload process handles both file uploads and content creation in a single step.
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -210,16 +209,12 @@ Prerequisites
 
    $ export NOTION_TOKEN="your_integration_token_here"
 
-3. Create a SHA mapping file (initially empty): ``{"sha256_hash": "notion_block_id"}``
-
-Single-Step Upload Process
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Use the ``notion-upload`` command to upload your documentation content and any referenced files:
+Usage
+~~~~~
 
 .. code-block:: console
 
-   $ notion-upload --file ./build/index.json --parent-id parent_page_id --parent-type page --title "Page Title" --sha-mapping ./notion-sha-mapping.json
+   $ notion-upload -f path/to/output.json -p parent_page_id -t "Page Title"
 
 Arguments:
 
@@ -227,29 +222,8 @@ Arguments:
 - ``--parent-id``: The ID of the parent page or database in Notion (must be shared with your integration)
 - ``--parent-type``: "page" or "database"
 - ``--title``: Title for the new page in Notion
-- ``--sha-mapping``: Path to the SHA mapping JSON file that tracks uploaded files (required)
-- ``--icon``: Optional emoji icon for the page
 
-This command will:
-- Scan the build file for any file references (images, videos, audio, PDFs)
-- Upload files to Notion that haven't been uploaded before
-- Create or update the Notion page with your documentation content
-- Update the SHA mapping file with block IDs for uploaded files
-
-Complete Workflow Example
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Here's a complete example of the upload workflow:
-
-.. code-block:: console
-
-   # Build your documentation
-   $ sphinx-build -b notion docs/ build/
-
-   # Upload documentation and files to Notion
-   $ notion-upload --file ./build/index.json --parent-id "your_page_id" --parent-type "page" --title "My Documentation" --sha-mapping ./notion-sha-mapping.json --icon "📚"
-
-The ``notion-upload`` command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
+The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
