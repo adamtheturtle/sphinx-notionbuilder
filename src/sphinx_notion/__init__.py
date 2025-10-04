@@ -284,6 +284,12 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 code=isinstance(child, nodes.literal),
                 strikethrough=isinstance(child, strike_node),
             )
+        else:
+            unsupported_child_type_msg = (
+                f"Unsupported child type: {type(child).__name__} on line "
+                f"{child.line} in {child.source}."
+            )
+            raise ValueError(unsupported_child_type_msg)
 
         rich_text += new_text
 
