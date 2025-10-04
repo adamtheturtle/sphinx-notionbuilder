@@ -190,6 +190,7 @@ Additional Text Styles
    This is :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
 The following additional text styles are supported:
+
 - ``:text-bold:`text`` - Makes text bold
 - ``:text-italic:`text`` - Makes text italic
 - ``:text-mono:`text`` - Makes text monospace
