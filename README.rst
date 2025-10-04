@@ -100,7 +100,7 @@ The following syntax is supported:
 - PDFs (with URLs or local paths)
 - Tables
 - Strikethrough text
-- Colored text
+- Colored text and text styles (bold, italic, monospace)
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 
@@ -130,10 +130,10 @@ PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs 
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
 
-Using Colored Text
-------------------
+Using Text Styles
+-----------------
 
-Colored text can be added using the `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ extension. First, install the extension:
+Text styles can be added using the `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ extension. First, install the extension:
 
 .. code-block:: console
 
@@ -150,13 +150,39 @@ Then add it to your ``conf.py``:
        "sphinx_notion",
    ]
 
-You can then use colored text in your reStructuredText documents:
+You can then use various text styles in your reStructuredText documents:
+
+Text Colors
+~~~~~~~~~~~
 
 .. code-block:: rst
 
    This is :text-red:`red text`, :text-blue:`blue text`, and :text-green:`green text`.
 
-The following colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
+The following text colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
+
+Background Colors
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: rst
+
+   This is :bg-red:`red background text`, :bg-blue:`blue background text`, and :bg-green:`green background text`.
+
+The following background colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
+
+Additional Text Styles
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: rst
+
+   This is :text-bold:`bold text`, :text-italic:`italic text`, and :text-mono:`monospace text`.
+
+The following additional text styles are supported:
+- ``:text-bold:`text`` - Makes text bold
+- ``:text-italic:`text`` - Makes text italic
+- ``:text-mono:`text`` - Makes text monospace
+
+Note: Some text styles like ``:text-underline:`text`` and ``:text-strike:`text`` are not supported by Notion and will render as plain text with a warning.
 
 Using TODO Lists
 ----------------

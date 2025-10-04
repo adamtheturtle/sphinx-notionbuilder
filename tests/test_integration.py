@@ -2440,6 +2440,50 @@ def test_text_styles_and_strike(
     )
 
 
+def test_additional_text_styles(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Additional text styles (text-bold, text-italic, text-mono) are supported.
+    """
+    rst_content = """
+        This is :text-bold:`bold text`, :text-italic:`italic text`, and
+        :text-mono:`monospace text`.
+    """
+
+    normal_text1 = text(text="This is ")
+    bold_text = text(text="bold text", bold=True)
+    normal_text2 = text(text=", ")
+    italic_text = text(text="italic text", italic=True)
+    normal_text3 = text(text=", and ")
+    code_text = text(text="monospace text", code=True)
+    normal_text4 = text(text=".")
+
+    combined_text = (
+        normal_text1
+        + bold_text
+        + normal_text2
+        + italic_text
+        + normal_text3
+        + code_text
+        + normal_text4
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+    )
+
+
 def test_flat_task_list(
     *,
     make_app: Callable[..., SphinxTestApp],

@@ -236,23 +236,39 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             color_mapping = _get_text_color_mapping()
             bg_color_classes = _get_background_color_classes()
 
+            # Check for additional text styles
+            is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
+            is_italic = (
+                isinstance(child, nodes.emphasis) or "text-italic" in classes
+            )
+            is_code = (
+                isinstance(child, nodes.literal) or "text-mono" in classes
+            )
+
+            # Check for unsupported styles
+            unsupported_styles = []
             for css_class in classes:
                 if (
                     css_class not in color_mapping
                     and css_class not in bg_color_classes
+                    and css_class
+                    not in {"text-bold", "text-italic", "text-mono"}
                 ):
-                    _LOGGER.warning(
-                        "Unsupported text style classes: %s. "
-                        "Text will be rendered without styling.",
-                        css_class,
-                    )
+                    unsupported_styles.append(css_class)
+
+            if unsupported_styles:
+                _LOGGER.warning(
+                    "Unsupported text style classes: %s. "
+                    "Text will be rendered without styling.",
+                    ", ".join(unsupported_styles),
+                )
 
             color: BGColor | Color | None = bg_color or text_color
             new_text = text(
                 text=child.astext(),
-                bold=isinstance(child, nodes.strong),
-                italic=isinstance(child, nodes.emphasis),
-                code=isinstance(child, nodes.literal),
+                bold=is_bold,
+                italic=is_italic,
+                code=is_code,
                 strikethrough=isinstance(child, strike_node),
                 # Ignore the type check here because Ultimate Notion has
                 # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
@@ -267,11 +283,21 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 italic=True,
             )
         else:
+            # Handle other node types that might have classes
+            classes = getattr(child, "attributes", {}).get("classes", [])
+            is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
+            is_italic = (
+                isinstance(child, nodes.emphasis) or "text-italic" in classes
+            )
+            is_code = (
+                isinstance(child, nodes.literal) or "text-mono" in classes
+            )
+
             new_text = text(
                 text=child.astext(),
-                bold=isinstance(child, nodes.strong),
-                italic=isinstance(child, nodes.emphasis),
-                code=isinstance(child, nodes.literal),
+                bold=is_bold,
+                italic=is_italic,
+                code=is_code,
                 strikethrough=isinstance(child, strike_node),
             )
         rich_text += new_text
