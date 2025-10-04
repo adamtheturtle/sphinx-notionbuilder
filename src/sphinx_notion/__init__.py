@@ -37,6 +37,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -66,7 +67,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import Text, text
+from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -320,6 +321,15 @@ def _(child: nodes.paragraph) -> Text:
     Process paragraph nodes by creating styled text.
     """
     return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.math) -> Text:
+    """
+    Process math nodes by creating math rich text.
+    """
+    return math(expression=child.astext())
 
 
 @beartype
@@ -1318,6 +1328,21 @@ def _(
     del node
     del section_level
     return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.math_block,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process math block nodes by creating Notion Equation blocks.
+    """
+    del section_level
+    latex_content = node.astext()
+    return [UnoEquation(latex=latex_content)]
 
 
 @beartype
