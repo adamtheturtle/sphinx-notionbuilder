@@ -232,7 +232,6 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             bg_color = _background_color_from_node(node=child)
             text_color = _color_from_node(node=child)
 
-            # Check for unsupported text style classes and warn
             classes = child.attributes.get("classes", [])
             color_mapping = _get_text_color_mapping()
             bg_color_classes = _get_background_color_classes()
