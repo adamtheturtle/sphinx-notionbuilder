@@ -2254,43 +2254,42 @@ and :text-green:`green text`.
     )
 
 
+@pytest.mark.parametrize(
+    argnames=("color_name", "expected_color"),
+    argvalues=[
+        ("red", BGColor.RED),
+        ("blue", BGColor.BLUE),
+        ("green", BGColor.GREEN),
+        ("yellow", BGColor.YELLOW),
+        ("orange", BGColor.ORANGE),
+        ("purple", BGColor.PURPLE),
+        ("pink", BGColor.PINK),
+        ("brown", BGColor.BROWN),
+        ("gray", BGColor.GRAY),
+    ],
+)
 def test_background_colored_text(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    color_name: str,
+    expected_color: BGColor,
 ) -> None:
     """
-    Background colored text from ``sphinxcontrib-text-styles`` becomes rich
-    text.
+    Each supported background color is converted correctly.
     """
-    rst_content = """
-        This is :bg-red:`red background text` and :bg-blue:`blue background text` \
-and :bg-green:`green background text`.
+    rst_content = f"""
+        This is :bg-{color_name}:`{color_name} background text`.
     """
 
     normal_text = text(text="This is ")
-    red_bg_text = text(
-        text="red background text",
-        color=BGColor.RED,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    colored_text = text(
+        text=f"{color_name} background text",
+        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
     )
-    normal_text2 = text(text=" and ")
-    blue_bg_text = text(
-        text="blue background text",
-        color=BGColor.BLUE,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-    )
-    normal_text3 = text(text=" and ")
-    green_bg_text = text(text="green background text", color=BGColor.GREEN)  # type: ignore[arg-type]
-    normal_text4 = text(text=".")
+    normal_text2 = text(text=".")
 
-    combined_text = (
-        normal_text
-        + red_bg_text
-        + normal_text2
-        + blue_bg_text
-        + normal_text3
-        + green_bg_text
-        + normal_text4
-    )
+    combined_text = normal_text + colored_text + normal_text2
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
