@@ -23,6 +23,13 @@ The builder supports colored text using `sphinxcontrib-text-styles <https://sphi
 
 This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
 
+Background Colors
+~~~~~~~~~~~~~~~~~~
+
+The builder also supports background colors using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
+
+This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
+
 .. note::
 
    This is an important note that demonstrates the note admonition support.

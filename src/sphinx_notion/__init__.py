@@ -92,9 +92,26 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
         "text-grey": Color.GRAY,
     }
 
+    bg_color_classes = {
+        "bg-red",
+        "bg-blue",
+        "bg-green",
+        "bg-yellow",
+        "bg-orange",
+        "bg-purple",
+        "bg-pink",
+        "bg-brown",
+        "bg-gray",
+        "bg-grey",
+    }
+
     for css_class in classes:
         if css_class in color_mapping:
             return color_mapping[css_class]
+
+        # Don't warn for background color classes, they are handled separately
+        if css_class in bg_color_classes:
+            continue
 
         # This warning being here assumes that only color classes,
         # and only classes from ``sphinxcontrib-text-styles``, are used.
@@ -103,6 +120,33 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
             "Text will be rendered without styling.",
             css_class,
         )
+
+    return None
+
+
+@beartype
+def _background_color_from_node(*, node: nodes.inline) -> BGColor | None:
+    """Extract Notion background color from CSS classes.
+
+    ``sphinxcontrib-text-styles`` creates classes like 'bg-red', 'bg-blue', etc.
+    """
+    classes = node.attributes.get("classes", [])
+    bg_color_mapping: dict[str, BGColor] = {
+        "bg-red": BGColor.RED,
+        "bg-blue": BGColor.BLUE,
+        "bg-green": BGColor.GREEN,
+        "bg-yellow": BGColor.YELLOW,
+        "bg-orange": BGColor.ORANGE,
+        "bg-purple": BGColor.PURPLE,
+        "bg-pink": BGColor.PINK,
+        "bg-brown": BGColor.BROWN,
+        "bg-gray": BGColor.GRAY,
+        "bg-grey": BGColor.GRAY,
+    }
+
+    for css_class in classes:
+        if css_class in bg_color_mapping:
+            return bg_color_mapping[css_class]
 
     return None
 
@@ -184,13 +228,17 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         elif isinstance(child, nodes.target):
             continue
         elif isinstance(child, nodes.inline):
+            bg_color = _background_color_from_node(node=child)
+            text_color = _color_from_node(node=child)
+            # Use background color as color parameter with type ignore as mentioned in the issue
+            color_to_use = bg_color if bg_color is not None else text_color
             new_text = text(
                 text=child.astext(),
                 bold=isinstance(child, nodes.strong),
                 italic=isinstance(child, nodes.emphasis),
                 code=isinstance(child, nodes.literal),
                 strikethrough=isinstance(child, strike_node),
-                color=_color_from_node(node=child),
+                color=color_to_use,  # type: ignore[arg-type]
             )
         elif isinstance(child, nodes.title_reference):
             # We match the behavior of the HTML builder here.

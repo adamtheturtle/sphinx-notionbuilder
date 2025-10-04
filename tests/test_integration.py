@@ -2254,6 +2254,57 @@ and :text-green:`green text`.
     )
 
 
+def test_background_colored_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Background colored text from ``sphinxcontrib-text-styles`` becomes rich
+    text.
+    """
+    rst_content = """
+        This is :bg-red:`red background text` and :bg-blue:`blue background text` \
+and :bg-green:`green background text`.
+    """
+
+    normal_text = text(text="This is ")
+    red_bg_text = text(
+        text="red background text",
+        color=BGColor.RED,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
+    normal_text2 = text(text=" and ")
+    blue_bg_text = text(
+        text="blue background text",
+        color=BGColor.BLUE,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
+    normal_text3 = text(text=" and ")
+    green_bg_text = text(text="green background text", color=BGColor.GREEN)  # type: ignore[arg-type]
+    normal_text4 = text(text=".")
+
+    combined_text = (
+        normal_text
+        + red_bg_text
+        + normal_text2
+        + blue_bg_text
+        + normal_text3
+        + green_bg_text
+        + normal_text4
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+    )
+
+
 @pytest.mark.parametrize(
     argnames=("color_name", "expected_color"),
     argvalues=[
