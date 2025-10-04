@@ -203,6 +203,192 @@ class _TableStructure:
     num_stub_columns: int
 
 
+@singledispatch
+@beartype
+def _process_rich_text_node(child: nodes.Node) -> Text:
+    """Create Notion rich text from a single docutils node.
+
+    This is the base function for singledispatch. Specific node types
+    are handled by registered functions.
+
+    Args:
+        child: The docutils node to process
+
+    Returns:
+        Notion Text object representing the node
+
+    Raises:
+        ValueError: If the node type is not supported
+    """
+    unsupported_child_type_msg = (
+        f"Unsupported child type: {type(child).__name__}."
+    )
+    # We use ``TRY004`` here because we want to raise a
+    # ``ValueError`` if the child type is unsupported, not a
+    # ``TypeError`` as the user has not directly provided any type.
+    raise ValueError(unsupported_child_type_msg)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.reference) -> Text:
+    """
+    Process reference nodes by creating linked text.
+    """
+    link_url = child.attributes["refuri"]
+    link_text = child.attributes.get("name", link_url)
+
+    return text(
+        text=link_text,
+        href=link_url,
+        bold=False,
+        italic=False,
+        code=False,
+    )
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.target) -> Text:
+    """
+    Process target nodes by returning empty text (targets are skipped).
+    """
+    del child  # Target nodes are skipped
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.title_reference) -> Text:
+    """Process title reference nodes by creating italic text.
+
+    We match the behavior of the HTML builder here.
+    If you render ``A `B``` in HTML, it will render as ``A <i>B</i>``.
+    """
+    return text(text=child.astext(), italic=True)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.Text) -> Text:
+    """
+    Process Text nodes by creating plain text.
+    """
+    return text(text=child.astext())
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.inline) -> Text:
+    """
+    Process inline nodes by creating styled text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.strong) -> Text:
+    """
+    Process strong nodes by creating bold text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.emphasis) -> Text:
+    """
+    Process emphasis nodes by creating italic text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.literal) -> Text:
+    """
+    Process literal nodes by creating code text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: strike_node) -> Text:
+    """
+    Process strike nodes by creating strikethrough text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(child: nodes.paragraph) -> Text:
+    """
+    Process paragraph nodes by creating styled text.
+    """
+    return _create_styled_text_from_node(child=child)
+
+
+@beartype
+def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
+    """Create styled text from a node with CSS class support.
+
+    This helper function handles the complex styling logic that was
+    previously inline in the main function.
+    """
+    classes = child.attributes.get("classes", [])
+    bg_color = _background_color_from_css_classes(classes=classes)
+    text_color = _color_from_css_classes(classes=classes)
+
+    color_mapping = _get_text_color_mapping()
+    bg_color_classes = _get_background_color_classes()
+
+    is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
+    is_italic = isinstance(child, nodes.emphasis) or "text-italic" in classes
+    is_code = isinstance(child, nodes.literal) or "text-mono" in classes
+    is_strikethrough = (
+        isinstance(child, strike_node) or "text-strike" in classes
+    )
+    is_underline = "text-underline" in classes
+
+    supported_style_classes = {
+        "text-bold",
+        "text-italic",
+        "text-mono",
+        "text-strike",
+        "text-underline",
+        *color_mapping.keys(),
+        *bg_color_classes,
+    }
+    unsupported_styles = [
+        css_class
+        for css_class in classes
+        if css_class not in supported_style_classes
+    ]
+
+    if unsupported_styles:
+        _LOGGER.warning(
+            "Unsupported text style classes: %s. "
+            "Text will be rendered without styling.",
+            ", ".join(unsupported_styles),
+        )
+
+    color: BGColor | Color | None = bg_color or text_color
+    return text(
+        text=child.astext(),
+        bold=is_bold,
+        italic=is_italic,
+        code=is_code,
+        strikethrough=is_strikethrough,
+        underline=is_underline,
+        # Ignore the type check here because Ultimate Notion has
+        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
+        color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
+
+
 @beartype
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """Create Notion rich text from ``docutils`` node children.
@@ -215,99 +401,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     rich_text = Text.from_plain_text(text="")
 
     for child in node.children:
-        if isinstance(child, nodes.reference):
-            link_url = child.attributes["refuri"]
-            link_text = child.attributes.get("name", link_url)
-
-            new_text = text(
-                text=link_text,
-                href=link_url,
-                bold=False,
-                italic=False,
-                code=False,
-            )
-        elif isinstance(child, nodes.target):
-            continue
-        elif isinstance(child, nodes.title_reference):
-            # We match the behavior of the HTML builder here.
-            # If you render ``A `B``` in HTML, it will render as
-            # ``A <i>B</i>``.
-            new_text = text(text=child.astext(), italic=True)
-        elif isinstance(child, nodes.Text):
-            new_text = text(text=child.astext())
-        elif isinstance(
-            child,
-            (
-                nodes.inline,
-                nodes.strong,
-                nodes.emphasis,
-                nodes.literal,
-                strike_node,
-                nodes.paragraph,
-            ),
-        ):
-            classes = child.attributes.get("classes", [])
-            bg_color = _background_color_from_css_classes(classes=classes)
-            text_color = _color_from_css_classes(classes=classes)
-
-            color_mapping = _get_text_color_mapping()
-            bg_color_classes = _get_background_color_classes()
-
-            is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
-            is_italic = (
-                isinstance(child, nodes.emphasis) or "text-italic" in classes
-            )
-            is_code = (
-                isinstance(child, nodes.literal) or "text-mono" in classes
-            )
-            is_strikethrough = (
-                isinstance(child, strike_node) or "text-strike" in classes
-            )
-            is_underline = "text-underline" in classes
-
-            supported_style_classes = {
-                "text-bold",
-                "text-italic",
-                "text-mono",
-                "text-strike",
-                "text-underline",
-                *color_mapping.keys(),
-                *bg_color_classes,
-            }
-            unsupported_styles = [
-                css_class
-                for css_class in classes
-                if css_class not in supported_style_classes
-            ]
-
-            if unsupported_styles:
-                _LOGGER.warning(
-                    "Unsupported text style classes: %s. "
-                    "Text will be rendered without styling.",
-                    ", ".join(unsupported_styles),
-                )
-
-            color: BGColor | Color | None = bg_color or text_color
-            new_text = text(
-                text=child.astext(),
-                bold=is_bold,
-                italic=is_italic,
-                code=is_code,
-                strikethrough=is_strikethrough,
-                underline=is_underline,
-                # Ignore the type check here because Ultimate Notion has
-                # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
-                color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-            )
-        else:
-            unsupported_child_type_msg = (
-                f"Unsupported child type: {type(child).__name__}."
-            )
-            # We use ``TRY004`` here because we want to raise a
-            # ``ValueError`` if the child type is unsupported, not a
-            # ``TypeError`` as the user has not directly provided any type.
-            raise ValueError(unsupported_child_type_msg)  # noqa: TRY004
-
+        new_text = _process_rich_text_node(child)
         rich_text += new_text
 
     return rich_text
