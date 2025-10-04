@@ -2321,19 +2321,14 @@ def test_text_styles_non_color(
     tmp_path: Path,
 ) -> None:
     """
-    Non-color text styles (like underline) emit a warning.
+    Non-color text styles (like underline) are supported without warnings.
     """
     rst_content = """
         This is :text-underline:`underlined text`.
     """
 
-    expected_warning = (
-        "Unsupported text style classes: text-underline. "
-        "Text will be rendered without styling."
-    )
-
     normal_text = text(text="This is ")
-    underline_text = text(text="underlined text")
+    underline_text = text(text="underlined text", underline=True)
     normal_text2 = text(text=".")
 
     combined_text = normal_text + underline_text + normal_text2
@@ -2348,7 +2343,6 @@ def test_text_styles_non_color(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
-        expected_warnings=[expected_warning],
     )
 
 
@@ -2446,6 +2440,8 @@ def test_text_styles_and_strike(
         ("text-bold", text(text="text-bold text", bold=True)),
         ("text-italic", text(text="text-italic text", italic=True)),
         ("text-mono", text(text="text-mono text", code=True)),
+        ("text-strike", text(text="text-strike text", strikethrough=True)),
+        ("text-underline", text(text="text-underline text", underline=True)),
     ],
 )
 def test_additional_text_styles(
@@ -2456,7 +2452,8 @@ def test_additional_text_styles(
     expected_text: Text,
 ) -> None:
     """
-    Additional text styles (text-bold, text-italic, text-mono) are supported.
+    Additional text styles from the ``sphinxcontrib_text_styles`` extension are
+    supported.
     """
     rst_content = f"""
         This is :{role}:`{role} text`.

@@ -43,7 +43,7 @@ The builder also supports additional background colors: :bg-cyan:`cyan`, :bg-mag
 Other Text Styles
 ~~~~~~~~~~~~~~~~~~
 
-The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, and :text-mono:`monospace text`. Note that :text-underline:`underlined text` and :text-strike:`strikethrough text` are not supported by Notion and will render as plain text.
+The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
 .. note::
 

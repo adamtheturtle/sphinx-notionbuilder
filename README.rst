@@ -175,14 +175,14 @@ Additional Text Styles
 
 .. code-block:: rst
 
-   This is :text-bold:`bold text`, :text-italic:`italic text`, and :text-mono:`monospace text`.
+   This is :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
 The following additional text styles are supported:
 - ``:text-bold:`text`` - Makes text bold
 - ``:text-italic:`text`` - Makes text italic
 - ``:text-mono:`text`` - Makes text monospace
-
-Note: Some text styles like ``:text-underline:`text`` and ``:text-strike:`text`` are not supported by Notion and will render as plain text with a warning.
+- ``:text-strike:`text`` - Makes text strikethrough
+- ``:text-underline:`text`` - Makes text underlined
 
 Using TODO Lists
 ----------------

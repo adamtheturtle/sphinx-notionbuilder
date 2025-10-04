@@ -244,6 +244,10 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             is_code = (
                 isinstance(child, nodes.literal) or "text-mono" in classes
             )
+            is_strikethrough = (
+                isinstance(child, strike_node) or "text-strike" in classes
+            )
+            is_underline = "text-underline" in classes
 
             # Check for unsupported styles
             unsupported_styles = []
@@ -252,7 +256,13 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                     css_class not in color_mapping
                     and css_class not in bg_color_classes
                     and css_class
-                    not in {"text-bold", "text-italic", "text-mono"}
+                    not in {
+                        "text-bold",
+                        "text-italic",
+                        "text-mono",
+                        "text-strike",
+                        "text-underline",
+                    }
                 ):
                     unsupported_styles.append(css_class)
 
@@ -269,7 +279,8 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 bold=is_bold,
                 italic=is_italic,
                 code=is_code,
-                strikethrough=isinstance(child, strike_node),
+                strikethrough=is_strikethrough,
+                underline=is_underline,
                 # Ignore the type check here because Ultimate Notion has
                 # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
                 color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
@@ -292,13 +303,18 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
             is_code = (
                 isinstance(child, nodes.literal) or "text-mono" in classes
             )
+            is_strikethrough = (
+                isinstance(child, strike_node) or "text-strike" in classes
+            )
+            is_underline = "text-underline" in classes
 
             new_text = text(
                 text=child.astext(),
                 bold=is_bold,
                 italic=is_italic,
                 code=is_code,
-                strikethrough=isinstance(child, strike_node),
+                strikethrough=is_strikethrough,
+                underline=is_underline,
             )
         rich_text += new_text
 
