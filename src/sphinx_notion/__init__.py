@@ -210,15 +210,6 @@ def _process_rich_text_node(child: nodes.Node) -> Text:
 
     This is the base function for singledispatch. Specific node types
     are handled by registered functions.
-
-    Args:
-        child: The docutils node to process
-
-    Returns:
-        Notion Text object representing the node
-
-    Raises:
-        ValueError: If the node type is not supported
     """
     unsupported_child_type_msg = (
         f"Unsupported child type: {type(child).__name__}."
