@@ -514,7 +514,7 @@ def _process_node_to_blocks(
     node: nodes.Element,
     *,
     section_level: int,
-) -> list[Block]:  # pragma: no cover
+) -> list[Block]:
     """
     Required function for ``singledispatch``.
     """

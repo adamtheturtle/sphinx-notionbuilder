@@ -2777,3 +2777,44 @@ def setup(app):
             tmp_path=tmp_path,
             conf_py_content=conf_py_content,
         )
+
+
+def test_unsupported_node_types_in_process_node_to_blocks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Unsupported node types in _process_node_to_blocks raise
+    NotImplementedError.
+    """
+    rst_content = """
+        .. unsupported-node::
+    """
+
+    conf_py_content = """
+from docutils import nodes
+from docutils.parsers.rst import Directive
+
+class UnsupportedNode(Directive):
+    def run(self):
+        # Create a custom node type that's not registered
+        node = nodes.Element()
+        node.tagname = 'unsupported_node'
+        return [node]
+
+def setup(app):
+    app.add_directive('unsupported-node', UnsupportedNode)
+    """
+
+    expected_message = r"^<.*unsupported_node.*"
+    with pytest.raises(
+        expected_exception=NotImplementedError, match=expected_message
+    ):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+            conf_py_content=conf_py_content,
+        )
