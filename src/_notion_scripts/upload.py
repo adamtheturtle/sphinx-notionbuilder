@@ -209,8 +209,8 @@ class _ParentType(Enum):
 )
 @click.option(
     "--sha-mapping",
-    help="JSON file mapping file SHAs to Notion block IDs (required)",
-    required=True,
+    help="JSON file mapping file SHAs to Notion block IDs",
+    required=False,
     type=click.Path(
         exists=True,
         path_type=Path,
@@ -226,20 +226,17 @@ def main(
     parent_type: _ParentType,
     title: str,
     icon: str | None = None,
-    sha_mapping: Path,
+    sha_mapping: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
     """
     session = Session()
 
-    sha_mapping_content = sha_mapping.read_text(encoding="utf-8")
-    if sha_mapping_content.strip():
-        sha_to_block_id: dict[str, str] = dict(
-            json.loads(s=sha_mapping_content)
-        )
-    else:
-        sha_to_block_id = {}
+    sha_mapping_content = (
+        sha_mapping.read_text(encoding="utf-8") if sha_mapping else "{}"
+    )
+    sha_to_block_id: dict[str, str] = dict(json.loads(s=sha_mapping_content))
 
     sha_to_block_id = _clean_deleted_blocks_from_mapping(
         sha_to_block_id=sha_to_block_id,
