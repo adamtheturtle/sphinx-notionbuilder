@@ -2807,9 +2807,14 @@ def setup(app):
     app.add_directive('unsupported-node', UnsupportedNode)
     """
 
-    expected_message = r"^<.*unsupported_node.*"
+    expected_message = (
+        r"^Unsupported node type: unsupported_node on line "
+        rf"1 in "
+        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}.$"
+    )
     with pytest.raises(
-        expected_exception=NotImplementedError, match=expected_message
+        expected_exception=NotImplementedError,
+        match=expected_message,
     ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,

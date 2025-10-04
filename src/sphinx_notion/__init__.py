@@ -519,7 +519,11 @@ def _process_node_to_blocks(
     Required function for ``singledispatch``.
     """
     del section_level
-    raise NotImplementedError(node)
+    unsupported_node_type_msg = (
+        f"Unsupported node type: {node.tagname} on line "
+        f"{node.line} in {node.source}."
+    )
+    raise NotImplementedError(unsupported_node_type_msg)
 
 
 @beartype
