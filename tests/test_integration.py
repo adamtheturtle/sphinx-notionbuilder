@@ -2294,6 +2294,8 @@ def test_individual_colors(
     normal_text = text(text="This is ")
     colored_text = text(
         text=f"{role} text",
+        # We ignore the type check here because Ultimate Notion has
+        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
         color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
     )
     normal_text2 = text(text=".")
