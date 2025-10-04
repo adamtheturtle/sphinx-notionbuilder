@@ -49,7 +49,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import text
+from ultimate_notion.rich_text import Text, text
 
 
 @beartype
@@ -2440,36 +2440,32 @@ def test_text_styles_and_strike(
     )
 
 
+@pytest.mark.parametrize(
+    argnames=("role", "expected_text"),
+    argvalues=[
+        ("text-bold", text(text="text-bold text", bold=True)),
+        ("text-italic", text(text="text-italic text", italic=True)),
+        ("text-mono", text(text="text-mono text", code=True)),
+    ],
+)
 def test_additional_text_styles(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    role: str,
+    expected_text: Text,
 ) -> None:
     """
     Additional text styles (text-bold, text-italic, text-mono) are supported.
     """
-    rst_content = """
-        This is :text-bold:`bold text`, :text-italic:`italic text`, and
-        :text-mono:`monospace text`.
+    rst_content = f"""
+        This is :{role}:`{role} text`.
     """
 
     normal_text1 = text(text="This is ")
-    bold_text = text(text="bold text", bold=True)
-    normal_text2 = text(text=", ")
-    italic_text = text(text="italic text", italic=True)
-    normal_text3 = text(text=", and ")
-    code_text = text(text="monospace text", code=True)
-    normal_text4 = text(text=".")
+    normal_text2 = text(text=".")
 
-    combined_text = (
-        normal_text1
-        + bold_text
-        + normal_text2
-        + italic_text
-        + normal_text3
-        + code_text
-        + normal_text4
-    )
+    combined_text = normal_text1 + expected_text + normal_text2
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
