@@ -2315,23 +2315,28 @@ def test_individual_colors(
     )
 
 
-def test_text_styles_non_color(
+def test_text_styles_unsupported_color(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Non-color text styles (like underline) are supported without warnings.
+    Unsupported colors from ``sphinxcontrib-text-styles`` emit warnings.
     """
     rst_content = """
-        This is :text-underline:`underlined text`.
+        This is :text-cyan:`cyan text`.
     """
 
+    expected_warning = (
+        "Unsupported text style classes: text-cyan. "
+        "Text will be rendered without styling."
+    )
+
     normal_text = text(text="This is ")
-    underline_text = text(text="underlined text", underline=True)
+    cyan_text = text(text="cyan text")
     normal_text2 = text(text=".")
 
-    combined_text = normal_text + underline_text + normal_text2
+    combined_text = normal_text + cyan_text + normal_text2
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
@@ -2343,6 +2348,7 @@ def test_text_styles_non_color(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=[expected_warning],
     )
 
 
