@@ -1622,3 +1622,8 @@ The builder supports task lists with checkboxes:
            - [ ] Another bullet point.
 
     3. [ ] Task C
+
+SVG support
+~~~~~~~~~~~
+
+.. image:: _static/camera.svg

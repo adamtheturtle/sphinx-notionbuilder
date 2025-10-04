@@ -5,6 +5,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import json
+import mimetypes
 from enum import Enum
 from functools import cache
 from pathlib import Path
@@ -150,10 +151,18 @@ def _block_from_details(
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
+            # Ultimate Notion does not support SVG files, so we need to
+            # provide the MIME type ourselves for SVG files.
+            # See https://github.com/ultimate-notion/ultimate-notion/issues/141.
+            mime_type, _ = mimetypes.guess_type(url=file_path.name)
+            if mime_type != "image/svg+xml":
+                mime_type = None
+
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
                     file=file_stream,
                     file_name=file_path.name,
+                    mime_type=mime_type,
                 )
 
             uploaded_file.wait_until_uploaded()
