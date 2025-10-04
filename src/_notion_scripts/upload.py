@@ -113,20 +113,21 @@ def _is_existing_equivalent(
     if existing_page_block == local_block:
         return True
 
-    if isinstance(
-        local_block, _FILE_BLOCK_TYPES
-    ) and local_block.url.startswith("file://"):
+    if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
-        file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-        file_sha = _calculate_file_sha(file_path=file_path)
-        existing_page_block_id_with_file_sha = sha_to_block_id.get(file_sha)
-        if not existing_page_block_id_with_file_sha:
-            return False
-        if (
-            UUID(hex=existing_page_block_id_with_file_sha)
-            == existing_page_block.id
-        ):
-            return True
+        if parsed.scheme == "file":
+            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            file_sha = _calculate_file_sha(file_path=file_path)
+            existing_page_block_id_with_file_sha = sha_to_block_id.get(
+                file_sha
+            )
+            if not existing_page_block_id_with_file_sha:
+                return False
+            if (
+                UUID(hex=existing_page_block_id_with_file_sha)
+                == existing_page_block.id
+            ):
+                return True
 
     return False
 
@@ -143,23 +144,22 @@ def _block_from_details(
     """
     block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
 
-    if isinstance(block, _FILE_BLOCK_TYPES) and block.url.startswith(
-        "file://"
-    ):
+    if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
-        # Ignore ``mypy`` error as the keyword arguments are different across
-        # Python versions and platforms.
-        file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+        if parsed.scheme == "file":
+            # Ignore ``mypy`` error as the keyword arguments are different
+            # across Python versions and platforms.
+            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-        with file_path.open(mode="rb") as file_stream:
-            uploaded_file = session.upload(
-                file=file_stream,
-                file_name=file_path.name,
-            )
+            with file_path.open(mode="rb") as file_stream:
+                uploaded_file = session.upload(
+                    file=file_stream,
+                    file_name=file_path.name,
+                )
 
-        uploaded_file.wait_until_uploaded()
+            uploaded_file.wait_until_uploaded()
 
-        return block.__class__(file=uploaded_file, caption=block.caption)
+            return block.__class__(file=uploaded_file, caption=block.caption)
 
     return block
 
@@ -311,8 +311,10 @@ def main(
                     delete_start_index + uploaded_block_index
                 ]
                 assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
-                if pre_uploaded_block.url.startswith("file://"):
-                    parsed = urlparse(url=pre_uploaded_block.url)
+                parsed = urlparse(url=pre_uploaded_block.url)
+                if parsed.scheme == "file":
+                    # Ignore ``mypy`` error as the keyword arguments are
+                    # different across Python versions and platforms.
                     file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
                     file_sha = _calculate_file_sha(file_path=file_path)
                     sha_to_block_id[file_sha] = str(object=uploaded_block.id)
