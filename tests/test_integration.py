@@ -21,6 +21,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -49,7 +50,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import Text, text
+from ultimate_notion.rich_text import Text, math, text
 
 
 @beartype
@@ -2823,3 +2824,61 @@ def setup(app):
             tmp_path=tmp_path,
             conf_py_content=conf_py_content,
         )
+
+
+def test_inline_equation(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Inline equations become Notion math rich text.
+    """
+    rst_content = """
+        This is an inline equation :math:`E = mc^2` in a paragraph.
+    """
+
+    normal_text1 = text(text="This is an inline equation ")
+    equation_text = math(expression="E = mc^2")
+    normal_text2 = text(text=" in a paragraph.")
+
+    combined_text = normal_text1 + equation_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.jsmath"),
+    )
+
+
+def test_block_equation(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Block equations become Notion Equation blocks.
+    """
+    rst_content = """
+        .. math::
+
+           E = mc^2
+    """
+
+    expected_objects: list[Block] = [
+        UnoEquation(latex="E = mc^2"),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib.jsmath"),
+    )

@@ -474,6 +474,49 @@ Here's some text before the PDF.
 
 And here's some text after the PDF.
 
+Mathematical Equations
+~~~~~~~~~~~~~~~~~~~~~~
+
+The builder supports mathematical equations using the ``sphinxcontrib.jsmath`` extension.
+
+Inline Equations
+~~~~~~~~~~~~~~~~
+
+You can include inline equations like this: :math:`E = mc^2` in your text.
+
+Here are some more examples:
+
+* The quadratic formula: :math:`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
+* The integral of x squared: :math:`\int x^2 dx = \frac{x^3}{3} + C`
+* Euler's identity: :math:`e^{i\pi} + 1 = 0`
+
+Block Equations
+~~~~~~~~~~~~~~~
+
+You can also include block-level equations:
+
+.. math::
+
+   E = mc^2
+
+The Schrödinger equation:
+
+.. math::
+
+   i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+
+Maxwell's equations:
+
+.. math::
+
+   \nabla \cdot \mathbf{E} = \frac{\rho}{\epsilon_0}
+
+   \nabla \cdot \mathbf{B} = 0
+
+   \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}
+
+   \nabla \times \mathbf{B} = \mu_0\mathbf{J} + \mu_0\epsilon_0\frac{\partial \mathbf{E}}{\partial t}
+
 .. collapse:: Long code block
 
    .. code-block:: python
