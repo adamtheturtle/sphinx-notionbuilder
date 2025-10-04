@@ -2255,7 +2255,7 @@ and :text-green:`green text`.
 
 
 @pytest.mark.parametrize(
-    argnames=("color_name", "expected_color"),
+    argnames=("role", "expected_color"),
     argvalues=[
         ("red", BGColor.RED),
         ("blue", BGColor.BLUE),
@@ -2272,19 +2272,19 @@ def test_background_colored_text(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    color_name: str,
+    role: str,
     expected_color: BGColor,
 ) -> None:
     """
     Each supported background color is converted correctly.
     """
     rst_content = f"""
-        This is :bg-{color_name}:`{color_name} background text`.
+        This is :bg-{role}:`{role} background text`.
     """
 
     normal_text = text(text="This is ")
     colored_text = text(
-        text=f"{color_name} background text",
+        text=f"{role} background text",
         color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
     )
     normal_text2 = text(text=".")
@@ -2305,35 +2305,35 @@ def test_background_colored_text(
 
 
 @pytest.mark.parametrize(
-    argnames=("color_name", "expected_color"),
+    argnames=("role", "expected_color"),
     argvalues=[
-        ("red", Color.RED),
-        ("blue", Color.BLUE),
-        ("green", Color.GREEN),
-        ("yellow", Color.YELLOW),
-        ("orange", Color.ORANGE),
-        ("purple", Color.PURPLE),
-        ("pink", Color.PINK),
-        ("brown", Color.BROWN),
-        ("gray", Color.GRAY),
+        ("text-red", Color.RED),
+        ("text-blue", Color.BLUE),
+        ("text-green", Color.GREEN),
+        ("text-yellow", Color.YELLOW),
+        ("text-orange", Color.ORANGE),
+        ("text-purple", Color.PURPLE),
+        ("text-pink", Color.PINK),
+        ("text-brown", Color.BROWN),
+        ("text-gray", Color.GRAY),
     ],
 )
 def test_individual_colors(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    color_name: str,
+    role: str,
     expected_color: Color,
 ) -> None:
     """
     Each supported color is converted correctly.
     """
     rst_content = f"""
-        This is :text-{color_name}:`{color_name} text`.
+        This is :{role}:`{role} text`.
     """
 
     normal_text = text(text="This is ")
-    colored_text = text(text=f"{color_name} text", color=expected_color)
+    colored_text = text(text=f"{role} text", color=expected_color)
     normal_text2 = text(text=".")
 
     combined_text = normal_text + colored_text + normal_text2
