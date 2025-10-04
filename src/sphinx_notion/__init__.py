@@ -291,9 +291,19 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 text=child.astext(),
                 italic=True,
             )
-        else:
-            # Handle other node types that might have classes
-            classes = getattr(child, "attributes", {}).get("classes", [])
+        elif isinstance(child, nodes.Text):
+            new_text = text(text=child.astext())
+        elif isinstance(
+            child,
+            (
+                nodes.strong,
+                nodes.emphasis,
+                nodes.literal,
+                strike_node,
+                nodes.paragraph,
+            ),
+        ):
+            classes = child.attributes.get("classes", [])
             is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
             is_italic = (
                 isinstance(child, nodes.emphasis) or "text-italic" in classes
@@ -305,7 +315,6 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 isinstance(child, strike_node) or "text-strike" in classes
             )
             is_underline = "text-underline" in classes
-
             new_text = text(
                 text=child.astext(),
                 bold=is_bold,
@@ -314,6 +323,15 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
                 strikethrough=is_strikethrough,
                 underline=is_underline,
             )
+        else:
+            unsupported_child_type_msg = (
+                f"Unsupported child type: {type(child).__name__}."
+            )
+            # We use ``TRY004`` here because we want to raise a
+            # ``ValueError`` if the child type is unsupported, not a
+            # ``TypeError`` as the user has not directly provided any type.
+            raise ValueError(unsupported_child_type_msg)  # noqa: TRY004
+
         rich_text += new_text
 
     return rich_text

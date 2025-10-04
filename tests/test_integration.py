@@ -2742,3 +2742,38 @@ def test_inline_single_backticks(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_unsupported_node_types_in_rich_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Unsupported node types in rich text processing raise ValueError.
+    """
+    rst_content = """
+        This is a test with :footnote:`footnote node`.
+    """
+
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    def footnote_role(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):  # noqa: PLR0913
+        node = nodes.footnote_reference(rawtext, text)
+        return [node], []
+
+    app.add_role('footnote', footnote_role)
+    """
+    expected_message = r"^Unsupported child type: footnote_reference\.$"
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+            conf_py_content=conf_py_content,
+        )
