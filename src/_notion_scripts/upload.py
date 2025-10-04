@@ -51,7 +51,7 @@ def _clean_deleted_blocks_from_mapping(
     sha_to_block_id: dict[str, str],
     session: Session,
 ) -> dict[str, str]:
-    """Remove deleted blocks from SHA mapping.
+    """Remove deleted blocks from ``SHA`` mapping.
 
     Returns a new dictionary with only existing blocks.
     """
