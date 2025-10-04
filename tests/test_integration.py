@@ -2257,56 +2257,6 @@ and :text-green:`green text`.
 @pytest.mark.parametrize(
     argnames=("role", "expected_color"),
     argvalues=[
-        ("red", BGColor.RED),
-        ("blue", BGColor.BLUE),
-        ("green", BGColor.GREEN),
-        ("yellow", BGColor.YELLOW),
-        ("orange", BGColor.ORANGE),
-        ("purple", BGColor.PURPLE),
-        ("pink", BGColor.PINK),
-        ("brown", BGColor.BROWN),
-        ("gray", BGColor.GRAY),
-    ],
-)
-def test_background_colored_text(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-    role: str,
-    expected_color: BGColor,
-) -> None:
-    """
-    Each supported background color is converted correctly.
-    """
-    rst_content = f"""
-        This is :bg-{role}:`{role} background text`.
-    """
-
-    normal_text = text(text="This is ")
-    colored_text = text(
-        text=f"{role} background text",
-        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-    )
-    normal_text2 = text(text=".")
-
-    combined_text = normal_text + colored_text + normal_text2
-
-    expected_paragraph = UnoParagraph(text=combined_text)
-
-    expected_objects: list[Block] = [expected_paragraph]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_objects=expected_objects,
-        make_app=make_app,
-        tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
-    )
-
-
-@pytest.mark.parametrize(
-    argnames=("role", "expected_color"),
-    argvalues=[
         ("text-red", Color.RED),
         ("text-blue", Color.BLUE),
         ("text-green", Color.GREEN),
@@ -2316,6 +2266,15 @@ def test_background_colored_text(
         ("text-pink", Color.PINK),
         ("text-brown", Color.BROWN),
         ("text-gray", Color.GRAY),
+        ("bg-red", BGColor.RED),
+        ("bg-blue", BGColor.BLUE),
+        ("bg-green", BGColor.GREEN),
+        ("bg-yellow", BGColor.YELLOW),
+        ("bg-orange", BGColor.ORANGE),
+        ("bg-purple", BGColor.PURPLE),
+        ("bg-pink", BGColor.PINK),
+        ("bg-brown", BGColor.BROWN),
+        ("bg-gray", BGColor.GRAY),
     ],
 )
 def test_individual_colors(
@@ -2323,7 +2282,7 @@ def test_individual_colors(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
     role: str,
-    expected_color: Color,
+    expected_color: Color | BGColor,
 ) -> None:
     """
     Each supported color is converted correctly.
@@ -2333,7 +2292,10 @@ def test_individual_colors(
     """
 
     normal_text = text(text="This is ")
-    colored_text = text(text=f"{role} text", color=expected_color)
+    colored_text = text(
+        text=f"{role} text",
+        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
     normal_text2 = text(text=".")
 
     combined_text = normal_text + colored_text + normal_text2
