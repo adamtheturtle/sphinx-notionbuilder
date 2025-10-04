@@ -206,9 +206,9 @@ class _TableStructure:
 @singledispatch
 @beartype
 def _process_rich_text_node(child: nodes.Node) -> Text:
-    """Create Notion rich text from a single docutils node.
+    """Create Notion rich text from a single ``docutils`` node.
 
-    This is the base function for singledispatch. Specific node types
+    This is the base function for ``singledispatch``. Specific node types
     are handled by registered functions.
     """
     unsupported_child_type_msg = (
