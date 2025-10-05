@@ -1340,17 +1340,11 @@ def _(
 
     classes = node.attributes.get("classes", [])
     if classes == ["rest-example"]:
-        # This looks like a rest-example container
-        rst_source_node = node.children[0]
-        assert isinstance(rst_source_node, nodes.literal_block)
-        output_nodes = node.children[1:]
-
         return _process_rest_example_container(
-            rst_source_node=rst_source_node,
-            output_nodes=output_nodes,
+            node=node,
+            section_level=section_level,
         )
 
-    # Regular container processing
     blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
@@ -1363,22 +1357,25 @@ def _(
 @beartype
 def _process_rest_example_container(
     *,
-    rst_source_node: nodes.literal_block,
-    output_nodes: list[nodes.Node],
+    node: nodes.container,
+    section_level: int,
 ) -> list[Block]:
     """
     Process a rest-example container by creating nested callouts.
     """
+    rst_source_node = node.children[0]
+    assert isinstance(rst_source_node, nodes.literal_block)
+    output_nodes = node.children[1:]
     code_blocks = _process_node_to_blocks(rst_source_node, section_level=1)
 
     output_blocks: list[Block] = []
     for output_node in output_nodes:
         output_blocks.extend(
-            _process_node_to_blocks(output_node, section_level=1)
+            _process_node_to_blocks(output_node, section_level=section_level)
         )
 
     code_callout = UnoCallout(text=text(text="Code"))
-    code_callout.append(blocks=code_blocks)  # Only the rst source
+    code_callout.append(blocks=code_blocks)
 
     output_callout = UnoCallout(text=text(text="Output"))
     output_callout.append(blocks=output_blocks)
