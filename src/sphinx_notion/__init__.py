@@ -716,8 +716,9 @@ def _(
 ) -> list[Block]:
     """Process paragraph nodes by creating Notion Paragraph blocks.
 
-    Special case: if the paragraph contains only a container (like rest-example),
-    process the container directly instead of trying to process it as rich text.
+    Special case: if the paragraph contains only a container (like
+    rest-example), process the container directly instead of trying to process
+    it as rich text.
     """
     del section_level
 
@@ -1307,11 +1308,8 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process container nodes, especially for ``literalinclude`` with
-    captions.
-
-    Also handles rest-example containers which contain both rst source
-    and output.
+    """
+    Process container nodes.
     """
     num_children_for_captioned_literalinclude = 2
     if (
@@ -1424,11 +1422,10 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process target nodes by checking if they are rest-example targets.
-
-    Rest-example targets are mapped in the document's ids dictionary to
-    their corresponding content nodes.
     """
+    Process target nodes by ignoring them completely.
+    """
+    del node
     del section_level
     return []
 
