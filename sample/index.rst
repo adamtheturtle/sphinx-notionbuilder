@@ -15,8 +15,8 @@ Comment Support
    .. This is a comment that demonstrates comment support.
       Comments should not appear in the final output.
 
-Text Formatting Examples
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Text Formatting
+~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -26,37 +26,17 @@ Text Formatting Examples
 
    This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
-Colored Text
-~~~~~~~~~~~~
-
-.. rest-example::
-
    The builder supports colored text using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
    This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
-
-Background Colors
-~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    The builder also supports background colors using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
    This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
 
-Other Text Styles
-~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
    The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
-Keyboard Shortcuts
-~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
-   The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
+   The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste.
 
 Admonitions
 ~~~~~~~~~~~
@@ -131,8 +111,8 @@ Including Files
       :language: python
       :caption: Example **Configuration** File
 
-Nested Content in Bullet Lists
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Bullet Lists
+~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -228,7 +208,7 @@ Task Lists
       3. [ ] Task C
 
 Block Quotes
-------------
+~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -238,8 +218,8 @@ Block Quotes
          block quote with
          multiple lines.
 
-Table Example
--------------
+Tables
+~~~~~~
 
 .. rest-example::
 
@@ -255,11 +235,6 @@ Table Example
    |                      |                               |
    | Normal text          | `link2 <https://google.com>`_ |
    +----------------------+-------------------------------+
-
-List Table with Stub (Header) Column
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. list-table::
       :header-rows: 1
@@ -278,75 +253,37 @@ List Table with Stub (Header) Column
         - Supports ``inline code``
         - ✅ Working
 
-Image Examples
---------------
-
-Simple Image
-~~~~~~~~~~~~
+Images
+~~~~~~
 
 .. rest-example::
 
    .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-
-Image with Alt Text (External)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
       :alt: Mountain landscape with snow-capped peaks
 
-Image with Alt Text
-~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
    .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-      :alt: Beautiful mountain scenery
-
-Local Image Example
-~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. image:: _static/test-image.png
-      :alt: Local test image
-
-SVG support
-~~~~~~~~~~~
-
-.. rest-example::
 
    .. image:: _static/camera.svg
 
-Video Examples
---------------
-
-Simple Video
-~~~~~~~~~~~~
+Video
+~~~~~
 
 .. rest-example::
 
    .. video:: https://www.w3schools.com/html/mov_bbb.mp4
 
-Video with Caption
-~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
    .. video:: https://www.w3schools.com/html/mov_bbb.mp4
-      :caption: Sample video demonstrating video support
-
-Local Video Example
-~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
+      :caption: Sample video demonstrating video support with a caption
 
    .. video:: _static/test-video.mp4
       :caption: Local test video file
 
-Audio Examples
-~~~~~~~~~~~~~~
+Audio
+~~~~~
 
 .. rest-example::
 
@@ -354,8 +291,8 @@ Audio Examples
 
    .. audio:: _static/test-audio.wav
 
-PDF Support
-~~~~~~~~~~~
+PDF
+~~~
 
 .. rest-example::
 
