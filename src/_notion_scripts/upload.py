@@ -131,15 +131,17 @@ def _is_existing_equivalent(
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
-            if not isinstance(existing_page_block.file_info, NotionFile):
-                return False
 
             if (
-                existing_page_block.file_info.name
-                != local_block.file_info.name
-            ) or (
-                existing_page_block.file_info.caption
-                != local_block.file_info.caption
+                not isinstance(existing_page_block.file_info, NotionFile)
+                or (
+                    existing_page_block.file_info.name
+                    != local_block.file_info.name
+                )
+                or (
+                    existing_page_block.file_info.caption
+                    != local_block.file_info.caption
+                )
             ):
                 return False
 
