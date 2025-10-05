@@ -33,6 +33,28 @@ _FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
 
 
 @beartype
+def _block_without_children(
+    *,
+    block: ParentBlock,
+) -> ParentBlock:
+    """
+    Return a copy of a block without children.
+    """
+    serialized_block_without_children = block.obj_ref.serialize_for_api()
+
+    # Delete the ID, else the block will have the children from Notion.
+    if "id" in serialized_block_without_children:
+        del serialized_block_without_children["id"]
+
+    block_without_children = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=serialized_block_without_children)
+    )
+    assert isinstance(block_without_children, ParentBlock)
+    assert not block_without_children.children
+    return block_without_children
+
+
+@beartype
 @cache
 def _calculate_file_sha(*, file_path: Path) -> str:
     """
@@ -107,18 +129,17 @@ def _is_existing_equivalent(
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
-            if not isinstance(existing_page_block.file_info, NotionFile):
-                return False
 
             if (
-                existing_page_block.file_info.name
-                != local_block.file_info.name
-            ):
-                return False
-
-            if (
-                existing_page_block.file_info.caption
-                != local_block.file_info.caption
+                not isinstance(existing_page_block.file_info, NotionFile)
+                or (
+                    existing_page_block.file_info.name
+                    != local_block.file_info.name
+                )
+                or (
+                    existing_page_block.file_info.caption
+                    != local_block.file_info.caption
+                )
             ):
                 return False
 
@@ -128,6 +149,33 @@ def _is_existing_equivalent(
                 file_url=existing_page_block.file_info.url,
             )
             return local_file_sha == existing_file_sha
+    elif isinstance(existing_page_block, ParentBlock):
+        assert isinstance(local_block, ParentBlock)
+        existing_page_block_without_children = _block_without_children(
+            block=existing_page_block,
+        )
+
+        local_block_without_children = _block_without_children(
+            block=local_block,
+        )
+
+        if (
+            existing_page_block_without_children
+            != local_block_without_children
+        ) or (len(existing_page_block.children) != len(local_block.children)):
+            return False
+
+        return all(
+            _is_existing_equivalent(
+                existing_page_block=existing_child_block,
+                local_block=local_child_block,
+            )
+            for (existing_child_block, local_child_block) in zip(
+                existing_page_block.children,
+                local_block.children,
+                strict=False,
+            )
+        )
 
     return existing_page_block == local_block
 
@@ -171,14 +219,7 @@ def _block_with_uploaded_file(
             _block_with_uploaded_file(block=child_block, session=session)
             for child_block in block.children
         ]
-        serialized_block_without_children = block.obj_ref.serialize_for_api()
-        block = Block.wrap_obj_ref(
-            UnoObjAPIBlock.model_validate(
-                obj=serialized_block_without_children
-            )
-        )
-        assert isinstance(block, ParentBlock)
-        assert not block.children
+        block = _block_without_children(block=block)
         block.append(blocks=new_child_blocks)
 
     return block
