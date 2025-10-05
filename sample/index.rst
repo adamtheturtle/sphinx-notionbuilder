@@ -18,86 +18,72 @@ Nothing should appear in the output here.
 Text Formatting Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
+Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
 
-   Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
+This is **bold** and *italic* and ``inline code``.
 
-   This is **bold** and *italic* and ``inline code``.
-
-   This text has :strike:`strike` formatting and :del:`deleted text` as well.
+This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
 Colored Text
 ~~~~~~~~~~~~
 
 The builder supports colored text using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
-.. rest-example::
-
-   This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
+This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
 
 Background Colors
 ~~~~~~~~~~~~~~~~~~
 
 The builder also supports background colors using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
-.. rest-example::
-
-   This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
+This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
 
 Other Text Styles
 ~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
+The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
 Keyboard Shortcuts
 ~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
+The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
 
 Note Admonition
 ~~~~~~~~~~~~~~~~
 
-.. rest-example::
+.. note::
 
-   .. note::
+   This is an important note that demonstrates the note admonition support.
 
-      This is an important note that demonstrates the note admonition support.
+   Some nested content:
 
-      Some nested content:
+   * First level item in note
+   * Another first level item
+   * Another first level item
 
-      * First level item in note
-      * Another first level item
-      * Another first level item
+   * Second level nested in note
+   * Another second level item
 
-      * Second level nested in note
-      * Another second level item
+      * Third level nested in note (deep!)
+      * Another third level item
 
-         * Third level nested in note (deep!)
-         * Another third level item
+         * Fourth level nested in note (very deep!)
+         * Another fourth level item
+         * Another fourth level item
 
-            * Fourth level nested in note (very deep!)
-            * Another fourth level item
-            * Another fourth level item
+         * Fifth level nested in note (extremely deep!)
+         * Another fifth level item
 
-            * Fifth level nested in note (extremely deep!)
-            * Another fifth level item
+         * Back to fourth level in note
 
-            * Back to fourth level in note
+      * Back to third level in note
 
-         * Back to third level in note
+   * Back to second level in note
 
-      * Back to second level in note
-
-      * Back to first level in note
+   * Back to first level in note
 
 Warning Admonition
 ~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. warning::
 
@@ -130,72 +116,56 @@ Warning Admonition
 Tip Admonition
 ~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. tip::
+.. tip::
 
       This is a helpful tip that demonstrates the tip admonition support.
 
 Attention Admonition
 ~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. attention::
+.. attention::
 
       This is an attention admonition that requires your attention.
 
 Caution Admonition
 ~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. caution::
+.. caution::
 
       This is a caution admonition that warns about potential issues.
 
 Danger Admonition
 ~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. danger::
+.. danger::
 
       This is a danger admonition that indicates a dangerous situation.
 
 Error Admonition
 ~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. error::
+.. error::
 
       This is an error admonition that shows error information.
 
 Hint Admonition
 ~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. hint::
+.. hint::
 
       This is a hint admonition that provides helpful hints.
 
 Important Admonition
 ~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. important::
+.. important::
 
       This is an important admonition that highlights important information.
 
 Custom Admonition
 ~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. admonition:: Custom Admonition Title
+.. admonition:: Custom Admonition Title
 
       This is a generic admonition with a custom title. You can use this for
       any type of callout that doesn't fit the standard admonition types.
@@ -209,9 +179,7 @@ Custom Admonition
 Collapsible Content
 ~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. collapse:: Click to expand this section
+.. collapse:: Click to expand this section
 
       This content is hidden by default and can be expanded by clicking the toggle.
 
@@ -224,9 +192,7 @@ Collapsible Content
 Literal Include Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   Here's an example of including a file:
+Here's an example of including a file:
 
    .. literalinclude:: conf.py
       :language: python
@@ -242,9 +208,7 @@ Nested Content in Bullet Lists
 
 This demonstrates the new support for nesting various content types within bullet lists:
 
-.. rest-example::
-
-   * First bullet point with **bold text**
+* First bullet point with **bold text**
 
    This is a paragraph nested within a bullet list item. It should work now!
 
@@ -291,9 +255,7 @@ Numbered Lists
 
 The builder supports numbered lists:
 
-.. rest-example::
-
-   #. First numbered item
+#. First numbered item
    #. Second numbered item with **bold text**
    #. Third numbered item with nested content
 
@@ -310,9 +272,7 @@ The builder supports numbered lists:
 Task Lists
 ~~~~~~~~~~
 
-.. rest-example::
-
-   The builder supports task lists with checkboxes:
+The builder supports task lists with checkboxes:
 
    .. task-list::
 
@@ -339,9 +299,7 @@ Heading with *italic* and ``inline code``
 
 The builder supports block quotes:
 
-.. rest-example::
-
-   Regular paragraph.
+Regular paragraph.
 
       This is a multi-line
       block quote with
@@ -351,27 +309,23 @@ The builder supports block quotes:
 Table Example
 -------------
 
-.. rest-example::
-
-   +----------------------+-------------------------------+
-   | **Header Bold**      | *Header Italic*               |
-   +======================+===============================+
-   | **Bold text**        | *Italic text*                 |
-   | Normal text          | `Link <https://example.com>`_ |
-   +----------------------+-------------------------------+
-   | **First paragraph**  | *Italic paragraph*            |
-   |                      |                               |
-   | **Second paragraph** | Normal paragraph              |
-   |                      |                               |
-   | Normal text          | `link2 <https://google.com>`_ |
-   +----------------------+-------------------------------+
++----------------------+-------------------------------+
+| **Header Bold**      | *Header Italic*               |
++======================+===============================+
+| **Bold text**        | *Italic text*                 |
+| Normal text          | `Link <https://example.com>`_ |
++----------------------+-------------------------------+
+| **First paragraph**  | *Italic paragraph*            |
+|                      |                               |
+| **Second paragraph** | Normal paragraph              |
+|                      |                               |
+| Normal text          | `link2 <https://google.com>`_ |
++----------------------+-------------------------------+
 
 List Table with Stub (Header) Column
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. list-table::
+.. list-table::
       :header-rows: 1
       :stub-columns: 1
 
@@ -394,14 +348,10 @@ Image Examples
 Simple Image
 ~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
 
 Image with Alt Text (External)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
 .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
    :alt: Mountain landscape with snow-capped peaks
@@ -409,25 +359,19 @@ Image with Alt Text (External)
 Image with Alt Text
 ~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-      :alt: Beautiful mountain scenery
+.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+   :alt: Beautiful mountain scenery
 
 Local Image Example
 ~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. image:: _static/test-image.png
-      :alt: Local test image
+.. image:: _static/test-image.png
+   :alt: Local test image
 
 SVG support
 ~~~~~~~~~~~
 
-.. rest-example::
-
-   .. image:: _static/camera.svg
+.. image:: _static/camera.svg
 
 Video Examples
 --------------
@@ -435,25 +379,19 @@ Video Examples
 Simple Video
 ~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. video:: https://www.w3schools.com/html/mov_bbb.mp4
+.. video:: https://www.w3schools.com/html/mov_bbb.mp4
 
 Video with Caption
 ~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. video:: https://www.w3schools.com/html/mov_bbb.mp4
-      :caption: Sample video demonstrating video support
+.. video:: https://www.w3schools.com/html/mov_bbb.mp4
+   :caption: Sample video demonstrating video support
 
 Local Video Example
 ~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. video:: _static/test-video.mp4
-      :caption: Local test video file
+.. video:: _static/test-video.mp4
+   :caption: Local test video file
 
 Audio Examples
 --------------
@@ -461,16 +399,12 @@ Audio Examples
 Simple Audio
 ~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
+.. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
 
 Local Audio Example
 ~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. audio:: _static/test-audio.wav
+.. audio:: _static/test-audio.wav
 
 PDF Support
 ~~~~~~~~~~~~
@@ -478,16 +412,12 @@ PDF Support
 Simple PDF
 ~~~~~~~~~~
 
-.. rest-example::
-
-   .. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
 
 Local PDF Example
 ~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   .. pdf-include:: _static/test.pdf
+.. pdf-include:: _static/test.pdf
 
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -497,29 +427,25 @@ The builder supports mathematical equations using the ``sphinx.ext.mathjax`` ext
 Inline Equations
 ~~~~~~~~~~~~~~~~
 
-.. rest-example::
+You can include inline equations like this: :math:`E = mc^2` in your text.
 
-   You can include inline equations like this: :math:`E = mc^2` in your text.
+Here are some more examples:
 
-   Here are some more examples:
-
-   * The quadratic formula: :math:`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
-   * The integral of x squared: :math:`\int x^2 dx = \frac{x^3}{3} + C`
-   * Euler's identity: :math:`e^{i\pi} + 1 = 0`
+* The quadratic formula: :math:`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
+* The integral of x squared: :math:`\int x^2 dx = \frac{x^3}{3} + C`
+* Euler's identity: :math:`e^{i\pi} + 1 = 0`
 
 Block Equations
 ~~~~~~~~~~~~~~~
 
 You can also include block-level equations:
 
-.. rest-example::
+.. math::
 
-   .. math::
+   E = mc^2
 
-      E = mc^2
+The Schrödinger equation:
 
-   The Schrödinger equation:
+.. math::
 
-   .. math::
-
-      i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+   i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
