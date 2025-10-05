@@ -76,7 +76,7 @@ Note Admonition
 
          * Back to fourth level in note
 
-      * Back to third level in note
+       * Back to third level in note
 
    * Back to second level in note
 
@@ -85,123 +85,96 @@ Note Admonition
 Warning Admonition
 ~~~~~~~~~~~~~~~~~~
 
+.. warning::
+
+   This is a warning that demonstrates the warning admonition support.
+
+   .. code-block:: python
+
+      """Python code nested in an admonition."""
+
+
+      def hello_world() -> int:
+          """Return the answer."""
+          return 42
+
+
+      hello_world()
+
    .. warning::
 
       This is a warning that demonstrates the warning admonition support.
 
-      .. code-block:: python
-
-         """Python code nested in an admonition."""
-
-
-         def hello_world() -> int:
-             """Return the answer."""
-             return 42
-
-
-         hello_world()
-
       .. warning::
 
-         This is a warning that demonstrates the warning admonition support.
+         This is a warning that demonstrates the nested admonition support.
 
          .. warning::
 
-            This is a warning that demonstrates the nested admonition support.
+            This is a warning that demonstrates the even deeper admonition support.
 
-            .. warning::
-
-               This is a warning that demonstrates the even deeper admonition support.
-
-Tip Admonition
-~~~~~~~~~~~~~~
+Various Admonitions
+~~~~~~~~~~~~~~~~~~~
 
 .. tip::
 
-      This is a helpful tip that demonstrates the tip admonition support.
-
-Attention Admonition
-~~~~~~~~~~~~~~~~~~~~
+   This is a helpful tip that demonstrates the tip admonition support.
 
 .. attention::
 
-      This is an attention admonition that requires your attention.
-
-Caution Admonition
-~~~~~~~~~~~~~~~~~~
+   This is an attention admonition that requires your attention.
 
 .. caution::
 
-      This is a caution admonition that warns about potential issues.
-
-Danger Admonition
-~~~~~~~~~~~~~~~~~
+   This is a caution admonition that warns about potential issues.
 
 .. danger::
 
-      This is a danger admonition that indicates a dangerous situation.
-
-Error Admonition
-~~~~~~~~~~~~~~~~
+   This is a danger admonition that indicates a dangerous situation.
 
 .. error::
 
-      This is an error admonition that shows error information.
-
-Hint Admonition
-~~~~~~~~~~~~~~~
+   This is an error admonition that shows error information.
 
 .. hint::
 
-      This is a hint admonition that provides helpful hints.
-
-Important Admonition
-~~~~~~~~~~~~~~~~~~~~
+   This is a hint admonition that provides helpful hints.
 
 .. important::
 
-      This is an important admonition that highlights important information.
-
-Custom Admonition
-~~~~~~~~~~~~~~~~~
+   This is an important admonition that highlights important information.
 
 .. admonition:: Custom Admonition Title
 
-      This is a generic admonition with a custom title. You can use this for
-      any type of callout that doesn't fit the standard admonition types.
-
-      It supports all the same features:
-
-      * Bullet points
-      * **Bold text** and *italic text*
-      * ``Code snippets``
+   This is a generic admonition with a custom title. You can use this for
+   any type of callout that doesn't fit the standard admonition types.
 
 Collapsible Content
 ~~~~~~~~~~~~~~~~~~~
 
 .. collapse:: Click to expand this section
 
-      This content is hidden by default and can be expanded by clicking the toggle.
+   This content is hidden by default and can be expanded by clicking the toggle.
 
-      It supports **all the same formatting** as regular content.
+   It supports **all the same formatting** as regular content.
 
-      .. note::
+   .. note::
 
-         You can even nest admonitions inside collapsible sections!
+      You can even nest admonitions inside collapsible sections!
 
 Literal Include Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's an example of including a file:
 
-   .. literalinclude:: conf.py
-      :language: python
+.. literalinclude:: conf.py
+   :language: python
 
-   And with a caption:
+And with a caption:
 
-   .. literalinclude:: conf.py
-      :language: python
-      :caption: Example **Configuration** File
+.. literalinclude:: conf.py
+   :language: python
+   :caption: Example **Configuration** File
 
 Nested Content in Bullet Lists
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,45 +183,33 @@ This demonstrates the new support for nesting various content types within bulle
 
 * First bullet point with **bold text**
 
-   This is a paragraph nested within a bullet list item. It should work now!
+  This is a paragraph nested within a bullet list item. It should work now!
 
-   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
-      :alt: Nested image in bullet list
+  .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+     :alt: Nested image in bullet list
 
-   * Nested bullet point
-   * Another nested bullet
+  * Nested bullet point
+  * Another nested bullet
 
-      * Deeply nested bullet
+    * Deeply nested bullet
 
-   * Second bullet point with *italic text*
+  * Second bullet point with *italic text*
 
-   Here's some code nested within a bullet list:
+    Here's some code nested within a bullet list:
 
-   .. code-block:: python
+    .. code-block:: python
 
-         """Python code."""
+       """Python code."""
 
-         import sys
+       import sys
 
-         sys.stdout.write("Hello, world!")
+       sys.stdout.write("Hello, world!")
 
-   And here's a note admonition nested within the bullet list:
+    And here's a note admonition nested within the bullet list:
 
-   .. note::
+    .. note::
 
-      This is a note that's nested within a bullet list item. This should work now!
-
-   * Third bullet point
-
-   This bullet point contains a table:
-
-   +----------+----------+
-   | Header 1 | Header 2 |
-   +==========+==========+
-   | Cell 1   | Cell 2   |
-   +----------+----------+
-   | Cell 3   | Cell 4   |
-   +----------+----------+
+       This is a note that's nested within a bullet list item. This should work now!
 
 Numbered Lists
 ~~~~~~~~~~~~~~
@@ -256,6 +217,7 @@ Numbered Lists
 The builder supports numbered lists:
 
 #. First numbered item
+
    #. Second numbered item with **bold text**
    #. Third numbered item with nested content
 
@@ -274,25 +236,24 @@ Task Lists
 
 The builder supports task lists with checkboxes:
 
-   .. task-list::
+.. task-list::
 
-       1. [x] Task A
-       2. [ ] Task B
+      1. [x] Task A
+      2. [ ] Task B
 
-          .. task-list::
-              :clickable:
+         .. task-list::
+            :clickable:
 
-              * [x] Task B1
-              * [x] Task B2
-              * [] Task B3
+            * [x] Task B1
+            * [x] Task B2
+            * [] Task B3
 
-              A rogue paragraph.
+            A rogue paragraph.
 
-              - A list item without a checkbox.
-              - [ ] Another bullet point.
+            - A list item without a checkbox.
+            - [ ] Another bullet point.
 
-       3. [ ] Task C
-
+      3. [ ] Task C
 
 Heading with *italic* and ``inline code``
 -----------------------------------------
@@ -304,7 +265,6 @@ Regular paragraph.
       This is a multi-line
       block quote with
       multiple lines.
-
 
 Table Example
 -------------
