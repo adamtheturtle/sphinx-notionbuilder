@@ -717,9 +717,13 @@ def _(
     """
     Process paragraph nodes by creating Notion Paragraph blocks.
     """
-    if len(node.children) == 1 and isinstance(
-        node.children[0],
-        nodes.container,
+    if (
+        len(node.children) == 1
+        and isinstance(
+            node.children[0],
+            nodes.container,
+        )
+        and node.children[0].attributes.get("classes", []) == ["rest-example"]
     ):
         return _process_node_to_blocks(
             node.children[0],
