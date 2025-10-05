@@ -2935,3 +2935,76 @@ def test_block_equation(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
     )
+
+
+def test_rest_example_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rest example blocks become Notion callouts with nested code and
+    description.
+    """
+    rst_content = """
+        .. rest-example::
+
+           .. code-block:: python
+
+              def hello_world():
+                  print("Hello, World!")
+
+           This is the rendered output that shows what the code does.
+    """
+
+    # Expected structure: main callout containing two nested callouts
+    # First nested callout: rst source code only
+    code_callout = UnoCallout(
+        text=text(text="Code"),
+    )
+    code_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text='.. code-block:: python\n\n   def hello_world():\n       print("Hello, World!")\n\nThis is the rendered output that shows what the code does.'
+                ),
+                language="markdown",
+            ),
+        ]
+    )
+
+    # Second nested callout: actual code + description
+    output_callout = UnoCallout(
+        text=text(text="Output"),
+    )
+    output_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text='def hello_world():\n    print("Hello, World!")'
+                ),
+                language="python",
+            ),
+            UnoParagraph(
+                text=text(
+                    text="This is the rendered output that shows what the code does."
+                )
+            ),
+        ]
+    )
+
+    # Main callout containing both nested callouts
+    main_callout = UnoCallout(
+        text=text(text="Example"),
+    )
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    expected_objects: list[Block] = [main_callout]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+    )

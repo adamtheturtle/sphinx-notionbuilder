@@ -711,10 +711,22 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process paragraph nodes by creating Notion Paragraph blocks.
+    """Process paragraph nodes by creating Notion Paragraph blocks.
+
+    Special case: if the paragraph contains only a container (like rest-example),
+    process the container directly instead of trying to process it as rich text.
     """
     del section_level
+
+    # Check if this paragraph contains only a container
+    if len(node.children) == 1 and isinstance(
+        node.children[0], nodes.container
+    ):
+        # This is likely a rest-example or similar directive
+        # Process the container directly
+        return _process_node_to_blocks(node.children[0], section_level=1)
+
+    # Regular paragraph processing
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 
@@ -1292,8 +1304,11 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process container nodes, especially for ``literalinclude`` with captions.
+    """Process container nodes, especially for ``literalinclude`` with
+    captions.
+
+    Also handles rest-example containers which contain both rst source
+    and output.
     """
     num_children_for_captioned_literalinclude = 2
     if (
@@ -1320,6 +1335,34 @@ def _(
             )
         ]
 
+    # Check if this is a rest-example container
+    # Rest-example containers typically have:
+    # - First literal_block: rst source code
+    # - Second literal_block: actual code
+    # - paragraph: output text
+    if (
+        len(node.children) >= 3
+        and isinstance(node.children[0], nodes.literal_block)
+        and isinstance(node.children[1], nodes.literal_block)
+        and isinstance(node.children[2], nodes.paragraph)
+    ):
+        # This looks like a rest-example container
+        rst_source_node = node.children[0]
+        code_node = node.children[1]
+        output_node = node.children[2]
+
+        # Check if the first literal block contains rst source code
+        rst_source_text = rst_source_node.astext()
+        if rst_source_text.startswith(".. code-block::"):
+            # This is a rest-example container
+            return _process_rest_example_container(
+                rst_source_node=rst_source_node,
+                code_node=code_node,
+                output_node=output_node,
+                remaining_children=node.children[3:],
+            )
+
+    # Regular container processing
     blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
@@ -1327,6 +1370,51 @@ def _(
         )
         blocks.extend(child_blocks)
     return blocks
+
+
+@beartype
+def _process_rest_example_container(
+    *,
+    rst_source_node: nodes.literal_block,
+    code_node: nodes.literal_block,
+    output_node: nodes.paragraph,
+    remaining_children: list[nodes.Node],
+) -> list[Block]:
+    """Process a rest-example container by creating nested callouts.
+
+    The rst source goes in the "Code" callout, and the actual rendered
+    output (the code block itself) goes in the "Output" callout.
+    """
+    # Process the rst source code - this shows how to write the directive
+    rst_source_text = rst_source_node.astext()
+    rst_code = UnoCode(
+        text=text(text=rst_source_text),
+        language="markdown",
+    )
+
+    # Process the actual code - this is what the directive produces
+    code_blocks = _process_node_to_blocks(code_node, section_level=1)
+
+    # Process the output text description
+    output_blocks = _process_node_to_blocks(output_node, section_level=1)
+
+    # Process any remaining children as output
+    for child in remaining_children:
+        output_blocks.extend(_process_node_to_blocks(child, section_level=1))
+
+    # Create nested callouts
+    code_callout = UnoCallout(text=text(text="Code"))
+    code_callout.append(blocks=[rst_code])  # Only the rst source
+
+    output_callout = UnoCallout(text=text(text="Output"))
+    # Add the actual rendered code first, then any description
+    output_callout.append(blocks=code_blocks + output_blocks)
+
+    # Create main callout
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    return [main_callout]
 
 
 @beartype
@@ -1358,6 +1446,112 @@ def _(
     del section_level
     latex_content = node.astext()
     return [UnoEquation(latex=latex_content)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.target,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process target nodes by checking if they are rest-example targets.
+
+    Rest-example targets are mapped in the document's ids dictionary to
+    their corresponding content nodes.
+    """
+    del section_level
+
+    # Check if this is a rest-example target by looking at the document's ids
+    # Rest-example targets have IDs like "example-0", "example-1", etc.
+    document = node.parent
+    while document is not None and not isinstance(document, nodes.document):
+        document = document.parent
+
+    if document is None:
+        # If we can't find the document, skip this target
+        return []
+
+    # Check if any of the document's ids point to this target
+    # and if they do, get the corresponding content
+    for target_id, target_node in document.ids.items():
+        if target_id.startswith("example-") and target_node == node:
+            # This is a rest-example target, find the content
+            # The content should be in the next sibling paragraph
+            current: nodes.Node = node
+            while current.next_node() is not None:
+                current = current.next_node()
+                if isinstance(current, nodes.paragraph):
+                    # Found the content, process it as a rest-example
+                    return _process_rest_example_content(node=current)
+
+    # Not a rest-example target, skip it
+    return []
+
+
+@beartype
+def _process_rest_example_content(*, node: nodes.paragraph) -> list[Block]:
+    """Process rest-example content by creating a callout with nested callouts.
+
+    The rest-example content contains both the rst source code and the rendered output.
+    We create a main callout with two nested callouts: one for code, one for output.
+    """
+    # Find the container with the actual content
+    container = None
+    for child in node.children:
+        if isinstance(child, nodes.container):
+            container = child
+            break
+
+    if container is None:
+        # No container found, just process as regular content
+        return _process_node_to_blocks(node, section_level=1)
+
+    # Process the container content to separate code and output
+    code_blocks: list[Block] = []
+    output_blocks: list[Block] = []
+
+    for child in container.children:
+        if isinstance(child, nodes.literal_block):
+            # This is code - we need to check if it's rst source or actual code
+            code_text = child.astext()
+            if code_text.startswith(".. code-block::"):
+                # This is rst source code - create a code block for it
+                rst_code = UnoCode(
+                    text=text(text=code_text),
+                    language="markdown",
+                )
+                code_blocks.append(rst_code)
+            else:
+                # This is actual code - process normally
+                code_blocks.extend(
+                    _process_node_to_blocks(child, section_level=1)
+                )
+        elif isinstance(child, nodes.paragraph):
+            # This is output text - process normally
+            output_blocks.extend(
+                _process_node_to_blocks(child, section_level=1)
+            )
+        else:
+            # Other content, treat as output
+            output_blocks.extend(
+                _process_node_to_blocks(child, section_level=1)
+            )
+
+    # Create nested callouts
+    code_callout = UnoCallout(text=text(text="Code"))
+    if code_blocks:
+        code_callout.append(blocks=code_blocks)
+
+    output_callout = UnoCallout(text=text(text="Output"))
+    if output_blocks:
+        output_callout.append(blocks=output_blocks)
+
+    # Create main callout
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    return [main_callout]
 
 
 @beartype

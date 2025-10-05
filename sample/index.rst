@@ -420,3 +420,20 @@ The Schrödinger equation:
 .. math::
 
    i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+
+Rest Examples
+~~~~~~~~~~~~~
+
+The `sphinx-toolbox rest_example extension <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ allows you to show both the reStructuredText source code and its rendered output side by side. This is useful for documentation that demonstrates how to write rst directives.
+
+.. rest-example::
+
+   .. code-block:: python
+
+      def greet(name: str) -> str:
+          """Return a greeting message."""
+          return f"Hello, {name}!"
+
+      greet("World")
+
+   This code defines a simple greeting function that takes a name parameter and returns a personalized greeting message.
