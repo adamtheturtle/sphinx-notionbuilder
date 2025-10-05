@@ -90,6 +90,17 @@ For mathematical equation support, also add the ``sphinx.ext.mathjax`` extension
        "sphinx_notion",
    ]
 
+For rest-example blocks support, also add the `sphinx-toolbox <https://sphinx-toolbox.readthedocs.io/>`_ rest-example extension:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_toolbox.rest_example",
+       "sphinx_notion",
+   ]
+
 PDF support is included by default with the sphinx-notionbuilder extension.
 
 Supported markup
@@ -105,6 +116,7 @@ The following syntax is supported:
 - Block quotes
 - All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
 - Collapsible sections (using sphinx-toolbox collapse directive)
+- Rest-example blocks (using sphinx-toolbox rest-example directive)
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
@@ -253,6 +265,11 @@ Block-level equations can be written using the ``.. math::`` directive:
       i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
 
 The equations will be rendered as proper mathematical notation in the generated Notion page, with inline equations appearing within the text flow and block equations appearing as separate equation blocks.
+
+Using Rest-Example Blocks
+-------------------------
+
+Rest-example blocks can be created using the `sphinx_toolbox.rest_example <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ extension to create example blocks that show both source code and expected output. These are rendered as callout blocks in Notion with nested code blocks:
 
 Unsupported Notion Block Types
 ------------------------------

@@ -2935,3 +2935,80 @@ def test_block_equation(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
     )
+
+
+def test_rest_example_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rest example blocks become Notion callout blocks with nested code and
+    description.
+    """
+    rst_content = """
+        .. rest-example::
+
+           .. code-block:: python
+
+              def hello_world():
+                  print("Hello, World!")
+
+           Rendered output shows what the code does.
+    """
+
+    code_callout = UnoCallout(
+        text=text(text="Code"),
+    )
+    code_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text=textwrap.dedent(
+                        text="""\
+                        .. code-block:: python
+
+                           def hello_world():
+                               print("Hello, World!")
+
+                        Rendered output shows what the code does."""
+                    )
+                ),
+                language="plain text",
+            ),
+        ]
+    )
+
+    output_callout = UnoCallout(
+        text=text(text="Output"),
+    )
+    output_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text=textwrap.dedent(
+                        text="""\
+                        def hello_world():
+                            print("Hello, World!")""",
+                    )
+                ),
+                language="python",
+            ),
+            UnoParagraph(
+                text=text(text="Rendered output shows what the code does.")
+            ),
+        ]
+    )
+
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    expected_objects: list[Block] = [main_callout]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+    )

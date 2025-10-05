@@ -578,6 +578,9 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "reason": CodeLang.REASON,
         "ruby": CodeLang.RUBY,
         "rb": CodeLang.RUBY,
+        # This is not a perfect match, but at least rest-example will
+        # be rendered.
+        "rest": CodeLang.PLAIN_TEXT,
         "rust": CodeLang.RUST,
         "rs": CodeLang.RUST,
         "sass": CodeLang.SASS,
@@ -711,10 +714,25 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
+    """Process paragraph nodes by creating Notion Paragraph blocks.
+
+    Special case: if the paragraph contains only a container a
+    ``rest-example`` class, process the container directly instead of
+    trying to process it as rich text.
     """
-    Process paragraph nodes by creating Notion Paragraph blocks.
-    """
-    del section_level
+    if (
+        len(node.children) == 1
+        and isinstance(
+            node.children[0],
+            nodes.container,
+        )
+        and node.children[0].attributes.get("classes", []) == ["rest-example"]
+    ):
+        return _process_node_to_blocks(
+            node.children[0],
+            section_level=section_level,
+        )
+
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 
@@ -1293,7 +1311,7 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process container nodes, especially for ``literalinclude`` with captions.
+    Process container nodes.
     """
     num_children_for_captioned_literalinclude = 2
     if (
@@ -1320,6 +1338,13 @@ def _(
             )
         ]
 
+    classes = node.attributes.get("classes", [])
+    if classes == ["rest-example"]:
+        return _process_rest_example_container(
+            node=node,
+            section_level=section_level,
+        )
+
     blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
@@ -1327,6 +1352,38 @@ def _(
         )
         blocks.extend(child_blocks)
     return blocks
+
+
+@beartype
+def _process_rest_example_container(
+    *,
+    node: nodes.container,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process a ``rest-example`` container by creating nested callout blocks.
+    """
+    rst_source_node = node.children[0]
+    assert isinstance(rst_source_node, nodes.literal_block)
+    output_nodes = node.children[1:]
+    code_blocks = _process_node_to_blocks(rst_source_node, section_level=1)
+
+    output_blocks: list[Block] = []
+    for output_node in output_nodes:
+        output_blocks.extend(
+            _process_node_to_blocks(output_node, section_level=section_level)
+        )
+
+    code_callout = UnoCallout(text=text(text="Code"))
+    code_callout.append(blocks=code_blocks)
+
+    output_callout = UnoCallout(text=text(text="Output"))
+    output_callout.append(blocks=output_blocks)
+
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    return [main_callout]
 
 
 @beartype
@@ -1358,6 +1415,21 @@ def _(
     del section_level
     latex_content = node.astext()
     return [UnoEquation(latex=latex_content)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.target,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process target nodes by ignoring them completely.
+    """
+    del node
+    del section_level
+    return []
 
 
 @beartype
