@@ -326,21 +326,21 @@ List Table with Stub (Header) Column
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
-      :header-rows: 1
-      :stub-columns: 1
+   :header-rows: 1
+   :stub-columns: 1
 
-      * - Feature
-        - Description
-        - Status
-      * - Bold text
-        - Supports **bold** formatting
-        - ✅ Working
-      * - Italic text
-        - Supports *italic* formatting
-        - ✅ Working
-      * - Code blocks
-        - Supports ``inline code``
-        - ✅ Working
+   * - Feature
+     - Description
+     - Status
+   * - Bold text
+     - Supports **bold** formatting
+     - ✅ Working
+   * - Italic text
+     - Supports *italic* formatting
+     - ✅ Working
+   * - Code blocks
+     - Supports ``inline code``
+     - ✅ Working
 
 Image Examples
 --------------
