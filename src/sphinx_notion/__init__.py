@@ -624,7 +624,8 @@ def _process_node_to_blocks(
     del section_level
     unsupported_node_type_msg = (
         f"Unsupported node type: {node.tagname} on line "
-        f"{node.line} in {node.source}."
+        f"{node.line or node.parent.line} in "
+        f"{node.source or node.parent.source}."
     )
     raise NotImplementedError(unsupported_node_type_msg)
 
