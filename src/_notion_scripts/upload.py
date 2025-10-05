@@ -33,6 +33,24 @@ _FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
 
 
 @beartype
+def _block_without_children(
+    *,
+    block: ParentBlock,
+) -> ParentBlock:
+    """
+    Return a copy of a block without children.
+    """
+    serialized_block_without_children = block.obj_ref.serialize_for_api()
+    del serialized_block_without_children["id"]
+    block_without_children = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=serialized_block_without_children)
+    )
+    assert isinstance(block_without_children, ParentBlock)
+    assert not block_without_children.children
+    return block_without_children
+
+
+@beartype
 @cache
 def _calculate_file_sha(*, file_path: Path) -> str:
     """
@@ -132,25 +150,13 @@ def _is_existing_equivalent(
             return local_file_sha == existing_file_sha
     elif isinstance(existing_page_block, ParentBlock):
         assert isinstance(local_block, ParentBlock)
-        serialized_existing_page_block_without_children = (
-            existing_page_block.obj_ref.serialize_for_api()
+        existing_page_block_without_children = _block_without_children(
+            block=existing_page_block,
         )
-        del serialized_existing_page_block_without_children["id"]
-        existing_page_block_without_children = Block.wrap_obj_ref(
-            UnoObjAPIBlock.model_validate(
-                obj=serialized_existing_page_block_without_children,
-            )
-        )
-        assert isinstance(existing_page_block_without_children, ParentBlock)
-        assert not existing_page_block_without_children.children
 
-        local_block_without_children = Block.wrap_obj_ref(
-            UnoObjAPIBlock.model_validate(
-                obj=local_block.obj_ref.serialize_for_api(),
-            )
+        local_block_without_children = _block_without_children(
+            block=local_block,
         )
-        assert isinstance(local_block_without_children, ParentBlock)
-        assert not local_block_without_children.children
 
         if (
             existing_page_block_without_children
@@ -215,14 +221,7 @@ def _block_with_uploaded_file(
             _block_with_uploaded_file(block=child_block, session=session)
             for child_block in block.children
         ]
-        serialized_block_without_children = block.obj_ref.serialize_for_api()
-        block = Block.wrap_obj_ref(
-            UnoObjAPIBlock.model_validate(
-                obj=serialized_block_without_children
-            )
-        )
-        assert isinstance(block, ParentBlock)
-        assert not block.children
+        block = _block_without_children(block=block)
         block.append(blocks=new_child_blocks)
 
     return block
