@@ -1999,7 +1999,8 @@ def test_list_table_stub_columns_two(
 
     expected_warning = (
         "Tables with more than 1 stub column are not supported. "
-        "Found 2 stub columns."
+        "Found 2 stub columns on table with first body row on line 8 in "
+        f"{tmp_path / 'src' / 'index.rst'}."
     )
 
     table = UnoTable(n_rows=3, n_cols=3, header_row=True, header_col=True)
