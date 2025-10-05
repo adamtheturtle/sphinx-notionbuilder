@@ -193,23 +193,17 @@ This demonstrates the new support for nesting various content types within bulle
 
     * Deeply nested bullet
 
-  * Second bullet point with *italic text*
+* Second bullet point with *italic text*
 
-    Here's some code nested within a bullet list:
+  Here's some code nested within a bullet list:
 
-    .. code-block:: python
+  .. code-block:: python
 
-       """Python code."""
+     """Python code."""
 
-       import sys
+     import sys
 
-       sys.stdout.write("Hello, world!")
-
-    And here's a note admonition nested within the bullet list:
-
-    .. note::
-
-       This is a note that's nested within a bullet list item. This should work now!
+     sys.stdout.write("Hello, world!")
 
 Numbered Lists
 ~~~~~~~~~~~~~~
