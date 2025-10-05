@@ -72,7 +72,9 @@ def _find_last_matching_block_index(
     blocks match.
     """
     last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=existing_blocks):
+    for index, existing_page_block in enumerate(
+        iterable=existing_blocks, start=0
+    ):
         click.echo(
             message=(
                 f"Checking block {index + 1} of {len(existing_blocks)} for "
@@ -128,6 +130,49 @@ def _is_existing_equivalent(
                 file_url=existing_page_block.file_info.url,
             )
             return local_file_sha == existing_file_sha
+    elif isinstance(existing_page_block, ParentBlock):
+        serialized_existing_page_block_without_children = (
+            existing_page_block.obj_ref.serialize_for_api()
+        )
+        del serialized_existing_page_block_without_children["id"]
+        existing_page_block_without_children = Block.wrap_obj_ref(
+            UnoObjAPIBlock.model_validate(
+                obj=serialized_existing_page_block_without_children,
+            )
+        )
+        assert isinstance(existing_page_block_without_children, ParentBlock)
+        assert not existing_page_block_without_children.children
+
+        local_block_without_children = Block.wrap_obj_ref(
+            UnoObjAPIBlock.model_validate(
+                obj=local_block.obj_ref.serialize_for_api(),
+            )
+        )
+        assert isinstance(local_block_without_children, ParentBlock)
+        assert not local_block_without_children.children
+
+        if (
+            existing_page_block_without_children
+            != local_block_without_children
+        ):
+            return False
+
+        if len(existing_page_block_without_children.children) != len(
+            local_block_without_children.children
+        ):
+            return False
+
+        for existing_child_block, local_child_block in zip(
+            existing_page_block_without_children.children,
+            local_block_without_children.children,
+            strict=False,
+        ):
+            if not _is_existing_equivalent(
+                existing_page_block=existing_child_block,
+                local_block=local_child_block,
+            ):
+                return False
+        return True
 
     return existing_page_block == local_block
 
