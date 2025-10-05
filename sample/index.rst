@@ -249,22 +249,22 @@ The builder supports task lists with checkboxes:
 
 .. task-list::
 
-      1. [x] Task A
-      2. [ ] Task B
+   1. [x] Task A
+   2. [ ] Task B
 
-         .. task-list::
-            :clickable:
+      .. task-list::
+         :clickable:
 
-            * [x] Task B1
-            * [x] Task B2
-            * [] Task B3
+         * [x] Task B1
+         * [x] Task B2
+         * [] Task B3
 
-            A rogue paragraph.
+         A rogue paragraph.
 
-            - A list item without a checkbox.
-            - [ ] Another bullet point.
+         - A list item without a checkbox.
+         - [ ] Another bullet point.
 
-      3. [ ] Task C
+   3. [ ] Task C
 
 Heading with *italic* and ``inline code``
 -----------------------------------------
