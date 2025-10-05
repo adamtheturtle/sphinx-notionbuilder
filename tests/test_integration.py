@@ -2954,11 +2954,6 @@ def test_rest_example_block(
               def hello_world():
                   print("Hello, World!")
 
-           .. code-block:: python
-
-              def hello_world():
-                  print("Hello, World!")
-
            This is the rendered output that shows what the code does.
     """
 
@@ -2973,7 +2968,7 @@ def test_rest_example_block(
                 text=text(
                     text='.. code-block:: python\n\n   def hello_world():\n       print("Hello, World!")\n\nThis is the rendered output that shows what the code does.'
                 ),
-                language="markdown",
+                language="plain text",
             ),
         ]
     )
