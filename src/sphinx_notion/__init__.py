@@ -349,7 +349,11 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
 
     is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
     is_italic = isinstance(child, nodes.emphasis) or "text-italic" in classes
-    is_code = isinstance(child, nodes.literal) or "text-mono" in classes
+    is_code = (
+        isinstance(child, nodes.literal)
+        or "text-mono" in classes
+        or "kbd" in classes
+    )
     is_strikethrough = (
         isinstance(child, strike_node) or "text-strike" in classes
     )
@@ -361,6 +365,7 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
         "text-mono",
         "text-strike",
         "text-underline",
+        "kbd",
         *color_mapping.keys(),
         *bg_color_classes,
     }
