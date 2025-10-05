@@ -2752,9 +2752,9 @@ def test_kbd_role(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """The :kbd: role creates keyboard input formatting.
+    """The ``:kbd:`` role creates keyboard input formatting.
 
-    The :kbd: role splits keyboard shortcuts into separate segments,
+    The ``:kbd:`` role splits keyboard shortcuts into separate segments,
     where each key is formatted as code but the + separator is not.
     """
     rst_content = """
