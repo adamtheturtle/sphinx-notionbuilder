@@ -7,10 +7,16 @@ Heading 1 with *bold*
 
    other
 
-.. rest-example::
+Comment Support
+~~~~~~~~~~~~~~~~
 
-   .. This is a comment that demonstrates comment support.
-      Comments should not appear in the final output.
+Nothing should appear in the output here.
+
+.. This is a comment that demonstrates comment support.
+   Comments should not appear in the final output.
+
+Text Formatting Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -52,6 +58,9 @@ Keyboard Shortcuts
 
    The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
 
+Note Admonition
+~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. note::
@@ -85,6 +94,9 @@ Keyboard Shortcuts
 
       * Back to first level in note
 
+Warning Admonition
+~~~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. warning::
@@ -115,6 +127,8 @@ Keyboard Shortcuts
 
                This is a warning that demonstrates the even deeper admonition support.
 
+Tip Admonition
+~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -122,11 +136,17 @@ Keyboard Shortcuts
 
       This is a helpful tip that demonstrates the tip admonition support.
 
+Attention Admonition
+~~~~~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. attention::
 
       This is an attention admonition that requires your attention.
+
+Caution Admonition
+~~~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -134,11 +154,17 @@ Keyboard Shortcuts
 
       This is a caution admonition that warns about potential issues.
 
+Danger Admonition
+~~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. danger::
 
       This is a danger admonition that indicates a dangerous situation.
+
+Error Admonition
+~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -146,17 +172,26 @@ Keyboard Shortcuts
 
       This is an error admonition that shows error information.
 
+Hint Admonition
+~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. hint::
 
       This is a hint admonition that provides helpful hints.
 
+Important Admonition
+~~~~~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. important::
 
       This is an important admonition that highlights important information.
+
+Custom Admonition
+~~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -171,6 +206,9 @@ Keyboard Shortcuts
       * **Bold text** and *italic text*
       * ``Code snippets``
 
+Collapsible Content
+~~~~~~~~~~~~~~~~~~~
+
 .. rest-example::
 
    .. collapse:: Click to expand this section
@@ -182,6 +220,9 @@ Keyboard Shortcuts
       .. note::
 
          You can even nest admonitions inside collapsible sections!
+
+Literal Include Examples
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -357,8 +398,8 @@ Simple Image
 
    .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
 
-Image with Alt Text
-~~~~~~~~~~~~~~~~~~~
+Image with Alt Text (External)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. rest-example::
 
