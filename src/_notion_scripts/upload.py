@@ -137,10 +137,7 @@ def _is_existing_equivalent(
             if (
                 existing_page_block.file_info.name
                 != local_block.file_info.name
-            ):
-                return False
-
-            if (
+            ) or (
                 existing_page_block.file_info.caption
                 != local_block.file_info.caption
             ):
