@@ -164,10 +164,7 @@ def _is_existing_equivalent(
         if (
             existing_page_block_without_children
             != local_block_without_children
-        ):
-            return False
-
-        if len(existing_page_block.children) != len(local_block.children):
+        ) or (len(existing_page_block.children) != len(local_block.children)):
             return False
 
         return all(
