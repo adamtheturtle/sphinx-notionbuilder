@@ -438,6 +438,6 @@ The `sphinx-toolbox rest_example extension <https://sphinx-toolbox.readthedocs.i
           return f"Hello, {name}!"
 
 
-      greet("World")
+      greet(name="World")
 
    This code defines a simple greeting function that takes a name parameter and returns a personalized greeting message.
