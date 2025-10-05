@@ -58,79 +58,18 @@ Keyboard Shortcuts
 
    The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
 
-Note Admonition
-~~~~~~~~~~~~~~~~
+Admonitions
+~~~~~~~~~~~
 
 .. rest-example::
 
    .. note::
 
-      This is an important note that demonstrates the note admonition support.
-
-      Some nested content:
-
-      * First level item in note
-      * Another first level item
-      * Another first level item
-
-        * Second level nested in note
-        * Another second level item
-
-          * Third level nested in note (deep!)
-          * Another third level item
-
-            * Fourth level nested in note (very deep!)
-            * Another fourth level item
-            * Another fourth level item
-
-              * Fifth level nested in note (extremely deep!)
-              * Another fifth level item
-
-            * Back to fourth level in note
-
-          * Back to third level in note
-
-        * Back to second level in note
-
-      * Back to first level in note
-
-Warning Admonition
-~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
+      This is a note that demonstrates the note admonition support.
 
    .. warning::
 
       This is a warning that demonstrates the warning admonition support.
-
-      .. code-block:: python
-
-         """Python code nested in an admonition."""
-
-
-         def hello_world() -> int:
-             """Return the answer."""
-             return 42
-
-
-         hello_world()
-
-      .. warning::
-
-         This is a warning that demonstrates the warning admonition support.
-
-         .. warning::
-
-            This is a warning that demonstrates the nested admonition support.
-
-            .. warning::
-
-               This is a warning that demonstrates the even deeper admonition support.
-
-Various Admonitions
-~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. tip::
 
@@ -162,8 +101,8 @@ Various Admonitions
 
    .. admonition:: Custom Admonition Title
 
-      This is a generic admonition with a custom title. You can use this for
-      any type of callout that doesn't fit the standard admonition types.
+      This is a generic admonition with a custom title.
+      You can use this for any type of callout that doesn't fit the standard admonition types.
 
 Collapsible Content
 ~~~~~~~~~~~~~~~~~~~
@@ -176,12 +115,8 @@ Collapsible Content
 
       It supports **all the same formatting** as regular content.
 
-      .. note::
-
-         You can even nest admonitions inside collapsible sections!
-
-Literal Include Examples
-~~~~~~~~~~~~~~~~~~~~~~~~
+Including Files
+~~~~~~~~~~~~~~~
 
 .. rest-example::
 
@@ -292,12 +227,10 @@ Task Lists
 
       3. [ ] Task C
 
-Heading with *italic* and ``inline code``
------------------------------------------
+Block Quotes
+------------
 
 .. rest-example::
-
-   The builder supports block quotes:
 
    Regular paragraph.
 
@@ -413,71 +346,33 @@ Local Video Example
       :caption: Local test video file
 
 Audio Examples
---------------
-
-Simple Audio
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. rest-example::
 
    .. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
 
-Local Audio Example
-~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
    .. audio:: _static/test-audio.wav
 
 PDF Support
-~~~~~~~~~~~~
-
-Simple PDF
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. rest-example::
 
    .. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
-
-Local PDF Example
-~~~~~~~~~~~~~~~~~
-
-.. rest-example::
 
    .. pdf-include:: _static/test.pdf
 
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
-
-   The builder supports mathematical equations using the ``sphinx.ext.mathjax`` extension.
-
-Inline Equations
-~~~~~~~~~~~~~~~~
+The builder supports mathematical equations using the ``sphinx.ext.mathjax`` extension.
 
 .. rest-example::
 
    You can include inline equations like this: :math:`E = mc^2` in your text.
 
-   Here are some more examples:
-
-   * The quadratic formula: :math:`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
-   * The integral of x squared: :math:`\int x^2 dx = \frac{x^3}{3} + C`
-   * Euler's identity: :math:`e^{i\pi} + 1 = 0`
-
-Block Equations
-~~~~~~~~~~~~~~~
-
-.. rest-example::
-
    You can also include block-level equations:
-
-   .. math::
-
-      E = mc^2
-
-   The Schrödinger equation:
 
    .. math::
 

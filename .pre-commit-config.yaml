@@ -308,7 +308,7 @@ repos:
         pass_filenames: false
         additional_dependencies: [uv==0.8.23]
 
-      # We don't check spelling because there is a conflict with a bug in ``sphinx-toolbox.rest_example``:
+      # We don't check spelling because here is a conflict with a bug in ``sphinx-toolbox.rest_example``:
       # https://github.com/sphinx-toolbox/sphinx-toolbox/issues/195.
       #
       # - id: spelling
