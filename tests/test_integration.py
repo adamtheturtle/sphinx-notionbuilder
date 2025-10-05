@@ -2954,6 +2954,11 @@ def test_rest_example_block(
               def hello_world():
                   print("Hello, World!")
 
+           .. code-block:: python
+
+              def hello_world():
+                  print("Hello, World!")
+
            This is the rendered output that shows what the code does.
     """
 

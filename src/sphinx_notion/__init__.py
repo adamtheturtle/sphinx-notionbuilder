@@ -578,6 +578,9 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "reason": CodeLang.REASON,
         "ruby": CodeLang.RUBY,
         "rb": CodeLang.RUBY,
+        # This is not a perfect match, but at least rest-example will
+        # be rendered.
+        "rest": CodeLang.PLAIN_TEXT,
         "rust": CodeLang.RUST,
         "rs": CodeLang.RUST,
         "sass": CodeLang.SASS,
@@ -1335,32 +1338,17 @@ def _(
             )
         ]
 
-    # Check if this is a rest-example container
-    # Rest-example containers typically have:
-    # - First literal_block: rst source code
-    # - Second literal_block: actual code
-    # - paragraph: output text
-    if (
-        len(node.children) >= 3
-        and isinstance(node.children[0], nodes.literal_block)
-        and isinstance(node.children[1], nodes.literal_block)
-        and isinstance(node.children[2], nodes.paragraph)
-    ):
+    classes = node.attributes.get("classes", [])
+    if classes == ["rest-example"]:
         # This looks like a rest-example container
         rst_source_node = node.children[0]
-        code_node = node.children[1]
-        output_node = node.children[2]
+        assert isinstance(rst_source_node, nodes.literal_block)
+        output_nodes = node.children[1:]
 
-        # Check if the first literal block contains rst source code
-        rst_source_text = rst_source_node.astext()
-        if rst_source_text.startswith(".. code-block::"):
-            # This is a rest-example container
-            return _process_rest_example_container(
-                rst_source_node=rst_source_node,
-                code_node=code_node,
-                output_node=output_node,
-                remaining_children=node.children[3:],
-            )
+        return _process_rest_example_container(
+            rst_source_node=rst_source_node,
+            output_nodes=output_nodes,
+        )
 
     # Regular container processing
     blocks: list[Block] = []
@@ -1376,41 +1364,25 @@ def _(
 def _process_rest_example_container(
     *,
     rst_source_node: nodes.literal_block,
-    code_node: nodes.literal_block,
-    output_node: nodes.paragraph,
-    remaining_children: list[nodes.Node],
+    output_nodes: list[nodes.Node],
 ) -> list[Block]:
-    """Process a rest-example container by creating nested callouts.
-
-    The rst source goes in the "Code" callout, and the actual rendered
-    output (the code block itself) goes in the "Output" callout.
     """
-    # Process the rst source code - this shows how to write the directive
-    rst_source_text = rst_source_node.astext()
-    rst_code = UnoCode(
-        text=text(text=rst_source_text),
-        language="markdown",
-    )
+    Process a rest-example container by creating nested callouts.
+    """
+    code_blocks = _process_node_to_blocks(rst_source_node, section_level=1)
 
-    # Process the actual code - this is what the directive produces
-    code_blocks = _process_node_to_blocks(code_node, section_level=1)
+    output_blocks: list[Block] = []
+    for output_node in output_nodes:
+        output_blocks.extend(
+            _process_node_to_blocks(output_node, section_level=1)
+        )
 
-    # Process the output text description
-    output_blocks = _process_node_to_blocks(output_node, section_level=1)
-
-    # Process any remaining children as output
-    for child in remaining_children:
-        output_blocks.extend(_process_node_to_blocks(child, section_level=1))
-
-    # Create nested callouts
     code_callout = UnoCallout(text=text(text="Code"))
-    code_callout.append(blocks=[rst_code])  # Only the rst source
+    code_callout.append(blocks=code_blocks)  # Only the rst source
 
     output_callout = UnoCallout(text=text(text="Output"))
-    # Add the actual rendered code first, then any description
-    output_callout.append(blocks=code_blocks + output_blocks)
+    output_callout.append(blocks=output_blocks)
 
-    # Create main callout
     main_callout = UnoCallout(text=text(text="Example"))
     main_callout.append(blocks=[code_callout, output_callout])
 
