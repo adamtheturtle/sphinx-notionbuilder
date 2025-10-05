@@ -213,7 +213,8 @@ def _process_rich_text_node(child: nodes.Node) -> Text:
     are handled by registered functions.
     """
     unsupported_child_type_msg = (
-        f"Unsupported child type: {type(child).__name__}."
+        f"Unsupported node type within text: {type(child).__name__} on line "
+        f"{child.parent.line} in {child.parent.source}."
     )
     # We use ``TRY004`` here because we want to raise a
     # ``ValueError`` if the child type is unsupported, not a

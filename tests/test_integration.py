@@ -2771,7 +2771,10 @@ def setup(app):
 
     app.add_role('footnote', footnote_role)
     """
-    expected_message = r"^Unsupported child type: footnote_reference\.$"
+    expected_message = (
+        r"^Unsupported node type within text: footnote_reference on line 1 in "
+        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}\.$"
+    )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
