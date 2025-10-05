@@ -714,8 +714,11 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process paragraph nodes by creating Notion Paragraph blocks.
+    """Process paragraph nodes by creating Notion Paragraph blocks.
+
+    Special case: if the paragraph contains only a container a
+    ``rest-example`` class, process the container directly instead of
+    trying to process it as rich text.
     """
     if (
         len(node.children) == 1
