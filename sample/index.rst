@@ -78,7 +78,7 @@ Note Admonition
 
        * Back to third level in note
 
-   * Back to second level in note
+     * Back to second level in note
 
    * Back to first level in note
 
