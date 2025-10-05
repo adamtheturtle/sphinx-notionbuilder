@@ -12,12 +12,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
-from uuid import UUID
 
 import click
+import requests
 from beartype import beartype
-from notion_client.errors import APIResponseError
-from ultimate_notion import Emoji, Session
+from ultimate_notion import Emoji, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
@@ -47,31 +46,18 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
-def _clean_deleted_blocks_from_mapping(
-    *,
-    sha_to_block_id: dict[str, str],
-    session: Session,
-) -> dict[str, str]:
-    """Remove deleted blocks from ``SHA`` mapping.
-
-    Returns a new dictionary with only existing blocks.
+@cache
+def _calculate_file_sha_from_url(*, file_url: str) -> str:
     """
-    cleaned_mapping = sha_to_block_id.copy()
-    deleted_block_shas: set[str] = set()
-
-    for sha, block_id_str in sha_to_block_id.items():
-        block_id = UUID(hex=block_id_str)
-        try:
-            session.api.blocks.retrieve(block=block_id)
-        except APIResponseError:
-            deleted_block_shas.add(sha)
-            msg = f"Block {block_id} does not exist, removing from SHA mapping"
-            click.echo(message=msg)
-
-    for deleted_block_sha in deleted_block_shas:
-        del cleaned_mapping[deleted_block_sha]
-
-    return cleaned_mapping
+    Calculate SHA-256 hash of a file from a URL.
+    """
+    sha256_hash = hashlib.sha256()
+    with requests.get(url=file_url, stream=True, timeout=10) as response:
+        response.raise_for_status()
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
 
 
 @beartype
@@ -79,7 +65,6 @@ def _find_last_matching_block_index(
     *,
     existing_blocks: list[Block] | tuple[Block, ...],
     local_blocks: list[Block],
-    sha_to_block_id: dict[str, str],
 ) -> int | None:
     """Find the last index where existing blocks match local blocks.
 
@@ -88,11 +73,16 @@ def _find_last_matching_block_index(
     """
     last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=existing_blocks):
+        click.echo(
+            message=(
+                f"Checking block {index + 1} of {len(existing_blocks)} for "
+                "equivalence"
+            ),
+        )
         if index < len(local_blocks) and (
             _is_existing_equivalent(
                 existing_page_block=existing_page_block,
                 local_block=local_blocks[index],
-                sha_to_block_id=sha_to_block_id,
             )
         ):
             last_matching_index = index
@@ -106,31 +96,41 @@ def _is_existing_equivalent(
     *,
     existing_page_block: Block,
     local_block: Block,
-    sha_to_block_id: dict[str, str],
 ) -> bool:
     """
     Check if a local block is equivalent to an existing page block.
     """
-    if existing_page_block == local_block:
-        return True
+    if type(existing_page_block) is not type(local_block):
+        return False
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
-            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            file_sha = _calculate_file_sha(file_path=file_path)
-            existing_page_block_id_with_file_sha = sha_to_block_id.get(
-                file_sha
-            )
-            if not existing_page_block_id_with_file_sha:
+            assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+            if not isinstance(existing_page_block.file_info, NotionFile):
                 return False
+
             if (
-                UUID(hex=existing_page_block_id_with_file_sha)
-                == existing_page_block.id
+                existing_page_block.file_info.name
+                != local_block.file_info.name
             ):
+                return False
+
+            if (
+                existing_page_block.file_info.caption
+                != local_block.file_info.caption
+            ):
+                return False
+
+            local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            local_file_sha = _calculate_file_sha(file_path=local_file_path)
+            existing_file_sha = _calculate_file_sha_from_url(
+                file_url=existing_page_block.file_info.url,
+            )
+            if local_file_sha != existing_file_sha:
                 return True
 
-    return False
+    return existing_page_block == local_block
 
 
 @beartype
@@ -215,20 +215,6 @@ class _ParentType(Enum):
     help="Icon of the page",
     required=False,
 )
-@click.option(
-    "--sha-mapping",
-    help=(
-        "JSON file mapping file SHAs to Notion block IDs "
-        "(use one file per document)"
-    ),
-    required=False,
-    type=click.Path(
-        exists=True,
-        path_type=Path,
-        file_okay=True,
-        dir_okay=False,
-    ),
-)
 @beartype
 def main(
     *,
@@ -237,22 +223,11 @@ def main(
     parent_type: _ParentType,
     title: str,
     icon: str | None = None,
-    sha_mapping: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
     """
     session = Session()
-
-    sha_mapping_content = (
-        sha_mapping.read_text(encoding="utf-8") if sha_mapping else "{}"
-    )
-    sha_to_block_id: dict[str, str] = dict(json.loads(s=sha_mapping_content))
-
-    sha_to_block_id = _clean_deleted_blocks_from_mapping(
-        sha_to_block_id=sha_to_block_id,
-        session=session,
-    )
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
@@ -291,7 +266,6 @@ def main(
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
         local_blocks=block_objs,
-        sha_to_block_id=sha_to_block_id,
     )
 
     click.echo(
@@ -309,37 +283,5 @@ def main(
         for details in blocks[delete_start_index:]
     ]
     page.append(blocks=block_objs_to_upload)
-
-    if sha_mapping:
-        for uploaded_block_index, uploaded_block in enumerate(
-            iterable=block_objs_to_upload
-        ):
-            if isinstance(uploaded_block, _FILE_BLOCK_TYPES):
-                pre_uploaded_block = block_objs[
-                    delete_start_index + uploaded_block_index
-                ]
-                assert isinstance(pre_uploaded_block, _FILE_BLOCK_TYPES)
-                parsed = urlparse(url=pre_uploaded_block.url)
-                if parsed.scheme == "file":
-                    # Ignore ``mypy`` error as the keyword arguments are
-                    # different across Python versions and platforms.
-                    file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-                    file_sha = _calculate_file_sha(file_path=file_path)
-                    sha_to_block_id[file_sha] = str(object=uploaded_block.id)
-
-                    sha_mapping.write_text(
-                        data=json.dumps(
-                            obj=sha_to_block_id, indent=2, sort_keys=True
-                        )
-                        + "\n",
-                        encoding="utf-8",
-                    )
-
-                    click.echo(
-                        message=(
-                            f"Updated SHA mapping for {file_path.name}:"
-                            f"{uploaded_block.id}"
-                        )
-                    )
 
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
