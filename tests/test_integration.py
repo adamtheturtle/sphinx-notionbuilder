@@ -2966,7 +2966,15 @@ def test_rest_example_block(
         blocks=[
             UnoCode(
                 text=text(
-                    text='.. code-block:: python\n\n   def hello_world():\n       print("Hello, World!")\n\nThis is the rendered output that shows what the code does.'
+                    text=textwrap.dedent(
+                        text="""\
+                        .. code-block:: python
+
+                           def hello_world():
+                               print("Hello, World!")
+
+                        This is the rendered output that shows what the code does."""
+                    )
                 ),
                 language="plain text",
             ),
