@@ -3,9 +3,11 @@ Heading 1 with *bold*
 
 .. contents::
 
-.. toctree::
+.. rest-example::
 
-   other
+   .. toctree::
+
+      other
 
 Comment Support
 ~~~~~~~~~~~~~~~~
