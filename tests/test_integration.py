@@ -2989,7 +2989,11 @@ def test_rest_example_block(
         blocks=[
             UnoCode(
                 text=text(
-                    text='def hello_world():\n    print("Hello, World!")'
+                    text=textwrap.dedent(
+                        text="""\
+                        def hello_world():
+                            print("Hello, World!")""",
+                    )
                 ),
                 language="python",
             ),
