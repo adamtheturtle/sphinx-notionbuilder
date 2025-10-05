@@ -2747,6 +2747,54 @@ def test_inline_single_backticks(
     )
 
 
+def test_kbd_role(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The ``:kbd:`` role creates keyboard input formatting.
+
+    The ``:kbd:`` role splits keyboard shortcuts into separate segments,
+    where each key is formatted as code but the + separator is not.
+    """
+    rst_content = """
+        Press :kbd:`Ctrl+C` to copy and :kbd:`Ctrl+V` to paste.
+    """
+
+    normal_text1 = text(text="Press ")
+    kbd_text1 = text(text="Ctrl", code=True)
+    plus_text1 = text(text="+", code=False)
+    kbd_text2 = text(text="C", code=True)
+    normal_text2 = text(text=" to copy and ")
+    kbd_text3 = text(text="Ctrl", code=True)
+    plus_text2 = text(text="+", code=False)
+    kbd_text4 = text(text="V", code=True)
+    normal_text3 = text(text=" to paste.")
+
+    combined_text = (
+        normal_text1
+        + kbd_text1
+        + plus_text1
+        + kbd_text2
+        + normal_text2
+        + kbd_text3
+        + plus_text2
+        + kbd_text4
+        + normal_text3
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_unsupported_node_types_in_rich_text(
     *,
     make_app: Callable[..., SphinxTestApp],

@@ -35,6 +35,11 @@ Other Text Styles
 
 The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
+Keyboard Shortcuts
+~~~~~~~~~~~~~~~~~~
+
+The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste, and :kbd:`Ctrl+Z` to undo.
+
 .. note::
 
    This is an important note that demonstrates the note admonition support.
