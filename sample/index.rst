@@ -440,5 +440,3 @@ This is useful for documentation that demonstrates how to write reStructuredText
 
 
       greet(name="World")
-
-   This code defines a simple greeting function that takes a name parameter and returns a personalized greeting message.
