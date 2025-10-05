@@ -199,31 +199,48 @@ This demonstrates the new support for nesting various content types within bulle
 
   .. code-block:: python
 
-     """Python code."""
+      """Python code."""
 
-     import sys
+      import sys
 
-     sys.stdout.write("Hello, world!")
+      sys.stdout.write("Hello, world!")
+
+  And here's a note admonition nested within the bullet list:
+
+  .. note::
+
+     This is a note that's nested within a bullet list item. This should work now!
+
+* Third bullet point
+
+  This bullet point contains a table:
+
+  +----------+----------+
+  | Header 1 | Header 2 |
+  +==========+==========+
+  | Cell 1   | Cell 2   |
+  +----------+----------+
+  | Cell 3   | Cell 4   |
+  +----------+----------+
 
 Numbered Lists
 ~~~~~~~~~~~~~~
 
-The builder supports numbered lists:
+The builder now supports numbered lists:
 
 #. First numbered item
+#. Second numbered item with **bold text**
+#. Third numbered item with nested content
 
-   #. Second numbered item with **bold text**
-   #. Third numbered item with nested content
+   #. First nested numbered item
+   #. Second nested numbered item
 
-      #. First nested numbered item
-      #. Second nested numbered item
+      #. Deeply nested numbered item
+      #. Another deeply nested item
 
-         #. Deeply nested numbered item
-         #. Another deeply nested item
+   #. Back to second level
 
-      #. Back to second level
-
-   #. Fourth top-level item
+#. Fourth top-level item
 
 Task Lists
 ~~~~~~~~~~
