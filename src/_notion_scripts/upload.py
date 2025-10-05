@@ -9,7 +9,7 @@ import mimetypes
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -185,20 +185,6 @@ def _block_with_uploaded_file(
 
 
 @beartype
-def _block_from_details(
-    *,
-    details: dict[str, Any],
-    session: Session,
-) -> Block:
-    """
-    Create a Block from a serialized block details, recursively processing
-    children.
-    """
-    block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-    return _block_with_uploaded_file(block=block, session=session)
-
-
-@beartype
 class _ParentType(Enum):
     """
     Type of parent that new page will live under.
@@ -305,9 +291,13 @@ def main(
         existing_page_block.delete()
 
     block_objs_to_upload = [
-        _block_from_details(details=details, session=session)
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
         for details in blocks[delete_start_index:]
     ]
-    page.append(blocks=block_objs_to_upload)
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in block_objs_to_upload
+    ]
+    page.append(blocks=block_objs_with_uploaded_files)
 
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
