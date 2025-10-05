@@ -61,18 +61,18 @@ Note Admonition
    * Another first level item
    * Another first level item
 
-   * Second level nested in note
-   * Another second level item
+     * Second level nested in note
+     * Another second level item
 
-      * Third level nested in note (deep!)
-      * Another third level item
+       * Third level nested in note (deep!)
+       * Another third level item
 
          * Fourth level nested in note (very deep!)
          * Another fourth level item
          * Another fourth level item
 
-         * Fifth level nested in note (extremely deep!)
-         * Another fifth level item
+           * Fifth level nested in note (extremely deep!)
+           * Another fifth level item
 
          * Back to fourth level in note
 
