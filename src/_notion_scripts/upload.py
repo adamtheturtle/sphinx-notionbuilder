@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
-from uuid import UUID
 
 import click
+import requests
 from beartype import beartype
-from ultimate_notion import Emoji, Session
+from ultimate_notion import Emoji, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
@@ -46,6 +46,21 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 
 @beartype
+@cache
+def _calculate_file_sha_from_url(*, file_url: str) -> str:
+    """
+    Calculate SHA-256 hash of a file from a URL.
+    """
+    sha256_hash = hashlib.sha256()
+    with requests.get(url=file_url, stream=True, timeout=10) as response:
+        response.raise_for_status()
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
+@beartype
 def _find_last_matching_block_index(
     *,
     existing_blocks: list[Block] | tuple[Block, ...],
@@ -58,6 +73,12 @@ def _find_last_matching_block_index(
     """
     last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=existing_blocks):
+        click.echo(
+            message=(
+                f"Checking block {index + 1} of {len(existing_blocks)} for "
+                "equivalence"
+            ),
+        )
         if index < len(local_blocks) and (
             _is_existing_equivalent(
                 existing_page_block=existing_page_block,
@@ -75,31 +96,41 @@ def _is_existing_equivalent(
     *,
     existing_page_block: Block,
     local_block: Block,
-    sha_to_block_id: dict[str, str],
 ) -> bool:
     """
     Check if a local block is equivalent to an existing page block.
     """
-    if existing_page_block == local_block:
-        return True
+    if type(existing_page_block) is not type(local_block):
+        return False
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
-            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            file_sha = _calculate_file_sha(file_path=file_path)
-            existing_page_block_id_with_file_sha = sha_to_block_id.get(
-                file_sha
-            )
-            if not existing_page_block_id_with_file_sha:
+            assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+            if not isinstance(existing_page_block.file_info, NotionFile):
                 return False
+
             if (
-                UUID(hex=existing_page_block_id_with_file_sha)
-                == existing_page_block.id
+                existing_page_block.file_info.name
+                != local_block.file_info.name
             ):
+                return False
+
+            if (
+                existing_page_block.file_info.caption
+                != local_block.file_info.caption
+            ):
+                return False
+
+            local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            local_file_sha = _calculate_file_sha(file_path=local_file_path)
+            existing_file_sha = _calculate_file_sha_from_url(
+                file_url=existing_page_block.file_info.url,
+            )
+            if local_file_sha != existing_file_sha:
                 return True
 
-    return False
+    return existing_page_block == local_block
 
 
 @beartype
