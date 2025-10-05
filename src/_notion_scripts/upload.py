@@ -127,8 +127,7 @@ def _is_existing_equivalent(
             existing_file_sha = _calculate_file_sha_from_url(
                 file_url=existing_page_block.file_info.url,
             )
-            if local_file_sha != existing_file_sha:
-                return True
+            return local_file_sha == existing_file_sha
 
     return existing_page_block == local_block
 
