@@ -131,6 +131,7 @@ def _is_existing_equivalent(
             )
             return local_file_sha == existing_file_sha
     elif isinstance(existing_page_block, ParentBlock):
+        assert isinstance(local_block, ParentBlock)
         serialized_existing_page_block_without_children = (
             existing_page_block.obj_ref.serialize_for_api()
         )
@@ -157,22 +158,20 @@ def _is_existing_equivalent(
         ):
             return False
 
-        if len(existing_page_block_without_children.children) != len(
-            local_block_without_children.children
-        ):
+        if len(existing_page_block.children) != len(local_block.children):
             return False
 
-        for existing_child_block, local_child_block in zip(
-            existing_page_block_without_children.children,
-            local_block_without_children.children,
-            strict=False,
-        ):
-            if not _is_existing_equivalent(
+        return all(
+            _is_existing_equivalent(
                 existing_page_block=existing_child_block,
                 local_block=local_child_block,
-            ):
-                return False
-        return True
+            )
+            for (existing_child_block, local_child_block) in zip(
+                existing_page_block.children,
+                local_block.children,
+                strict=False,
+            )
+        )
 
     return existing_page_block == local_block
 
