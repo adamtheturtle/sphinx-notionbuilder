@@ -370,11 +370,13 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
     ]
 
     if unsupported_styles:
-        _LOGGER.warning(
-            "Unsupported text style classes: %s. "
-            "Text will be rendered without styling.",
-            ", ".join(unsupported_styles),
+        unsupported_style_msg = (
+            "Unsupported text style classes: "
+            f"{', '.join(unsupported_styles)}. "
+            f"Text on line {child.parent.line} in {child.parent.source} will "
+            "be rendered without styling."
         )
+        _LOGGER.warning(unsupported_style_msg)
 
     color: BGColor | Color | None = bg_color or text_color
     return text(
@@ -664,9 +666,15 @@ def _(
         _LOGGER.warning(msg=table_multiple_header_rows_msg)
 
     if table_structure.num_stub_columns > 1:
+        first_body_row = table_structure.body_rows[0]
+        first_body_row_entry = first_body_row.children[0]
+        first_body_row_paragraph = first_body_row_entry.children[0]
         table_more_than_one_stub_column_msg = (
             f"Tables with more than 1 stub column are not supported. "
-            f"Found {table_structure.num_stub_columns} stub columns."
+            f"Found {table_structure.num_stub_columns} stub columns "
+            f"on table with first body row on line "
+            f"{first_body_row_paragraph.line} in "
+            f"{first_body_row_paragraph.source}."
         )
         _LOGGER.warning(msg=table_more_than_one_stub_column_msg)
 
