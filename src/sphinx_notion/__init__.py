@@ -714,23 +714,18 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process paragraph nodes by creating Notion Paragraph blocks.
-
-    Special case: if the paragraph contains only a container (like
-    rest-example), process the container directly instead of trying to process
-    it as rich text.
     """
-    del section_level
-
-    # Check if this paragraph contains only a container
+    Process paragraph nodes by creating Notion Paragraph blocks.
+    """
     if len(node.children) == 1 and isinstance(
-        node.children[0], nodes.container
+        node.children[0],
+        nodes.container,
     ):
-        # This is likely a rest-example or similar directive
-        # Process the container directly
-        return _process_node_to_blocks(node.children[0], section_level=1)
+        return _process_node_to_blocks(
+            node.children[0],
+            section_level=section_level,
+        )
 
-    # Regular paragraph processing
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 
