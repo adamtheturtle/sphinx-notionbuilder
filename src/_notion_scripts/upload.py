@@ -41,7 +41,11 @@ def _block_without_children(
     Return a copy of a block without children.
     """
     serialized_block_without_children = block.obj_ref.serialize_for_api()
-    del serialized_block_without_children["id"]
+
+    # Delete the ID, else the block will have the children from Notion.
+    if "id" in serialized_block_without_children:
+        del serialized_block_without_children["id"]
+
     block_without_children = Block.wrap_obj_ref(
         UnoObjAPIBlock.model_validate(obj=serialized_block_without_children)
     )
