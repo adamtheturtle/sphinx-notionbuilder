@@ -120,7 +120,7 @@ Keyboard Shortcuts
 
    .. tip::
 
-   This is a helpful tip that demonstrates the tip admonition support.
+      This is a helpful tip that demonstrates the tip admonition support.
 
 .. rest-example::
 
@@ -132,31 +132,31 @@ Keyboard Shortcuts
 
    .. caution::
 
-   This is a caution admonition that warns about potential issues.
+      This is a caution admonition that warns about potential issues.
 
 .. rest-example::
 
    .. danger::
 
-   This is a danger admonition that indicates a dangerous situation.
+      This is a danger admonition that indicates a dangerous situation.
 
 .. rest-example::
 
    .. error::
 
-   This is an error admonition that shows error information.
+      This is an error admonition that shows error information.
 
 .. rest-example::
 
    .. hint::
 
-   This is a hint admonition that provides helpful hints.
+      This is a hint admonition that provides helpful hints.
 
 .. rest-example::
 
    .. important::
 
-   This is an important admonition that highlights important information.
+      This is an important admonition that highlights important information.
 
 .. rest-example::
 
@@ -171,18 +171,17 @@ Keyboard Shortcuts
       * **Bold text** and *italic text*
       * ``Code snippets``
 
-
 .. rest-example::
 
    .. collapse:: Click to expand this section
 
-   This content is hidden by default and can be expanded by clicking the toggle.
+      This content is hidden by default and can be expanded by clicking the toggle.
 
-   It supports **all the same formatting** as regular content.
+      It supports **all the same formatting** as regular content.
 
-   .. note::
+      .. note::
 
-      You can even nest admonitions inside collapsible sections!
+         You can even nest admonitions inside collapsible sections!
 
 .. rest-example::
 
@@ -294,10 +293,8 @@ Task Lists
        3. [ ] Task C
 
 
-.. rest-example::
-
-   Heading with *italic* and ``inline code``
-   ------------------------------------------
+Heading with *italic* and ``inline code``
+-----------------------------------------
 
 The builder supports block quotes:
 
@@ -331,24 +328,22 @@ Table Example
 List Table with Stub (Header) Column
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rest-example::
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
 
-   .. list-table::
-      :header-rows: 1
-      :stub-columns: 1
-
-      * - Feature
-      - Description
-      - Status
-      * - Bold text
-      - Supports **bold** formatting
-      - ✅ Working
-      * - Italic text
-      - Supports *italic* formatting
-      - ✅ Working
-      * - Code blocks
-      - Supports ``inline code``
-      - ✅ Working
+   * - Feature
+     - Description
+     - Status
+   * - Bold text
+     - Supports **bold** formatting
+     - ✅ Working
+   * - Italic text
+     - Supports *italic* formatting
+     - ✅ Working
+   * - Code blocks
+     - Supports ``inline code``
+     - ✅ Working
 
 Image Examples
 --------------
@@ -1575,32 +1570,6 @@ Maxwell's equations:
    * List item
    * List item
    * List item
-
-
-
-Task Lists
-~~~~~~~~~~
-
-The builder supports task lists with checkboxes:
-
-.. task-list::
-
-    1. [x] Task A
-    2. [ ] Task B
-
-       .. task-list::
-           :clickable:
-
-           * [x] Task B1
-           * [x] Task B2
-           * [] Task B3
-
-           A rogue paragraph.
-
-           - A list item without a checkbox.
-           - [ ] Another bullet point.
-
-    3. [ ] Task C
 
 SVG support
 ~~~~~~~~~~~
