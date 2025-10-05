@@ -2330,7 +2330,8 @@ def test_text_styles_unsupported_color(
 
     expected_warning = (
         "Unsupported text style classes: text-cyan. "
-        "Text will be rendered without styling."
+        f"Text on line 1 in {tmp_path / 'src' / 'index.rst'} will be rendered "
+        "without styling."
     )
 
     normal_text = text(text="This is ")
