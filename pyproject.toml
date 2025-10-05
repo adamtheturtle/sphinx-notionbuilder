@@ -35,7 +35,6 @@ dependencies = [
     "beartype>=0.21.0",
     "click>=8.0.0",
     "docutils>=0.21",
-    "notion-client>=2.5.0",
     "sphinx>=8.2.3",
     "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
