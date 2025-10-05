@@ -1361,7 +1361,7 @@ def _process_rest_example_container(
     section_level: int,
 ) -> list[Block]:
     """
-    Process a rest-example container by creating nested callouts.
+    Process a ``rest-example`` container by creating nested callout blocks.
     """
     rst_source_node = node.children[0]
     assert isinstance(rst_source_node, nodes.literal_block)

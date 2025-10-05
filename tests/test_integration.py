@@ -2943,7 +2943,7 @@ def test_rest_example_block(
     tmp_path: Path,
 ) -> None:
     """
-    Rest example blocks become Notion callouts with nested code and
+    Rest example blocks become Notion callout blocks with nested code and
     description.
     """
     rst_content = """
@@ -2957,8 +2957,6 @@ def test_rest_example_block(
            Rendered output shows what the code does.
     """
 
-    # Expected structure: main callout containing two nested callouts
-    # First nested callout: rst source code only
     code_callout = UnoCallout(
         text=text(text="Code"),
     )
@@ -2981,7 +2979,6 @@ def test_rest_example_block(
         ]
     )
 
-    # Second nested callout: actual code + description
     output_callout = UnoCallout(
         text=text(text="Output"),
     )
@@ -3003,10 +3000,7 @@ def test_rest_example_block(
         ]
     )
 
-    # Main callout containing both nested callouts
-    main_callout = UnoCallout(
-        text=text(text="Example"),
-    )
+    main_callout = UnoCallout(text=text(text="Example"))
     main_callout.append(blocks=[code_callout, output_callout])
 
     expected_objects: list[Block] = [main_callout]
