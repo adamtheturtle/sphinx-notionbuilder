@@ -2954,7 +2954,7 @@ def test_rest_example_block(
               def hello_world():
                   print("Hello, World!")
 
-           This is the rendered output that shows what the code does.
+           Rendered output shows what the code does.
     """
 
     # Expected structure: main callout containing two nested callouts
@@ -2973,7 +2973,7 @@ def test_rest_example_block(
                            def hello_world():
                                print("Hello, World!")
 
-                        This is the rendered output that shows what the code does."""
+                        Rendered output shows what the code does."""
                     )
                 ),
                 language="plain text",
@@ -2994,9 +2994,7 @@ def test_rest_example_block(
                 language="python",
             ),
             UnoParagraph(
-                text=text(
-                    text="This is the rendered output that shows what the code does."
-                )
+                text=text(text="Rendered output shows what the code does.")
             ),
         ]
     )
