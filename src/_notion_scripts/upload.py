@@ -9,7 +9,7 @@ import mimetypes
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -19,7 +19,7 @@ from beartype import beartype
 from ultimate_notion import Emoji, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
@@ -133,16 +133,14 @@ def _is_existing_equivalent(
 
 
 @beartype
-def _block_from_details(
+def _block_with_uploaded_file(
     *,
-    details: dict[str, Any],
+    block: Block,
     session: Session,
 ) -> Block:
     """
-    Create a Block from a serialized block details.
+    Replace a file block with an uploaded file block.
     """
-    block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-
     if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
@@ -166,7 +164,22 @@ def _block_from_details(
 
             uploaded_file.wait_until_uploaded()
 
-            return block.__class__(file=uploaded_file, caption=block.caption)
+            block = block.__class__(file=uploaded_file, caption=block.caption)
+
+    elif isinstance(block, ParentBlock) and block.children:
+        new_child_blocks = [
+            _block_with_uploaded_file(block=child_block, session=session)
+            for child_block in block.children
+        ]
+        serialized_block_without_children = block.obj_ref.serialize_for_api()
+        block = Block.wrap_obj_ref(
+            UnoObjAPIBlock.model_validate(
+                obj=serialized_block_without_children
+            )
+        )
+        assert isinstance(block, ParentBlock)
+        assert not block.children
+        block.append(blocks=new_child_blocks)
 
     return block
 
@@ -278,9 +291,13 @@ def main(
         existing_page_block.delete()
 
     block_objs_to_upload = [
-        _block_from_details(details=details, session=session)
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
         for details in blocks[delete_start_index:]
     ]
-    page.append(blocks=block_objs_to_upload)
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in block_objs_to_upload
+    ]
+    page.append(blocks=block_objs_with_uploaded_files)
 
     click.echo(message=f"Updated existing page: '{title}' ({page.url})")
