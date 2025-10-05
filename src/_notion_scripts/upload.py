@@ -94,9 +94,7 @@ def _find_last_matching_block_index(
     blocks match.
     """
     last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(
-        iterable=existing_blocks, start=0
-    ):
+    for index, existing_page_block in enumerate(iterable=existing_blocks):
         click.echo(
             message=(
                 f"Checking block {index + 1} of {len(existing_blocks)} for "
