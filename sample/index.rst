@@ -424,7 +424,8 @@ The Schrödinger equation:
 Rest Examples
 ~~~~~~~~~~~~~
 
-The `sphinx-toolbox rest_example extension <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ allows you to show both the reStructuredText source code and its rendered output side by side. This is useful for documentation that demonstrates how to write rst directives.
+The `sphinx-toolbox rest_example extension <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ allows you to show both the reStructuredText source code and its rendered output side by side.
+This is useful for documentation that demonstrates how to write reStructuredText directives.
 
 .. rest-example::
 
