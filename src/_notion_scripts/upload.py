@@ -19,7 +19,7 @@ from beartype import beartype
 from ultimate_notion import Emoji, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block
+from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
@@ -72,7 +72,10 @@ def _find_last_matching_block_index(
     blocks match.
     """
     last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=existing_blocks):
+    for index, existing_page_block in enumerate(
+        iterable=existing_blocks,
+        start=26,
+    ):
         click.echo(
             message=(
                 f"Checking block {index + 1} of {len(existing_blocks)} for "
@@ -129,6 +132,27 @@ def _is_existing_equivalent(
             )
             if local_file_sha != existing_file_sha:
                 return True
+
+    if isinstance(existing_page_block, ParentBlock) and isinstance(
+        local_block,
+        ParentBlock,
+    ):
+        existing_children = existing_page_block.children
+        local_children = local_block.children
+
+        if len(existing_children) != len(local_children):
+            return False
+
+        for existing_child, local_child in zip(
+            existing_children,
+            local_children,
+            strict=True,
+        ):
+            if not _is_existing_equivalent(
+                existing_page_block=existing_child,
+                local_block=local_child,
+            ):
+                return False
 
     return existing_page_block == local_block
 
