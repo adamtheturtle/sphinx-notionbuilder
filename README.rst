@@ -35,7 +35,7 @@ For collapsible sections (toggle blocks), also add the sphinx-toolbox collapse e
        "sphinx_toolbox.collapse",
    ]
 
-For video support, also add the sphinxcontrib-video extension:
+For video support, also add the `sphinxcontrib-video <https://github.com/sphinx-contrib/video>`_ extension:
 
 .. code-block:: python
 
@@ -186,19 +186,16 @@ Then add it to your ``conf.py``:
        "sphinx_notion",
    ]
 
-You can then use the ``iframe`` directive in your reStructuredText documents:
+You can then use the ``iframe`` directive:
 
 .. code-block:: rst
-
-   .. iframe:: https://example.com/embed
-      :width: 600
-      :height: 400
 
    .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
       :width: 560
       :height: 315
 
 The iframes will be rendered as embed blocks in the generated Notion page, allowing you to embed external content like videos, interactive demos, or other web content.
+However
 
 Using Text Styles
 -----------------
