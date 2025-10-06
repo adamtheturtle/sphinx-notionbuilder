@@ -341,6 +341,13 @@ Unsupported Notion Block Types
 Uploading Documentation to Notion
 ----------------------------------
 
+Build documentation with the ``notion`` builder.
+For eaxmple:
+
+.. code-block:: console
+
+   $ sphinx-build -W -b notion source build/notion
+
 After building your documentation with the Notion builder, you can upload it to Notion using the included command-line tool.
 
 Prerequisites
@@ -358,6 +365,7 @@ Usage
 
 .. code-block:: console
 
+   # The JSON file will be in the build directory, e.g. ./build/notion/index.json
    $ notion-upload --file path/to/output.json --parent-id parent_page_id --parent-type page --title "Page Title" --sha-mapping notion-sha-mapping.json
 
 Arguments:
