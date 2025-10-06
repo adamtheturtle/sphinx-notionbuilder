@@ -3043,3 +3043,37 @@ def test_embed_block(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
     )
+
+
+def test_embed_and_video(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
+    this with ``sphinx-notionbuilder``.
+
+    We check this because there is a conflict between the two
+    extensions. See
+    https://github.com/TeachBooks/sphinx-iframes/issues/8.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+
+        .. video:: https://example.com/video.mp4
+    """
+
+    expected_objects: list[Block] = [
+        UnoEmbed(url="https://example.com/embed"),
+        UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_iframes", "sphinxcontrib.video", "sphinx_notion"),
+        # We explain in the README that this is necessary.
+        confoverrides={"suppress_warnings": ["app.add_directive"]},
+    )

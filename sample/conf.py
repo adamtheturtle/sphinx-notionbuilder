@@ -16,4 +16,7 @@ extensions = [
     "sphinx.ext.mathjax",
 ]
 
+# This is necessary because ``sphinx-iframes`` and ``sphinxcontrib.video``
+# both implement a ``video`` directive.
+# This is explained in the README.
 suppress_warnings = ["app.add_directive"]
