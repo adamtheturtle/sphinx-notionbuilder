@@ -1373,7 +1373,9 @@ def _(
     # Get the raw HTML content
     raw_content = node.astext()
 
-    # Check if this is an iframe from sphinx-iframes
+    # Check if this is an ``iframe`` from ``sphinx-iframes``.
+    # See https://github.com/TeachBooks/sphinx-iframes/issues/9
+    # for making this more robust.
     if "<iframe" in raw_content and "src=" in raw_content:
         # Extract the URL from the iframe src attribute
         match = re.search(pattern=r'src="([^"]+)"', string=raw_content)
