@@ -13,4 +13,5 @@ extensions = [
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
     "sphinx.ext.mathjax",
+    "sphinx_iframes",
 ]

@@ -336,3 +336,19 @@ This is useful for documentation that demonstrates how to write reStructuredText
 
 
       greet(name="World")
+
+
+Embed Blocks
+~~~~~~~~~~~~
+
+Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension to embed external content as iframes. These are rendered as embed blocks in Notion:
+
+.. rest-example::
+
+   .. iframe:: https://example.com/embed
+      :width: 600
+      :height: 400
+
+   .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+      :width: 560
+      :height: 315

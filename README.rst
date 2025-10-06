@@ -121,6 +121,7 @@ The following syntax is supported:
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
+- Embed blocks (using sphinx-iframes iframe directive)
 - Tables
 - Strikethrough text
 - Colored text and text styles (bold, italic, monospace)
@@ -153,6 +154,40 @@ PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs 
    .. pdf-include:: _static/local-document.pdf
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
+
+Using Embed Blocks
+------------------
+
+Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension. First, install the extension:
+
+.. code-block:: console
+
+   $ pip install sphinx-iframes
+
+Then add it to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_iframes",
+       "sphinx_notion",
+   ]
+
+You can then use the ``iframe`` directive in your reStructuredText documents:
+
+.. code-block:: rst
+
+   .. iframe:: https://example.com/embed
+      :width: 600
+      :height: 400
+
+   .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+      :width: 560
+      :height: 315
+
+The iframes will be rendered as embed blocks in the generated Notion page, allowing you to embed external content like videos, interactive demos, or other web content.
 
 Using Text Styles
 -----------------
@@ -280,7 +315,6 @@ Unsupported Notion Block Types
 - Child page
 - Column and column list
 - Divider
-- Embed
 - File
 - Link preview
 - Mention

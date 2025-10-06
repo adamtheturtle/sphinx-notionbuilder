@@ -21,6 +21,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -3011,4 +3012,33 @@ def test_rest_example_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+    )
+
+
+def test_embed_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Embed blocks using iframe directive become Notion Embed blocks.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+           :width: 600
+           :height: 400
+    """
+
+    expected_objects: list[Block] = [UnoEmbed(url="https://example.com/embed")]
+
+    # Create the _static directory that sphinx-iframes expects
+    static_dir = tmp_path / "build" / "notion" / "_static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_iframes"),
     )

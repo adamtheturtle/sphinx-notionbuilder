@@ -4,6 +4,7 @@ Sphinx Notion Builder.
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -37,6 +38,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
@@ -1352,6 +1354,35 @@ def _(
         )
         blocks.extend(child_blocks)
     return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.raw,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process raw nodes, specifically those containing iframe HTML from sphinx-
+    iframes.
+    """
+    del section_level
+
+    # Get the raw HTML content
+    raw_content = node.astext()
+
+    # Check if this is an iframe from sphinx-iframes
+    if "<iframe" in raw_content and "src=" in raw_content:
+        # Extract the URL from the iframe src attribute
+        match = re.search(pattern=r'src="([^"]+)"', string=raw_content)
+        if match:
+            url = match.group(1)
+            return [UnoEmbed(url=url)]
+
+    # If it's not an iframe or we can't extract the URL, return empty list
+    # This handles other raw HTML that we don't support
+    return []
 
 
 @beartype
