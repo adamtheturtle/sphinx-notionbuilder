@@ -3042,5 +3042,4 @@ def test_embed_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
-        confoverrides={"suppress_warnings": ["app.add_directive"]},
     )

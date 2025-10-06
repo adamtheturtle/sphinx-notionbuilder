@@ -42,9 +42,20 @@ For video support, also add the sphinxcontrib-video extension:
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinxcontrib.video",  # Must be before sphinx_notion
+       # sphinxcontrib.video must be before sphinx_notion
+       "sphinxcontrib.video",
        "sphinx_notion",
    ]
+
+If you are using ``sphinxcontrib.video`` with ``sphinx-iframes``, the warning ``app.add_directive`` will be raised.
+This is because ``sphinxcontrib.video`` and ``sphinx-iframes`` both implement a ``video`` directive.
+To suppress this warning, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["app.add_directive"]
 
 For strikethrough text support, also add the `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ extension:
 
