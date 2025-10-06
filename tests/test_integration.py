@@ -2835,26 +2835,39 @@ def setup(app):
         )
 
 
+@pytest.mark.parametrize(
+    argnames=("rst_content", "node_name", "line_number_available"),
+    argvalues=[
+        (".. raw:: html\n\n   <hr width=50 size=10>", "raw", True),
+        (
+            ".. sidebar:: title\n\n   content",
+            "sidebar",
+            False,
+        ),
+    ],
+)
 def test_unsupported_node_types_in_process_node_to_blocks(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    rst_content: str,
+    node_name: str,
+    line_number_available: bool,
 ) -> None:
     """
     Unsupported node types in _process_node_to_blocks raise
     ``NotImplementedError``.
     """
-    rst_content = """
-        .. raw:: html
-
-           <hr width=50 size=10>
-    """
-
-    expected_message = (
-        r"^Unsupported node type: raw on line "
-        rf"1 in "
-        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}.$"
-    )
+    index_rst = tmp_path / "src" / "index.rst"
+    # Some nodes do not have a line number available.
+    if line_number_available:
+        expected_message = (
+            rf"^Unsupported node type: {node_name} on line "
+            rf"1 in "
+            rf"{re.escape(pattern=str(object=index_rst))}.$"
+        )
+    else:
+        expected_message = rf"^Unsupported node type: {node_name}.$"
     with pytest.raises(
         expected_exception=NotImplementedError,
         match=expected_message,

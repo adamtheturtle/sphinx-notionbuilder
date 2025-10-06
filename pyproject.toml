@@ -33,6 +33,7 @@ dynamic = [
 dependencies = [
     "atsphinx-audioplayer>=0.1.0",
     "beartype>=0.21.0",
+    "beautifulsoup4>=4.13.3",
     "click>=8.0.0",
     "docutils>=0.21",
     "requests>=2.32.5",

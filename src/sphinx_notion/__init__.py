@@ -4,12 +4,12 @@ Sphinx Notion Builder.
 
 import json
 import logging
-import re
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
+import bs4
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -617,6 +617,26 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
+def _get_unsupported_node_type_exception(
+    *,
+    node: nodes.Element,
+) -> NotImplementedError:
+    """
+    Raise an ``NotImplementedError`` for an unsupported node type.
+    """
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    return NotImplementedError(unsupported_node_type_msg)
+
+
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -628,12 +648,7 @@ def _process_node_to_blocks(
     Required function for ``singledispatch``.
     """
     del section_level
-    unsupported_node_type_msg = (
-        f"Unsupported node type: {node.tagname} on line "
-        f"{node.line or node.parent.line} in "
-        f"{node.source or node.parent.source}."
-    )
-    raise NotImplementedError(unsupported_node_type_msg)
+    raise _get_unsupported_node_type_exception(node=node)
 
 
 @beartype
@@ -1370,22 +1385,17 @@ def _(
     """
     del section_level
 
-    # Get the raw HTML content
-    raw_content = node.astext()
-
     # Check if this is an ``iframe`` from ``sphinx-iframes``.
     # See https://github.com/TeachBooks/sphinx-iframes/issues/9
     # for making this more robust.
-    if "<iframe" in raw_content and "src=" in raw_content:
-        # Extract the URL from the iframe src attribute
-        match = re.search(pattern=r'src="([^"]+)"', string=raw_content)
-        if match:
-            url = match.group(1)
-            return [UnoEmbed(url=url)]
+    soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
+    iframe = soup.find(name="iframe")
+    if iframe is not None:
+        url = iframe.get(key="src")
+        assert url is not None
+        return [UnoEmbed(url=str(object=url))]
 
-    # If it's not an iframe or we can't extract the URL, return empty list
-    # This handles other raw HTML that we don't support
-    return []
+    raise _get_unsupported_node_type_exception(node=node)
 
 
 @beartype
