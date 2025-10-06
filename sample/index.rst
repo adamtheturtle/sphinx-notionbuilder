@@ -337,7 +337,6 @@ This is useful for documentation that demonstrates how to write reStructuredText
 
       greet(name="World")
 
-
 Embed Blocks
 ~~~~~~~~~~~~
 
