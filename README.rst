@@ -24,7 +24,7 @@ Add the following to ``conf.py`` to enable the extension:
 
    extensions = ["sphinx_notion"]
 
-For collapsible sections (toggle blocks), also add the sphinx-toolbox collapse extension:
+For collapsible sections (toggle blocks), also add the `sphinx-toolbox collapse <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html>`_ extension:
 
 .. code-block:: python
 
@@ -35,7 +35,7 @@ For collapsible sections (toggle blocks), also add the sphinx-toolbox collapse e
        "sphinx_toolbox.collapse",
    ]
 
-For video support, also add the `sphinxcontrib-video <https://github.com/sphinx-contrib/video>`_ extension:
+For video support, also add the `sphinxcontrib-video <https://sphinxcontrib-video.readthedocs.io>`_ extension:
 
 .. code-block:: python
 
@@ -90,7 +90,7 @@ For TODO list support, also add the `sphinx-immaterial <https://github.com/jbms/
        "sphinx_notion",
    ]
 
-For mathematical equation support, also add the ``sphinx.ext.mathjax`` extension:
+For mathematical equation support, also add the `sphinx.ext.mathjax <https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax>`_ extension:
 
 .. code-block:: python
 
@@ -112,7 +112,7 @@ For rest-example blocks support, also add the `sphinx-toolbox <https://sphinx-to
        "sphinx_notion",
    ]
 
-PDF support is included by default with the sphinx-notionbuilder extension.
+PDF support is included by default with the ``sphinx-notionbuilder`` extension and builds on the `sphinx-simplepdf <https://sphinx-simplepdf.readthedocs.io/>`_ extension.
 
 Supported markup
 ----------------
@@ -143,7 +143,8 @@ See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/s
 Using Audio
 -----------
 
-Audio files can be embedded using the ``audio`` directive. Both remote URLs and local file paths are supported:
+Audio files can be embedded using the ``audio`` directive.
+Both remote URLs and local file paths are supported:
 
 .. code-block:: rst
 
@@ -153,10 +154,11 @@ Audio files can be embedded using the ``audio`` directive. Both remote URLs and 
 
 The audio will be rendered as an audio player in the generated Notion page.
 
-Using PDF
+Using PDFs
 ----------
 
-PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported.
+PDF files can be embedded using the ``pdf-include`` directive.
+Both remote URLs and local file paths are supported.
 
 .. code-block:: rst
 

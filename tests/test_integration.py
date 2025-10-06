@@ -2842,29 +2842,16 @@ def test_unsupported_node_types_in_process_node_to_blocks(
 ) -> None:
     """
     Unsupported node types in _process_node_to_blocks raise
-    NotImplementedError.
+    ``NotImplementedError``.
     """
     rst_content = """
-        .. unsupported-node::
-    """
+        .. raw:: html
 
-    conf_py_content = """
-from docutils import nodes
-from docutils.parsers.rst import Directive
-
-class UnsupportedNode(Directive):
-    def run(self):
-        # Create a custom node type that's not registered
-        node = nodes.Element()
-        node.tagname = 'unsupported_node'
-        return [node]
-
-def setup(app):
-    app.add_directive('unsupported-node', UnsupportedNode)
+           <hr width=50 size=10>
     """
 
     expected_message = (
-        r"^Unsupported node type: unsupported_node on line "
+        r"^Unsupported node type: raw on line "
         rf"1 in "
         rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}.$"
     )
@@ -2877,7 +2864,6 @@ def setup(app):
             expected_objects=[],
             make_app=make_app,
             tmp_path=tmp_path,
-            conf_py_content=conf_py_content,
         )
 
 
