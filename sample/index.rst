@@ -345,10 +345,6 @@ Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/
 
 .. rest-example::
 
-   .. iframe:: https://example.com/embed
-      :width: 600
-      :height: 400
-
    .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
       :width: 560
       :height: 315
