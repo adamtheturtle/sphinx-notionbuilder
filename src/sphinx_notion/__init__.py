@@ -10,7 +10,6 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
-import sphinx_iframes
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -1581,6 +1580,9 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
 @beartype
 def _make_static_dir(app: Sphinx) -> None:
+    """
+    We make the ``_static`` directory that ``sphinx-iframes`` expects.
+    """
     (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
 
 
@@ -1597,21 +1599,17 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_pdf_include_directive,
     )
 
-    app.connect(
-        event="builder-inited",
-        callback=_make_static_dir,
-    )
+    app.connect(event="builder-inited", callback=_make_static_dir)
 
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
 
-    # sphinx_iframes.write_css = _write_css
-    # sphinx_iframes.write_js = _write_js
-
-    # TODO: Only do this if sphinxcontrib.video is enabled already.
-    # TODO: Explain that this is a hack to get the video directive to work with sphinx-iframes.
+    # that we use. The ``sphinx-iframes`` extension implements a ``video``
+    # directive that we don't use.
+    # Make sure that if they are both enabled, we use the
+    # ``sphinxcontrib.video`` extension.
     if "sphinxcontrib.video" in app.extensions:
         app.add_directive(name="video", cls=Video, override=True)
 
