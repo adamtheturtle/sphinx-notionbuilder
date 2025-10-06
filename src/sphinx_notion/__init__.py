@@ -1612,6 +1612,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     # TODO: Only do this if sphinxcontrib.video is enabled already.
     # TODO: Explain that this is a hack to get the video directive to work with sphinx-iframes.
-    app.add_directive(name="video", cls=Video, override=True)
+    if "sphinxcontrib.video" in app.extensions:
+        app.add_directive(name="video", cls=Video, override=True)
 
     return {"parallel_read_safe": True}

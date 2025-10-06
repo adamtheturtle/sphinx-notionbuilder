@@ -1624,7 +1624,7 @@ def test_simple_video(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
@@ -1654,7 +1654,7 @@ def test_video_with_caption(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
