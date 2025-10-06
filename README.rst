@@ -42,9 +42,20 @@ For video support, also add the `sphinxcontrib-video <https://sphinxcontrib-vide
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinxcontrib.video",  # Must be before sphinx_notion
+       # ``sphinxcontrib.video`` must be before ``sphinx_notion``
+       "sphinxcontrib.video",
        "sphinx_notion",
    ]
+
+If you are using ``sphinxcontrib.video`` with ``sphinx-iframes``, the warning ``app.add_directive`` will be raised.
+This is because ``sphinxcontrib.video`` and ``sphinx-iframes`` both implement a ``video`` directive.
+To suppress this warning, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["app.add_directive"]
 
 For strikethrough text support, also add the `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ extension:
 
@@ -53,7 +64,7 @@ For strikethrough text support, also add the `sphinxnotes-strike <https://github
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinxnotes.strike",  # Must be before sphinx_notion
+       "sphinxnotes.strike",  # Must be before ``sphinx_notion``
        "sphinx_notion",
    ]
 
@@ -115,12 +126,13 @@ The following syntax is supported:
 - Table of contents
 - Block quotes
 - All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
-- Collapsible sections (using sphinx-toolbox collapse directive)
-- Rest-example blocks (using sphinx-toolbox rest-example directive)
+- Collapsible sections (using the ``collapse`` directive from ``sphinx-toolbox``)
+- Rest-example blocks (using the ``rest-example`` directive from ``sphinx-toolbox``)
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
+- Embed blocks (using the ``iframe`` directive from ``sphinx-iframes``)
 - Tables
 - Strikethrough text
 - Colored text and text styles (bold, italic, monospace)
@@ -155,6 +167,43 @@ Both remote URLs and local file paths are supported.
    .. pdf-include:: _static/local-document.pdf
 
 The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
+
+Using Embed Blocks
+------------------
+
+Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension. First, install the extension:
+
+.. code-block:: console
+
+   $ pip install sphinx-iframes
+
+Then add it to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   extensions = [
+       "sphinx_iframes",  # Must be before ``sphinx_notion``
+       "sphinx_notion",
+   ]
+
+You can then use the ``iframe`` directive:
+
+.. code-block:: rst
+
+   .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+
+The iframes will be rendered as embed blocks in the generated Notion page, allowing you to embed external content like videos, interactive demos, or other web content.
+However, if you are using ``sphinx-iframes`` with ``sphinxcontrib.video``, the warning ``app.add_directive`` will be raised.
+This is because ``sphinx-iframes`` and ``sphinxcontrib.video`` both implement a ``video`` directive.
+To suppress this warning, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["app.add_directive"]
 
 Using Text Styles
 -----------------
@@ -282,7 +331,6 @@ Unsupported Notion Block Types
 - Child page
 - Column and column list
 - Divider
-- Embed
 - File
 - Link preview
 - Mention

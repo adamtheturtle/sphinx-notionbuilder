@@ -9,6 +9,7 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
+import bs4
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -27,6 +28,7 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
 )
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
+    Video,
     video_node,
 )
 from sphinxnotes.strike import strike_node
@@ -37,6 +39,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
@@ -614,6 +617,26 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
+def _get_unsupported_node_type_exception(
+    *,
+    node: nodes.Element,
+) -> NotImplementedError:
+    """
+    Raise an ``NotImplementedError`` for an unsupported node type.
+    """
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    return NotImplementedError(unsupported_node_type_msg)
+
+
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -625,12 +648,7 @@ def _process_node_to_blocks(
     Required function for ``singledispatch``.
     """
     del section_level
-    unsupported_node_type_msg = (
-        f"Unsupported node type: {node.tagname} on line "
-        f"{node.line or node.parent.line} in "
-        f"{node.source or node.parent.source}."
-    )
-    raise NotImplementedError(unsupported_node_type_msg)
+    raise _get_unsupported_node_type_exception(node=node)
 
 
 @beartype
@@ -1355,6 +1373,32 @@ def _(
 
 
 @beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.raw,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process raw nodes, specifically those containing HTML from the extension
+    ``sphinx-iframes``.
+    """
+    del section_level
+
+    # Check if this is an ``iframe`` from ``sphinx-iframes``.
+    # See https://github.com/TeachBooks/sphinx-iframes/issues/9
+    # for making this more robust.
+    soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
+    iframe = soup.find(name="iframe")
+    if iframe is not None:
+        url = iframe.get(key="src")
+        assert url is not None
+        return [UnoEmbed(url=str(object=url))]
+
+    raise _get_unsupported_node_type_exception(node=node)
+
+
+@beartype
 def _process_rest_example_container(
     *,
     node: nodes.container,
@@ -1547,6 +1591,14 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
 
 @beartype
+def _make_static_dir(app: Sphinx) -> None:
+    """
+    We make the ``_static`` directory that ``sphinx-iframes`` expects.
+    """
+    (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1559,8 +1611,18 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_pdf_include_directive,
     )
 
+    app.connect(event="builder-inited", callback=_make_static_dir)
+
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
+
+    # that we use. The ``sphinx-iframes`` extension implements a ``video``
+    # directive that we don't use.
+    # Make sure that if they are both enabled, we use the
+    # ``sphinxcontrib.video`` extension.
+    if "sphinxcontrib.video" in app.extensions:
+        app.add_directive(name="video", cls=Video, override=True)
+
     return {"parallel_read_safe": True}

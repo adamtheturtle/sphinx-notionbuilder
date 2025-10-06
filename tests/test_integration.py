@@ -21,6 +21,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -79,11 +80,13 @@ def _assert_rst_converts_to_notion_objects(
     extensions: tuple[str, ...] = ("sphinx_notion",),
     conf_py_content: str = "",
     expected_warnings: Collection[str] = (),
+    confoverrides: dict[str, Any] | None = None,
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via Sphinx
     build process.
     """
+    confoverrides = confoverrides or {}
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
 
@@ -96,7 +99,7 @@ def _assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": list(extensions)},
+        confoverrides={"extensions": list(extensions)} | confoverrides,
     )
     app.build()
     assert app.statuscode == 0
@@ -1621,7 +1624,7 @@ def test_simple_video(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
@@ -1651,7 +1654,7 @@ def test_video_with_caption(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
@@ -2832,26 +2835,39 @@ def setup(app):
         )
 
 
+@pytest.mark.parametrize(
+    argnames=("rst_content", "node_name", "line_number_available"),
+    argvalues=[
+        (".. raw:: html\n\n   <hr width=50 size=10>", "raw", True),
+        (
+            ".. sidebar:: title\n\n   content",
+            "sidebar",
+            False,
+        ),
+    ],
+)
 def test_unsupported_node_types_in_process_node_to_blocks(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
+    rst_content: str,
+    node_name: str,
+    line_number_available: bool,
 ) -> None:
     """
     Unsupported node types in _process_node_to_blocks raise
     ``NotImplementedError``.
     """
-    rst_content = """
-        .. raw:: html
-
-           <hr width=50 size=10>
-    """
-
-    expected_message = (
-        r"^Unsupported node type: raw on line "
-        rf"1 in "
-        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}.$"
-    )
+    index_rst = tmp_path / "src" / "index.rst"
+    # Some nodes do not have a line number available.
+    if line_number_available:
+        expected_message = (
+            rf"^Unsupported node type: {node_name} on line "
+            rf"1 in "
+            rf"{re.escape(pattern=str(object=index_rst))}.$"
+        )
+    else:
+        expected_message = rf"^Unsupported node type: {node_name}.$"
     with pytest.raises(
         expected_exception=NotImplementedError,
         match=expected_message,
@@ -2996,4 +3012,67 @@ def test_rest_example_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+    )
+
+
+def test_embed_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Blocks using the ``iframe`` directive become Notion Embed blocks.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+           :width: 600
+           :height: 400
+    """
+
+    expected_objects: list[Block] = [UnoEmbed(url="https://example.com/embed")]
+
+    # Create the _static directory that ``sphinx-iframes`` expects
+    static_dir = tmp_path / "build" / "notion" / "_static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_iframes"),
+    )
+
+
+def test_embed_and_video(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
+    this with ``sphinx-notionbuilder``.
+
+    We check this because there is a conflict between the two
+    extensions. See
+    https://github.com/TeachBooks/sphinx-iframes/issues/8.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+
+        .. video:: https://example.com/video.mp4
+    """
+
+    expected_objects: list[Block] = [
+        UnoEmbed(url="https://example.com/embed"),
+        UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_iframes", "sphinxcontrib.video", "sphinx_notion"),
+        # We explain in the README that this is necessary.
+        confoverrides={"suppress_warnings": ["app.add_directive"]},
     )

@@ -4,9 +4,10 @@ Configuration for Sphinx.
 
 extensions = [
     "sphinxcontrib.video",
+    "sphinx_iframes",
+    "sphinx_notion",
     "sphinxnotes.strike",
     "sphinxcontrib_text_styles",
-    "sphinx_notion",
     "sphinx_simplepdf",
     "sphinx_toolbox.collapse",
     "sphinx_toolbox.rest_example",
@@ -14,3 +15,8 @@ extensions = [
     "sphinx_immaterial.task_lists",
     "sphinx.ext.mathjax",
 ]
+
+# This is necessary because ``sphinx-iframes`` and ``sphinxcontrib.video``
+# both implement a ``video`` directive.
+# This is explained in the README.
+suppress_warnings = ["app.add_directive"]
