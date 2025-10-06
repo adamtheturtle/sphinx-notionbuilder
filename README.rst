@@ -182,7 +182,7 @@ Then add it to your ``conf.py``:
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinx_iframes",
+       "sphinx_iframes",  # Must be before sphinx_notion
        "sphinx_notion",
    ]
 
@@ -191,11 +191,17 @@ You can then use the ``iframe`` directive:
 .. code-block:: rst
 
    .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
-      :width: 560
-      :height: 315
 
 The iframes will be rendered as embed blocks in the generated Notion page, allowing you to embed external content like videos, interactive demos, or other web content.
-However
+However, if you are using ``sphinx-iframes`` with ``sphinxcontrib.video``, the warning ``app.add_directive`` will be raised.
+This is because ``sphinx-iframes`` and ``sphinxcontrib.video`` both implement a ``video`` directive.
+To suppress this warning, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["app.add_directive"]
 
 Using Text Styles
 -----------------
