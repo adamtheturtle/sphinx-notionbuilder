@@ -1380,8 +1380,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process raw nodes, specifically those containing iframe HTML from sphinx-
-    iframes.
+    Process raw nodes, specifically those containing HTML from ``sphinx-
+    iframes``.
     """
     del section_level
 
