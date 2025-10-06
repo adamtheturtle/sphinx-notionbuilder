@@ -42,7 +42,7 @@ For video support, also add the `sphinxcontrib-video <https://sphinxcontrib-vide
    """Configuration for Sphinx."""
 
    extensions = [
-       # sphinxcontrib.video must be before sphinx_notion
+       # ``sphinxcontrib.video`` must be before ``sphinx_notion``
        "sphinxcontrib.video",
        "sphinx_notion",
    ]
@@ -64,7 +64,7 @@ For strikethrough text support, also add the `sphinxnotes-strike <https://github
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinxnotes.strike",  # Must be before sphinx_notion
+       "sphinxnotes.strike",  # Must be before ``sphinx_notion``
        "sphinx_notion",
    ]
 
@@ -184,7 +184,7 @@ Then add it to your ``conf.py``:
    """Configuration for Sphinx."""
 
    extensions = [
-       "sphinx_iframes",  # Must be before sphinx_notion
+       "sphinx_iframes",  # Must be before ``sphinx_notion``
        "sphinx_notion",
    ]
 
