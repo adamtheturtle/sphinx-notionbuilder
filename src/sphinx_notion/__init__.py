@@ -10,6 +10,7 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
+import sphinx_iframes
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -1578,6 +1579,20 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
 
 @beartype
+def _write_css(app: Sphinx, exc: Exception | None) -> None:
+    """
+    Write the CSS for sphinx-iframes.
+    """
+
+
+@beartype
+def _write_js(app: Sphinx, exc: Exception | None) -> None:
+    """
+    Write the CSS for sphinx-iframes.
+    """
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1594,4 +1609,8 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
+
+    sphinx_iframes.write_css = _write_css
+    sphinx_iframes.write_js = _write_js
+
     return {"parallel_read_safe": True}

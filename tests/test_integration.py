@@ -3021,7 +3021,7 @@ def test_embed_block(
     tmp_path: Path,
 ) -> None:
     """
-    Embed blocks using iframe directive become Notion Embed blocks.
+    Blocks using the ``iframe`` directive become Notion Embed blocks.
     """
     rst_content = """
         .. iframe:: https://example.com/embed
@@ -3031,7 +3031,7 @@ def test_embed_block(
 
     expected_objects: list[Block] = [UnoEmbed(url="https://example.com/embed")]
 
-    # Create the _static directory that sphinx-iframes expects
+    # Create the _static directory that ``sphinx-iframes`` expects
     static_dir = tmp_path / "build" / "notion" / "_static"
     static_dir.mkdir(parents=True, exist_ok=True)
 

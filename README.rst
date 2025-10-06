@@ -115,13 +115,13 @@ The following syntax is supported:
 - Table of contents
 - Block quotes
 - All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
-- Collapsible sections (using sphinx-toolbox collapse directive)
-- Rest-example blocks (using sphinx-toolbox rest-example directive)
+- Collapsible sections (using the ``collapse`` directive from ``sphinx-toolbox``)
+- Rest-example blocks (using the ``rest-example`` directive from ``sphinx-toolbox``)
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
-- Embed blocks (using sphinx-iframes iframe directive)
+- Embed blocks (using the ``iframe`` directive from ``sphinx-iframes``)
 - Tables
 - Strikethrough text
 - Colored text and text styles (bold, italic, monospace)
