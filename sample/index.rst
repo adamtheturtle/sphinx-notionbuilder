@@ -343,6 +343,6 @@ Embed Blocks
 
 Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension.
 
-   .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
-      :width: 560
-      :height: 315
+.. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+   :width: 560
+   :height: 315
