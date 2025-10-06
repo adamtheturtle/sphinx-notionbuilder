@@ -29,6 +29,7 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
 )
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
+    Video,
     video_node,
 )
 from sphinxnotes.strike import strike_node
@@ -1579,17 +1580,8 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
 
 @beartype
-def _write_css(app: Sphinx, exc: Exception | None) -> None:
-    """
-    Write the CSS for sphinx-iframes.
-    """
-
-
-@beartype
-def _write_js(app: Sphinx, exc: Exception | None) -> None:
-    """
-    Write the CSS for sphinx-iframes.
-    """
+def _make_static_dir(app: Sphinx) -> None:
+    (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
 
 
 @beartype
@@ -1605,12 +1597,21 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_pdf_include_directive,
     )
 
+    app.connect(
+        event="builder-inited",
+        callback=_make_static_dir,
+    )
+
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
 
-    sphinx_iframes.write_css = _write_css
-    sphinx_iframes.write_js = _write_js
+    # sphinx_iframes.write_css = _write_css
+    # sphinx_iframes.write_js = _write_js
+
+    # TODO: Only do this if sphinxcontrib.video is enabled already.
+    # TODO: Explain that this is a hack to get the video directive to work with sphinx-iframes.
+    app.add_directive(name="video", cls=Video, override=True)
 
     return {"parallel_read_safe": True}

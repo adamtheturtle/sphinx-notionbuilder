@@ -80,11 +80,13 @@ def _assert_rst_converts_to_notion_objects(
     extensions: tuple[str, ...] = ("sphinx_notion",),
     conf_py_content: str = "",
     expected_warnings: Collection[str] = (),
+    confoverrides: dict[str, Any] | None = None,
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via Sphinx
     build process.
     """
+    confoverrides = confoverrides or {}
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
 
@@ -97,7 +99,7 @@ def _assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": list(extensions)},
+        confoverrides={"extensions": list(extensions)} | confoverrides,
     )
     app.build()
     assert app.statuscode == 0
@@ -1596,7 +1598,6 @@ def test_local_image_file(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -3041,4 +3042,5 @@ def test_embed_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
+        confoverrides={"suppress_warnings": ["app.add_directive"]},
     )
