@@ -3094,9 +3094,14 @@ def test_line_block(
     """
 
     expected_objects: list[Block] = [
-        UnoParagraph(text=text(text="This is a line block")),
-        UnoParagraph(text=text(text="with multiple lines")),
-        UnoParagraph(text=text(text="preserved exactly as written")),
+        UnoParagraph(
+            text=text(text="This is a line block")
+            + text(text="\n")
+            + text(text="with multiple lines")
+            + text(text="\n")
+            + text(text="preserved exactly as written")
+            + text(text="\n")
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(

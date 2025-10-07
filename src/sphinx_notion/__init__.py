@@ -231,7 +231,7 @@ def _(child: nodes.line) -> Text:
     """
     Process line nodes by creating rich text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(child=child) + "\n"
 
 
 @beartype

@@ -357,6 +357,12 @@ Line Blocks
 
    The builder supports line blocks using pipe characters to preserve line breaks:
 
+   Nothing in between
+
+   |
+
+   Now something in between
+
    | This is a line block
    | with multiple lines
    | preserved exactly as written
