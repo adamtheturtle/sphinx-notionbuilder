@@ -816,7 +816,10 @@ def _(
                 bulleted_item_block.append(blocks=child_blocks)
             result.append(bulleted_item_block)
         else:
-            assert isinstance(first_child, checkbox_label)
+            assert isinstance(first_child, checkbox_label), (
+                first_child.line,
+                first_child.source,
+            )
             label_text_node = list_item.children[1]
             # Get the checked state from the checkbox_label node
             checked = first_child.attributes.get("checked", False)
@@ -864,7 +867,10 @@ def _(
                 block.append(blocks=child_blocks)
             result.append(block)
         else:
-            assert isinstance(first_child, checkbox_label)
+            assert isinstance(first_child, checkbox_label), (
+                first_child.line,
+                first_child.source,
+            )
             label_text_node = list_item.children[1]
             # Get the checked state from the checkbox_label node
             checked = first_child.attributes.get("checked", False)
