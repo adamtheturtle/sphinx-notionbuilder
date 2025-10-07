@@ -227,6 +227,15 @@ def _process_rich_text_node(child: nodes.Node) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(child: nodes.line) -> Text:
+    """
+    Process line nodes by creating rich text.
+    """
+    return _create_styled_text_from_node(child=child) + "\n"
+
+
+@beartype
+@_process_rich_text_node.register
 def _(child: nodes.reference) -> Text:
     """
     Process reference nodes by creating linked text.
@@ -1495,6 +1504,23 @@ def _(
     del node
     del section_level
     return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.line_block,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process line block nodes by creating separate paragraph blocks for each
+    line.
+    """
+    del section_level
+
+    line_text = _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=line_text)]
 
 
 @beartype
