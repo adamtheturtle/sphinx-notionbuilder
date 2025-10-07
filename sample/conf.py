@@ -5,7 +5,6 @@ Configuration for Sphinx.
 extensions = [
     "sphinxcontrib.video",
     "sphinx_iframes",
-    "sphinx_notion",
     "sphinxnotes.strike",
     "sphinxcontrib_text_styles",
     "sphinx_simplepdf",
@@ -14,6 +13,7 @@ extensions = [
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
     "sphinx.ext.mathjax",
+    "sphinx_notion",
 ]
 
 # This is necessary because ``sphinx-iframes`` and ``sphinxcontrib.video``
