@@ -37,10 +37,11 @@ Add the following to ``conf.py`` to enable the extension:
 * `sphinx.ext.mathjax <https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax>`_
 * `sphinx-simplepdf <https://sphinx-simplepdf.readthedocs.io/>`_
 * `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_
+* `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_ for an example of each of these.
 
-To set these up, install the extensions you want to use and add them to your ``conf.py``:
+To set these up, install the extensions you want to use and add them to your ``conf.py``, before ``sphinx_notion``:
 
 .. code-block:: python
 
@@ -48,17 +49,20 @@ To set these up, install the extensions you want to use and add them to your ``c
 
    extensions = [
        "atsphinx.audioplayer",
-       "sphinx_toolbox.collapse",
-       "sphinxcontrib.video",
-       "sphinxnotes.strike",
-       "sphinx_immaterial.task_lists",
-       "sphinx_toolbox.rest_example",
        "sphinx.ext.mathjax",
-       "sphinx_notion",  # Put ``sphinx_notion`` after the other extensions.
+       "sphinx_iframes",
+       "sphinx_immaterial.task_lists",
+       "sphinx_simplepdf",
+       "sphinx_toolbox.collapse",
+       "sphinx_toolbox.rest_example",
+       "sphinxcontrib.video",
+       "sphinxcontrib_text_styles",
+       "sphinxnotes.strike",
+       "sphinx_notion",
    ]
 
-If you are using ``sphinxcontrib.video`` with ``sphinx-iframes``, the warning ``app.add_directive`` will be raised.
-This is because ``sphinxcontrib.video`` and ``sphinx-iframes`` both implement a ``video`` directive.
+If you are using ``sphinxcontrib.video`` with ``sphinx_iframes``, the warning ``app.add_directive`` will be raised.
+This is because ``sphinxcontrib.video`` and ``sphinx_iframes`` both implement a ``video`` directive.
 To suppress this warning, add the following to your ``conf.py``:
 
 .. code-block:: python
@@ -67,8 +71,8 @@ To suppress this warning, add the following to your ``conf.py``:
 
    suppress_warnings = ["app.add_directive"]
 
-Supported markup
-----------------
+Supported Notion Block Types
+----------------------------
 
 The following syntax is supported:
 
@@ -78,26 +82,22 @@ The following syntax is supported:
 - Code blocks
 - Table of contents
 - Block quotes
-- All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
-- Collapsible sections (using the ``collapse`` directive from ``sphinx-toolbox``)
-- Rest-example blocks (using the ``rest-example`` directive from ``sphinx-toolbox``)
+- Callouts
+- Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html>`_ )
+- Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ )
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
-- Embed blocks (using the ``iframe`` directive from ``sphinx-iframes``)
+- Embed blocks (using the ``iframe`` directive from `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ )
 - Tables
-- Strikethrough text
-- Colored text and text styles (bold, italic, monospace)
-- Mathematical equations (inline and block-level)
+- Strikethrough text (using the ``strike`` role from `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ )
+- Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ )
+- Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax <https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax>`_ )
 
 See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
 
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   suppress_warnings = ["app.add_directive"]
+All of these can be used in a way which means your documentation can still be rendered to HTML.
 
 Unsupported Notion Block Types
 ------------------------------
