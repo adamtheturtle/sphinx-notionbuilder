@@ -3,14 +3,9 @@ Heading 1 with *bold*
 
 .. contents::
 
-.. rest-example::
 
-   .. toctree::
-
-      other
-
-Comment Support
-~~~~~~~~~~~~~~~~
+Comments
+~~~~~~~~
 
 .. rest-example::
 
@@ -325,17 +320,19 @@ This is useful for documentation that demonstrates how to write reStructuredText
 
 .. rest-example::
 
-   .. code-block:: python
+   .. rest-example::
 
-      """Python code."""
+      .. code-block:: python
 
-
-      def greet(name: str) -> str:
-          """Return a greeting message."""
-          return f"Hello, {name}!"
+         """Python code."""
 
 
-      greet(name="World")
+         def greet(name: str) -> str:
+             """Return a greeting message."""
+             return f"Hello, {name}!"
+
+
+         greet(name="World")
 
 Embed Blocks
 ~~~~~~~~~~~~
@@ -343,3 +340,12 @@ Embed Blocks
 Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension.
 
 .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+
+Sphinx ``toctree``\s are hidden
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. toctree::
+
+      other
