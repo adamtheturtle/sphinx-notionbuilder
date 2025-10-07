@@ -5,7 +5,7 @@ Notion Builder for Sphinx
 
 Builder for Sphinx which enables publishing documentation to Notion.
 
-See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_ for an example of what it can do.
+See a `sample document source`_ and the `published Notion page`_ for an example of what it can do.
 
 .. contents::
 
@@ -28,18 +28,18 @@ Add the following to ``conf.py`` to enable the extension:
 
 ``sphinx-notionbuilder`` also works with a variety of Sphinx extensions:
 
-* `sphinx-toolbox collapse <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html>`_
-* `sphinx-toolbox rest_example <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_
-* `sphinxcontrib-video <https://sphinxcontrib-video.readthedocs.io>`_
-* `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_
-* `atsphinx-audioplayer <https://github.com/atsphinx/atsphinx-audioplayer>`_
-* `sphinx-immaterial task_lists <https://github.com/jbms/sphinx-immaterial>`_
-* `sphinx.ext.mathjax <https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax>`_
-* `sphinx-simplepdf <https://sphinx-simplepdf.readthedocs.io/>`_
-* `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_
-* `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_
+* `sphinx-toolbox collapse`_
+* `sphinx-toolbox rest_example`_
+* `sphinxcontrib-video`_
+* `sphinxnotes-strike`_
+* `atsphinx-audioplayer`_
+* `sphinx-immaterial task_lists`_
+* `sphinx.ext.mathjax`_
+* `sphinx-simplepdf`_
+* `sphinx-iframes`_
+* `sphinxcontrib-text-styles`_
 
-See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_ for an example of each of these.
+See a `sample document source`_ and the `published Notion page`_ for an example of each of these.
 
 To set these up, install the extensions you want to use and add them to your ``conf.py``, before ``sphinx_notion``:
 
@@ -83,19 +83,19 @@ The following syntax is supported:
 - Table of contents
 - Block quotes
 - Callouts
-- Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html>`_ )
-- Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ )
+- Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox`_ )
+- Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox`_ )
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
-- Embed blocks (using the ``iframe`` directive from `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ )
+- Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
-- Strikethrough text (using the ``strike`` role from `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ )
-- Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ )
-- Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax <https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax>`_ )
+- Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
+- Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
+- Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 
-See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
+See a `sample document source`_ and the `published Notion page`_.
 
 All of these can be used in a way which means your documentation can still be rendered to HTML.
 
@@ -130,7 +130,7 @@ After building your documentation with the Notion builder, you can upload it to 
 Prerequisites
 ~~~~~~~~~~~~~
 
-#. Create a Notion integration at https://www.notion.so/my-integrations
+#. Create a Notion integration at `notion-integrations`_
 #. Get your integration token and set it as an environment variable:
 
 .. code-block:: console
@@ -159,3 +159,18 @@ The command will create a new page if one with the given title doesn't exist, or
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
    :target: https://badge.fury.io/py/Sphinx-Notion-Builder
 .. |minimum-python-version| replace:: 3.11
+
+.. _atsphinx-audioplayer: https://github.com/atsphinx/atsphinx-audioplayer
+.. _notion-integrations: https://www.notion.so/my-integrations
+.. _published Notion page: https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55
+.. _sample document source: https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst
+.. _sphinx-iframes: https://pypi.org/project/sphinx-iframes/
+.. _sphinx-immaterial task_lists: https://github.com/jbms/sphinx-immaterial
+.. _sphinx-simplepdf: https://sphinx-simplepdf.readthedocs.io/
+.. _sphinx-toolbox collapse: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html
+.. _sphinx-toolbox rest_example: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html
+.. _sphinx-toolbox: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/
+.. _sphinx.ext.mathjax: https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax
+.. _sphinxcontrib-text-styles: https://sphinxcontrib-text-styles.readthedocs.io/
+.. _sphinxcontrib-video: https://sphinxcontrib-video.readthedocs.io
+.. _sphinxnotes-strike: https://github.com/sphinx-toolbox/sphinxnotes-strike
