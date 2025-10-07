@@ -35,6 +35,17 @@ Text Formatting
 
    The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste.
 
+Line Blocks
+~~~~~~~~~~~~
+
+.. rest-example::
+
+   The builder supports line blocks using pipe characters to preserve line breaks:
+
+   | This is a line block
+   | with multiple lines
+   | preserved exactly as written
+
 Admonitions
 ~~~~~~~~~~~
 

@@ -3076,3 +3076,32 @@ def test_embed_and_video(
         # We explain in the README that this is necessary.
         confoverrides={"suppress_warnings": ["app.add_directive"]},
     )
+
+
+def test_line_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Line blocks (created with pipe character) become empty Notion paragraph
+    blocks.
+    """
+    rst_content = """
+        | This is a line block
+        | with multiple lines
+        | preserved exactly as written
+    """
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="This is a line block")),
+        UnoParagraph(text=text(text="with multiple lines")),
+        UnoParagraph(text=text(text="preserved exactly as written")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
