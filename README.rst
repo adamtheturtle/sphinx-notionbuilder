@@ -1,4 +1,4 @@
-|Build Status| |codecov| |PyPI|
+|Build Status| |PyPI|
 
 Notion Builder for Sphinx
 =========================
@@ -379,8 +379,6 @@ The command will create a new page if one with the given title doesn't exist, or
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
-.. |codecov| image:: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
    :target: https://badge.fury.io/py/Sphinx-Notion-Builder
 .. |minimum-python-version| replace:: 3.11
