@@ -22,6 +22,7 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_iframes import iframe_node
 from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -1390,7 +1391,7 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
-    node: nodes.raw,
+    node: iframe_node,
     *,
     section_level: int,
 ) -> list[Block]:
@@ -1404,13 +1405,11 @@ def _(
     # See https://github.com/TeachBooks/sphinx-iframes/issues/9
     # for making this more robust.
     soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
-    iframe = soup.find(name="iframe")
-    if iframe is not None:
-        url = iframe.get(key="src")
-        assert url is not None
-        return [UnoEmbed(url=str(object=url))]
-
-    raise _get_unsupported_node_type_exception(node=node)
+    iframes = soup.find_all(name="iframe")
+    (iframe,) = iframes
+    url = iframe.get(key="src")
+    assert url is not None
+    return [UnoEmbed(url=str(object=url))]
 
 
 @beartype
