@@ -22,6 +22,9 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_iframes import (  # pyright: ignore[reportMissingTypeStubs]
+    iframe_node,
+)
 from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -626,26 +629,6 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
-def _get_unsupported_node_type_exception(
-    *,
-    node: nodes.Element,
-) -> NotImplementedError:
-    """
-    Raise an ``NotImplementedError`` for an unsupported node type.
-    """
-    line_number = node.line or node.parent.line
-    source = node.source or node.parent.source
-
-    if line_number is not None and source is not None:
-        unsupported_node_type_msg = (
-            f"Unsupported node type: {node.tagname} on line "
-            f"{line_number} in {source}."
-        )
-    else:
-        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
-    return NotImplementedError(unsupported_node_type_msg)
-
-
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -657,7 +640,17 @@ def _process_node_to_blocks(
     Required function for ``singledispatch``.
     """
     del section_level
-    raise _get_unsupported_node_type_exception(node=node)
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    raise NotImplementedError(unsupported_node_type_msg)
 
 
 @beartype
@@ -1390,7 +1383,7 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
-    node: nodes.raw,
+    node: iframe_node,
     *,
     section_level: int,
 ) -> list[Block]:
@@ -1404,13 +1397,11 @@ def _(
     # See https://github.com/TeachBooks/sphinx-iframes/issues/9
     # for making this more robust.
     soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
-    iframe = soup.find(name="iframe")
-    if iframe is not None:
-        url = iframe.get(key="src")
-        assert url is not None
-        return [UnoEmbed(url=str(object=url))]
-
-    raise _get_unsupported_node_type_exception(node=node)
+    iframes = soup.find_all(name="iframe")
+    (iframe,) = iframes
+    url = iframe.get(key="src")
+    assert url is not None
+    return [UnoEmbed(url=str(object=url))]
 
 
 @beartype
