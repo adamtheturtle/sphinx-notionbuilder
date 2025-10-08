@@ -627,26 +627,6 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
-def _get_unsupported_node_type_exception(
-    *,
-    node: nodes.Element,
-) -> NotImplementedError:
-    """
-    Raise an ``NotImplementedError`` for an unsupported node type.
-    """
-    line_number = node.line or node.parent.line
-    source = node.source or node.parent.source
-
-    if line_number is not None and source is not None:
-        unsupported_node_type_msg = (
-            f"Unsupported node type: {node.tagname} on line "
-            f"{line_number} in {source}."
-        )
-    else:
-        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
-    return NotImplementedError(unsupported_node_type_msg)
-
-
 @singledispatch
 @beartype
 def _process_node_to_blocks(
@@ -658,7 +638,17 @@ def _process_node_to_blocks(
     Required function for ``singledispatch``.
     """
     del section_level
-    raise _get_unsupported_node_type_exception(node=node)
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    raise NotImplementedError(unsupported_node_type_msg)
 
 
 @beartype
