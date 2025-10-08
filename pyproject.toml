@@ -81,7 +81,7 @@ optional-dependencies.dev = [
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
     "sphinxcontrib-text-styles==0.2.0",
-    "types-docutils==0.22.2.20250924",
+    "types-docutils==0.22.2.20251006",
     "types-requests==2.32.4.20250913",
     "vulture==2.14",
     "yamlfix==1.18.0",
