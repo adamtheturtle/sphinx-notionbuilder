@@ -316,30 +316,29 @@ def main(
         for details in blocks
     ]
 
-    page.append(blocks=block_objs)
-    # last_matching_index = _find_last_matching_block_index(
-    #     existing_blocks=page.children,
-    #     local_blocks=block_objs,
-    # )
+    last_matching_index = _find_last_matching_block_index(
+        existing_blocks=page.children,
+        local_blocks=block_objs,
+    )
 
-    # click.echo(
-    #     message=(
-    #         f"Matching blocks until index {last_matching_index} for page "
-    #         f"'{title}'"
-    #     ),
-    # )
-    # delete_start_index = (last_matching_index or -1) + 1
-    # for existing_page_block in page.children[delete_start_index:]:
-    #     existing_page_block.delete()
+    click.echo(
+        message=(
+            f"Matching blocks until index {last_matching_index} for page "
+            f"'{title}'"
+        ),
+    )
+    delete_start_index = (last_matching_index or -1) + 1
+    for existing_page_block in page.children[delete_start_index:]:
+        existing_page_block.delete()
 
-    # block_objs_to_upload = [
-    #     Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-    #     for details in blocks[delete_start_index:]
-    # ]
-    # block_objs_with_uploaded_files = [
-    #     _block_with_uploaded_file(block=block, session=session)
-    #     for block in block_objs_to_upload
-    # ]
-    # page.append(blocks=block_objs_with_uploaded_files)
+    block_objs_to_upload = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in blocks[delete_start_index:]
+    ]
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in block_objs_to_upload
+    ]
+    page.append(blocks=block_objs_with_uploaded_files)
 
-    # click.echo(message=f"Updated existing page: '{title}' ({page.url})")
+    click.echo(message=f"Updated existing page: '{title}' ({page.url})")
