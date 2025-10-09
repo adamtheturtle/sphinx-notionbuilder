@@ -556,6 +556,56 @@ def test_multiline_quote(
     )
 
 
+def test_multi_paragraph_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Block quotes with multiple paragraphs create Quote blocks with nested
+    paragraph children.
+    """
+    rst_content = """
+        Some content.
+
+            This is the first paragraph
+            with multiple lines
+            in the quote.
+
+            This is a second paragraph
+            with **bold text** and multiple
+            lines as well.
+    """
+    quote = UnoQuote(
+        text=text(
+            text="This is the first paragraph\nwith multiple lines\n"
+            "in the quote."
+        )
+    )
+
+    nested_paragraph = UnoParagraph(
+        text=(
+            text(text="This is a second paragraph\nwith ")
+            + text(text="bold text", bold=True)
+            + text(text=" and multiple\nlines as well.")
+        )
+    )
+
+    quote.append(blocks=[nested_paragraph])
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Some content.")),
+        quote,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_table_of_contents(
     *,
     make_app: Callable[..., SphinxTestApp],

@@ -767,14 +767,14 @@ def _(
     """
     Process block quote nodes by creating Notion Quote blocks.
     """
-    del section_level
-    rich_text = Text.from_plain_text(text="")
-    for index, child in enumerate(iterable=node.children):
-        rich_text += _process_rich_text_node(child)
-        if index < len(node.children) - 1:
-            rich_text += Text.from_plain_text(text="\n\n")
+    first_child = node.children[0]
+    rich_text = _process_rich_text_node(first_child)
+    quote = UnoQuote(text=rich_text)
+    for child in node.children[1:]:
+        blocks = _process_node_to_blocks(child, section_level=section_level)
+        quote.append(blocks=blocks)
 
-    return [UnoQuote(text=rich_text)]
+    return [quote]
 
 
 @beartype
