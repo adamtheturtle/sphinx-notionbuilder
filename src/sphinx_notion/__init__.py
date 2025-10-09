@@ -336,12 +336,7 @@ def _(node: nodes.paragraph) -> Text:
     """
     Process paragraph nodes by creating styled text.
     """
-    result = Text.from_plain_text(text="")
-    for index, child in enumerate(iterable=node.children):
-        result += _process_rich_text_node(child)
-        if index < len(node.children) - 1:
-            result += Text.from_plain_text(text="")
-    return result
+    return _create_rich_text_from_children(node=node)
 
 
 @beartype
