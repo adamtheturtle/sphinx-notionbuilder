@@ -768,7 +768,11 @@ def _(
     Process block quote nodes by creating Notion Quote blocks.
     """
     del section_level
-    rich_text = _create_rich_text_from_children(node=node)
+    rich_text = Text.from_plain_text(text="")
+    for index, child in enumerate(iterable=node.children):
+        rich_text += _process_rich_text_node(child)
+        if index < len(node.children) - 1:
+            rich_text += Text.from_plain_text(text="\n\n")
     return [UnoQuote(text=rich_text)]
 
 
