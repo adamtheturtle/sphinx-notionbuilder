@@ -3102,7 +3102,7 @@ def test_embed_and_video(
     """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
     this with ``sphinx-notionbuilder``.
 
-    We check this because there is a conflict between the two
+    We check this because there was a conflict between the two
     extensions. See
     https://github.com/TeachBooks/sphinx-iframes/issues/8.
     """
@@ -3122,9 +3122,7 @@ def test_embed_and_video(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_iframes", "sphinxcontrib.video", "sphinx_notion"),
-        # We explain in the README that this is necessary.
-        confoverrides={"suppress_warnings": ["app.add_directive"]},
+        extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
     )
 
 
