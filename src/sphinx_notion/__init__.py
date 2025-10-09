@@ -336,7 +336,12 @@ def _(child: nodes.paragraph) -> Text:
     """
     Process paragraph nodes by creating styled text.
     """
-    return _create_styled_text_from_node(child=child)
+    result = Text.from_plain_text(text="")
+    for index, suchild in enumerate(iterable=child.children):
+        result += _process_rich_text_node(child=child)
+        if index < len(child.children) - 1:
+            result += Text.from_plain_text(text="")
+    return result
 
 
 @beartype
@@ -400,6 +405,7 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
         _LOGGER.warning(unsupported_style_msg)
 
     color: BGColor | Color | None = bg_color or text_color
+    breakpoint()
     return text(
         text=child.astext(),
         bold=is_bold,
@@ -773,6 +779,8 @@ def _(
         rich_text += _process_rich_text_node(child)
         if index < len(node.children) - 1:
             rich_text += Text.from_plain_text(text="\n\n")
+
+    breakpoint()
     return [UnoQuote(text=rich_text)]
 
 
