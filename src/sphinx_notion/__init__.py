@@ -212,15 +212,15 @@ class _TableStructure:
 
 @singledispatch
 @beartype
-def _process_rich_text_node(child: nodes.Node) -> Text:
+def _process_rich_text_node(node: nodes.Node) -> Text:
     """Create Notion rich text from a single ``docutils`` node.
 
     This is the base function for ``singledispatch``. Specific node types
     are handled by registered functions.
     """
     unsupported_child_type_msg = (
-        f"Unsupported node type within text: {type(child).__name__} on line "
-        f"{child.parent.line} in {child.parent.source}."
+        f"Unsupported node type within text: {type(node).__name__} on line "
+        f"{node.parent.line} in {node.parent.source}."
     )
     # We use ``TRY004`` here because we want to raise a
     # ``ValueError`` if the child type is unsupported, not a
@@ -230,21 +230,21 @@ def _process_rich_text_node(child: nodes.Node) -> Text:
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.line) -> Text:
+def _(node: nodes.line) -> Text:
     """
     Process line nodes by creating rich text.
     """
-    return _create_styled_text_from_node(child=child) + "\n"
+    return _create_styled_text_from_node(node=node) + "\n"
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.reference) -> Text:
+def _(node: nodes.reference) -> Text:
     """
     Process reference nodes by creating linked text.
     """
-    link_url = child.attributes["refuri"]
-    link_text = child.attributes.get("name", link_url)
+    link_url = node.attributes["refuri"]
+    link_text = node.attributes.get("name", link_url)
 
     return text(
         text=link_text,
@@ -257,120 +257,120 @@ def _(child: nodes.reference) -> Text:
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.target) -> Text:
+def _(node: nodes.target) -> Text:
     """
     Process target nodes by returning empty text (targets are skipped).
     """
-    del child  # Target nodes are skipped
+    del node  # Target nodes are skipped
     return Text.from_plain_text(text="")
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.title_reference) -> Text:
+def _(node: nodes.title_reference) -> Text:
     """Process title reference nodes by creating italic text.
 
     We match the behavior of the HTML builder here.
     If you render ``A `B``` in HTML, it will render as ``A <i>B</i>``.
     """
-    return text(text=child.astext(), italic=True)
+    return text(text=node.astext(), italic=True)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.Text) -> Text:
+def _(node: nodes.Text) -> Text:
     """
     Process Text nodes by creating plain text.
     """
-    return text(text=child.astext())
+    return text(text=node.astext())
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.inline) -> Text:
+def _(node: nodes.inline) -> Text:
     """
     Process inline nodes by creating styled text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.strong) -> Text:
+def _(node: nodes.strong) -> Text:
     """
     Process strong nodes by creating bold text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.emphasis) -> Text:
+def _(node: nodes.emphasis) -> Text:
     """
     Process emphasis nodes by creating italic text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.literal) -> Text:
+def _(node: nodes.literal) -> Text:
     """
     Process literal nodes by creating code text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: strike_node) -> Text:
+def _(node: strike_node) -> Text:
     """
     Process strike nodes by creating strikethrough text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.paragraph) -> Text:
+def _(node: nodes.paragraph) -> Text:
     """
     Process paragraph nodes by creating styled text.
     """
-    return _create_styled_text_from_node(child=child)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
-def _(child: nodes.math) -> Text:
+def _(node: nodes.math) -> Text:
     """
     Process math nodes by creating math rich text.
     """
-    return math(expression=child.astext())
+    return math(expression=node.astext())
 
 
 @beartype
-def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
+def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
     """Create styled text from a node with CSS class support.
 
     This helper function handles the complex styling logic that was
     previously inline in the main function.
     """
-    classes = child.attributes.get("classes", [])
+    classes = node.attributes.get("classes", [])
     bg_color = _background_color_from_css_classes(classes=classes)
     text_color = _color_from_css_classes(classes=classes)
 
     color_mapping = _get_text_color_mapping()
     bg_color_classes = _get_background_color_classes()
 
-    is_bold = isinstance(child, nodes.strong) or "text-bold" in classes
-    is_italic = isinstance(child, nodes.emphasis) or "text-italic" in classes
+    is_bold = isinstance(node, nodes.strong) or "text-bold" in classes
+    is_italic = isinstance(node, nodes.emphasis) or "text-italic" in classes
     is_code = (
-        isinstance(child, nodes.literal)
+        isinstance(node, nodes.literal)
         or "text-mono" in classes
         or "kbd" in classes
     )
     is_strikethrough = (
-        isinstance(child, strike_node) or "text-strike" in classes
+        isinstance(node, strike_node) or "text-strike" in classes
     )
     is_underline = "text-underline" in classes
 
@@ -394,14 +394,14 @@ def _create_styled_text_from_node(*, child: nodes.Element) -> Text:
         unsupported_style_msg = (
             "Unsupported text style classes: "
             f"{', '.join(unsupported_styles)}. "
-            f"Text on line {child.parent.line} in {child.parent.source} will "
+            f"Text on line {node.parent.line} in {node.parent.source} will "
             "be rendered without styling."
         )
         _LOGGER.warning(unsupported_style_msg)
 
     color: BGColor | Color | None = bg_color or text_color
     return text(
-        text=child.astext(),
+        text=node.astext(),
         bold=is_bold,
         italic=is_italic,
         code=is_code,
