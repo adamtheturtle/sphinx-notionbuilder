@@ -336,7 +336,7 @@ def _(node: nodes.paragraph) -> Text:
     """
     Process paragraph nodes by creating styled text.
     """
-    return _create_rich_text_from_children(node=node)
+    return _create_styled_text_from_node(node=node)
 
 
 @beartype
