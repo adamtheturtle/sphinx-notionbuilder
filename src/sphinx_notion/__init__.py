@@ -400,7 +400,6 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         _LOGGER.warning(unsupported_style_msg)
 
     color: BGColor | Color | None = bg_color or text_color
-    breakpoint()
     return text(
         text=node.astext(),
         bold=is_bold,
@@ -775,7 +774,6 @@ def _(
         if index < len(node.children) - 1:
             rich_text += Text.from_plain_text(text="\n\n")
 
-    breakpoint()
     return [UnoQuote(text=rich_text)]
 
 

@@ -5,6 +5,8 @@ Regular paragraph.
       rich text **and**
       multiple lines.
 
+
+
       And with different paragraphs within the quote.
 
       Like this.
