@@ -61,16 +61,6 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx_notion",
    ]
 
-If you are using ``sphinxcontrib.video`` with ``sphinx_iframes``, the warning ``app.add_directive`` will be raised.
-This is because ``sphinxcontrib.video`` and ``sphinx_iframes`` both implement a ``video`` directive.
-To suppress this warning, add the following to your ``conf.py``:
-
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   suppress_warnings = ["app.add_directive"]
-
 Supported Notion Block Types
 ----------------------------
 
