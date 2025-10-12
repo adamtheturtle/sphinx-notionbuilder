@@ -33,10 +33,14 @@ dynamic = [
 dependencies = [
     "atsphinx-audioplayer>=0.1.0",
     "beartype>=0.21.0",
+    "beautifulsoup4>=4.13.3",
     "click>=8.0.0",
-    "click-option-group>=0.5.8",
+    "click-option-group>=0.5.9",
     "docutils>=0.21",
+    "requests>=2.32.5",
     "sphinx>=8.2.3",
+    "sphinx-iframes>=1.1.0",
+    "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
@@ -59,15 +63,15 @@ optional-dependencies.dev = [
     "pre-commit==4.3.0",
     "pydocstyle==6.3",
     "pygments==2.19.2",
-    "pylint[spelling]==3.3.8",
+    "pylint[spelling]==3.3.9",
     "pylint-per-file-ignores==2.0.3",
-    "pyproject-fmt==2.6.0",
-    "pyright==1.1.405",
+    "pyproject-fmt==2.9.0",
+    "pyright==1.1.406",
     "pyroma==5.0",
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
     "pyyaml==6.0.3",
-    "ruff==0.13.2",
+    "ruff==0.14.0",
     # We add shellcheck-py not only for shell scripts and shell code blocks,
     # but also because having it installed means that ``actionlint-py`` will
     # use it to lint shell commands in GitHub workflow files.
@@ -78,7 +82,8 @@ optional-dependencies.dev = [
     "sphinx-substitution-extensions==2025.6.6",
     "sphinxcontrib-spelling==8.0.1",
     "sphinxcontrib-text-styles==0.2.0",
-    "types-docutils==0.22.2.20250924",
+    "types-docutils==0.22.2.20251006",
+    "types-requests==2.32.4.20250913",
     "vulture==2.14",
     "yamlfix==1.18.0",
 ]
@@ -89,6 +94,7 @@ optional-dependencies.sample = [
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 
 scripts.notion-upload = "_notion_scripts.upload:main"
+scripts.upload-files = "_notion_scripts.upload_files:main"
 
 [tool.setuptools]
 zip-safe = false
@@ -307,7 +313,6 @@ ignore = [
     "Makefile",
     "ci",
     "ci/**",
-    "codecov.yaml",
     "docs",
     "docs/**",
     ".git_archival.txt",
@@ -412,6 +417,7 @@ ignore_names = [
     "rst_prolog",
     "source_suffix",
     "spelling_word_list_filename",
+    "suppress_warnings",
     "templates_path",
     "warning_is_error",
     # Docutils translator

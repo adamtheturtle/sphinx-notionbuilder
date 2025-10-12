@@ -21,6 +21,8 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
+from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -42,13 +44,14 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import text
+from ultimate_notion.rich_text import Text, math, text
 
 
 @beartype
@@ -77,11 +80,13 @@ def _assert_rst_converts_to_notion_objects(
     extensions: tuple[str, ...] = ("sphinx_notion",),
     conf_py_content: str = "",
     expected_warnings: Collection[str] = (),
+    confoverrides: dict[str, Any] | None = None,
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via Sphinx
     build process.
     """
+    confoverrides = confoverrides or {}
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
 
@@ -94,7 +99,7 @@ def _assert_rst_converts_to_notion_objects(
         srcdir=srcdir,
         builddir=tmp_path / "build",
         buildername="notion",
-        confoverrides={"extensions": list(extensions)},
+        confoverrides={"extensions": list(extensions)} | confoverrides,
     )
     app.build()
     assert app.statuscode == 0
@@ -543,6 +548,56 @@ def test_multiline_quote(
             )
         ),
     ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_multi_paragraph_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Block quotes with multiple paragraphs create Quote blocks with nested
+    paragraph children.
+    """
+    rst_content = """
+        Some content.
+
+            This is the first paragraph
+            with multiple lines
+            in the quote.
+
+            This is a second paragraph
+            with **bold text** and multiple
+            lines as well.
+    """
+    quote = UnoQuote(
+        text=text(
+            text="This is the first paragraph\nwith multiple lines\n"
+            "in the quote."
+        )
+    )
+
+    nested_paragraph = UnoParagraph(
+        text=(
+            text(text="This is a second paragraph\nwith ")
+            + text(text="bold text", bold=True)
+            + text(text=" and multiple\nlines as well.")
+        )
+    )
+
+    quote.append(blocks=[nested_paragraph])
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Some content.")),
+        quote,
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_objects=expected_objects,
@@ -1593,7 +1648,6 @@ def test_local_image_file(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
     )
 
 
@@ -1620,7 +1674,7 @@ def test_simple_video(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
@@ -1650,7 +1704,7 @@ def test_video_with_caption(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_notion", "sphinxcontrib.video"),
+        extensions=("sphinxcontrib.video", "sphinx_notion"),
     )
 
 
@@ -1780,37 +1834,6 @@ def test_strikethrough_text(
             "sphinx_notion",
         ),
     )
-
-
-def test_bullet_list_item_invalid_nested_child_error(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """
-    Bullet list items with invalid nested children raise a clear error message.
-    """
-    rst_content = """
-        * First bullet point
-
-          Some paragraph that should not be here
-
-          * Nested bullet
-    """
-
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_message = (
-        r"^The only thing Notion supports within a bullet list is a "
-        r"bullet list. Given paragraph on line 3 "
-        rf"in {re.escape(pattern=str(object=index_rst))}$"
-    )
-    with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
-            rst_content=rst_content,
-            expected_objects=[],
-            make_app=make_app,
-            tmp_path=tmp_path,
-        )
 
 
 def test_comment_ignored(
@@ -2028,7 +2051,8 @@ def test_list_table_stub_columns_two(
 
     expected_warning = (
         "Tables with more than 1 stub column are not supported. "
-        "Found 2 stub columns."
+        "Found 2 stub columns on table with first body row on line 8 in "
+        f"{tmp_path / 'src' / 'index.rst'}."
     )
 
     table = UnoTable(n_rows=3, n_cols=3, header_row=True, header_col=True)
@@ -2285,35 +2309,49 @@ and :text-green:`green text`.
 
 
 @pytest.mark.parametrize(
-    argnames=("color_name", "expected_color"),
+    argnames=("role", "expected_color"),
     argvalues=[
-        ("red", Color.RED),
-        ("blue", Color.BLUE),
-        ("green", Color.GREEN),
-        ("yellow", Color.YELLOW),
-        ("orange", Color.ORANGE),
-        ("purple", Color.PURPLE),
-        ("pink", Color.PINK),
-        ("brown", Color.BROWN),
-        ("gray", Color.GRAY),
+        ("text-red", Color.RED),
+        ("text-blue", Color.BLUE),
+        ("text-green", Color.GREEN),
+        ("text-yellow", Color.YELLOW),
+        ("text-orange", Color.ORANGE),
+        ("text-purple", Color.PURPLE),
+        ("text-pink", Color.PINK),
+        ("text-brown", Color.BROWN),
+        ("text-gray", Color.GRAY),
+        ("bg-red", BGColor.RED),
+        ("bg-blue", BGColor.BLUE),
+        ("bg-green", BGColor.GREEN),
+        ("bg-yellow", BGColor.YELLOW),
+        ("bg-orange", BGColor.ORANGE),
+        ("bg-purple", BGColor.PURPLE),
+        ("bg-pink", BGColor.PINK),
+        ("bg-brown", BGColor.BROWN),
+        ("bg-gray", BGColor.GRAY),
     ],
 )
 def test_individual_colors(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    color_name: str,
-    expected_color: Color,
+    role: str,
+    expected_color: Color | BGColor,
 ) -> None:
     """
     Each supported color is converted correctly.
     """
     rst_content = f"""
-        This is :text-{color_name}:`{color_name} text`.
+        This is :{role}:`{role} text`.
     """
 
     normal_text = text(text="This is ")
-    colored_text = text(text=f"{color_name} text", color=expected_color)
+    colored_text = text(
+        text=f"{role} text",
+        # We ignore the type check here because Ultimate Notion has
+        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
+        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
     normal_text2 = text(text=".")
 
     combined_text = normal_text + colored_text + normal_text2
@@ -2331,28 +2369,29 @@ def test_individual_colors(
     )
 
 
-def test_text_styles_non_color(
+def test_text_styles_unsupported_color(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
     """
-    Non-color text styles (like underline) emit a warning.
+    Unsupported colors from ``sphinxcontrib-text-styles`` emit warnings.
     """
     rst_content = """
-        This is :text-underline:`underlined text`.
+        This is :text-cyan:`cyan text`.
     """
 
     expected_warning = (
-        "Unsupported text style classes: text-underline. "
-        "Text will be rendered without styling."
+        "Unsupported text style classes: text-cyan. "
+        f"Text on line 1 in {tmp_path / 'src' / 'index.rst'} will be rendered "
+        "without styling."
     )
 
     normal_text = text(text="This is ")
-    underline_text = text(text="underlined text")
+    cyan_text = text(text="cyan text")
     normal_text2 = text(text=".")
 
-    combined_text = normal_text + underline_text + normal_text2
+    combined_text = normal_text + cyan_text + normal_text2
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
@@ -2453,4 +2492,669 @@ def test_text_styles_and_strike(
             "sphinxcontrib_text_styles",
             "sphinxnotes.strike",
         ),
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("role", "expected_text"),
+    argvalues=[
+        ("text-bold", text(text="text-bold text", bold=True)),
+        ("text-italic", text(text="text-italic text", italic=True)),
+        ("text-mono", text(text="text-mono text", code=True)),
+        ("text-strike", text(text="text-strike text", strikethrough=True)),
+        ("text-underline", text(text="text-underline text", underline=True)),
+    ],
+)
+def test_additional_text_styles(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    role: str,
+    expected_text: Text,
+) -> None:
+    """
+    Additional text styles from the ``sphinxcontrib_text_styles`` extension are
+    supported.
+    """
+    rst_content = f"""
+        This is :{role}:`{role} text`.
+    """
+
+    normal_text1 = text(text="This is ")
+    normal_text2 = text(text=".")
+
+    combined_text = normal_text1 + expected_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+    )
+
+
+def test_flat_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Flat task lists become separate Notion ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Unchecked task item
+           - [x] Checked task item
+           - [ ] Another unchecked task with **bold text**
+    """
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Unchecked task item"), checked=False),
+        UnoToDoItem(text=text(text="Checked task item"), checked=True),
+        UnoToDoItem(
+            text=(
+                text(text="Another unchecked task with ", bold=False)
+                + text(text="bold text", bold=True)
+            ),
+            checked=False,
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_bullet_list_with_nested_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Test that bullet lists can contain nested content like paragraphs and
+    nested bullets.
+    """
+    rst_content = """
+        * First bullet point
+
+          This is a paragraph nested within a bullet list item.
+
+          * Nested bullet point
+          * Another nested bullet
+
+        * Second bullet point
+
+          Another nested paragraph.
+    """
+
+    first_bullet = UnoBulletedItem(text=text(text="First bullet point"))
+
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a paragraph nested within a bullet list item.")
+    )
+    first_bullet.append(blocks=[nested_paragraph])
+
+    nested_bullet_1 = UnoBulletedItem(text=text(text="Nested bullet point"))
+    nested_bullet_2 = UnoBulletedItem(text=text(text="Another nested bullet"))
+    first_bullet.append(blocks=[nested_bullet_1])
+    first_bullet.append(blocks=[nested_bullet_2])
+
+    second_bullet = UnoBulletedItem(text=text(text="Second bullet point"))
+
+    nested_paragraph_2 = UnoParagraph(
+        text=text(text="Another nested paragraph.")
+    )
+    second_bullet.append(blocks=[nested_paragraph_2])
+
+    expected_objects: list[Block] = [
+        first_bullet,
+        second_bullet,
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_task_list_with_nested_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Task lists with nested content should create ToDoItem blocks with nested
+    children.
+    """
+    rst_content = """
+        .. task-list::
+
+           - [ ] Task with nested content
+
+             This is a paragraph nested within the task item.
+
+             * A bullet point nested within the task item.
+    """
+
+    # Create the main task item
+    task_item = UnoToDoItem(
+        text=text(text="Task with nested content"), checked=False
+    )
+
+    # Add nested paragraph
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a paragraph nested within the task item.")
+    )
+    task_item.append(blocks=[nested_paragraph])
+
+    # Add nested bullet list
+    nested_bullet = UnoBulletedItem(
+        text=text(text="A bullet point nested within the task item.")
+    )
+    task_item.append(blocks=[nested_bullet])
+
+    expected_objects: list[Block] = [task_item]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_nested_task_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Nested task lists should create nested ToDoItem blocks.
+    """
+    rst_content = """
+        .. task-list::
+
+           1. [x] Task A
+           2. [ ] Task B
+
+              .. task-list::
+
+                  * [x] Task B1
+                  * [x] Task B2
+                  * [ ] Task B3
+
+              A rogue paragraph.
+
+              - A list item without a checkbox.
+              - [ ] Another bullet point.
+
+           3. [ ] Task C
+    """
+    # Create Task B with nested children (including the rogue paragraph)
+    task_b = UnoToDoItem(text=text(text="Task B"), checked=False)
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B1"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B2"), checked=True)]
+    )
+    task_b.append(
+        blocks=[UnoToDoItem(text=text(text="Task B3"), checked=False)]
+    )
+    # The rogue paragraph is nested within Task B
+    # Note: The actual output has the text split across multiple rich text
+    # segments
+    rogue_paragraph = UnoParagraph(text=text(text="A rogue paragraph."))
+    task_b.append(blocks=[rogue_paragraph])
+
+    # Regular bullet list items should be nested within Task B as bullet items
+    regular_bullet = UnoBulletedItem(
+        text=text(text="A list item without a checkbox.")
+    )
+    task_b.append(blocks=[regular_bullet])
+
+    # Another bullet item (has "[ ]" but should be treated as a bullet)
+    another_bullet = UnoBulletedItem(
+        text=text(text="[ ] Another bullet point.")
+    )
+    task_b.append(blocks=[another_bullet])
+
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        task_b,
+        UnoToDoItem(text=text(text="Task C"), checked=False),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_task_list_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    A quote can exist within a task list.
+    """
+    rst_content = """
+    .. task-list::
+
+        1. [x] Task A
+        2. [ ] Task B
+
+          foo
+    """
+
+    # The actual processing creates a flat structure where the quote
+    # becomes a separate quote block
+    expected_objects: list[Block] = [
+        UnoToDoItem(text=text(text="Task A"), checked=True),
+        UnoToDoItem(text=text(text="Task B"), checked=False),
+        UnoQuote(text=text(text="foo")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+    )
+
+
+def test_inline_single_backticks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Reproduces a bug where we got confused by mismatching blocks.
+    """
+    rst_content = """
+        A `B`
+    """
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="A ") + text(text="B", italic=True)),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_kbd_role(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The ``:kbd:`` role creates keyboard input formatting.
+
+    The ``:kbd:`` role splits keyboard shortcuts into separate segments,
+    where each key is formatted as code but the + separator is not.
+    """
+    rst_content = """
+        Press :kbd:`Ctrl+C` to copy and :kbd:`Ctrl+V` to paste.
+    """
+
+    normal_text1 = text(text="Press ")
+    kbd_text1 = text(text="Ctrl", code=True)
+    plus_text1 = text(text="+", code=False)
+    kbd_text2 = text(text="C", code=True)
+    normal_text2 = text(text=" to copy and ")
+    kbd_text3 = text(text="Ctrl", code=True)
+    plus_text2 = text(text="+", code=False)
+    kbd_text4 = text(text="V", code=True)
+    normal_text3 = text(text=" to paste.")
+
+    combined_text = (
+        normal_text1
+        + kbd_text1
+        + plus_text1
+        + kbd_text2
+        + normal_text2
+        + kbd_text3
+        + plus_text2
+        + kbd_text4
+        + normal_text3
+    )
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_unsupported_node_types_in_rich_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Unsupported node types in rich text processing raise ValueError.
+    """
+    rst_content = """
+        This is a test with :footnote:`footnote node`.
+    """
+
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    def footnote_role(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):  # noqa: PLR0913
+        node = nodes.footnote_reference(rawtext, text)
+        return [node], []
+
+    app.add_role('footnote', footnote_role)
+    """
+    expected_message = (
+        r"^Unsupported node type within text: footnote_reference on line 1 in "
+        rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}\.$"
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_message):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+            conf_py_content=conf_py_content,
+        )
+
+
+@pytest.mark.parametrize(
+    argnames=("rst_content", "node_name", "line_number_available"),
+    argvalues=[
+        (".. raw:: html\n\n   <hr width=50 size=10>", "raw", True),
+        (
+            ".. sidebar:: title\n\n   content",
+            "sidebar",
+            False,
+        ),
+    ],
+)
+def test_unsupported_node_types_in_process_node_to_blocks(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    rst_content: str,
+    node_name: str,
+    line_number_available: bool,
+) -> None:
+    """
+    Unsupported node types in _process_node_to_blocks raise
+    ``NotImplementedError``.
+    """
+    index_rst = tmp_path / "src" / "index.rst"
+    # Some nodes do not have a line number available.
+    if line_number_available:
+        expected_message = (
+            rf"^Unsupported node type: {node_name} on line "
+            rf"1 in "
+            rf"{re.escape(pattern=str(object=index_rst))}.$"
+        )
+    else:
+        expected_message = rf"^Unsupported node type: {node_name}.$"
+    with pytest.raises(
+        expected_exception=NotImplementedError,
+        match=expected_message,
+    ):
+        _assert_rst_converts_to_notion_objects(
+            rst_content=rst_content,
+            expected_objects=[],
+            make_app=make_app,
+            tmp_path=tmp_path,
+        )
+
+
+def test_inline_equation(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Inline equations become Notion math rich text.
+    """
+    rst_content = """
+        This is an inline equation :math:`E = mc^2` in a paragraph.
+    """
+
+    normal_text1 = text(text="This is an inline equation ")
+    equation_text = math(expression="E = mc^2")
+    normal_text2 = text(text=" in a paragraph.")
+
+    combined_text = normal_text1 + equation_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.mathjax"),
+    )
+
+
+def test_block_equation(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Block equations become Notion Equation blocks.
+    """
+    rst_content = """
+        .. math::
+
+           E = mc^2
+    """
+
+    expected_objects: list[Block] = [
+        UnoEquation(latex="E = mc^2"),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx.ext.mathjax"),
+    )
+
+
+def test_rest_example_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rest example blocks become Notion callout blocks with nested code and
+    description.
+    """
+    rst_content = """
+        .. rest-example::
+
+           .. code-block:: python
+
+              def hello_world():
+                  print("Hello, World!")
+
+           Rendered output shows what the code does.
+    """
+
+    code_callout = UnoCallout(
+        text=text(text="Code"),
+    )
+    code_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text=textwrap.dedent(
+                        text="""\
+                        .. code-block:: python
+
+                           def hello_world():
+                               print("Hello, World!")
+
+                        Rendered output shows what the code does."""
+                    )
+                ),
+                language="plain text",
+            ),
+        ]
+    )
+
+    output_callout = UnoCallout(
+        text=text(text="Output"),
+    )
+    output_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text=textwrap.dedent(
+                        text="""\
+                        def hello_world():
+                            print("Hello, World!")""",
+                    )
+                ),
+                language="python",
+            ),
+            UnoParagraph(
+                text=text(text="Rendered output shows what the code does.")
+            ),
+        ]
+    )
+
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    expected_objects: list[Block] = [main_callout]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+    )
+
+
+def test_embed_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Blocks using the ``iframe`` directive become Notion Embed blocks.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+           :width: 600
+           :height: 400
+    """
+
+    expected_objects: list[Block] = [UnoEmbed(url="https://example.com/embed")]
+
+    # Create the _static directory that ``sphinx-iframes`` expects
+    static_dir = tmp_path / "build" / "notion" / "_static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_iframes"),
+    )
+
+
+def test_embed_and_video(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
+    this with ``sphinx-notionbuilder``.
+
+    We check this because there was a conflict between the two
+    extensions. See
+    https://github.com/TeachBooks/sphinx-iframes/issues/8.
+    """
+    rst_content = """
+        .. iframe:: https://example.com/embed
+
+        .. video:: https://example.com/video.mp4
+    """
+
+    expected_objects: list[Block] = [
+        UnoEmbed(url="https://example.com/embed"),
+        UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
+    )
+
+
+def test_line_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Line blocks (created with pipe character) become empty Notion paragraph
+    blocks.
+    """
+    rst_content = """
+        | This is a line block
+        | with multiple lines
+        | preserved exactly as written
+    """
+
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="This is a line block")
+            + text(text="\n")
+            + text(text="with multiple lines")
+            + text(text="\n")
+            + text(text="preserved exactly as written")
+            + text(text="\n")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )

@@ -1,9 +1,11 @@
-|Build Status| |codecov| |PyPI|
+|Build Status| |PyPI|
 
 Notion Builder for Sphinx
 =========================
 
-Extension for Sphinx which enables publishing documentation to Notion.
+Builder for Sphinx which enables publishing documentation to Notion.
+
+See a `sample document source`_ and the `published Notion page`_ for an example of what it can do.
 
 .. contents::
 
@@ -24,40 +26,22 @@ Add the following to ``conf.py`` to enable the extension:
 
    extensions = ["sphinx_notion"]
 
-For collapsible sections (toggle blocks), also add the sphinx-toolbox collapse extension:
+``sphinx-notionbuilder`` also works with a variety of Sphinx extensions:
 
-.. code-block:: python
+* `sphinx-toolbox collapse`_
+* `sphinx-toolbox rest_example`_
+* `sphinxcontrib-video`_
+* `sphinxnotes-strike`_
+* `atsphinx-audioplayer`_
+* `sphinx-immaterial task_lists`_
+* `sphinx.ext.mathjax`_
+* `sphinx-simplepdf`_
+* `sphinx-iframes`_
+* `sphinxcontrib-text-styles`_
 
-   """Configuration for Sphinx."""
+See a `sample document source`_ and the `published Notion page`_ for an example of each of these.
 
-   extensions = [
-       "sphinx_notion",
-       "sphinx_toolbox.collapse",
-   ]
-
-For video support, also add the sphinxcontrib-video extension:
-
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   extensions = [
-       "sphinxcontrib.video",  # Must be before sphinx_notion
-       "sphinx_notion",
-   ]
-
-For strikethrough text support, also add the `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_ extension:
-
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   extensions = [
-       "sphinxnotes.strike",  # Must be before sphinx_notion
-       "sphinx_notion",
-   ]
-
-For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphinx/atsphinx-audioplayer>`_ extension:
+To set these up, install the extensions you want to use and add them to your ``conf.py``, before ``sphinx_notion``:
 
 .. code-block:: python
 
@@ -65,97 +49,79 @@ For audio support, also add the `atsphinx-audioplayer <https://github.com/atsphi
 
    extensions = [
        "atsphinx.audioplayer",
+       "sphinx.ext.mathjax",
+       "sphinx_iframes",
+       "sphinx_immaterial.task_lists",
+       "sphinx_simplepdf",
+       "sphinx_toolbox.collapse",
+       "sphinx_toolbox.rest_example",
+       "sphinxcontrib.video",
+       "sphinxcontrib_text_styles",
+       "sphinxnotes.strike",
        "sphinx_notion",
    ]
 
-PDF support is included by default with the sphinx-notionbuilder extension.
-
-Supported markup
-----------------
+Supported Notion Block Types
+----------------------------
 
 The following syntax is supported:
 
 - Headers
 - Bulleted lists
+- TODO lists (with checkboxes)
 - Code blocks
 - Table of contents
 - Block quotes
-- All standard admonitions (note, warning, tip, attention, caution, danger, error, hint, important)
-- Collapsible sections (using sphinx-toolbox collapse directive)
+- Callouts
+- Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox`_ )
+- Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox`_ )
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
+- Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
-- Strikethrough text
-- Colored text
+- Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
+- Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
+- Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 
-See a `sample document source <https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst>`_ and the `published Notion page <https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55>`_.
+See a `sample document source`_ and the `published Notion page`_.
 
-Using Audio
------------
+All of these can be used in a way which means your documentation can still be rendered to HTML.
 
-Audio files can be embedded using the ``audio`` directive. Both remote URLs and local file paths are supported:
+Unsupported Notion Block Types
+------------------------------
 
-.. code-block:: rst
-
-   .. audio:: https://www.example.com/audio.mp3
-
-   .. audio:: _static/local-audio.mp3
-
-The audio will be rendered as an audio player in the generated Notion page.
-
-Using PDFs
-----------
-
-PDF files can be embedded using the ``pdf-include`` directive. Both remote URLs and local file paths are supported.
-
-.. code-block:: rst
-
-   .. pdf-include:: https://www.example.com/document.pdf
-
-   .. pdf-include:: _static/local-document.pdf
-
-The PDF will be rendered as an embedded PDF viewer in the generated Notion page.
-
-Using Colored Text
-------------------
-
-Colored text can be added using the `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_ extension. First, install the extension:
-
-.. code-block:: console
-
-   $ pip install sphinxcontrib-text-styles
-
-Then add it to your ``conf.py``:
-
-.. code-block:: python
-
-   """Configuration for Sphinx."""
-
-   extensions = [
-       "sphinxcontrib_text_styles",
-       "sphinx_notion",
-   ]
-
-You can then use colored text in your reStructuredText documents:
-
-.. code-block:: rst
-
-   This is :text-red:`red text`, :text-blue:`blue text`, and :text-green:`green text`.
-
-The following colors are supported: red, blue, green, yellow, orange, purple, pink, brown, and gray.
+- Bookmark
+- Breadcrumb
+- Child database
+- Child page
+- Column and column list
+- Divider
+- File
+- Link preview
+- Mention
+- Synced block
+- Template
+- Heading with ``is_toggleable`` set to ``True``
 
 Uploading Documentation to Notion
 ----------------------------------
+
+Build documentation with the ``notion`` builder.
+For eaxmple:
+
+.. code-block:: console
+
+   $ sphinx-build -W -b notion source build/notion
 
 After building your documentation with the Notion builder, you can upload it to Notion using the included command-line tool.
 
 Prerequisites
 ~~~~~~~~~~~~~
 
-1. Create a Notion integration at https://www.notion.so/my-integrations
-2. Get your integration token and set it as an environment variable:
+#. Create a Notion integration at `notion-integrations`_
+#. Get your integration token and set it as an environment variable:
 
 .. code-block:: console
 
@@ -164,8 +130,10 @@ Prerequisites
 Usage
 ~~~~~
 
+
 .. code-block:: console
 
+   # The JSON file will be in the build directory, e.g. ./build/notion/index.json
    $ notion-upload --file path/to/output.json --parent-page-id parent_page_id --title "Page Title"
 
 Or with a database parent:
@@ -185,8 +153,21 @@ The command will create a new page if one with the given title doesn't exist, or
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
-.. |codecov| image:: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/adamtheturtle/sphinx-notionbuilder
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
    :target: https://badge.fury.io/py/Sphinx-Notion-Builder
 .. |minimum-python-version| replace:: 3.11
+
+.. _atsphinx-audioplayer: https://github.com/atsphinx/atsphinx-audioplayer
+.. _notion-integrations: https://www.notion.so/my-integrations
+.. _published Notion page: https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55
+.. _sample document source: https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst
+.. _sphinx-iframes: https://pypi.org/project/sphinx-iframes/
+.. _sphinx-immaterial task_lists: https://github.com/jbms/sphinx-immaterial
+.. _sphinx-simplepdf: https://sphinx-simplepdf.readthedocs.io/
+.. _sphinx-toolbox collapse: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html
+.. _sphinx-toolbox rest_example: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html
+.. _sphinx-toolbox: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/
+.. _sphinx.ext.mathjax: https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax
+.. _sphinxcontrib-text-styles: https://sphinxcontrib-text-styles.readthedocs.io/
+.. _sphinxcontrib-video: https://sphinxcontrib-video.readthedocs.io
+.. _sphinxnotes-strike: https://github.com/sphinx-toolbox/sphinxnotes-strike

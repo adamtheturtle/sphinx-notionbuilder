@@ -9,6 +9,7 @@ from functools import singledispatch
 from pathlib import Path
 from typing import Any
 
+import bs4
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -21,11 +22,14 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
+from sphinx_iframes import iframe_node
+from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
+    Video,
     video_node,
 )
 from sphinxnotes.strike import strike_node
@@ -36,6 +40,8 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Embed as UnoEmbed
+from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -58,26 +64,24 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.rich_text import Text, text
+from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
 @beartype
-def _color_from_node(*, node: nodes.inline) -> Color | None:
-    """Extract Notion color from CSS classes.
-
-    ``sphinxcontrib-text-styles`` creates classes like 'text-red', 'text-
-    blue', etc.
+def _get_text_color_mapping() -> dict[str, Color]:
     """
-    classes = node.attributes.get("classes", [])
-    color_mapping: dict[str, Color] = {
+    Get the mapping from CSS classes to Notion colors.
+    """
+    return {
         "text-red": Color.RED,
         "text-blue": Color.BLUE,
         "text-green": Color.GREEN,
@@ -90,17 +94,65 @@ def _color_from_node(*, node: nodes.inline) -> Color | None:
         "text-grey": Color.GRAY,
     }
 
+
+@beartype
+def _get_background_color_classes() -> set[str]:
+    """
+    Get the set of supported background color classes.
+    """
+    return {
+        "bg-red",
+        "bg-blue",
+        "bg-green",
+        "bg-yellow",
+        "bg-orange",
+        "bg-purple",
+        "bg-pink",
+        "bg-brown",
+        "bg-gray",
+        "bg-grey",
+    }
+
+
+@beartype
+def _color_from_css_classes(*, classes: list[str]) -> Color | None:
+    """Extract Notion color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
+    """
+    color_mapping = _get_text_color_mapping()
+
     for css_class in classes:
         if css_class in color_mapping:
             return color_mapping[css_class]
 
-        # This warning being here assumes that only color classes,
-        # and only classes from ``sphinxcontrib-text-styles``, are used.
-        _LOGGER.warning(
-            "Unsupported text style classes: %s. "
-            "Text will be rendered without styling.",
-            css_class,
-        )
+    return None
+
+
+@beartype
+def _background_color_from_css_classes(
+    *, classes: list[str]
+) -> BGColor | None:
+    """Extract Notion background color from CSS classes.
+
+    Classes created by ``sphinxcontrib-text-styles``.
+    """
+    bg_color_mapping: dict[str, BGColor] = {
+        "bg-red": BGColor.RED,
+        "bg-blue": BGColor.BLUE,
+        "bg-green": BGColor.GREEN,
+        "bg-yellow": BGColor.YELLOW,
+        "bg-orange": BGColor.ORANGE,
+        "bg-purple": BGColor.PURPLE,
+        "bg-pink": BGColor.PINK,
+        "bg-brown": BGColor.BROWN,
+        "bg-gray": BGColor.GRAY,
+        "bg-grey": BGColor.GRAY,
+    }
+
+    for css_class in classes:
+        if css_class in bg_color_mapping:
+            return bg_color_mapping[css_class]
 
     return None
 
@@ -156,6 +208,209 @@ class _TableStructure:
     num_stub_columns: int
 
 
+@singledispatch
+@beartype
+def _process_rich_text_node(node: nodes.Node) -> Text:
+    """Create Notion rich text from a single ``docutils`` node.
+
+    This is the base function for ``singledispatch``. Specific node types
+    are handled by registered functions.
+    """
+    unsupported_child_type_msg = (
+        f"Unsupported node type within text: {type(node).__name__} on line "
+        f"{node.parent.line} in {node.parent.source}."
+    )
+    # We use ``TRY004`` here because we want to raise a
+    # ``ValueError`` if the child type is unsupported, not a
+    # ``TypeError`` as the user has not directly provided any type.
+    raise ValueError(unsupported_child_type_msg)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.line) -> Text:
+    """
+    Process line nodes by creating rich text.
+    """
+    return _create_styled_text_from_node(node=node) + "\n"
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.reference) -> Text:
+    """
+    Process reference nodes by creating linked text.
+    """
+    link_url = node.attributes["refuri"]
+    link_text = node.attributes.get("name", link_url)
+
+    return text(
+        text=link_text,
+        href=link_url,
+        bold=False,
+        italic=False,
+        code=False,
+    )
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.target) -> Text:
+    """
+    Process target nodes by returning empty text (targets are skipped).
+    """
+    del node  # Target nodes are skipped
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.title_reference) -> Text:
+    """Process title reference nodes by creating italic text.
+
+    We match the behavior of the HTML builder here.
+    If you render ``A `B``` in HTML, it will render as ``A <i>B</i>``.
+    """
+    return text(text=node.astext(), italic=True)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.Text) -> Text:
+    """
+    Process Text nodes by creating plain text.
+    """
+    return text(text=node.astext())
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.inline) -> Text:
+    """
+    Process inline nodes by creating styled text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.strong) -> Text:
+    """
+    Process strong nodes by creating bold text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.emphasis) -> Text:
+    """
+    Process emphasis nodes by creating italic text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.literal) -> Text:
+    """
+    Process literal nodes by creating code text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: strike_node) -> Text:
+    """
+    Process strike nodes by creating strikethrough text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.paragraph) -> Text:
+    """
+    Process paragraph nodes by creating styled text.
+    """
+    return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.math) -> Text:
+    """
+    Process math nodes by creating math rich text.
+    """
+    return math(expression=node.astext())
+
+
+@beartype
+def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
+    """Create styled text from a node with CSS class support.
+
+    This helper function handles the complex styling logic that was
+    previously inline in the main function.
+    """
+    classes = node.attributes.get("classes", [])
+    bg_color = _background_color_from_css_classes(classes=classes)
+    text_color = _color_from_css_classes(classes=classes)
+
+    color_mapping = _get_text_color_mapping()
+    bg_color_classes = _get_background_color_classes()
+
+    is_bold = isinstance(node, nodes.strong) or "text-bold" in classes
+    is_italic = isinstance(node, nodes.emphasis) or "text-italic" in classes
+    is_code = (
+        isinstance(node, nodes.literal)
+        or "text-mono" in classes
+        or "kbd" in classes
+    )
+    is_strikethrough = (
+        isinstance(node, strike_node) or "text-strike" in classes
+    )
+    is_underline = "text-underline" in classes
+
+    supported_style_classes = {
+        "text-bold",
+        "text-italic",
+        "text-mono",
+        "text-strike",
+        "text-underline",
+        "kbd",
+        *color_mapping.keys(),
+        *bg_color_classes,
+    }
+    unsupported_styles = [
+        css_class
+        for css_class in classes
+        if css_class not in supported_style_classes
+    ]
+
+    if unsupported_styles:
+        unsupported_style_msg = (
+            "Unsupported text style classes: "
+            f"{', '.join(unsupported_styles)}. "
+            f"Text on line {node.parent.line} in {node.parent.source} will "
+            "be rendered without styling."
+        )
+        _LOGGER.warning(unsupported_style_msg)
+
+    color: BGColor | Color | None = bg_color or text_color
+    return text(
+        text=node.astext(),
+        bold=is_bold,
+        italic=is_italic,
+        code=is_code,
+        strikethrough=is_strikethrough,
+        underline=is_underline,
+        # Ignore the type check here because Ultimate Notion has
+        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
+        color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
+
+
 @beartype
 def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     """Create Notion rich text from ``docutils`` node children.
@@ -168,36 +423,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
     rich_text = Text.from_plain_text(text="")
 
     for child in node.children:
-        if isinstance(child, nodes.reference):
-            link_url = child.attributes["refuri"]
-            link_text = child.attributes.get("name", link_url)
-
-            new_text = text(
-                text=link_text,
-                href=link_url,
-                bold=False,
-                italic=False,
-                code=False,
-            )
-        elif isinstance(child, nodes.target):
-            continue
-        elif isinstance(child, nodes.inline):
-            new_text = text(
-                text=child.astext(),
-                bold=isinstance(child, nodes.strong),
-                italic=isinstance(child, nodes.emphasis),
-                code=isinstance(child, nodes.literal),
-                strikethrough=isinstance(child, strike_node),
-                color=_color_from_node(node=child),
-            )
-        else:
-            new_text = text(
-                text=child.astext(),
-                bold=isinstance(child, nodes.strong),
-                italic=isinstance(child, nodes.emphasis),
-                code=isinstance(child, nodes.literal),
-                strikethrough=isinstance(child, strike_node),
-            )
+        new_text = _process_rich_text_node(child)
         rich_text += new_text
 
     return rich_text
@@ -325,6 +551,9 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "graphql": CodeLang.GRAPHQL,
         "groovy": CodeLang.GROOVY,
         "haskell": CodeLang.HASKELL,
+        # This is not a perfect match, but at least JSON within the
+        # HTTP definition will be highlighted.
+        "http": CodeLang.JSON,
         "html": CodeLang.HTML,
         "java": CodeLang.JAVA,
         "javascript": CodeLang.JAVASCRIPT,
@@ -362,6 +591,9 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "reason": CodeLang.REASON,
         "ruby": CodeLang.RUBY,
         "rb": CodeLang.RUBY,
+        # This is not a perfect match, but at least rest-example will
+        # be rendered.
+        "rest": CodeLang.PLAIN_TEXT,
         "rust": CodeLang.RUST,
         "rs": CodeLang.RUST,
         "sass": CodeLang.SASS,
@@ -395,89 +627,28 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
     return language_mapping[pygments_lang.lower()]
 
 
-@beartype
-def _process_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a list item node and return a BulletedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoBulletedItem(text=rich_text)
-
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        if not isinstance(child, nodes.bullet_list):
-            bullet_only_msg = (
-                "The only thing Notion supports within a bullet list is a "
-                f"bullet list. Given {type(child).__name__} on line "
-                f"{child.line} in {child.source}"
-            )
-            # Ignore error which is about a type error, but we want to
-            # raise a value error because the user has not sent anything to
-            # do with types.
-            raise ValueError(bullet_only_msg)  # noqa: TRY004
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item)
-            block.append(
-                blocks=_process_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
-@beartype
-def _process_numbered_list_item_recursively(
-    *,
-    node: nodes.list_item,
-) -> list[Block]:
-    """
-    Recursively process a numbered list item node and return a NumberedItem.
-    """
-    paragraph = node.children[0]
-    assert isinstance(paragraph, nodes.paragraph)
-    rich_text = _create_rich_text_from_children(node=paragraph)
-    block = UnoNumberedItem(text=rich_text)
-
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
-    assert isinstance(node, nodes.list_item)
-
-    for child in node.children[1:]:
-        assert isinstance(child, nodes.enumerated_list), numbered_only_msg
-        for nested_list_item in child.children:
-            assert isinstance(nested_list_item, nodes.list_item), (
-                numbered_only_msg
-            )
-
-            block.append(
-                blocks=_process_numbered_list_item_recursively(
-                    node=nested_list_item,
-                )
-            )
-    return [block]
-
-
 @singledispatch
 @beartype
 def _process_node_to_blocks(
     node: nodes.Element,
     *,
     section_level: int,
-) -> list[Block]:  # pragma: no cover
+) -> list[Block]:
     """
     Required function for ``singledispatch``.
     """
     del section_level
-    raise NotImplementedError(node)
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    raise NotImplementedError(unsupported_node_type_msg)
 
 
 @beartype
@@ -523,9 +694,15 @@ def _(
         _LOGGER.warning(msg=table_multiple_header_rows_msg)
 
     if table_structure.num_stub_columns > 1:
+        first_body_row = table_structure.body_rows[0]
+        first_body_row_entry = first_body_row.children[0]
+        first_body_row_paragraph = first_body_row_entry.children[0]
         table_more_than_one_stub_column_msg = (
             f"Tables with more than 1 stub column are not supported. "
-            f"Found {table_structure.num_stub_columns} stub columns."
+            f"Found {table_structure.num_stub_columns} stub columns "
+            f"on table with first body row on line "
+            f"{first_body_row_paragraph.line} in "
+            f"{first_body_row_paragraph.source}."
         )
         _LOGGER.warning(msg=table_more_than_one_stub_column_msg)
 
@@ -555,10 +732,25 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
+    """Process paragraph nodes by creating Notion Paragraph blocks.
+
+    Special case: if the paragraph contains only a container a
+    ``rest-example`` class, process the container directly instead of
+    trying to process it as rich text.
     """
-    Process paragraph nodes by creating Notion Paragraph blocks.
-    """
-    del section_level
+    if (
+        len(node.children) == 1
+        and isinstance(
+            node.children[0],
+            nodes.container,
+        )
+        and node.children[0].attributes.get("classes", []) == ["rest-example"]
+    ):
+        return _process_node_to_blocks(
+            node.children[0],
+            section_level=section_level,
+        )
+
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 
@@ -573,9 +765,14 @@ def _(
     """
     Process block quote nodes by creating Notion Quote blocks.
     """
-    del section_level
-    rich_text = _create_rich_text_from_children(node=node)
-    return [UnoQuote(text=rich_text)]
+    first_child = node.children[0]
+    rich_text = _process_rich_text_node(first_child)
+    quote = UnoQuote(text=rich_text)
+    for child in node.children[1:]:
+        blocks = _process_node_to_blocks(child, section_level=section_level)
+        quote.append(blocks=blocks)
+
+    return [quote]
 
 
 @beartype
@@ -607,15 +804,43 @@ def _(
     """
     Process bullet list nodes by creating Notion BulletedItem blocks.
     """
-    del section_level
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.list_item)
-        result.extend(
-            _process_list_item_recursively(
-                node=list_item,
+        first_child = list_item.children[0]
+        if isinstance(first_child, nodes.paragraph):
+            paragraph = first_child
+            rich_text = _create_rich_text_from_children(node=paragraph)
+            bulleted_item_block = UnoBulletedItem(text=rich_text)
+
+            for child in list_item.children[1:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                bulleted_item_block.append(blocks=child_blocks)
+            result.append(bulleted_item_block)
+        else:
+            assert isinstance(first_child, checkbox_label), (
+                first_child.line,
+                first_child.source,
             )
-        )
+            label_text_node = list_item.children[1]
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
+            assert isinstance(label_text_node, nodes.paragraph)
+            rich_text = _create_rich_text_from_children(
+                node=label_text_node,
+            )
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
+
+            for child in list_item.children[2:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                todo_item_block.append(blocks=child_blocks)
+            result.append(todo_item_block)
     return result
 
 
@@ -627,22 +852,46 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process enumerated list nodes by creating Notion NumberedItem blocks.
+    Process enumerated list nodes by creating Notion NumberedItem or ToDoItem
+    blocks.
     """
-    del section_level
     result: list[Block] = []
-    numbered_only_msg = (
-        "The only thing Notion supports within a numbered list is a "
-        f"numbered list. Given {type(node).__name__} on line {node.line} "
-        f"in {node.source}"
-    )
     for list_item in node.children:
-        assert isinstance(list_item, nodes.list_item), numbered_only_msg
-        result.extend(
-            _process_numbered_list_item_recursively(
-                node=list_item,
+        assert isinstance(list_item, nodes.list_item)
+        first_child = list_item.children[0]
+        if isinstance(first_child, nodes.paragraph):
+            paragraph = first_child
+            rich_text = _create_rich_text_from_children(node=paragraph)
+            block = UnoNumberedItem(text=rich_text)
+
+            for child in list_item.children[1:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                block.append(blocks=child_blocks)
+            result.append(block)
+        else:
+            assert isinstance(first_child, checkbox_label), (
+                first_child.line,
+                first_child.source,
             )
-        )
+            label_text_node = list_item.children[1]
+            # Get the checked state from the checkbox_label node
+            checked = first_child.attributes.get("checked", False)
+            assert isinstance(label_text_node, nodes.paragraph)
+            rich_text = _create_rich_text_from_children(
+                node=label_text_node,
+            )
+            todo_item_block = UnoToDoItem(text=rich_text, checked=checked)
+
+            for child in list_item.children[2:]:
+                child_blocks = _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+                todo_item_block.append(blocks=child_blocks)
+            result.append(todo_item_block)
     return result
 
 
@@ -1091,32 +1340,103 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process container nodes, especially for ``literalinclude`` with captions.
+    Process container nodes.
+    """
+    num_children_for_captioned_literalinclude = 2
+    if (
+        len(node.children) == num_children_for_captioned_literalinclude
+        and isinstance(node.children[0], nodes.caption)
+        and isinstance(node.children[1], nodes.literal_block)
+    ):
+        caption_node, literal_node = node.children
+        assert isinstance(caption_node, nodes.caption)
+        assert isinstance(literal_node, nodes.literal_block)
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
+
+        code_text = _create_rich_text_from_children(node=literal_node)
+        pygments_lang = literal_node.get(key="language", failobj="")
+        language = _map_pygments_to_notion_language(
+            pygments_lang=pygments_lang,
+        )
+
+        return [
+            UnoCode(
+                text=code_text,
+                language=language,
+                caption=caption_rich_text,
+            )
+        ]
+
+    classes = node.attributes.get("classes", [])
+    if classes == ["rest-example"]:
+        return _process_rest_example_container(
+            node=node,
+            section_level=section_level,
+        )
+
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: iframe_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process raw nodes, specifically those containing HTML from the extension
+    ``sphinx-iframes``.
     """
     del section_level
 
-    caption_node, literal_node = node.children
-    msg = (
-        "The only supported container type is a literalinclude with a caption"
-    )
-    assert isinstance(caption_node, nodes.caption), msg
-    assert isinstance(literal_node, nodes.literal_block), msg
+    # Check if this is an ``iframe`` from ``sphinx-iframes``.
+    # See https://github.com/TeachBooks/sphinx-iframes/issues/9
+    # for making this more robust.
+    soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
+    iframes = soup.find_all(name="iframe")
+    (iframe,) = iframes
+    url = iframe.get(key="src")
+    assert url is not None
+    return [UnoEmbed(url=str(object=url))]
 
-    caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
-    code_text = _create_rich_text_from_children(node=literal_node)
-    pygments_lang = literal_node.get(key="language", failobj="")
-    language = _map_pygments_to_notion_language(
-        pygments_lang=pygments_lang,
-    )
+@beartype
+def _process_rest_example_container(
+    *,
+    node: nodes.container,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process a ``rest-example`` container by creating nested callout blocks.
+    """
+    rst_source_node = node.children[0]
+    assert isinstance(rst_source_node, nodes.literal_block)
+    output_nodes = node.children[1:]
+    code_blocks = _process_node_to_blocks(rst_source_node, section_level=1)
 
-    return [
-        UnoCode(
-            text=code_text,
-            language=language,
-            caption=caption_rich_text,
+    output_blocks: list[Block] = []
+    for output_node in output_nodes:
+        output_blocks.extend(
+            _process_node_to_blocks(output_node, section_level=section_level)
         )
-    ]
+
+    code_callout = UnoCallout(text=text(text="Code"))
+    code_callout.append(blocks=code_blocks)
+
+    output_callout = UnoCallout(text=text(text="Output"))
+    output_callout.append(blocks=output_blocks)
+
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    return [main_callout]
 
 
 @beartype
@@ -1138,6 +1458,36 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.math_block,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process math block nodes by creating Notion Equation blocks.
+    """
+    del section_level
+    latex_content = node.astext()
+    return [UnoEquation(latex=latex_content)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.target,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process target nodes by ignoring them completely.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.document,
     *,
     section_level: int,
@@ -1148,6 +1498,23 @@ def _(
     del node
     del section_level
     return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.line_block,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process line block nodes by creating separate paragraph blocks for each
+    line.
+    """
+    del section_level
+
+    line_text = _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=line_text)]
 
 
 @beartype
@@ -1250,6 +1617,14 @@ def _filter_ulem(record: logging.LogRecord) -> bool:
 
 
 @beartype
+def _make_static_dir(app: Sphinx) -> None:
+    """
+    We make the ``_static`` directory that ``sphinx-iframes`` expects.
+    """
+    (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1262,8 +1637,18 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_pdf_include_directive,
     )
 
+    app.connect(event="builder-inited", callback=_make_static_dir)
+
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
+
+    # that we use. The ``sphinx-iframes`` extension implements a ``video``
+    # directive that we don't use.
+    # Make sure that if they are both enabled, we use the
+    # ``sphinxcontrib.video`` extension.
+    if "sphinxcontrib.video" in app.extensions:
+        app.add_directive(name="video", cls=Video, override=True)
+
     return {"parallel_read_safe": True}

@@ -3,1469 +3,375 @@ Heading 1 with *bold*
 
 .. contents::
 
-.. toctree::
 
-   other
+Comments
+~~~~~~~~
 
-.. This is a comment that demonstrates comment support.
-   Comments should not appear in the final output.
+.. rest-example::
 
-Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
+   .. This is a comment that demonstrates comment support.
+      Comments should not appear in the final output.
 
-This is **bold** and *italic* and ``inline code``.
+Text Formatting
+~~~~~~~~~~~~~~~
 
-This text has :strike:`strike` formatting and :del:`deleted text` as well.
+.. rest-example::
 
-Colored Text
-~~~~~~~~~~~~
+   Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
 
-The builder supports colored text using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
+   This is **bold** and *italic* and ``inline code``.
 
-This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
+   This text has :strike:`strike` formatting and :del:`deleted text` as well.
 
-.. note::
+   The builder supports colored text using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
-   This is an important note that demonstrates the note admonition support.
+   This is :text-red:`red text`, :text-blue:`blue text`, :text-green:`green text`, :text-yellow:`yellow text`, :text-orange:`orange text`, :text-purple:`purple text`, :text-pink:`pink text`, :text-brown:`brown text`, and :text-gray:`gray text`.
 
-   Some nested content:
+   The builder also supports background colors using `sphinxcontrib-text-styles <https://sphinxcontrib-text-styles.readthedocs.io/>`_:
 
-   * First level item in note
-   * Another first level item
-   * Another first level item
+   This is :bg-red:`red background text`, :bg-blue:`blue background text`, :bg-green:`green background text`, :bg-yellow:`yellow background text`, :bg-orange:`orange background text`, :bg-purple:`purple background text`, :bg-pink:`pink background text`, :bg-brown:`brown background text`, and :bg-gray:`gray background text`.
 
-     * Second level nested in note
-     * Another second level item
+   The builder supports additional text styles: :text-bold:`bold text`, :text-italic:`italic text`, :text-mono:`monospace text`, :text-strike:`strikethrough text`, and :text-underline:`underlined text`.
 
-       * Third level nested in note (deep!)
-       * Another third level item
+   The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste.
 
-         * Fourth level nested in note (very deep!)
-         * Another fourth level item
-         * Another fourth level item
+Admonitions
+~~~~~~~~~~~
 
-           * Fifth level nested in note (extremely deep!)
-           * Another fifth level item
+.. rest-example::
 
-         * Back to fourth level in note
+   .. note::
 
-       * Back to third level in note
-
-     * Back to second level in note
-
-   * Back to first level in note
-
-.. warning::
-
-   This is a warning that demonstrates the warning admonition support.
-
-   .. code-block:: python
-
-      """Python code nested in an admonition."""
-
-
-      def hello_world() -> int:
-          """Return the answer."""
-          return 42
-
-
-      hello_world()
+      This is a note that demonstrates the note admonition support.
 
    .. warning::
 
       This is a warning that demonstrates the warning admonition support.
 
-      .. warning::
+   .. tip::
 
-         This is a warning that demonstrates the nested admonition support.
+      This is a helpful tip that demonstrates the tip admonition support.
 
-         .. warning::
+   .. attention::
 
-            This is a warning that demonstrates the even deeper admonition support.
+      This is an attention admonition that requires your attention.
 
-.. tip::
+   .. caution::
 
-   This is a helpful tip that demonstrates the tip admonition support.
+      This is a caution admonition that warns about potential issues.
 
-.. attention::
+   .. danger::
 
-   This is an attention admonition that requires your attention.
+      This is a danger admonition that indicates a dangerous situation.
 
-.. caution::
+   .. error::
 
-   This is a caution admonition that warns about potential issues.
+      This is an error admonition that shows error information.
 
-.. danger::
+   .. hint::
 
-   This is a danger admonition that indicates a dangerous situation.
+      This is a hint admonition that provides helpful hints.
 
-.. error::
+   .. important::
 
-   This is an error admonition that shows error information.
+      This is an important admonition that highlights important information.
 
-.. hint::
+   .. admonition:: Custom Admonition Title
 
-   This is a hint admonition that provides helpful hints.
+      This is a generic admonition with a custom title.
+      You can use this for any type of callout that doesn't fit the standard admonition types.
 
-.. important::
+Collapsible Content
+~~~~~~~~~~~~~~~~~~~
 
-   This is an important admonition that highlights important information.
+.. rest-example::
 
-.. admonition:: Custom Admonition Title
+   .. collapse:: Click to expand this section
 
-   This is a generic admonition with a custom title. You can use this for
-   any type of callout that doesn't fit the standard admonition types.
+      This content is hidden by default and can be expanded by clicking the toggle.
 
-   It supports all the same features:
+      It supports **all the same formatting** as regular content.
 
-   * Bullet points
-   * **Bold text** and *italic text*
-   * ``Code snippets``
+Including Files
+~~~~~~~~~~~~~~~
 
-.. collapse:: Click to expand this section
+.. rest-example::
 
-   This content is hidden by default and can be expanded by clicking the toggle.
+   Here's an example of including a file:
 
-   It supports **all the same formatting** as regular content:
+   .. literalinclude:: conf.py
+      :language: python
 
-   * Bullet points
-   * ``Code snippets``
-   * *Emphasis* and **bold text**
+   And with a caption:
 
-   .. note::
+   .. literalinclude:: conf.py
+      :language: python
+      :caption: Example **Configuration** File
 
-      You can even nest admonitions inside collapsible sections!
+Bullet Lists
+~~~~~~~~~~~~
 
-   .. code-block:: python
+.. rest-example::
 
-      """Run code within a collapse."""
+   This demonstrates the new support for nesting various content types within bullet lists:
 
+   * First bullet point with **bold text**
 
-      def example_function() -> str:
-          """Example code inside a collapsed section."""
-          return "This is hidden by default"
+     This is a paragraph nested within a bullet list item. It should work now!
 
+     .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+        :alt: Nested image in bullet list
 
-      example_function()
+     * Nested bullet point
+     * Another nested bullet
 
-.. collapse:: Another collapsible section
+       * Deeply nested bullet
 
-   You can have multiple collapsible sections in your document.
+   * Second bullet point with *italic text*
 
-   Each one can contain different types of content.
+     Here's some code nested within a bullet list:
 
-.. code-block:: python
+     .. code-block:: python
 
-   """Python code."""
+         """Python code."""
 
+         import sys
 
-   def hello_world() -> int:
-       """Return the answer."""
-       return 42
+         sys.stdout.write("Hello, world!")
 
+     And here's a note admonition nested within the bullet list:
 
-   hello_world()
+     .. note::
 
-.. code-block:: console
+        This is a note that's nested within a bullet list item. This should work now!
 
-   $ pip install sphinx-notionbuilder
+   * Third bullet point
 
-Here's an example of including a file:
+     This bullet point contains a table:
 
-.. literalinclude:: conf.py
-   :language: python
-
-And with a caption:
-
-.. literalinclude:: conf.py
-   :language: python
-   :caption: Example **Configuration** File
-
-Some key features 👍:
-
-* Easy integration with **Sphinx**
-* Converts reStructuredText to Notion-compatible format
-
-  * Supports nested bullet points (new!)
-  * Deep nesting now works with multiple levels
-
-    * Third level nesting is now supported
-    * Fourth level also works
-
-      * Fifth level nesting works too!
-      * The upload script handles deep nesting automatically
-
-    * Back to third level
-
-  * Back to second level
-
-* Supports code blocks with syntax highlighting
-* Handles headings, links, and formatting
-* Works with bullet points like this one
-* Now supports note, warning, and tip admonitions!
-* Supports images with URLs
-* Supports videos with URLs and local files
-* Supports PDFs with URLs and local files
+     +----------+----------+
+     | Header 1 | Header 2 |
+     +==========+==========+
+     | Cell 1   | Cell 2   |
+     +----------+----------+
+     | Cell 3   | Cell 4   |
+     +----------+----------+
 
 Numbered Lists
 ~~~~~~~~~~~~~~
 
-The builder now supports numbered lists:
+.. rest-example::
 
-1. First numbered item
-2. Second numbered item with **bold text**
-3. Third numbered item with nested content
+   The builder now supports numbered lists:
 
-   1. First nested numbered item
-   2. Second nested numbered item
+   #. First numbered item
+   #. Second numbered item with **bold text**
+   #. Third numbered item with nested content
 
-      1. Deeply nested numbered item
-      2. Another deeply nested item
+      #. First nested numbered item
+      #. Second nested numbered item
 
-   3. Back to second level
+         #. Deeply nested numbered item
+         #. Another deeply nested item
 
-4. Fourth top-level item
+      #. Back to second level
 
-Heading 2 with *italic*
------------------------
+   #. Fourth top-level item
 
-Heading 3 with ``inline code``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Regular paragraph.
-
-    This is a multi-line
-    block quote with
-    multiple lines.
-
-
-Table Example
--------------
-
-Here is a simple table:
-
-+----------+----------+
-| Header 1 | Header 2 |
-+==========+==========+
-| Cell 1   | Cell 2   |
-+----------+----------+
-| Cell 3   | Cell 4   |
-+----------+----------+
-
-Multi-Paragraph Rich Text Table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This table demonstrates the fix for issue #90 - tables with cells containing
-multiple paragraphs where at least one paragraph includes rich text formatting:
-
-+----------------------+-------------------------------+
-| **Header Bold**      | *Header Italic*               |
-+======================+===============================+
-| **Bold text**        | *Italic text*                 |
-| Normal text          | `Link <https://example.com>`_ |
-+----------------------+-------------------------------+
-| **First paragraph**  | *Italic paragraph*            |
-|                      |                               |
-| **Second paragraph** | Normal paragraph              |
-|                      |                               |
-| Normal text          | `link2 <https://google.com>`_ |
-+----------------------+-------------------------------+
-
-List Table with Stub Column
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This table demonstrates a list table with a stub column (header column):
-
-.. list-table::
-   :header-rows: 1
-   :stub-columns: 1
-
-   * - Feature
-     - Description
-     - Status
-   * - Bold text
-     - Supports **bold** formatting
-     - ✅ Working
-   * - Italic text
-     - Supports *italic* formatting
-     - ✅ Working
-   * - Code blocks
-     - Supports ``inline code``
-     - ✅ Working
-
-
-Image Examples
---------------
-
-Simple Image
-~~~~~~~~~~~~
-
-.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-
-Image with Alt Text
-~~~~~~~~~~~~~~~~~~~
-
-.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-   :alt: Mountain landscape with snow-capped peaks
-
-Image with Alt Text
-~~~~~~~~~~~~~~~~~~~
-
-.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-   :alt: Beautiful mountain scenery
-
-Local Image Example
-~~~~~~~~~~~~~~~~~~~
-
-.. image:: _static/test-image.png
-   :alt: Local test image
-
-Mixed Content with Images
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Here's some text before the image.
-
-.. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
-
-And here's some text after the image.
-
-Video Examples
---------------
-
-Simple Video
-~~~~~~~~~~~~
-
-.. video:: https://www.w3schools.com/html/mov_bbb.mp4
-
-Video with Caption
-~~~~~~~~~~~~~~~~~~
-
-.. video:: https://www.w3schools.com/html/mov_bbb.mp4
-   :caption: Sample video demonstrating video support
-
-Local Video Example
-~~~~~~~~~~~~~~~~~~~
-
-.. video:: _static/test-video.mp4
-   :caption: Local test video file
-
-Mixed Content with Videos
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Here's some text before the video.
-
-.. video:: https://www.w3schools.com/html/mov_bbb.mp4
-   :caption: Video embedded in content
-
-And here's some text after the video.
-
-Audio Examples
---------------
-
-Simple Audio
-~~~~~~~~~~~~
-
-.. audio:: https://voiceage.com/wbsamples/in_mono/Chorus.wav
-
-Local Audio Example
-~~~~~~~~~~~~~~~~~~~
-
-.. audio:: _static/test-audio.wav
-
-PDF Support
-~~~~~~~~~~~~
-
-Simple PDF
+Task Lists
 ~~~~~~~~~~
 
-.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+.. rest-example::
 
-Local PDF Example
-~~~~~~~~~~~~~~~~~
+   The builder supports task lists with checkboxes:
 
-.. pdf-include:: _static/test.pdf
+   .. task-list::
 
-Here's some text before the PDF.
+      1. [x] Task A
+      2. [ ] Task B
 
-.. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+         .. task-list::
+            :clickable:
 
-And here's some text after the PDF.
+            * [x] Task B1
+            * [x] Task B2
+            * [] Task B3
 
-.. collapse:: Long code block
+            A rogue paragraph.
 
-   .. code-block:: python
+            - A list item without a checkbox.
+            - [ ] Another bullet point.
 
-      """Long code block to demonstrate working around Notion limits."""
+      3. [ ] Task C
 
-      import sys
+Block Quotes
+~~~~~~~~~~~~
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+.. rest-example::
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+   Regular paragraph.
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+         This is a multi-line
+         block quote with
+         multiple lines.
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+         This is a multi-line
+         block quote with
+         *rich text* **and**
+         multiple lines.
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+         And with different paragraphs within the quote.
 
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
-      sys.stdout.write("Hello, world!")
+         Like this.
 
-.. collapse:: Over 100 blocks
+Tables
+~~~~~~
 
-   Test that we can upload > 100 blocks and child blocks.
-   See https://developers.notion.com/reference/request-limits#limits-for-property-values.
+.. rest-example::
 
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
-   * List item
+   +----------------------+-------------------------------+
+   | **Header Bold**      | *Header Italic*               |
+   +======================+===============================+
+   | **Bold text**        | *Italic text*                 |
+   | Normal text          | `Link <https://example.com>`_ |
+   +----------------------+-------------------------------+
+   | **First paragraph**  | *Italic paragraph*            |
+   |                      |                               |
+   | **Second paragraph** | Normal paragraph              |
+   |                      |                               |
+   | Normal text          | `link2 <https://google.com>`_ |
+   +----------------------+-------------------------------+
+
+   .. list-table::
+      :header-rows: 1
+      :stub-columns: 1
+
+      * - Feature
+        - Description
+        - Status
+      * - Bold text
+        - Supports **bold** formatting
+        - ✅ Working
+      * - Italic text
+        - Supports *italic* formatting
+        - ✅ Working
+      * - Code blocks
+        - Supports ``inline code``
+        - ✅ Working
+
+Images
+~~~~~~
+
+.. rest-example::
+
+   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+
+   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+      :alt: Mountain landscape with snow-capped peaks
+
+   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop
+
+   .. image:: _static/test-image.png
+
+   .. image:: _static/camera.svg
+
+Video
+~~~~~
+
+.. rest-example::
+
+   .. video:: https://www.w3schools.com/html/mov_bbb.mp4
+
+   .. video:: https://www.w3schools.com/html/mov_bbb.mp4
+      :caption: Sample video demonstrating video support with a caption
+
+   .. video:: _static/test-video.mp4
+      :caption: Local test video file
+
+Audio
+~~~~~
+
+.. rest-example::
+
+   .. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
+
+   .. audio:: _static/test-audio.wav
+
+PDF
+~~~
+
+.. rest-example::
+
+   .. pdf-include:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+
+   .. pdf-include:: _static/test.pdf
+
+Mathematical Equations
+~~~~~~~~~~~~~~~~~~~~~~
+
+The builder supports mathematical equations using the ``sphinx.ext.mathjax`` extension.
+
+.. rest-example::
+
+   You can include inline equations like this: :math:`E = mc^2` in your text.
+
+   You can also include block-level equations:
+
+   .. math::
+
+      i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+
+Rest Examples
+~~~~~~~~~~~~~
+
+The `sphinx-toolbox rest_example extension <https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html>`_ allows you to show both the reStructuredText source code and its rendered output side by side.
+This is useful for documentation that demonstrates how to write reStructuredText directives.
+
+.. rest-example::
+
+   .. rest-example::
+
+      .. code-block:: python
+
+         """Python code."""
+
+
+         def greet(name: str) -> str:
+             """Return a greeting message."""
+             return f"Hello, {name}!"
+
+
+         greet(name="World")
+
+Embed Blocks
+~~~~~~~~~~~~
+
+Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/sphinx-iframes/>`_ extension.
+
+.. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
+
+Sphinx ``toctree``\s are hidden
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. toctree::
+
+      other
+
+Line Blocks
+~~~~~~~~~~~~
+
+.. rest-example::
+
+   The builder supports line blocks using pipe characters to preserve line breaks:
+
+   Nothing in between
+
+   |
+
+   Now something in between
+
+   | This is a line block
+   | with multiple lines
+   | preserved exactly as written
