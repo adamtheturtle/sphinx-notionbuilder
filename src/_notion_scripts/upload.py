@@ -3,6 +3,7 @@
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
+from pydantic import ValidationError
 import hashlib
 import json
 import mimetypes
@@ -275,7 +276,6 @@ def main(
     Upload documentation to Notion.
     """
     session = Session()
-
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     parent: Page | Database
@@ -284,7 +284,13 @@ def main(
         subpages = parent.subpages
     else:
         assert parent_database_id is not None
-        parent = session.get_db(db_ref=parent_database_id)
+        try:
+            parent = session.get_db(db_ref=parent_database_id)
+        except ValidationError as e:
+            print(json.dumps(e.errors(), indent=2))
+            print("VALIDATION SUMMARY:")
+            print(str(e))
+            raise
         subpages = parent.get_all_pages().to_pages()
 
     pages_matching_title = [
