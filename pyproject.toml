@@ -37,6 +37,9 @@ dependencies = [
     "click>=8.0.0",
     "click-option-group>=0.5.9",
     "docutils>=0.21",
+    # This (and its corresponding deptry ignore) is a workaround for
+    # https://github.com/ultimate-notion/ultimate-notion/issues/153.
+    "notion-client<2.6.0",
     "requests>=2.32.5",
     "sphinx>=8.2.3",
     "sphinx-iframes>=1.1.0",
@@ -328,6 +331,9 @@ pep621_dev_dependency_groups = [
     "release",
     "sample",
 ]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = [ "notion-client" ]
 
 [tool.pyproject-fmt]
 indent = 4
