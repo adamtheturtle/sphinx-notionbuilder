@@ -5,7 +5,7 @@ Tests for the upload script.
 from click.testing import CliRunner
 from pytest_regressions.file_regression import FileRegressionFixture
 
-from _notion_scripts.upload import main
+from _notion_scripts.upload import main  # pylint: disable=import-private-name
 
 
 def test_help(file_regression: FileRegressionFixture) -> None:
