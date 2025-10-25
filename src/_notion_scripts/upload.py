@@ -247,7 +247,7 @@ def _block_with_uploaded_file(
         "--parent-database-id",
         help="Parent database ID (integration connected)",
     ),
-    constraint=cloup.constraints.RequireExactly(1),
+    constraint=cloup.constraints.RequireExactly(n=1),
 )
 @cloup.option(
     "--title",
