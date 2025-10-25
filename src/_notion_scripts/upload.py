@@ -13,12 +13,9 @@ from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
+import cloup
 import requests
 from beartype import beartype
-from click_option_group import (
-    RequiredMutuallyExclusiveOptionGroup,
-    optgroup,
-)
 from ultimate_notion import Emoji, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -228,36 +225,36 @@ def _block_with_uploaded_file(
     return block
 
 
-@click.command()
-@click.option(
+@cloup.command()
+@cloup.option(
     "--file",
     help="JSON File to upload",
     required=True,
-    type=click.Path(
+    type=cloup.Path(
         exists=True,
         path_type=Path,
         file_okay=True,
         dir_okay=False,
     ),
 )
-@optgroup.group(
-    name="Parent location",
-    cls=RequiredMutuallyExclusiveOptionGroup,
+@cloup.option_group(
+    "Parent location",
+    cloup.option(
+        "--parent-page-id",
+        help="Parent page ID (integration connected)",
+    ),
+    cloup.option(
+        "--parent-database-id",
+        help="Parent database ID (integration connected)",
+    ),
+    constraint=cloup.constraints.RequireExactly(1),
 )
-@optgroup.option(
-    "--parent-page-id",
-    help="Parent page ID (integration connected)",
-)
-@optgroup.option(
-    "--parent-database-id",
-    help="Parent database ID (integration connected)",
-)
-@click.option(
+@cloup.option(
     "--title",
     help="Title of the page to update (or create if it does not exist)",
     required=True,
 )
-@click.option(
+@cloup.option(
     "--icon",
     help="Icon of the page",
     required=False,
