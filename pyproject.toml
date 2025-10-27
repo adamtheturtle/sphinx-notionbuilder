@@ -300,6 +300,7 @@ ignore = [
     ".checkmake-config.ini",
     ".cursor",
     ".cursor/**",
+    ".prettierrc",
     ".vscode",
     ".vscode/**",
     "sample/",
