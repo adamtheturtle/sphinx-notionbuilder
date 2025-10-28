@@ -2847,6 +2847,37 @@ def test_kbd_role(
     )
 
 
+def test_file_role(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The ``:file:`` role creates file path formatting.
+
+    File paths should be rendered as inline code.
+    """
+    rst_content = """
+        Edit the :file:`config.py` file.
+    """
+
+    normal_text1 = text(text="Edit the ")
+    file_text = text(text="config.py", code=True)
+    normal_text2 = text(text=" file.")
+
+    combined_text = normal_text1 + file_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_unsupported_node_types_in_rich_text(
     *,
     make_app: Callable[..., SphinxTestApp],
