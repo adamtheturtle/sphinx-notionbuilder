@@ -1,0 +1,14 @@
+Usage: main [OPTIONS]
+
+  Upload documentation to Notion.
+
+Parent location: [exactly 1 required]
+  --parent-page-id TEXT      Parent page ID (integration connected)
+  --parent-database-id TEXT  Parent database ID (integration connected)
+
+Other options:
+  --file FILE                JSON File to upload  [required]
+  --title TEXT               Title of the page to update (or create if it does
+                             not exist)  [required]
+  --icon TEXT                Icon of the page
+  --help                     Show this message and exit.

@@ -35,6 +35,8 @@ Text Formatting
 
    The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste.
 
+   The builder supports file paths using the standard ``:file:`` role: Edit the :file:`config.py` file or check :file:`/etc/hosts`.
+
 Admonitions
 ~~~~~~~~~~~
 
@@ -214,6 +216,15 @@ Block Quotes
          This is a multi-line
          block quote with
          multiple lines.
+
+         This is a multi-line
+         block quote with
+         *rich text* **and**
+         multiple lines.
+
+         And with different paragraphs within the quote.
+
+         Like this.
 
 Tables
 ~~~~~~

@@ -6,7 +6,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import json
 import mimetypes
-from enum import Enum
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,6 +13,7 @@ from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import click
+import cloup
 import requests
 from beartype import beartype
 from ultimate_notion import Emoji, NotionFile, Session
@@ -225,45 +225,36 @@ def _block_with_uploaded_file(
     return block
 
 
-@beartype
-class _ParentType(Enum):
-    """
-    Type of parent that new page will live under.
-    """
-
-    PAGE = "page"
-    DATABASE = "database"
-
-
-@click.command()
-@click.option(
+@cloup.command()
+@cloup.option(
     "--file",
     help="JSON File to upload",
     required=True,
-    type=click.Path(
+    type=cloup.Path(
         exists=True,
         path_type=Path,
         file_okay=True,
         dir_okay=False,
     ),
 )
-@click.option(
-    "--parent-id",
-    help="Parent page or database ID (integration connected)",
-    required=True,
+@cloup.option_group(
+    "Parent location",
+    cloup.option(
+        "--parent-page-id",
+        help="Parent page ID (integration connected)",
+    ),
+    cloup.option(
+        "--parent-database-id",
+        help="Parent database ID (integration connected)",
+    ),
+    constraint=cloup.constraints.RequireExactly(n=1),
 )
-@click.option(
-    "--parent-type",
-    help="Parent type",
-    required=True,
-    type=click.Choice(choices=_ParentType, case_sensitive=False),
-)
-@click.option(
+@cloup.option(
     "--title",
     help="Title of the page to update (or create if it does not exist)",
     required=True,
 )
-@click.option(
+@cloup.option(
     "--icon",
     help="Icon of the page",
     required=False,
@@ -272,8 +263,8 @@ class _ParentType(Enum):
 def main(
     *,
     file: Path,
-    parent_id: str,
-    parent_type: _ParentType,
+    parent_page_id: str | None,
+    parent_database_id: str | None,
     title: str,
     icon: str | None = None,
 ) -> None:
@@ -285,13 +276,13 @@ def main(
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     parent: Page | Database
-    match parent_type:
-        case _ParentType.PAGE:
-            parent = session.get_page(page_ref=parent_id)
-            subpages = parent.subpages
-        case _ParentType.DATABASE:
-            parent = session.get_db(db_ref=parent_id)
-            subpages = parent.get_all_pages().to_pages()
+    if parent_page_id:
+        parent = session.get_page(page_ref=parent_page_id)
+        subpages = parent.subpages
+    else:
+        assert parent_database_id is not None
+        parent = session.get_db(db_ref=parent_database_id)
+        subpages = parent.get_all_pages().to_pages()
 
     pages_matching_title = [
         child_page for child_page in subpages if child_page.title == title

@@ -556,6 +556,56 @@ def test_multiline_quote(
     )
 
 
+def test_multi_paragraph_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Block quotes with multiple paragraphs create Quote blocks with nested
+    paragraph children.
+    """
+    rst_content = """
+        Some content.
+
+            This is the first paragraph
+            with multiple lines
+            in the quote.
+
+            This is a second paragraph
+            with **bold text** and multiple
+            lines as well.
+    """
+    quote = UnoQuote(
+        text=text(
+            text="This is the first paragraph\nwith multiple lines\n"
+            "in the quote."
+        )
+    )
+
+    nested_paragraph = UnoParagraph(
+        text=(
+            text(text="This is a second paragraph\nwith ")
+            + text(text="bold text", bold=True)
+            + text(text=" and multiple\nlines as well.")
+        )
+    )
+
+    quote.append(blocks=[nested_paragraph])
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="Some content.")),
+        quote,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_table_of_contents(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2797,6 +2847,37 @@ def test_kbd_role(
     )
 
 
+def test_file_role(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The ``:file:`` role creates file path formatting.
+
+    File paths should be rendered as inline code.
+    """
+    rst_content = """
+        Edit the :file:`config.py` file.
+    """
+
+    normal_text1 = text(text="Edit the ")
+    file_text = text(text="config.py", code=True)
+    normal_text2 = text(text=" file.")
+
+    combined_text = normal_text1 + file_text + normal_text2
+
+    expected_paragraph = UnoParagraph(text=combined_text)
+
+    expected_objects: list[Block] = [expected_paragraph]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_unsupported_node_types_in_rich_text(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -3052,7 +3133,7 @@ def test_embed_and_video(
     """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
     this with ``sphinx-notionbuilder``.
 
-    We check this because there is a conflict between the two
+    We check this because there was a conflict between the two
     extensions. See
     https://github.com/TeachBooks/sphinx-iframes/issues/8.
     """
@@ -3072,9 +3153,7 @@ def test_embed_and_video(
         expected_objects=expected_objects,
         make_app=make_app,
         tmp_path=tmp_path,
-        extensions=("sphinx_iframes", "sphinxcontrib.video", "sphinx_notion"),
-        # We explain in the README that this is necessary.
-        confoverrides={"suppress_warnings": ["app.add_directive"]},
+        extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
     )
 
 
