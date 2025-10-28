@@ -180,7 +180,6 @@ class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
     Custom PDF node for Notion PDF blocks.
     """
 
-
 @beartype
 class _NotionPdfIncludeDirective(PdfIncludeDirective):
     """
@@ -213,8 +212,8 @@ class _TableStructure:
 def _process_rich_text_node(node: nodes.Node) -> Text:
     """Create Notion rich text from a single ``docutils`` node.
 
-    This is the base function for ``singledispatch``. Specific node types
-    are handled by registered functions.
+    This is the base function for ``singledispatch``. Specific node
+    types are handled by registered functions.
     """
     unsupported_child_type_msg = (
         f"Unsupported node type within text: {type(node).__name__} on line "
@@ -268,8 +267,8 @@ def _(node: nodes.target) -> Text:
 def _(node: nodes.title_reference) -> Text:
     """Process title reference nodes by creating italic text.
 
-    We match the behavior of the HTML builder here.
-    If you render ``A `B``` in HTML, it will render as ``A <i>B</i>``.
+    We match the behavior of the HTML builder here. If you render ``A
+    `B``` in HTML, it will render as ``A <i>B</i>``.
     """
     return text(text=node.astext(), italic=True)
 

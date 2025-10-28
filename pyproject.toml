@@ -123,6 +123,10 @@ universal = true
 # Code to match this is in ``conf.py``.
 version_scheme = "post-release"
 
+[tool.uv.sources]
+# See https://github.com/PyCQA/docformatter/pull/325.
+docformatter = { "git" = "https://github.com/tdenewiler/docformatter.git", branch = "untokenize-std-lib" }
+
 [tool.ruff]
 line-length = 79
 

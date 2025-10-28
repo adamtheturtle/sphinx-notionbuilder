@@ -11,8 +11,8 @@ from _notion_scripts.upload import main  # pylint: disable=import-private-name
 def test_help(file_regression: FileRegressionFixture) -> None:
     """Expected help text is shown.
 
-    This help text is defined in files.
-    To update these files, run ``pytest`` with the ``--regen-all`` flag.
+    This help text is defined in files. To update these files, run
+    ``pytest`` with the ``--regen-all`` flag.
     """
     runner = CliRunner()
     arguments = ["--help"]
