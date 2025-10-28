@@ -180,6 +180,7 @@ class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
     Custom PDF node for Notion PDF blocks.
     """
 
+
 @beartype
 class _NotionPdfIncludeDirective(PdfIncludeDirective):
     """
