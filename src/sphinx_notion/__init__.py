@@ -366,6 +366,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         isinstance(node, nodes.literal)
         or "text-mono" in classes
         or "kbd" in classes
+        or "file" in classes
     )
     is_strikethrough = (
         isinstance(node, strike_node) or "text-strike" in classes
@@ -379,6 +380,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "text-strike",
         "text-underline",
         "kbd",
+        "file",
         *color_mapping.keys(),
         *bg_color_classes,
     }
