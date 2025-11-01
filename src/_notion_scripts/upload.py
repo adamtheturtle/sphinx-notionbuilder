@@ -198,36 +198,33 @@ def _get_mime_type_for_upload(*, file_name: str) -> str | None:
 def _update_page_cover(
     *,
     page: Page,
-    cover: Path | None,
+    cover: Path,
     session: Session,
 ) -> None:
     """
-    Update or remove the cover image of a page.
+    Update the cover image of a page.
     """
-    if cover is not None:
-        should_update_cover = True
-        if page.cover is not None and isinstance(page.cover, NotionFile):
-            existing_cover_sha = _calculate_file_sha_from_url(
-                file_url=page.cover.url,
+    should_update_cover = True
+    if page.cover is not None and isinstance(page.cover, NotionFile):
+        existing_cover_sha = _calculate_file_sha_from_url(
+            file_url=page.cover.url,
+        )
+        new_cover_sha = _calculate_file_sha(file_path=cover)
+        if existing_cover_sha == new_cover_sha:
+            should_update_cover = False
+
+    if should_update_cover:
+        mime_type = _get_mime_type_for_upload(file_name=cover.name)
+
+        with cover.open(mode="rb") as file_stream:
+            uploaded_cover = session.upload(
+                file=file_stream,
+                file_name=cover.name,
+                mime_type=mime_type,
             )
-            new_cover_sha = _calculate_file_sha(file_path=cover)
-            if existing_cover_sha == new_cover_sha:
-                should_update_cover = False
 
-        if should_update_cover:
-            mime_type = _get_mime_type_for_upload(file_name=cover.name)
-
-            with cover.open(mode="rb") as file_stream:
-                uploaded_cover = session.upload(
-                    file=file_stream,
-                    file_name=cover.name,
-                    mime_type=mime_type,
-                )
-
-            uploaded_cover.wait_until_uploaded()
-            page.cover = uploaded_cover
-    elif page.cover is not None:
-        page.cover = None
+        uploaded_cover.wait_until_uploaded()
+        page.cover = uploaded_cover
 
 
 @beartype
@@ -358,7 +355,10 @@ def main(
 
     page.icon = Emoji(emoji=icon) if icon else None
 
-    _update_page_cover(page=page, cover=cover, session=session)
+    if cover:
+        _update_page_cover(page=page, cover=cover, session=session)
+    else:
+        page.cover = None
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
