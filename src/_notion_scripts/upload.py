@@ -22,6 +22,7 @@ from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
@@ -194,37 +195,34 @@ def _get_mime_type_for_upload(*, file_name: str) -> str | None:
     return mime_type
 
 
-@beartype
-def _update_page_cover(
+def _get_uploaded_cover(
     *,
     page: Page,
     cover: Path,
     session: Session,
-) -> None:
+) -> UploadedFile | None:
     """
-    Update the cover image of a page.
+    Get uploaded cover file, or None if it matches the existing cover.
     """
-    should_update_cover = True
     if page.cover is not None and isinstance(page.cover, NotionFile):
         existing_cover_sha = _calculate_file_sha_from_url(
             file_url=page.cover.url,
         )
         new_cover_sha = _calculate_file_sha(file_path=cover)
         if existing_cover_sha == new_cover_sha:
-            should_update_cover = False
+            return None
 
-    if should_update_cover:
-        mime_type = _get_mime_type_for_upload(file_name=cover.name)
+    mime_type = _get_mime_type_for_upload(file_name=cover.name)
 
-        with cover.open(mode="rb") as file_stream:
-            uploaded_cover = session.upload(
-                file=file_stream,
-                file_name=cover.name,
-                mime_type=mime_type,
-            )
+    with cover.open(mode="rb") as file_stream:
+        uploaded_cover = session.upload(
+            file=file_stream,
+            file_name=cover.name,
+            mime_type=mime_type,
+        )
 
-        uploaded_cover.wait_until_uploaded()
-        page.cover = uploaded_cover
+    uploaded_cover.wait_until_uploaded()
+    return uploaded_cover
 
 
 @beartype
@@ -354,11 +352,11 @@ def main(
         click.echo(message=f"Created new page: '{title}' ({page.url})")
 
     page.icon = Emoji(emoji=icon) if icon else None
-
-    if cover:
-        _update_page_cover(page=page, cover=cover, session=session)
-    else:
-        page.cover = None
+    page.cover = (
+        _get_uploaded_cover(page=page, cover=cover, session=session)
+        if cover
+        else None
+    )
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
