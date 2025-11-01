@@ -356,8 +356,7 @@ def main(
         page = session.create_page(parent=parent, title=title)
         click.echo(message=f"Created new page: '{title}' ({page.url})")
 
-    if icon:
-        page.icon = Emoji(emoji=icon)
+    page.icon = Emoji(emoji=icon) if icon else None
 
     _update_page_cover(page=page, cover=cover, session=session)
 
