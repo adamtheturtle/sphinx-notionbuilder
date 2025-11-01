@@ -23,10 +23,10 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
-    from ultimate_notion.page import Page
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
 _FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
@@ -181,6 +181,48 @@ def _is_existing_equivalent(
 
 
 @beartype
+def _update_page_cover(
+    *,
+    page: Page,
+    cover: Path | None,
+    session: Session,
+) -> None:
+    """
+    Update or remove the cover image of a page.
+    """
+    if cover is not None:
+        # Check if current cover matches to avoid unnecessary updates
+        should_update_cover = True
+        if page.cover is not None and isinstance(page.cover, NotionFile):
+            # Compare the local file with the existing cover
+            existing_cover_sha = _calculate_file_sha_from_url(
+                file_url=page.cover.url,
+            )
+            new_cover_sha = _calculate_file_sha(file_path=cover)
+            if existing_cover_sha == new_cover_sha:
+                should_update_cover = False
+
+        if should_update_cover:
+            # Upload the cover image
+            mime_type, _ = mimetypes.guess_type(url=cover.name)
+            if mime_type != "image/svg+xml":
+                mime_type = None
+
+            with cover.open(mode="rb") as file_stream:
+                uploaded_cover = session.upload(
+                    file=file_stream,
+                    file_name=cover.name,
+                    mime_type=mime_type,
+                )
+
+            uploaded_cover.wait_until_uploaded()
+            page.cover = uploaded_cover
+    # Remove cover if no cover is provided
+    elif page.cover is not None:
+        page.cover = None
+
+
+@beartype
 def _block_with_uploaded_file(
     *,
     block: Block,
@@ -314,39 +356,7 @@ def main(
     if icon:
         page.icon = Emoji(emoji=icon)
 
-    # Handle cover image
-    if cover is not None:
-        # Upload the cover image if provided
-        # Check if the current cover matches the new cover to avoid unnecessary updates
-        should_update_cover = True
-        if page.cover is not None:
-            if isinstance(page.cover, NotionFile):
-                # Compare the local file with the existing cover
-                existing_cover_sha = _calculate_file_sha_from_url(
-                    file_url=page.cover.url,
-                )
-                new_cover_sha = _calculate_file_sha(file_path=cover)
-                if existing_cover_sha == new_cover_sha:
-                    should_update_cover = False
-
-        if should_update_cover:
-            # Upload the cover image
-            mime_type, _ = mimetypes.guess_type(url=cover.name)
-            if mime_type != "image/svg+xml":
-                mime_type = None
-
-            with cover.open(mode="rb") as file_stream:
-                uploaded_cover = session.upload(
-                    file=file_stream,
-                    file_name=cover.name,
-                    mime_type=mime_type,
-                )
-
-            uploaded_cover.wait_until_uploaded()
-            page.cover = uploaded_cover
-    # Remove cover if no cover is provided
-    elif page.cover is not None:
-        page.cover = None
+    _update_page_cover(page=page, cover=cover, session=session)
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
