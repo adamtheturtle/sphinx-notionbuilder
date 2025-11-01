@@ -259,6 +259,17 @@ def _block_with_uploaded_file(
     help="Icon of the page",
     required=False,
 )
+@cloup.option(
+    "--cover",
+    help="Cover image file path for the page",
+    required=False,
+    type=cloup.Path(
+        exists=True,
+        path_type=Path,
+        file_okay=True,
+        dir_okay=False,
+    ),
+)
 @beartype
 def main(
     *,
@@ -267,6 +278,7 @@ def main(
     parent_database_id: str | None,
     title: str,
     icon: str | None = None,
+    cover: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -301,6 +313,40 @@ def main(
 
     if icon:
         page.icon = Emoji(emoji=icon)
+
+    # Handle cover image
+    if cover is not None:
+        # Upload the cover image if provided
+        # Check if the current cover matches the new cover to avoid unnecessary updates
+        should_update_cover = True
+        if page.cover is not None:
+            if isinstance(page.cover, NotionFile):
+                # Compare the local file with the existing cover
+                existing_cover_sha = _calculate_file_sha_from_url(
+                    file_url=page.cover.url,
+                )
+                new_cover_sha = _calculate_file_sha(file_path=cover)
+                if existing_cover_sha == new_cover_sha:
+                    should_update_cover = False
+
+        if should_update_cover:
+            # Upload the cover image
+            mime_type, _ = mimetypes.guess_type(url=cover.name)
+            if mime_type != "image/svg+xml":
+                mime_type = None
+
+            with cover.open(mode="rb") as file_stream:
+                uploaded_cover = session.upload(
+                    file=file_stream,
+                    file_name=cover.name,
+                    mime_type=mime_type,
+                )
+
+            uploaded_cover.wait_until_uploaded()
+            page.cover = uploaded_cover
+    # Remove cover if no cover is provided
+    elif page.cover is not None:
+        page.cover = None
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
