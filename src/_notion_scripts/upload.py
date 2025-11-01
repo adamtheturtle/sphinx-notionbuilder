@@ -181,6 +181,20 @@ def _is_existing_equivalent(
 
 
 @beartype
+def _get_mime_type_for_upload(*, file_name: str) -> str | None:
+    """Get MIME type for file upload.
+
+    Ultimate Notion does not support SVG files, so we need to provide
+    the MIME type ourselves for SVG files. See
+    https://github.com/ultimate-notion/ultimate-notion/issues/141.
+    """
+    mime_type, _ = mimetypes.guess_type(url=file_name)
+    if mime_type != "image/svg+xml":
+        mime_type = None
+    return mime_type
+
+
+@beartype
 def _update_page_cover(
     *,
     page: Page,
@@ -204,9 +218,7 @@ def _update_page_cover(
 
         if should_update_cover:
             # Upload the cover image
-            mime_type, _ = mimetypes.guess_type(url=cover.name)
-            if mime_type != "image/svg+xml":
-                mime_type = None
+            mime_type = _get_mime_type_for_upload(file_name=cover.name)
 
             with cover.open(mode="rb") as file_stream:
                 uploaded_cover = session.upload(
@@ -238,12 +250,7 @@ def _block_with_uploaded_file(
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-            # Ultimate Notion does not support SVG files, so we need to
-            # provide the MIME type ourselves for SVG files.
-            # See https://github.com/ultimate-notion/ultimate-notion/issues/141.
-            mime_type, _ = mimetypes.guess_type(url=file_path.name)
-            if mime_type != "image/svg+xml":
-                mime_type = None
+            mime_type = _get_mime_type_for_upload(file_name=file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
