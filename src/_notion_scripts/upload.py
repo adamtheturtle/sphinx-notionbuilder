@@ -299,8 +299,7 @@ def main(
         page = session.create_page(parent=parent, title=title)
         click.echo(message=f"Created new page: '{title}' ({page.url})")
 
-    if icon:
-        page.icon = Emoji(emoji=icon)
+    page.icon = Emoji(emoji=icon) if icon else None
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
