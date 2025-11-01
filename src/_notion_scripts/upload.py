@@ -22,11 +22,12 @@ from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
-    from ultimate_notion.page import Page
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
 _FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
@@ -80,6 +81,18 @@ def _calculate_file_sha_from_url(*, file_url: str) -> str:
             if chunk:
                 sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
+
+
+@beartype
+def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
+    """
+    Check if an existing file matches a local file by comparing SHA-256 hashes.
+    """
+    existing_file_sha = _calculate_file_sha_from_url(
+        file_url=existing_file_url
+    )
+    local_file_sha = _calculate_file_sha(file_path=local_file_path)
+    return existing_file_sha == local_file_sha
 
 
 @beartype
@@ -144,11 +157,10 @@ def _is_existing_equivalent(
                 return False
 
             local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            local_file_sha = _calculate_file_sha(file_path=local_file_path)
-            existing_file_sha = _calculate_file_sha_from_url(
-                file_url=existing_page_block.file_info.url,
+            return _files_match(
+                existing_file_url=existing_page_block.file_info.url,
+                local_file_path=local_file_path,
             )
-            return local_file_sha == existing_file_sha
     elif isinstance(existing_page_block, ParentBlock):
         assert isinstance(local_block, ParentBlock)
         existing_page_block_without_children = _block_without_children(
@@ -181,6 +193,51 @@ def _is_existing_equivalent(
 
 
 @beartype
+def _get_mime_type_for_upload(*, file_name: str) -> str | None:
+    """Get MIME type for file upload.
+
+    Ultimate Notion does not support SVG files, so we need to provide
+    the MIME type ourselves for SVG files. See
+    https://github.com/ultimate-notion/ultimate-notion/issues/141.
+    """
+    mime_type, _ = mimetypes.guess_type(url=file_name)
+    if mime_type != "image/svg+xml":
+        mime_type = None
+    return mime_type
+
+
+def _get_uploaded_cover(
+    *,
+    page: Page,
+    cover: Path,
+    session: Session,
+) -> UploadedFile | None:
+    """
+    Get uploaded cover file, or None if it matches the existing cover.
+    """
+    if (
+        page.cover is not None
+        and isinstance(page.cover, NotionFile)
+        and _files_match(
+            existing_file_url=page.cover.url, local_file_path=cover
+        )
+    ):
+        return None
+
+    mime_type = _get_mime_type_for_upload(file_name=cover.name)
+
+    with cover.open(mode="rb") as file_stream:
+        uploaded_cover = session.upload(
+            file=file_stream,
+            file_name=cover.name,
+            mime_type=mime_type,
+        )
+
+    uploaded_cover.wait_until_uploaded()
+    return uploaded_cover
+
+
+@beartype
 def _block_with_uploaded_file(
     *,
     block: Block,
@@ -196,12 +253,7 @@ def _block_with_uploaded_file(
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-            # Ultimate Notion does not support SVG files, so we need to
-            # provide the MIME type ourselves for SVG files.
-            # See https://github.com/ultimate-notion/ultimate-notion/issues/141.
-            mime_type, _ = mimetypes.guess_type(url=file_path.name)
-            if mime_type != "image/svg+xml":
-                mime_type = None
+            mime_type = _get_mime_type_for_upload(file_name=file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
@@ -259,6 +311,17 @@ def _block_with_uploaded_file(
     help="Icon of the page",
     required=False,
 )
+@cloup.option(
+    "--cover",
+    help="Cover image file path for the page",
+    required=False,
+    type=cloup.Path(
+        exists=True,
+        path_type=Path,
+        file_okay=True,
+        dir_okay=False,
+    ),
+)
 @beartype
 def main(
     *,
@@ -267,6 +330,7 @@ def main(
     parent_database_id: str | None,
     title: str,
     icon: str | None = None,
+    cover: Path | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -300,6 +364,11 @@ def main(
         click.echo(message=f"Created new page: '{title}' ({page.url})")
 
     page.icon = Emoji(emoji=icon) if icon else None
+    page.cover = (
+        _get_uploaded_cover(page=page, cover=cover, session=session)
+        if cover
+        else None
+    )
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))

@@ -11,4 +11,5 @@ Other options:
   --title TEXT               Title of the page to update (or create if it does
                              not exist)  [required]
   --icon TEXT                Icon of the page
+  --cover FILE               Cover image file path for the page
   --help                     Show this message and exit.
