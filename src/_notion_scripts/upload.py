@@ -205,10 +205,8 @@ def _update_page_cover(
     Update or remove the cover image of a page.
     """
     if cover is not None:
-        # Check if current cover matches to avoid unnecessary updates
         should_update_cover = True
         if page.cover is not None and isinstance(page.cover, NotionFile):
-            # Compare the local file with the existing cover
             existing_cover_sha = _calculate_file_sha_from_url(
                 file_url=page.cover.url,
             )
@@ -217,7 +215,6 @@ def _update_page_cover(
                 should_update_cover = False
 
         if should_update_cover:
-            # Upload the cover image
             mime_type = _get_mime_type_for_upload(file_name=cover.name)
 
             with cover.open(mode="rb") as file_stream:
@@ -229,7 +226,6 @@ def _update_page_cover(
 
             uploaded_cover.wait_until_uploaded()
             page.cover = uploaded_cover
-    # Remove cover if no cover is provided
     elif page.cover is not None:
         page.cover = None
 
