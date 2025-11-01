@@ -84,6 +84,18 @@ def _calculate_file_sha_from_url(*, file_url: str) -> str:
 
 
 @beartype
+def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
+    """
+    Check if an existing file matches a local file by comparing SHA-256 hashes.
+    """
+    existing_file_sha = _calculate_file_sha_from_url(
+        file_url=existing_file_url
+    )
+    local_file_sha = _calculate_file_sha(file_path=local_file_path)
+    return existing_file_sha == local_file_sha
+
+
+@beartype
 def _find_last_matching_block_index(
     *,
     existing_blocks: list[Block] | tuple[Block, ...],
@@ -145,11 +157,10 @@ def _is_existing_equivalent(
                 return False
 
             local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            local_file_sha = _calculate_file_sha(file_path=local_file_path)
-            existing_file_sha = _calculate_file_sha_from_url(
-                file_url=existing_page_block.file_info.url,
+            return _files_match(
+                existing_file_url=existing_page_block.file_info.url,
+                local_file_path=local_file_path,
             )
-            return local_file_sha == existing_file_sha
     elif isinstance(existing_page_block, ParentBlock):
         assert isinstance(local_block, ParentBlock)
         existing_page_block_without_children = _block_without_children(
@@ -204,13 +215,14 @@ def _get_uploaded_cover(
     """
     Get uploaded cover file, or None if it matches the existing cover.
     """
-    if page.cover is not None and isinstance(page.cover, NotionFile):
-        existing_cover_sha = _calculate_file_sha_from_url(
-            file_url=page.cover.url,
+    if (
+        page.cover is not None
+        and isinstance(page.cover, NotionFile)
+        and _files_match(
+            existing_file_url=page.cover.url, local_file_path=cover
         )
-        new_cover_sha = _calculate_file_sha(file_path=cover)
-        if existing_cover_sha == new_cover_sha:
-            return None
+    ):
+        return None
 
     mime_type = _get_mime_type_for_upload(file_name=cover.name)
 
