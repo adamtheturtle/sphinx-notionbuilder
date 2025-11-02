@@ -16,7 +16,7 @@ import click
 import cloup
 import requests
 from beartype import beartype
-from ultimate_notion import Emoji, NotionFile, Session
+from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -379,7 +379,7 @@ def main(
             page=page, cover=cover_path, session=session
         )
     elif cover_url:
-        page.cover = NotionFile(url=cover_url)
+        page.cover = ExternalFile(url=cover_url)
     else:
         page.cover = None
 
