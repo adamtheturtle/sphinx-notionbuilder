@@ -311,16 +311,25 @@ def _block_with_uploaded_file(
     help="Icon of the page",
     required=False,
 )
-@cloup.option(
-    "--cover",
-    help="Cover image file path for the page",
-    required=False,
-    type=cloup.Path(
-        exists=True,
-        path_type=Path,
-        file_okay=True,
-        dir_okay=False,
+@cloup.option_group(
+    "Cover image",
+    cloup.option(
+        "--cover-path",
+        help="Cover image file path for the page",
+        required=False,
+        type=cloup.Path(
+            exists=True,
+            path_type=Path,
+            file_okay=True,
+            dir_okay=False,
+        ),
     ),
+    cloup.option(
+        "--cover-url",
+        help="Cover image URL for the page",
+        required=False,
+    ),
+    constraint=cloup.constraints.mutually_exclusive,
 )
 @beartype
 def main(
@@ -330,7 +339,8 @@ def main(
     parent_database_id: str | None,
     title: str,
     icon: str | None = None,
-    cover: Path | None = None,
+    cover_path: Path | None = None,
+    cover_url: str | None = None,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -364,11 +374,14 @@ def main(
         click.echo(message=f"Created new page: '{title}' ({page.url})")
 
     page.icon = Emoji(emoji=icon) if icon else None
-    page.cover = (
-        _get_uploaded_cover(page=page, cover=cover, session=session)
-        if cover
-        else None
-    )
+    if cover_path:
+        page.cover = _get_uploaded_cover(
+            page=page, cover=cover_path, session=session
+        )
+    elif cover_url:
+        page.cover = NotionFile(url=cover_url)
+    else:
+        page.cover = None
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))

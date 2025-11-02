@@ -149,7 +149,7 @@ Arguments:
 - ``--parent-database-id``: The ID of the parent database in Notion (must be shared with your integration) - mutually exclusive with ``--parent-page-id``
 - ``--title``: Title for the new page in Notion
 - ``--icon``: (Optional) Icon for the page (emoji)
-- ``--cover``: (Optional) Path to a cover image file for the page
+- ``--cover-path``: (Optional) Path to a cover image file for the page
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
