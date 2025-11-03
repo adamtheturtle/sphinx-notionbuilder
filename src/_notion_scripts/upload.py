@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from ultimate_notion.database import Database
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
-_FileBlock = UnoImage | UnoVideo | UnoAudio | UnoPDF
 
 
 @beartype
