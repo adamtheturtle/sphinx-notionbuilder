@@ -97,13 +97,9 @@ Collapsible Content
 Dividers
 ~~~~~~~~
 
-.. rest-example::
+There will be a divider here (this does not work within collapse blocks).
 
-   Content before the divider.
-
-   ----
-
-   Content after the divider.
+--------
 
 Including Files
 ~~~~~~~~~~~~~~~
