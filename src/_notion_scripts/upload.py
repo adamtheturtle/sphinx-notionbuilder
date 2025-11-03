@@ -17,19 +17,13 @@ import cloup
 import requests
 from beartype import beartype
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
-from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
-from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
-from ultimate_notion.blocks import Image as UnoImage
-from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.blocks import Block, FileBaseBlock, ParentBlock
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
-
-_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
 
 
 @beartype
@@ -137,10 +131,10 @@ def _is_existing_equivalent(
     if type(existing_page_block) is not type(local_block):
         return False
 
-    if isinstance(local_block, _FILE_BLOCK_TYPES):
+    if isinstance(local_block, FileBaseBlock):
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
-            assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+            assert isinstance(existing_page_block, FileBaseBlock)
 
             if (
                 not isinstance(existing_page_block.file_info, NotionFile)
@@ -245,7 +239,7 @@ def _block_with_uploaded_file(
     """
     Replace a file block with an uploaded file block.
     """
-    if isinstance(block, _FILE_BLOCK_TYPES):
+    if isinstance(block, FileBaseBlock):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
             # Ignore ``mypy`` error as the keyword arguments are different
