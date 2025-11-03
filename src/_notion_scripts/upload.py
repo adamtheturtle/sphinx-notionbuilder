@@ -331,6 +331,12 @@ def _block_with_uploaded_file(
     ),
     constraint=cloup.constraints.mutually_exclusive,
 )
+@cloup.option(
+    "--cancel-on-discussion",
+    help="Cancel upload with error if the page has discussion thread comments",
+    is_flag=True,
+    default=False,
+)
 @beartype
 def main(
     *,
@@ -341,6 +347,7 @@ def main(
     icon: str | None = None,
     cover_path: Path | None = None,
     cover_url: str | None = None,
+    cancel_on_discussion: bool = False,
 ) -> None:
     """
     Upload documentation to Notion.
@@ -382,6 +389,13 @@ def main(
         page.cover = ExternalFile(url=cover_url)
     else:
         page.cover = None
+
+    if cancel_on_discussion and len(page.comments) > 0:
+        error_message = (
+            f"Page '{title}' has {len(page.comments)} discussion thread "
+            f"comment(s). Upload cancelled."
+        )
+        raise click.ClickException(message=error_message)
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
