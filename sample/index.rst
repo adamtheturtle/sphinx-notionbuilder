@@ -94,6 +94,13 @@ Collapsible Content
 
       It supports **all the same formatting** as regular content.
 
+Dividers
+~~~~~~~~
+
+There will be a divider here (this does not work within collapse blocks).
+
+--------
+
 Including Files
 ~~~~~~~~~~~~~~~
 

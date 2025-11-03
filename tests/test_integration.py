@@ -21,6 +21,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import (
@@ -3181,6 +3182,36 @@ def test_line_block(
             + text(text="preserved exactly as written")
             + text(text="\n")
         ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_transition_divider(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Transitions (horizontal rules) become Notion Divider blocks.
+    """
+    rst_content = """
+        First paragraph.
+
+        ----
+
+        Second paragraph.
+    """
+
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="First paragraph.")),
+        UnoDivider(),
+        UnoParagraph(text=text(text="Second paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
