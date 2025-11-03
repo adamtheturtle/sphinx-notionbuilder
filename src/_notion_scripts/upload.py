@@ -346,10 +346,10 @@ def main(
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
-    icon: str | None = None,
-    cover_path: Path | None = None,
-    cover_url: str | None = None,
-    cancel_on_discussion: bool = False,
+    icon: str | None,
+    cover_path: Path | None,
+    cover_url: str | None,
+    cancel_on_discussion: bool,
 ) -> None:
     """
     Upload documentation to Notion.
