@@ -40,6 +40,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
+from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import Heading as UnoHeading
@@ -1517,6 +1518,21 @@ def _(
 
     line_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=line_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.transition,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """
+    Process transition nodes by creating Notion Divider blocks.
+    """
+    del node
+    del section_level
+    return [UnoDivider()]
 
 
 @beartype

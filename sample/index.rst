@@ -94,6 +94,17 @@ Collapsible Content
 
       It supports **all the same formatting** as regular content.
 
+Dividers
+~~~~~~~~
+
+.. rest-example::
+
+   Content before the divider.
+
+   ----
+
+   Content after the divider.
+
 Including Files
 ~~~~~~~~~~~~~~~
 

@@ -81,6 +81,7 @@ The following syntax is supported:
 - PDFs (with URLs or local paths)
 - Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
+- Dividers (horizontal rules / transitions)
 - Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
 - Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
@@ -97,7 +98,6 @@ Unsupported Notion Block Types
 - Child database
 - Child page
 - Column and column list
-- Divider
 - File
 - Link preview
 - Mention
