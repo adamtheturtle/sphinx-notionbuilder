@@ -15,4 +15,5 @@ reportMissingTypeStubs
 reportUnknownArgumentType
 reportUnknownMemberType
 reportUnknownVariableType
+reportUnnecessaryIsInstance
 strikethrough

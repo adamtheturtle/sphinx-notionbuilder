@@ -397,6 +397,16 @@ def main(
         for details in blocks
     ]
 
+    for index, child in enumerate(iterable=page.children):
+        # This ignore works around a bug in Ultimate-Notion type hints.
+        # See https://github.com/ultimate-notion/ultimate-notion/issues/159.
+        if not isinstance(child, Block):  # pyright: ignore[reportUnnecessaryIsInstance]
+            non_block_page_child_error = (
+                f"We only support pages which only contain Blocks. "
+                f"Found {type(child)} instead at index {index}."
+            )
+            raise click.ClickException(message=non_block_page_child_error)
+
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
         local_blocks=block_objs,
