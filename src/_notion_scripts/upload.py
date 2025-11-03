@@ -333,7 +333,10 @@ def _block_with_uploaded_file(
 )
 @cloup.option(
     "--cancel-on-discussion",
-    help="Cancel upload with error if the page has discussion thread comments",
+    help=(
+        "Cancel upload with error if blocks to be deleted have discussion "
+        "threads"
+    ),
     is_flag=True,
     default=False,
 )
@@ -390,13 +393,6 @@ def main(
     else:
         page.cover = None
 
-    if cancel_on_discussion and len(page.comments) > 0:
-        error_message = (
-            f"Page '{title}' has {len(page.comments)} discussion thread "
-            f"comment(s). Upload cancelled."
-        )
-        raise click.ClickException(message=error_message)
-
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
         for details in blocks
@@ -414,7 +410,25 @@ def main(
         ),
     )
     delete_start_index = (last_matching_index or -1) + 1
-    for existing_page_block in page.children[delete_start_index:]:
+    blocks_to_delete = page.children[delete_start_index:]
+    blocks_to_delete_with_discussions = [
+        block for block in blocks_to_delete if len(block.discussions) > 0
+    ]
+
+    if cancel_on_discussion and blocks_to_delete_with_discussions:
+        total_discussions = sum(
+            len(block.discussions)
+            for block in blocks_to_delete_with_discussions
+        )
+        error_message = (
+            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
+            f"block(s) to delete with {total_discussions} discussion "
+            "thread(s). "
+            f"Upload cancelled."
+        )
+        raise click.ClickException(message=error_message)
+
+    for existing_page_block in blocks_to_delete:
         existing_page_block.delete()
 
     block_objs_to_upload = [

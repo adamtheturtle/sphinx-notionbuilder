@@ -15,6 +15,6 @@ Other options:
   --title TEXT               Title of the page to update (or create if it does
                              not exist)  [required]
   --icon TEXT                Icon of the page
-  --cancel-on-discussion     Cancel upload with error if the page has discussion
-                             thread comments
+  --cancel-on-discussion     Cancel upload with error if blocks to be deleted
+                             have discussion threads
   --help                     Show this message and exit.
