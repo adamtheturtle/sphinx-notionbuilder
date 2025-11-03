@@ -121,6 +121,15 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 #. Create a Notion integration at `notion-integrations`_
+
+The integration token must have the following "Capabilities" set within the "Configuration" tab:
+
+- **Content Capabilities**: Insert content, Update content, Read content
+- **Comment Capabilities**: Read comments (required for checking if blocks have discussion threads for the ``--cancel-on-discussion`` option)
+- **User Capabilities**: Read user information without email addresses (for bot identification)
+
+In the "Access" tab, choose the pages and databases your integration can access.
+
 #. Get your integration token and set it as an environment variable:
 
 .. code-block:: console
