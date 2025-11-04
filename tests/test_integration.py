@@ -217,6 +217,35 @@ def test_notion_link_to_page_with_content_around(
     )
 
 
+def test_notion_link_to_page_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-link-to-page`` directive with HTML builder creates a link.
+    """
+    test_page_id = "12345678-1234-1234-1234-123456789abc"
+    rst_content = f"""
+        .. notion-link-to-page:: {test_page_id}
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_url = f"https://www.notion.so/{test_page_id}"
+    assert expected_url in index_html
+
+
 def test_multiple_paragraphs(
     *,
     make_app: Callable[..., SphinxTestApp],

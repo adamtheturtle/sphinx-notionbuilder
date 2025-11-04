@@ -222,9 +222,18 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         Create a Notion link-to-page block.
         """
         (page_id,) = self.arguments
-        node = _LinkToPageNode()
-        node.attributes["page_id"] = page_id
-        return [node]
+
+        if self.env.app.builder.name == "notion":
+            node = _LinkToPageNode()
+            node.attributes["page_id"] = page_id
+            return [node]
+
+        notion_url = f"https://www.notion.so/{page_id}"
+        reference = nodes.reference(refuri=notion_url, text=notion_url)
+        reference += nodes.Text(data=notion_url)
+        paragraph = nodes.paragraph()
+        paragraph += reference
+        return [paragraph]
 
 
 @dataclass
@@ -1671,11 +1680,11 @@ def _notion_register_link_to_page_directive(
     """
     Register the link-to-page directive.
     """
-    if isinstance(app.builder, NotionBuilder):
-        sphinx_docutils.register_directive(
-            name="notion-link-to-page",
-            directive=_NotionLinkToPageDirective,
-        )
+    del app
+    sphinx_docutils.register_directive(
+        name="notion-link-to-page",
+        directive=_NotionLinkToPageDirective,
+    )
 
 
 @beartype
