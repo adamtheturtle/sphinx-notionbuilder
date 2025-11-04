@@ -9,6 +9,7 @@ import textwrap
 from collections.abc import Callable, Collection
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import anstrip
 import pytest
@@ -34,6 +35,7 @@ from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
 from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import LinkToPage as UnoLinkToPage
 from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -51,7 +53,9 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
+from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
+from ultimate_notion.obj_api.objects import PageRef
 from ultimate_notion.rich_text import Text, math, text
 
 
@@ -149,6 +153,97 @@ def test_single_paragraph(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_notion_link_to_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-link-to-page`` directives become Notion link-to-page blocks.
+    """
+    test_page_id = "12345678-1234-1234-1234-123456789abc"
+
+    rst_content = f"""
+        .. notion-link-to-page:: {test_page_id}
+    """
+
+    page_ref = PageRef(page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+    expected_objects: list[Block] = [
+        UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_link_to_page_with_content_around(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-link-to-page`` directive works with surrounding content.
+    """
+    test_page_id = "87654321-4321-4321-4321-cba987654321"
+
+    rst_content = f"""
+        This is a paragraph before.
+
+        .. notion-link-to-page:: {test_page_id}
+
+        This is a paragraph after.
+    """
+
+    page_ref = PageRef(page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+    expected_objects: list[Block] = [
+        UnoParagraph(text=text(text="This is a paragraph before.")),
+        UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
+        UnoParagraph(text=text(text="This is a paragraph after.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_link_to_page_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-link-to-page`` directive with HTML builder creates a link.
+    """
+    test_page_id = "12345678-1234-1234-1234-123456789abc"
+    rst_content = f"""
+        .. notion-link-to-page:: {test_page_id}
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_url = f"https://www.notion.so/{test_page_id}"
+    assert expected_url in index_html
 
 
 def test_multiple_paragraphs(

@@ -61,6 +61,13 @@ Link to Notion
 
    Link to Notion page without title `<https://www.notion.so/Other-page-2a19ce7b60a4807dbae7c12161f12056>`_
 
+Link to Notion Page Block
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   .. notion-link-to-page:: 2a19ce7b60a4807dbae7c12161f12056
+
 Admonitions
 ~~~~~~~~~~~
 

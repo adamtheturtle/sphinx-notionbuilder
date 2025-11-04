@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import bs4
 import sphinxnotes.strike
@@ -54,6 +55,7 @@ from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
 from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import LinkToPage as UnoLinkToPage
 from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -71,7 +73,9 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
+from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
+from ultimate_notion.obj_api.objects import PageRef
 from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
@@ -196,6 +200,40 @@ class _NotionPdfIncludeDirective(PdfIncludeDirective):
         node = _PdfNode()
         node.attributes["uri"] = pdf_file
         return [node]
+
+
+@beartype
+class _LinkToPageNode(nodes.Element):
+    """
+    Custom node for Notion link-to-page blocks.
+    """
+
+
+@beartype
+class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
+    """
+    Link-to-page directive that creates Notion link-to-page blocks.
+    """
+
+    required_arguments = 1
+
+    def run(self) -> list[nodes.Element]:
+        """
+        Create a Notion link-to-page block.
+        """
+        (page_id,) = self.arguments
+
+        if isinstance(self.env.app.builder, NotionBuilder):
+            node = _LinkToPageNode()
+            node.attributes["page_id"] = page_id
+            return [node]
+
+        notion_url = f"https://www.notion.so/{page_id}"
+        reference = nodes.reference(refuri=notion_url, text=notion_url)
+        reference += nodes.Text(data=notion_url)
+        paragraph = nodes.paragraph()
+        paragraph += reference
+        return [paragraph]
 
 
 @dataclass
@@ -1338,6 +1376,26 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: _LinkToPageNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process link-to-page nodes by creating Notion link-to-page blocks.
+
+    This handles nodes created by our custom NotionLinkToPageDirective.
+    """
+    del section_level
+
+    page_id = node.attributes["page_id"]
+    page_ref = PageRef(page_id=UUID(hex=page_id))
+    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+
+    return [UnoLinkToPage.wrap_obj_ref(obj_link_to_page)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.container,
     *,
     section_level: int,
@@ -1616,6 +1674,20 @@ def _notion_register_pdf_include_directive(
 
 
 @beartype
+def _notion_register_link_to_page_directive(
+    app: Sphinx,
+) -> None:
+    """
+    Register the link-to-page directive.
+    """
+    del app
+    sphinx_docutils.register_directive(
+        name="notion-link-to-page",
+        directive=_NotionLinkToPageDirective,
+    )
+
+
+@beartype
 def _filter_ulem(record: logging.LogRecord) -> bool:
     """Filter out the warning about the `ulem package already being included`.
 
@@ -1653,6 +1725,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.connect(
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
+    )
+
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_link_to_page_directive,
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)
