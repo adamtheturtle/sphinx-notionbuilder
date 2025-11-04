@@ -6,6 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import json
 import mimetypes
+from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -237,6 +238,26 @@ def _get_uploaded_cover(
 
 
 @beartype
+def _check_all_blocks_recursive(
+    *,
+    blocks: Sequence[Block | Page],
+) -> None:
+    """
+    Recursively check that all items are Blocks, including nested children.
+    """
+    for child in blocks:
+        if not isinstance(child, Block):
+            non_block_page_child_error = (
+                f"We only support pages which only contain Blocks. "
+                f"Found {type(child)}. "
+            )
+            raise click.ClickException(message=non_block_page_child_error)
+
+        if isinstance(child, ParentBlock) and child.children:
+            _check_all_blocks_recursive(blocks=child.children)
+
+
+@beartype
 def _block_with_uploaded_file(
     *,
     block: Block,
@@ -397,15 +418,7 @@ def main(
         for details in blocks
     ]
 
-    for index, child in enumerate(iterable=page.children):
-        # This ignore works around a bug in Ultimate-Notion type hints.
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/159.
-        if not isinstance(child, Block):  # pyright: ignore[reportUnnecessaryIsInstance]
-            non_block_page_child_error = (
-                f"We only support pages which only contain Blocks. "
-                f"Found {type(child)} instead at index {index}."
-            )
-            raise click.ClickException(message=non_block_page_child_error)
+    _check_all_blocks_recursive(blocks=page.children)
 
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
