@@ -61,6 +61,17 @@ Link to Notion
 
    Link to Notion page without title `<https://www.notion.so/Other-page-2a19ce7b60a4807dbae7c12161f12056>`_
 
+Link to Notion Page Block
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   You can create a link-to-page block using the ``notion-link-to-page`` directive with a page ID:
+
+   .. notion-link-to-page:: 2a19ce7b60a4807dbae7c12161f12056
+
+   This creates a Notion "link to page" block that references another page in your workspace.
+
 Admonitions
 ~~~~~~~~~~~
 

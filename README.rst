@@ -85,10 +85,39 @@ The following syntax is supported:
 - Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
 - Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
+- Link to page blocks (using the ``notion-link-to-page`` directive)
 
 See a `sample document source`_ and the `published Notion page`_.
 
 All of these can be used in a way which means your documentation can still be rendered to HTML.
+
+Directives
+----------
+
+``sphinx-notionbuilder`` provides custom directives for Notion-specific features:
+
+``notion-link-to-page``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Creates a Notion "link to page" block that references another page in your Notion workspace.
+
+**Usage:**
+
+.. code-block:: rst
+
+   .. notion-link-to-page:: PAGE_ID
+
+**Parameters:**
+
+- ``PAGE_ID``: The UUID of the Notion page you want to link to (without hyphens or with hyphens, both formats are accepted)
+
+**Example:**
+
+.. code-block:: rst
+
+   .. notion-link-to-page:: 12345678-1234-1234-1234-123456789abc
+
+This creates a clickable link block in Notion that navigates to the specified page when clicked.
 
 Unsupported Notion Block Types
 ------------------------------
