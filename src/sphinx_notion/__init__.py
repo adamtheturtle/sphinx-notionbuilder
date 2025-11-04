@@ -223,7 +223,7 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         """
         (page_id,) = self.arguments
 
-        if self.env.app.builder.name == "notion":
+        if isinstance(self.env.app.builder, NotionBuilder):
             node = _LinkToPageNode()
             node.attributes["page_id"] = page_id
             return [node]
