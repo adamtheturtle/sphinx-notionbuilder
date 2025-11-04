@@ -17,8 +17,6 @@ Text Formatting
 
 .. rest-example::
 
-   Some text with a link to `Google <https://google.com>`_ and `<https://example.com>`_.
-
    This is **bold** and *italic* and ``inline code``.
 
    This text has :strike:`strike` formatting and :del:`deleted text` as well.
@@ -36,6 +34,32 @@ Text Formatting
    The builder supports keyboard shortcuts using the standard ``:kbd:`` role: Press :kbd:`Ctrl+C` to copy, :kbd:`Ctrl+V` to paste.
 
    The builder supports file paths using the standard ``:file:`` role: Edit the :file:`config.py` file or check :file:`/etc/hosts`.
+
+Links
+~~~~~
+
+Link with a title
+^^^^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   Link to `Google <https://google.com>`_
+
+Link with no title
+^^^^^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   Link to `<https://google.com>`_
+
+Link to Notion
+^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   Link to `Notion page with title <https://www.notion.so/Other-page-2a19ce7b60a4807dbae7c12161f12056>`_
+
+   Link to Notion page without title `<https://www.notion.so/Other-page-2a19ce7b60a4807dbae7c12161f12056>`_
 
 Admonitions
 ~~~~~~~~~~~
