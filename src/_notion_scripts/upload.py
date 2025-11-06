@@ -6,7 +6,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import json
 import mimetypes
-from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -240,26 +239,6 @@ def _get_uploaded_cover(
 
 
 @beartype
-def _check_all_blocks_recursive(
-    *,
-    blocks: Sequence[Block | Page],
-) -> None:
-    """
-    Recursively check that all items are Blocks, including nested children.
-    """
-    for child in blocks:
-        if not isinstance(child, Block):
-            non_block_page_child_error = (
-                f"We only support pages which only contain Blocks. "
-                f"Found {type(child)}. "
-            )
-            raise click.ClickException(message=non_block_page_child_error)
-
-        if isinstance(child, ParentBlock) and child.children:
-            _check_all_blocks_recursive(blocks=child.children)
-
-
-@beartype
 def _block_with_uploaded_file(
     *,
     block: Block,
@@ -415,12 +394,17 @@ def main(
     else:
         page.cover = None
 
+    if page.subpages:
+        non_block_page_child_error = (
+            "We only support pages which only contain Blocks. "
+            "This page has subpages."
+        )
+        raise click.ClickException(message=non_block_page_child_error)
+
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
         for details in blocks
     ]
-
-    _check_all_blocks_recursive(blocks=page.children)
 
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
