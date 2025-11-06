@@ -394,17 +394,17 @@ def main(
     else:
         page.cover = None
 
-    block_objs = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in blocks
-    ]
-
     if page.subpages:
         non_block_page_child_error = (
             "We only support pages which only contain Blocks. "
             "This page has subpages."
         )
         raise click.ClickException(message=non_block_page_child_error)
+
+    block_objs = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in blocks
+    ]
 
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.children,
