@@ -280,19 +280,17 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
 
 @beartype
-def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
+def _notion_mention_user_role(
     name: str,
     rawtext: str,
     text_content: str,
     lineno: int,
     inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """
     Create a Notion user mention role.
     """
-    del name, rawtext, lineno, inliner, options, content
+    del name, rawtext, lineno, inliner
     node = _MentionUserNode()
     node.attributes["user_id"] = text_content
     node += nodes.Text(data=f"@{text_content}")
