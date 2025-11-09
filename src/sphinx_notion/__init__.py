@@ -4,6 +4,7 @@ Sphinx Notion Builder.
 
 import json
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -18,6 +19,7 @@ from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStu
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import states
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
@@ -75,7 +77,15 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.obj_api.objects import PageRef
+from ultimate_notion.obj_api.objects import (
+    Annotations,
+    MentionObject,
+    MentionPage,
+    MentionUser,
+    ObjectRef,
+    PageRef,
+    UserRef,
+)
 from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
@@ -236,6 +246,63 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         return [paragraph]
 
 
+@beartype
+class _MentionNode(nodes.Inline, nodes.TextElement):
+    """
+    Custom inline node for Notion mentions.
+    """
+
+
+def _notion_mention_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: states.Inliner,
+    options: dict[str, Any] | None = None,
+    content: Sequence[str] = (),
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """Create a Notion mention inline role.
+
+    The text should be in the format: "type:id" where type is "user" or "page"
+    and id is the UUID of the user or page to mention.
+
+    Examples:
+        :notion-mention:`user:12345678-1234-1234-1234-123456789abc`
+        :notion-mention:`page:12345678-1234-1234-1234-123456789abc`
+    """
+    del name, rawtext, options, content
+
+    parts = text.split(sep=":", maxsplit=1)
+    if len(parts) != 2:  # noqa: PLR2004
+        msg = inliner.reporter.error(
+            f"notion-mention role requires 'type:id' format, got: {text}",
+            line=lineno,
+        )
+        return [], [msg]
+
+    mention_type, mention_id = parts
+    if mention_type not in {"user", "page"}:
+        msg = inliner.reporter.error(
+            "notion-mention type must be 'user' or 'page', got: "
+            f"{mention_type}",
+            line=lineno,
+        )
+        return [], [msg]
+
+    if isinstance(inliner.document.settings.env.app.builder, NotionBuilder):
+        node = _MentionNode()
+        node.attributes["mention_type"] = mention_type
+        node.attributes["mention_id"] = mention_id
+        node += nodes.Text(data=f"@{mention_type}")
+        return [node], []
+
+    notion_url = f"https://www.notion.so/{mention_id}"
+    reference = nodes.reference(refuri=notion_url)
+    reference += nodes.Text(data=f"@{mention_type}")
+    return [reference], []
+
+
 @dataclass
 class _TableStructure:
     """
@@ -290,6 +357,35 @@ def _(node: nodes.reference) -> Text:
         italic=False,
         code=False,
     )
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: _MentionNode) -> Text:
+    """
+    Process mention nodes by creating Notion mentions.
+    """
+    mention_type = node.attributes["mention_type"]
+    mention_id = node.attributes["mention_id"]
+
+    annotations = Annotations()
+    mention_uuid = UUID(hex=mention_id)
+
+    mention: MentionUser | MentionPage
+    if mention_type == "user":
+        user_ref = UserRef(id=mention_uuid)
+        mention = MentionUser(user=user_ref)
+    else:
+        obj_ref = ObjectRef(id=mention_uuid)
+        mention = MentionPage(page=obj_ref)
+
+    mention_obj = MentionObject(
+        mention=mention,
+        plain_text=f"@{mention_type}",
+        annotations=annotations,
+    )
+
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
 @beartype
@@ -1688,6 +1784,20 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
+def _notion_register_mention_role(
+    app: Sphinx,
+) -> None:
+    """
+    Register the mention role.
+    """
+    del app
+    sphinx_docutils.register_role(
+        name="notion-mention",
+        role=_notion_mention_role,
+    )
+
+
+@beartype
 def _filter_ulem(record: logging.LogRecord) -> bool:
     """Filter out the warning about the `ulem package already being included`.
 
@@ -1730,6 +1840,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.connect(
         event="builder-inited",
         callback=_notion_register_link_to_page_directive,
+    )
+
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_mention_role,
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)

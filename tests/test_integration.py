@@ -55,7 +55,15 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.obj_api.objects import PageRef
+from ultimate_notion.obj_api.objects import (
+    Annotations,
+    MentionObject,
+    MentionPage,
+    MentionUser,
+    ObjectRef,
+    PageRef,
+    UserRef,
+)
 from ultimate_notion.rich_text import Text, math, text
 
 
@@ -244,6 +252,114 @@ def test_notion_link_to_page_html_output(
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
     expected_url = f"https://www.notion.so/{test_page_id}"
     assert expected_url in index_html
+
+
+def test_notion_mention_user(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention`` role with user type creates a user mention.
+    """
+    test_user_id = "12345678-1234-1234-1234-123456789abc"
+
+    rst_content = f"""
+        This is a paragraph with :notion-mention:`user:{test_user_id}` in it.
+    """
+
+    user_ref = UserRef(id=UUID(hex=test_user_id))
+    mention = MentionUser(user=user_ref)
+    annotations = Annotations()
+    mention_obj = MentionObject(
+        mention=mention,
+        plain_text="@user",
+        annotations=annotations,
+    )
+
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="This is a paragraph with ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=" in it."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention`` role with page type creates a page mention.
+    """
+    test_page_id = "87654321-4321-4321-4321-cba987654321"
+
+    rst_content = f"""
+        Check out :notion-mention:`page:{test_page_id}` for more info.
+    """
+
+    obj_ref = ObjectRef(id=UUID(hex=test_page_id))
+    mention = MentionPage(page=obj_ref)
+    annotations = Annotations()
+    mention_obj = MentionObject(
+        mention=mention,
+        plain_text="@page",
+        annotations=annotations,
+    )
+
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="Check out ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=" for more info."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention`` role with HTML builder creates a link.
+    """
+    test_user_id = "12345678-1234-1234-1234-123456789abc"
+    rst_content = f"""
+        Hello :notion-mention:`user:{test_user_id}` there.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_url = f"https://www.notion.so/{test_user_id}"
+    assert expected_url in index_html
+    assert "@user" in index_html or "&#64;user" in index_html
 
 
 def test_multiple_paragraphs(
