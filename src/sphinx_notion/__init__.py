@@ -573,17 +573,9 @@ def _(node: _MentionDateNode) -> Text:
     Process mention date nodes by creating date mention rich text.
     """
     date_str = node.attributes["date"]
-    try:
-        parsed_date = pendulum.parse(text=date_str, strict=True)
-    except Exception as e:
-        msg = f"Invalid date format: {date_str}"
-        raise ValueError(msg) from e
-
-    if isinstance(parsed_date, dt.datetime | dt.date):
-        date_range = DateRange.build(dt_spec=parsed_date)
-    else:
-        msg = f"Unsupported date type: {type(parsed_date)}"
-        raise TypeError(msg)
+    parsed_date = pendulum.parse(text=date_str, strict=True)
+    assert isinstance(parsed_date, dt.datetime | dt.date)
+    date_range = DateRange.build(dt_spec=parsed_date)
 
     mention_date = MentionDate(date=date_range)
     mention_obj = MentionObject(
