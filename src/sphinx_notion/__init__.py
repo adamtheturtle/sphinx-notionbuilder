@@ -27,6 +27,7 @@ from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
+from sphinx.writers.html5 import HTML5Translator
 from sphinx_iframes import iframe_node
 from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
@@ -1951,18 +1952,102 @@ def _make_static_dir(app: Sphinx) -> None:
 
 
 @beartype
-def _visit_mention_node(self: NodeVisitor, node: nodes.Node) -> None:
-    """Visit a mention node for non-Notion builders (HTML, LaTeX, etc.).
+def _visit_mention_user_node_html(
+    self: HTML5Translator,
+    node: _MentionUserNode,
+) -> None:
+    """Visit a user mention node for HTML builder.
 
-    Renders the text content of the mention node.
+    Renders as a link to the Notion user page.
+    """
+    user_id = node.attributes["user_id"]
+    url = f"https://www.notion.so/{user_id.replace('-', '')}"
+    self.body.append(f'<a href="{url}">@{user_id}</a>')
+    raise nodes.SkipNode
+
+
+@beartype
+def _depart_mention_user_node_html(
+    self: HTML5Translator,
+    node: _MentionUserNode,
+) -> None:
+    """Depart a user mention node for HTML builder.
+
+    Not called due to SkipNode in visit.
+    """
+
+
+@beartype
+def _visit_mention_page_node_html(
+    self: HTML5Translator,
+    node: _MentionPageNode,
+) -> None:
+    """Visit a page mention node for HTML builder.
+
+    Renders as a link to the Notion page.
+    """
+    page_id = node.attributes["page_id"]
+    url = f"https://www.notion.so/{page_id.replace('-', '')}"
+    self.body.append(f'<a href="{url}">{page_id}</a>')
+    raise nodes.SkipNode
+
+
+@beartype
+def _depart_mention_page_node_html(
+    self: HTML5Translator,
+    node: _MentionPageNode,
+) -> None:
+    """Depart a page mention node for HTML builder.
+
+    Not called due to SkipNode in visit.
+    """
+
+
+@beartype
+def _visit_mention_database_node_html(
+    self: HTML5Translator,
+    node: _MentionDatabaseNode,
+) -> None:
+    """Visit a database mention node for HTML builder.
+
+    Renders as a link to the Notion database.
+    """
+    database_id = node.attributes["database_id"]
+    url = f"https://www.notion.so/{database_id.replace('-', '')}"
+    self.body.append(f'<a href="{url}">{database_id}</a>')
+    raise nodes.SkipNode
+
+
+@beartype
+def _depart_mention_database_node_html(
+    self: HTML5Translator,
+    node: _MentionDatabaseNode,
+) -> None:
+    """Depart a database mention node for HTML builder.
+
+    Not called due to SkipNode in visit.
+    """
+
+
+@beartype
+def _visit_mention_date_node_html(
+    self: HTML5Translator,
+    node: _MentionDateNode,
+) -> None:
+    """Visit a date mention node for HTML builder.
+
+    Renders the date as plain text (dates don't have URLs in Notion).
     """
     self.body.append(node.astext())
     raise nodes.SkipNode
 
 
 @beartype
-def _depart_mention_node(self: NodeVisitor, node: nodes.Node) -> None:
-    """Depart a mention node for non-Notion builders (HTML, LaTeX, etc.).
+def _depart_mention_date_node_html(
+    self: HTML5Translator,
+    node: _MentionDateNode,
+) -> None:
+    """Depart a date mention node for HTML builder.
 
     Not called due to SkipNode in visit.
     """
@@ -1995,27 +2080,22 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     app.add_node(
         node=_MentionUserNode,
-        html=(_visit_mention_node, _depart_mention_node),
-        latex=(_visit_mention_node, _depart_mention_node),
-        text=(_visit_mention_node, _depart_mention_node),
+        html=(_visit_mention_user_node_html, _depart_mention_user_node_html),
     )
     app.add_node(
         node=_MentionPageNode,
-        html=(_visit_mention_node, _depart_mention_node),
-        latex=(_visit_mention_node, _depart_mention_node),
-        text=(_visit_mention_node, _depart_mention_node),
+        html=(_visit_mention_page_node_html, _depart_mention_page_node_html),
     )
     app.add_node(
         node=_MentionDatabaseNode,
-        html=(_visit_mention_node, _depart_mention_node),
-        latex=(_visit_mention_node, _depart_mention_node),
-        text=(_visit_mention_node, _depart_mention_node),
+        html=(
+            _visit_mention_database_node_html,
+            _depart_mention_database_node_html,
+        ),
     )
     app.add_node(
         node=_MentionDateNode,
-        html=(_visit_mention_node, _depart_mention_node),
-        latex=(_visit_mention_node, _depart_mention_node),
-        text=(_visit_mention_node, _depart_mention_node),
+        html=(_visit_mention_date_node_html, _depart_mention_date_node_html),
     )
 
     logger = logging.getLogger(name="sphinx.sphinx.registry")

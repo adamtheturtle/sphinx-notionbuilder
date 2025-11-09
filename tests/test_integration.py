@@ -3494,7 +3494,7 @@ def test_notion_mention_user_html_output(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-mention-user`` role with HTML builder shows the user ID.
+    ``notion-mention-user`` role with HTML builder generates a link.
     """
     test_user_id = "12345678-1234-1234-1234-123456789abc"
     rst_content = f"""
@@ -3513,7 +3513,8 @@ def test_notion_mention_user_html_output(
     app.build()
     assert app.statuscode == 0
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
-    assert f"@{test_user_id}" in index_html
+    expected_url = f"https://www.notion.so/{test_user_id.replace('-', '')}"
+    assert f'<a href="{expected_url}">@{test_user_id}</a>' in index_html
 
 
 def test_notion_mention_page_html_output(
@@ -3522,7 +3523,7 @@ def test_notion_mention_page_html_output(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-mention-page`` role with HTML builder shows the page ID.
+    ``notion-mention-page`` role with HTML builder generates a link.
     """
     test_page_id = "87654321-4321-4321-4321-cba987654321"
     rst_content = f"""
@@ -3541,7 +3542,8 @@ def test_notion_mention_page_html_output(
     app.build()
     assert app.statuscode == 0
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
-    assert test_page_id in index_html
+    expected_url = f"https://www.notion.so/{test_page_id.replace('-', '')}"
+    assert f'<a href="{expected_url}">{test_page_id}</a>' in index_html
 
 
 def test_notion_mention_database_html_output(
@@ -3550,7 +3552,7 @@ def test_notion_mention_database_html_output(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-mention-database`` role with HTML builder shows the database ID.
+    ``notion-mention-database`` role with HTML builder generates a link.
     """
     test_database_id = "abcdef12-3456-7890-abcd-ef1234567890"
     rst_content = f"""
@@ -3569,7 +3571,8 @@ def test_notion_mention_database_html_output(
     app.build()
     assert app.statuscode == 0
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
-    assert test_database_id in index_html
+    expected_url = f"https://www.notion.so/{test_database_id.replace('-', '')}"
+    assert f'<a href="{expected_url}">{test_database_id}</a>' in index_html
 
 
 def test_notion_mention_date_html_output(
