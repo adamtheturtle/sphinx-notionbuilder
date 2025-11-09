@@ -5,7 +5,6 @@ Sphinx Notion Builder.
 import datetime as dt
 import json
 import logging
-from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -298,19 +297,17 @@ def _notion_mention_user_role(
 
 
 @beartype
-def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
+def _notion_mention_page_role(
     name: str,
     rawtext: str,
     text_content: str,
     lineno: int,
     inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """
     Create a Notion page mention role.
     """
-    del name, rawtext, lineno, inliner, options, content
+    del name, rawtext, lineno, inliner
     node = _MentionPageNode()
     node.attributes["page_id"] = text_content
     node += nodes.Text(data=text_content)
@@ -318,19 +315,17 @@ def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
 
 
 @beartype
-def _notion_mention_database_role(  # pylint: disable=too-many-positional-arguments
+def _notion_mention_database_role(
     name: str,
     rawtext: str,
     text_content: str,
     lineno: int,
     inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """
     Create a Notion database mention role.
     """
-    del name, rawtext, lineno, inliner, options, content
+    del name, rawtext, lineno, inliner
     node = _MentionDatabaseNode()
     node.attributes["database_id"] = text_content
     node += nodes.Text(data=text_content)
@@ -338,19 +333,17 @@ def _notion_mention_database_role(  # pylint: disable=too-many-positional-argume
 
 
 @beartype
-def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
+def _notion_mention_date_role(
     name: str,
     rawtext: str,
     text_content: str,
     lineno: int,
     inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """
     Create a Notion date mention role.
     """
-    del name, rawtext, lineno, inliner, options, content
+    del name, rawtext, lineno, inliner
     node = _MentionDateNode()
     node.attributes["date"] = text_content
     node += nodes.Text(data=text_content)
