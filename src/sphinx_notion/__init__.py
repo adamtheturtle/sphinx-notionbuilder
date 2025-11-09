@@ -13,7 +13,6 @@ from typing import Any
 from uuid import UUID
 
 import bs4
-import pendulum
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -573,8 +572,7 @@ def _(node: _MentionDateNode) -> Text:
     Process mention date nodes by creating date mention rich text.
     """
     date_str = node.attributes["date"]
-    parsed_date = pendulum.parse(text=date_str, strict=True)
-    assert isinstance(parsed_date, dt.datetime | dt.date)
+    parsed_date = dt.date.fromisoformat(date_str)
     date_range = DateRange.build(dt_spec=parsed_date)
 
     mention_date = MentionDate(date=date_range)

@@ -13,7 +13,6 @@ from typing import Any
 from uuid import UUID
 
 import anstrip
-import pendulum
 import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
@@ -3461,8 +3460,7 @@ def test_notion_mention_date(
         The meeting is on :notion-mention-date:`{test_date}`.
     """
 
-    parsed_date = pendulum.parse(text=test_date, strict=True)
-    assert isinstance(parsed_date, dt.datetime | dt.date)
+    parsed_date = dt.date.fromisoformat(test_date)
     date_range = DateRange.build(dt_spec=parsed_date)
     mention_date = MentionDate(date=date_range)
     mention_obj = MentionObject(
