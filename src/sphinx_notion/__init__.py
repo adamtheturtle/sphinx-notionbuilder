@@ -97,6 +97,14 @@ _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
 @beartype
+def _validate_mention(mention_id: str) -> UUID:
+    """
+    Ensure the provided string is a valid UUID in hex form and return it.
+    """
+    return UUID(hex=mention_id)
+
+
+@beartype
 def _get_text_color_mapping() -> dict[str, Color]:
     """
     Get the mapping from CSS classes to Notion colors.
@@ -265,6 +273,7 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         Create a Notion link-to-page block.
         """
         (page_id,) = self.arguments
+        _validate_mention(mention_id=page_id)
 
         if isinstance(self.env.app.builder, NotionBuilder):
             node = _LinkToPageNode()
@@ -293,6 +302,7 @@ def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
     Create a Notion user mention role.
     """
     del name, rawtext, lineno, inliner, options, content
+    _validate_mention(mention_id=text_content)
     node = _MentionUserNode()
     node.attributes["user_id"] = text_content
     node += nodes.Text(data=f"@{text_content}")
@@ -313,6 +323,7 @@ def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
     Create a Notion page mention role.
     """
     del name, rawtext, lineno, inliner, options, content
+    _validate_mention(mention_id=text_content)
     node = _MentionPageNode()
     node.attributes["page_id"] = text_content
     node += nodes.Text(data=text_content)
@@ -333,6 +344,7 @@ def _notion_mention_database_role(  # pylint: disable=too-many-positional-argume
     Create a Notion database mention role.
     """
     del name, rawtext, lineno, inliner, options, content
+    _validate_mention(mention_id=text_content)
     node = _MentionDatabaseNode()
     node.attributes["database_id"] = text_content
     node += nodes.Text(data=text_content)
@@ -514,7 +526,7 @@ def _(node: _MentionUserNode) -> Text:
     """
     Process mention user nodes by creating user mention rich text.
     """
-    user_id = UUID(hex=node.attributes["user_id"])
+    user_id = _validate_mention(mention_id=node.attributes["user_id"])
     user_ref = UserRef(id=user_id)
     mention_user = MentionUser(user=user_ref)
     mention_obj = MentionObject(
@@ -533,7 +545,7 @@ def _(node: _MentionPageNode) -> Text:
     """
     Process mention page nodes by creating page mention rich text.
     """
-    page_id = UUID(hex=node.attributes["page_id"])
+    page_id = _validate_mention(mention_id=node.attributes["page_id"])
     page_obj_ref = ObjectRef(id=page_id)
     mention_page = MentionPage(page=page_obj_ref)
     mention_obj = MentionObject(
@@ -552,7 +564,7 @@ def _(node: _MentionDatabaseNode) -> Text:
     """
     Process mention database nodes by creating database mention rich text.
     """
-    database_id = UUID(hex=node.attributes["database_id"])
+    database_id = _validate_mention(mention_id=node.attributes["database_id"])
     database_obj_ref = ObjectRef(id=database_id)
     mention_database = MentionDatabase(database=database_obj_ref)
     mention_obj = MentionObject(
@@ -1586,9 +1598,8 @@ def _(
     This handles nodes created by our custom NotionLinkToPageDirective.
     """
     del section_level
-
-    page_id = node.attributes["page_id"]
-    page_ref = PageRef(page_id=UUID(hex=page_id))
+    page_id = _validate_mention(mention_id=node.attributes["page_id"])
+    page_ref = PageRef(page_id=page_id)
     obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
 
     return [UnoLinkToPage.wrap_obj_ref(obj_link_to_page)]
