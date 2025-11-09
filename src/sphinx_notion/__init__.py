@@ -2,6 +2,7 @@
 Sphinx Notion Builder.
 """
 
+import datetime as dt
 import json
 import logging
 from collections.abc import Sequence
@@ -12,6 +13,7 @@ from typing import Any
 from uuid import UUID
 
 import bs4
+import pendulum
 import sphinxnotes.strike
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
@@ -79,8 +81,9 @@ from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.obj_api.objects import (
     Annotations,
-    DatabaseRef,
+    DateRange,
     MentionDatabase,
+    MentionDate,
     MentionObject,
     MentionPage,
     MentionUser,
@@ -568,11 +571,6 @@ def _(node: _MentionDateNode) -> Text:
     """
     Process mention date nodes by creating date mention rich text.
     """
-    import datetime as dt
-
-    import pendulum
-    from ultimate_notion.obj_api.objects import DateRange, MentionDate
-
     date_str = node.attributes["date"]
     try:
         parsed_date = pendulum.parse(text=date_str, strict=True)
@@ -584,7 +582,7 @@ def _(node: _MentionDateNode) -> Text:
         date_range = DateRange.build(dt_spec=parsed_date)
     else:
         msg = f"Unsupported date type: {type(parsed_date)}"
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     mention_date = MentionDate(date=date_range)
     mention_obj = MentionObject(
@@ -1953,7 +1951,7 @@ def _make_static_dir(app: Sphinx) -> None:
 
 
 @beartype
-def _visit_mention_node(self: Any, node: nodes.Node) -> None:
+def _visit_mention_node(self: NodeVisitor, node: nodes.Node) -> None:
     """Visit a mention node for non-Notion builders (HTML, LaTeX, etc.).
 
     Renders the text content of the mention node.
@@ -1963,7 +1961,7 @@ def _visit_mention_node(self: Any, node: nodes.Node) -> None:
 
 
 @beartype
-def _depart_mention_node(self: Any, node: nodes.Node) -> None:
+def _depart_mention_node(self: NodeVisitor, node: nodes.Node) -> None:
     """Depart a mention node for non-Notion builders (HTML, LaTeX, etc.).
 
     Not called due to SkipNode in visit.

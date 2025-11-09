@@ -3,6 +3,7 @@ Integration tests for the Sphinx Notion Builder functionality.
 """
 
 import base64
+import datetime as dt
 import json
 import re
 import textwrap
@@ -12,6 +13,7 @@ from typing import Any
 from uuid import UUID
 
 import anstrip
+import pendulum
 import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
@@ -57,7 +59,9 @@ from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.obj_api.objects import (
     Annotations,
+    DateRange,
     MentionDatabase,
+    MentionDate,
     MentionObject,
     MentionPage,
     MentionUser,
@@ -3451,11 +3455,6 @@ def test_notion_mention_date(
     """
     ``notion-mention-date`` role creates date mention in paragraph.
     """
-    import datetime as dt
-
-    import pendulum
-    from ultimate_notion.obj_api.objects import DateRange, MentionDate
-
     test_date = "2025-11-09"
 
     rst_content = f"""
