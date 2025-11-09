@@ -68,6 +68,37 @@ Link to Notion Page Block
 
    .. notion-link-to-page:: 2a19ce7b60a4807dbae7c12161f12056
 
+Mentions
+~~~~~~~~
+
+User Mention
+^^^^^^^^^^^^
+
+.. rest-example::
+
+   Hello :notion-mention-user:`12345678-1234-1234-1234-123456789abc` there!
+
+Page Mention
+^^^^^^^^^^^^
+
+.. rest-example::
+
+   See :notion-mention-page:`2a19ce7b60a4807dbae7c12161f12056` for more details.
+
+Database Mention
+^^^^^^^^^^^^^^^^
+
+.. rest-example::
+
+   Check the :notion-mention-database:`abcdef12-3456-7890-abcd-ef1234567890` database.
+
+Date Mention
+^^^^^^^^^^^^
+
+.. rest-example::
+
+   The meeting is scheduled for :notion-mention-date:`2025-11-09`.
+
 Admonitions
 ~~~~~~~~~~~
 

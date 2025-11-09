@@ -55,7 +55,16 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.obj_api.objects import PageRef
+from ultimate_notion.obj_api.objects import (
+    Annotations,
+    MentionDatabase,
+    MentionObject,
+    MentionPage,
+    MentionUser,
+    ObjectRef,
+    PageRef,
+    UserRef,
+)
 from ultimate_notion.rich_text import Text, math, text
 
 
@@ -3315,3 +3324,278 @@ def test_transition_divider(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_notion_mention_user(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-user`` role creates user mention in paragraph.
+    """
+    test_user_id = "12345678-1234-1234-1234-123456789abc"
+
+    rst_content = f"""
+        Hello :notion-mention-user:`{test_user_id}` there!
+    """
+
+    user_ref = UserRef(id=UUID(hex=test_user_id))
+    mention_user = MentionUser(user=user_ref)
+    mention_obj = MentionObject(
+        mention=mention_user,
+        annotations=Annotations(),
+        plain_text=f"@{test_user_id}",
+        href=None,
+        type="mention",
+    )
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="Hello ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=" there!")
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-page`` role creates page mention in paragraph.
+    """
+    test_page_id = "87654321-4321-4321-4321-cba987654321"
+
+    rst_content = f"""
+        See :notion-mention-page:`{test_page_id}` for details.
+    """
+
+    page_obj_ref = ObjectRef(id=UUID(hex=test_page_id))
+    mention_page = MentionPage(page=page_obj_ref)
+    mention_obj = MentionObject(
+        mention=mention_page,
+        annotations=Annotations(),
+        plain_text=test_page_id,
+        href=None,
+        type="mention",
+    )
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="See ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=" for details.")
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_database(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-database`` role creates database mention in paragraph.
+    """
+    test_database_id = "abcdef12-3456-7890-abcd-ef1234567890"
+
+    rst_content = f"""
+        Check the :notion-mention-database:`{test_database_id}` database.
+    """
+
+    database_obj_ref = ObjectRef(id=UUID(hex=test_database_id))
+    mention_database = MentionDatabase(database=database_obj_ref)
+    mention_obj = MentionObject(
+        mention=mention_database,
+        annotations=Annotations(),
+        plain_text=test_database_id,
+        href=None,
+        type="mention",
+    )
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="Check the ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=" database.")
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_date(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-date`` role creates date mention in paragraph.
+    """
+    import datetime as dt
+
+    import pendulum
+    from ultimate_notion.obj_api.objects import DateRange, MentionDate
+
+    test_date = "2025-11-09"
+
+    rst_content = f"""
+        The meeting is on :notion-mention-date:`{test_date}`.
+    """
+
+    parsed_date = pendulum.parse(text=test_date, strict=True)
+    assert isinstance(parsed_date, dt.datetime | dt.date)
+    date_range = DateRange.build(dt_spec=parsed_date)
+    mention_date = MentionDate(date=date_range)
+    mention_obj = MentionObject(
+        mention=mention_date,
+        annotations=Annotations(),
+        plain_text=test_date,
+        href=None,
+        type="mention",
+    )
+    expected_objects: list[Block] = [
+        UnoParagraph(
+            text=text(text="The meeting is on ")
+            + Text.wrap_obj_ref(obj_refs=[mention_obj])
+            + text(text=".")
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_objects=expected_objects,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_notion_mention_user_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-user`` role with HTML builder shows the user ID.
+    """
+    test_user_id = "12345678-1234-1234-1234-123456789abc"
+    rst_content = f"""
+        Hello :notion-mention-user:`{test_user_id}` there!
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    assert f"@{test_user_id}" in index_html
+
+
+def test_notion_mention_page_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-page`` role with HTML builder shows the page ID.
+    """
+    test_page_id = "87654321-4321-4321-4321-cba987654321"
+    rst_content = f"""
+        See :notion-mention-page:`{test_page_id}` for details.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    assert test_page_id in index_html
+
+
+def test_notion_mention_database_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-database`` role with HTML builder shows the database ID.
+    """
+    test_database_id = "abcdef12-3456-7890-abcd-ef1234567890"
+    rst_content = f"""
+        Check the :notion-mention-database:`{test_database_id}` database.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    assert test_database_id in index_html
+
+
+def test_notion_mention_date_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``notion-mention-date`` role with HTML builder shows the date.
+    """
+    test_date = "2025-11-09"
+    rst_content = f"""
+        The meeting is on :notion-mention-date:`{test_date}`.
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    assert test_date in index_html

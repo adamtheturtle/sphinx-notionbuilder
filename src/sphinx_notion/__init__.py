@@ -4,6 +4,7 @@ Sphinx Notion Builder.
 
 import json
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -18,6 +19,7 @@ from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStu
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.util import docutils as sphinx_docutils
@@ -75,7 +77,17 @@ from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
-from ultimate_notion.obj_api.objects import PageRef
+from ultimate_notion.obj_api.objects import (
+    Annotations,
+    DatabaseRef,
+    MentionDatabase,
+    MentionObject,
+    MentionPage,
+    MentionUser,
+    ObjectRef,
+    PageRef,
+    UserRef,
+)
 from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
@@ -210,6 +222,34 @@ class _LinkToPageNode(nodes.Element):
 
 
 @beartype
+class _MentionUserNode(nodes.Inline, nodes.TextElement):
+    """
+    Custom node for Notion user mentions.
+    """
+
+
+@beartype
+class _MentionPageNode(nodes.Inline, nodes.TextElement):
+    """
+    Custom node for Notion page mentions.
+    """
+
+
+@beartype
+class _MentionDatabaseNode(nodes.Inline, nodes.TextElement):
+    """
+    Custom node for Notion database mentions.
+    """
+
+
+@beartype
+class _MentionDateNode(nodes.Inline, nodes.TextElement):
+    """
+    Custom node for Notion date mentions.
+    """
+
+
+@beartype
 class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
     """
     Link-to-page directive that creates Notion link-to-page blocks.
@@ -234,6 +274,86 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]
+
+
+@beartype
+def _notion_mention_user_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, Any] | None = None,
+    content: Sequence[str] = (),
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """
+    Create a Notion user mention role.
+    """
+    del name, rawtext, lineno, inliner, options, content
+    node = _MentionUserNode()
+    node.attributes["user_id"] = text
+    node += nodes.Text(data=f"@{text}")
+    return [node], []
+
+
+@beartype
+def _notion_mention_page_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, Any] | None = None,
+    content: Sequence[str] = (),
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """
+    Create a Notion page mention role.
+    """
+    del name, rawtext, lineno, inliner, options, content
+    node = _MentionPageNode()
+    node.attributes["page_id"] = text
+    node += nodes.Text(data=text)
+    return [node], []
+
+
+@beartype
+def _notion_mention_database_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, Any] | None = None,
+    content: Sequence[str] = (),
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """
+    Create a Notion database mention role.
+    """
+    del name, rawtext, lineno, inliner, options, content
+    node = _MentionDatabaseNode()
+    node.attributes["database_id"] = text
+    node += nodes.Text(data=text)
+    return [node], []
+
+
+@beartype
+def _notion_mention_date_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, Any] | None = None,
+    content: Sequence[str] = (),
+) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+    """
+    Create a Notion date mention role.
+    """
+    del name, rawtext, lineno, inliner, options, content
+    node = _MentionDateNode()
+    node.attributes["date"] = text
+    node += nodes.Text(data=text)
+    return [node], []
 
 
 @dataclass
@@ -383,6 +503,98 @@ def _(node: nodes.math) -> Text:
     Process math nodes by creating math rich text.
     """
     return math(expression=node.astext())
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: _MentionUserNode) -> Text:
+    """
+    Process mention user nodes by creating user mention rich text.
+    """
+    user_id = UUID(hex=node.attributes["user_id"])
+    user_ref = UserRef(id=user_id)
+    mention_user = MentionUser(user=user_ref)
+    mention_obj = MentionObject(
+        mention=mention_user,
+        annotations=Annotations(),
+        plain_text=f"@{user_id}",
+        href=None,
+        type="mention",
+    )
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: _MentionPageNode) -> Text:
+    """
+    Process mention page nodes by creating page mention rich text.
+    """
+    page_id = UUID(hex=node.attributes["page_id"])
+    page_obj_ref = ObjectRef(id=page_id)
+    mention_page = MentionPage(page=page_obj_ref)
+    mention_obj = MentionObject(
+        mention=mention_page,
+        annotations=Annotations(),
+        plain_text=node.attributes["page_id"],
+        href=None,
+        type="mention",
+    )
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: _MentionDatabaseNode) -> Text:
+    """
+    Process mention database nodes by creating database mention rich text.
+    """
+    database_id = UUID(hex=node.attributes["database_id"])
+    database_obj_ref = ObjectRef(id=database_id)
+    mention_database = MentionDatabase(database=database_obj_ref)
+    mention_obj = MentionObject(
+        mention=mention_database,
+        annotations=Annotations(),
+        plain_text=node.attributes["database_id"],
+        href=None,
+        type="mention",
+    )
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: _MentionDateNode) -> Text:
+    """
+    Process mention date nodes by creating date mention rich text.
+    """
+    import datetime as dt
+
+    import pendulum
+    from ultimate_notion.obj_api.objects import DateRange, MentionDate
+
+    date_str = node.attributes["date"]
+    try:
+        parsed_date = pendulum.parse(text=date_str, strict=True)
+    except Exception as e:
+        msg = f"Invalid date format: {date_str}"
+        raise ValueError(msg) from e
+
+    if isinstance(parsed_date, dt.datetime | dt.date):
+        date_range = DateRange.build(dt_spec=parsed_date)
+    else:
+        msg = f"Unsupported date type: {type(parsed_date)}"
+        raise ValueError(msg)
+
+    mention_date = MentionDate(date=date_range)
+    mention_obj = MentionObject(
+        mention=mention_date,
+        annotations=Annotations(),
+        plain_text=date_str,
+        href=None,
+        type="mention",
+    )
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
 @beartype
@@ -1688,6 +1900,32 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
+def _notion_register_mention_roles(
+    app: Sphinx,
+) -> None:
+    """
+    Register the mention roles.
+    """
+    del app
+    sphinx_docutils.register_role(
+        name="notion-mention-user",
+        role=_notion_mention_user_role,
+    )
+    sphinx_docutils.register_role(
+        name="notion-mention-page",
+        role=_notion_mention_page_role,
+    )
+    sphinx_docutils.register_role(
+        name="notion-mention-database",
+        role=_notion_mention_database_role,
+    )
+    sphinx_docutils.register_role(
+        name="notion-mention-date",
+        role=_notion_mention_date_role,
+    )
+
+
+@beartype
 def _filter_ulem(record: logging.LogRecord) -> bool:
     """Filter out the warning about the `ulem package already being included`.
 
@@ -1715,6 +1953,24 @@ def _make_static_dir(app: Sphinx) -> None:
 
 
 @beartype
+def _visit_mention_node(self: Any, node: nodes.Node) -> None:
+    """Visit a mention node for non-Notion builders (HTML, LaTeX, etc.).
+
+    Renders the text content of the mention node.
+    """
+    self.body.append(node.astext())
+    raise nodes.SkipNode
+
+
+@beartype
+def _depart_mention_node(self: Any, node: nodes.Node) -> None:
+    """Depart a mention node for non-Notion builders (HTML, LaTeX, etc.).
+
+    Not called due to SkipNode in visit.
+    """
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """
     Add the builder to Sphinx.
@@ -1732,7 +1988,37 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         callback=_notion_register_link_to_page_directive,
     )
 
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_mention_roles,
+    )
+
     app.connect(event="builder-inited", callback=_make_static_dir)
+
+    app.add_node(
+        node=_MentionUserNode,
+        html=(_visit_mention_node, _depart_mention_node),
+        latex=(_visit_mention_node, _depart_mention_node),
+        text=(_visit_mention_node, _depart_mention_node),
+    )
+    app.add_node(
+        node=_MentionPageNode,
+        html=(_visit_mention_node, _depart_mention_node),
+        latex=(_visit_mention_node, _depart_mention_node),
+        text=(_visit_mention_node, _depart_mention_node),
+    )
+    app.add_node(
+        node=_MentionDatabaseNode,
+        html=(_visit_mention_node, _depart_mention_node),
+        latex=(_visit_mention_node, _depart_mention_node),
+        text=(_visit_mention_node, _depart_mention_node),
+    )
+    app.add_node(
+        node=_MentionDateNode,
+        html=(_visit_mention_node, _depart_mention_node),
+        latex=(_visit_mention_node, _depart_mention_node),
+        text=(_visit_mention_node, _depart_mention_node),
+    )
 
     logger = logging.getLogger(name="sphinx.sphinx.registry")
     logger.addFilter(filter=_filter_ulem)
