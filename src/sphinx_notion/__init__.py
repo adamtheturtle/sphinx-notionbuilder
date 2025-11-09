@@ -280,10 +280,10 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
 
 @beartype
-def _notion_mention_user_role(
+def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
     name: str,
     rawtext: str,
-    text: str,
+    text_content: str,
     lineno: int,
     inliner: Inliner,
     options: dict[str, Any] | None = None,
@@ -294,16 +294,16 @@ def _notion_mention_user_role(
     """
     del name, rawtext, lineno, inliner, options, content
     node = _MentionUserNode()
-    node.attributes["user_id"] = text
-    node += nodes.Text(data=f"@{text}")
+    node.attributes["user_id"] = text_content
+    node += nodes.Text(data=f"@{text_content}")
     return [node], []
 
 
 @beartype
-def _notion_mention_page_role(
+def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
     name: str,
     rawtext: str,
-    text: str,
+    text_content: str,
     lineno: int,
     inliner: Inliner,
     options: dict[str, Any] | None = None,
@@ -314,16 +314,16 @@ def _notion_mention_page_role(
     """
     del name, rawtext, lineno, inliner, options, content
     node = _MentionPageNode()
-    node.attributes["page_id"] = text
-    node += nodes.Text(data=text)
+    node.attributes["page_id"] = text_content
+    node += nodes.Text(data=text_content)
     return [node], []
 
 
 @beartype
-def _notion_mention_database_role(
+def _notion_mention_database_role(  # pylint: disable=too-many-positional-arguments
     name: str,
     rawtext: str,
-    text: str,
+    text_content: str,
     lineno: int,
     inliner: Inliner,
     options: dict[str, Any] | None = None,
@@ -334,16 +334,16 @@ def _notion_mention_database_role(
     """
     del name, rawtext, lineno, inliner, options, content
     node = _MentionDatabaseNode()
-    node.attributes["database_id"] = text
-    node += nodes.Text(data=text)
+    node.attributes["database_id"] = text_content
+    node += nodes.Text(data=text_content)
     return [node], []
 
 
 @beartype
-def _notion_mention_date_role(
+def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
     name: str,
     rawtext: str,
-    text: str,
+    text_content: str,
     lineno: int,
     inliner: Inliner,
     options: dict[str, Any] | None = None,
@@ -354,8 +354,8 @@ def _notion_mention_date_role(
     """
     del name, rawtext, lineno, inliner, options, content
     node = _MentionDateNode()
-    node.attributes["date"] = text
-    node += nodes.Text(data=text)
+    node.attributes["date"] = text_content
+    node += nodes.Text(data=text_content)
     return [node], []
 
 
@@ -1958,8 +1958,8 @@ def _visit_mention_user_node_html(
 
 @beartype
 def _depart_mention_user_node_html(
-    self: HTML5Translator,
-    node: _MentionUserNode,
+    self: HTML5Translator,  # pylint: disable=unused-argument
+    node: _MentionUserNode,  # pylint: disable=unused-argument
 ) -> None:
     """Depart a user mention node for HTML builder.
 
@@ -1984,8 +1984,8 @@ def _visit_mention_page_node_html(
 
 @beartype
 def _depart_mention_page_node_html(
-    self: HTML5Translator,
-    node: _MentionPageNode,
+    self: HTML5Translator,  # pylint: disable=unused-argument
+    node: _MentionPageNode,  # pylint: disable=unused-argument
 ) -> None:
     """Depart a page mention node for HTML builder.
 
@@ -2010,8 +2010,8 @@ def _visit_mention_database_node_html(
 
 @beartype
 def _depart_mention_database_node_html(
-    self: HTML5Translator,
-    node: _MentionDatabaseNode,
+    self: HTML5Translator,  # pylint: disable=unused-argument
+    node: _MentionDatabaseNode,  # pylint: disable=unused-argument
 ) -> None:
     """Depart a database mention node for HTML builder.
 
@@ -2034,8 +2034,8 @@ def _visit_mention_date_node_html(
 
 @beartype
 def _depart_mention_date_node_html(
-    self: HTML5Translator,
-    node: _MentionDateNode,
+    self: HTML5Translator,  # pylint: disable=unused-argument
+    node: _MentionDateNode,  # pylint: disable=unused-argument
 ) -> None:
     """Depart a date mention node for HTML builder.
 
