@@ -86,6 +86,7 @@ The following syntax is supported:
 - Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 - Link to page blocks (using the ``notion-link-to-page`` directive)
+- Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
 
 See a `sample document source`_ and the `published Notion page`_.
 
@@ -119,6 +120,95 @@ Creates a Notion "link to page" block that references another page in your Notio
 
 This creates a clickable link block in Notion that navigates to the specified page when clicked.
 
+Roles
+-----
+
+``sphinx-notionbuilder`` provides custom roles for inline Notion-specific features:
+
+``notion-mention-user``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Creates a Notion user mention inline.
+
+**Usage:**
+
+.. code-block:: rst
+
+   :notion-mention-user:`USER_ID`
+
+**Parameters:**
+
+- ``USER_ID``: The UUID of the Notion user you want to mention
+
+**Example:**
+
+.. code-block:: rst
+
+   Hello :notion-mention-user:`12345678-1234-1234-1234-123456789abc` there!
+
+``notion-mention-page``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Creates a Notion page mention inline.
+
+**Usage:**
+
+.. code-block:: rst
+
+   :notion-mention-page:`PAGE_ID`
+
+**Parameters:**
+
+- ``PAGE_ID``: The UUID of the Notion page you want to mention
+
+**Example:**
+
+.. code-block:: rst
+
+   See :notion-mention-page:`87654321-4321-4321-4321-cba987654321` for details.
+
+``notion-mention-database``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Creates a Notion database mention inline.
+
+**Usage:**
+
+.. code-block:: rst
+
+   :notion-mention-database:`DATABASE_ID`
+
+**Parameters:**
+
+- ``DATABASE_ID``: The UUID of the Notion database you want to mention
+
+**Example:**
+
+.. code-block:: rst
+
+   Check the :notion-mention-database:`abcdef12-3456-7890-abcd-ef1234567890` database.
+
+``notion-mention-date``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Creates a Notion date mention inline.
+
+**Usage:**
+
+.. code-block:: rst
+
+   :notion-mention-date:`DATE_STRING`
+
+**Parameters:**
+
+- ``DATE_STRING``: A date string in ISO format (e.g., ``2025-11-09``)
+
+**Example:**
+
+.. code-block:: rst
+
+   The meeting is on :notion-mention-date:`2025-11-09`.
+
 Unsupported Notion Block Types
 ------------------------------
 
@@ -129,7 +219,6 @@ Unsupported Notion Block Types
 - Column and column list
 - File
 - Link preview
-- Mention
 - Synced block
 - Template
 - Heading with ``is_toggleable`` set to ``True``
