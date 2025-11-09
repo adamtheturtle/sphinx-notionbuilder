@@ -14,10 +14,12 @@ from uuid import UUID
 
 import bs4
 import sphinxnotes.strike
+import ultimate_notion
 from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
     audio as audio_node,
 )
 from beartype import beartype
+from beartype._data.typing.datatyping import MethodDescriptorBuiltin
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst.states import Inliner
@@ -91,7 +93,8 @@ from ultimate_notion.obj_api.objects import (
     PageRef,
     UserRef,
 )
-from ultimate_notion.rich_text import Text, math, text
+from ultimate_notion.rich_text import Text, math, mention, text
+from ultimate_notion.user import User
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -527,16 +530,14 @@ def _(node: _MentionUserNode) -> Text:
     Process mention user nodes by creating user mention rich text.
     """
     user_id = _validate_mention(mention_id=node.attributes["user_id"])
-    user_ref = UserRef(id=user_id)
-    mention_user = MentionUser(user=user_ref)
-    mention_obj = MentionObject(
-        mention=mention_user,
-        annotations=Annotations(),
-        plain_text=f"@{user_id}",
-        href=None,
-        type="mention",
-    )
-    return Text.wrap_obj_ref(obj_refs=[mention_obj])
+
+    from ultimate_notion import Session
+
+    session = Session()
+    user = session.get_user(session.whoami().id)
+    me = mention(target=user)
+    return me
+    # return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
 @beartype

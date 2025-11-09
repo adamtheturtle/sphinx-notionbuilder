@@ -76,7 +76,7 @@ User Mention
 
 .. rest-example::
 
-   Hello :notion-mention-user:`12345678-1234-1234-1234-123456789abc` there!
+   Hello :notion-mention-user:`c3b9ce7b60a483a28e8381d0fa17510a` there!
 
 Page Mention
 ^^^^^^^^^^^^
