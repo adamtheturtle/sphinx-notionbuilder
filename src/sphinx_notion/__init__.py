@@ -29,6 +29,8 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
+
+# See https://github.com/sphinx-contrib/video/pull/60.
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     Video,
     video_node,
