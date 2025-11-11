@@ -12,9 +12,7 @@ from uuid import UUID
 
 import bs4
 import sphinxnotes.strike
-from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
-    audio as audio_node,
-)
+from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
