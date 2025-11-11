@@ -31,7 +31,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "atsphinx-audioplayer>=0.1.0",
+    "atsphinx-audioplayer>=0.2.1",
     "beartype>=0.21.0",
     "beautifulsoup4>=4.13.3",
     "click>=8.0.0",
