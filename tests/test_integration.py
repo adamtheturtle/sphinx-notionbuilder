@@ -68,9 +68,9 @@ def _details_from_block(
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.children:
+    if isinstance(block, ParentBlock) and block.blocks:
         serialized_obj[block.obj_ref.type]["children"] = [
-            _details_from_block(block=child) for child in block.children
+            _details_from_block(block=child) for child in block.blocks
         ]
     return serialized_obj
 
@@ -169,8 +169,10 @@ def test_notion_link_to_page(
         .. notion-link-to-page:: {test_page_id}
     """
 
-    page_ref = PageRef(page_id=UUID(hex=test_page_id))
-    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+    page_ref = PageRef(type="page_id", page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(
+        type="link_to_page", link_to_page=page_ref
+    )
     expected_objects: list[Block] = [
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
     ]
@@ -201,8 +203,10 @@ def test_notion_link_to_page_with_content_around(
         This is a paragraph after.
     """
 
-    page_ref = PageRef(page_id=UUID(hex=test_page_id))
-    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+    page_ref = PageRef(type="page_id", page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(
+        type="link_to_page", link_to_page=page_ref
+    )
     expected_objects: list[Block] = [
         UnoParagraph(text=text(text="This is a paragraph before.")),
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
@@ -2444,9 +2448,7 @@ def test_individual_colors(
     normal_text = text(text="This is ")
     colored_text = text(
         text=f"{role} text",
-        # We ignore the type check here because Ultimate Notion has
-        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
-        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        color=expected_color,
     )
     normal_text2 = text(text=".")
 

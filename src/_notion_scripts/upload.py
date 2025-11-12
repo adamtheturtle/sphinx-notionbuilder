@@ -175,7 +175,7 @@ def _is_existing_equivalent(
         if (
             existing_page_block_without_children
             != local_block_without_children
-        ) or (len(existing_page_block.children) != len(local_block.children)):
+        ) or (len(existing_page_block.blocks) != len(local_block.blocks)):
             return False
 
         return all(
@@ -184,8 +184,8 @@ def _is_existing_equivalent(
                 local_block=local_child_block,
             )
             for (existing_child_block, local_child_block) in zip(
-                existing_page_block.children,
-                local_block.children,
+                existing_page_block.blocks,
+                local_block.blocks,
                 strict=False,
             )
         )
@@ -270,7 +270,7 @@ def _block_with_uploaded_file(
     elif isinstance(block, ParentBlock) and block.children:
         new_child_blocks = [
             _block_with_uploaded_file(block=child_block, session=session)
-            for child_block in block.children
+            for child_block in block.blocks
         ]
         block = _block_without_children(block=block)
         block.append(blocks=new_child_blocks)
@@ -407,7 +407,7 @@ def main(
     ]
 
     last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.children,
+        existing_blocks=page.blocks,
         local_blocks=block_objs,
     )
 
@@ -418,7 +418,7 @@ def main(
         ),
     )
     delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.children[delete_start_index:]
+    blocks_to_delete = page.blocks[delete_start_index:]
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
