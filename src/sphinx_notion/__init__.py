@@ -1691,16 +1691,15 @@ def _notion_register_link_to_page_directive(
 def _filter_ulem(record: logging.LogRecord) -> bool:
     """Filter out the warning about the `ulem package already being included`.
 
-    This warning is emitted by ``sphinxcontrib-text-styles`` or
-    ``sphinxnotes.strike`` when the ``ulem`` package is already included.
+    This warning is emitted by ``sphinxnotes.strike`` when the ``ulem`` package
+    is already included (e.g. by ``sphinxcontrib-text-styles``).
 
     Our users may use both of these extensions, so we filter out the
     warning.
 
     See:
 
-    * https://github.com/sphinx-notes/strike/pull/10
-    * https://github.com/martinpriestley/sphinxcontrib-text-styles/pull/1
+    * https://github.com/sphinx-notes/strike/pull/10 (merged, not released)
     """
     msg = record.getMessage()
     return msg != "latex package 'ulem' already included"
