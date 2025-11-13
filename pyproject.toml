@@ -82,7 +82,7 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2025.10.24",
     "sphinxcontrib-spelling==8.0.1",
-    "sphinxcontrib-text-styles==0.2.0",
+    "sphinxcontrib-text-styles==0.2.1",
     "types-docutils==0.22.2.20251006",
     "types-requests==2.32.4.20250913",
     "vulture==2.14",
@@ -90,7 +90,7 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
 optional-dependencies.sample = [
-    "sphinxcontrib-text-styles==0.2.0",
+    "sphinxcontrib-text-styles==0.2.1",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 
