@@ -3,7 +3,6 @@ Sphinx Notion Builder.
 """
 
 import json
-import logging
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -1688,24 +1687,6 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
-def _filter_ulem(record: logging.LogRecord) -> bool:
-    """Filter out the warning about the `ulem package already being included`.
-
-    This warning is emitted by ``sphinxnotes.strike`` when the ``ulem`` package
-    is already included (e.g. by ``sphinxcontrib-text-styles``).
-
-    Our users may use both of these extensions, so we filter out the
-    warning.
-
-    See:
-
-    * https://github.com/sphinx-notes/strike/pull/10 (merged, not released)
-    """
-    msg = record.getMessage()
-    return msg != "latex package 'ulem' already included"
-
-
-@beartype
 def _make_static_dir(app: Sphinx) -> None:
     """
     We make the ``_static`` directory that ``sphinx-iframes`` expects.
@@ -1732,9 +1713,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)
-
-    logger = logging.getLogger(name="sphinx.sphinx.registry")
-    logger.addFilter(filter=_filter_ulem)
 
     sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
 
