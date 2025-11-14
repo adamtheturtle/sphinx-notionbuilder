@@ -1687,14 +1687,6 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
-def _make_static_dir(app: Sphinx) -> None:
-    """
-    We make the ``_static`` directory that ``sphinx-iframes`` expects.
-    """
-    (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
-
-
-@beartype
 def _visit_strike_node(_: NotionTranslator, __: strike_node) -> None:
     """
     Dummy visitor for strike nodes.
@@ -1721,6 +1713,14 @@ def _register_strike_node_handlers(app: Sphinx, config: Config) -> None:
         override=True,
         notion=(_visit_strike_node, _depart_strike_node),
     )
+
+
+@beartype
+def _make_static_dir(app: Sphinx) -> None:
+    """
+    We make the ``_static`` directory that ``sphinx-iframes`` expects.
+    """
+    (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
 
 
 @beartype
