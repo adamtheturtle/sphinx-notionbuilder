@@ -1702,10 +1702,8 @@ def _depart_strike_node(_: NotionTranslator, __: strike_node) -> None:
 
 @beartype
 def _register_strike_node_handlers(app: Sphinx, __: Config) -> None:
-    """Register strike_node handlers for the notion builder.
-
-    This is called after all extensions are loaded to ensure we register
-    after sphinxnotes.strike has registered the node.
+    """
+    Register strike_node handlers for the notion builder.
     """
     app.add_node(
         node=strike_node,
