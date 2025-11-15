@@ -6,6 +6,7 @@ import json
 import logging
 from dataclasses import dataclass
 from functools import singledispatch
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -1745,4 +1746,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     if "sphinxcontrib.video" in app.extensions:
         app.add_directive(name="video", cls=Video, override=True)
 
-    return {"parallel_read_safe": True}
+    return {
+        "parallel_read_safe": True,
+        "version": version(distribution_name="sphinx-notionbuilder"),
+    }
