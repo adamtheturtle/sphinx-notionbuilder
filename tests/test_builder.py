@@ -3,6 +3,7 @@ Tests for the Sphinx builder.
 """
 
 from collections.abc import Callable
+from importlib.metadata import version
 from pathlib import Path
 
 import docutils.utils
@@ -28,7 +29,11 @@ def test_meta(
     (srcdir / "conf.py").touch()
     app = make_app(srcdir=srcdir)
     setup_result = sphinx_notion.setup(app=app)
-    assert setup_result == {"parallel_read_safe": True}
+    pkg_version = version(distribution_name="sphinx-notionbuilder")
+    assert setup_result == {
+        "parallel_read_safe": True,
+        "version": pkg_version,
+    }
 
     builder = builder_cls(app=app, env=app.env)
     document = docutils.utils.new_document(source_path=".")
