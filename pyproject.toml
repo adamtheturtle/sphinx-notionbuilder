@@ -44,7 +44,9 @@ dependencies = [
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
-    "sphinxnotes-strike>=1.4",
+    # Pin to less than 1.4 to avoid
+    # https://github.com/sphinx-notes/strike/issues/14.
+    "sphinxnotes-strike>=1.3,<=1.4",
     "ultimate-notion>=0.9.5",
 ]
 optional-dependencies.dev = [
