@@ -3,6 +3,7 @@ Sphinx Notion Builder.
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from functools import singledispatch
 from pathlib import Path
@@ -10,13 +11,13 @@ from typing import Any
 from uuid import UUID
 
 import bs4
+import sphinxnotes
 from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
-from sphinx.config import Config
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
@@ -683,8 +684,8 @@ def _process_node_to_blocks(
 
     if line_number is not None and source is not None:
         unsupported_node_type_msg = (
-            f"Unsupported node type: {node.tagname} on line "
-            f"{line_number} in {source}."
+            f"Unsupported node type: {node.tagname} on line {line_number} in "
+            f"{source}."
         )
     else:
         unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
@@ -1687,32 +1688,21 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
-def _visit_strike_node(_: NotionTranslator, __: strike_node) -> None:
-    """
-    Dummy visitor for strike nodes.
-    """
+def _filter_ulem(record: logging.LogRecord) -> bool:
+    """Filter out the warning about the `ulem package already being included`.
 
+    This warning is emitted by ``sphinxnotes.strike`` when the ``ulem`` package
+    is already included (e.g. by ``sphinxcontrib-text-styles``).
 
-@beartype
-def _depart_strike_node(_: NotionTranslator, __: strike_node) -> None:
+    Our users may use both of these extensions, so we filter out the
+    warning.
+
+    See:
+
+    * https://github.com/sphinx-notes/strike/pull/10 (merged, not released)
     """
-    Dummy depart for strike nodes.
-    """
-
-
-@beartype
-def _register_strike_node_handlers(app: Sphinx, config: Config) -> None:
-    """Register strike_node handlers for the notion builder.
-
-    This is called after all extensions are loaded to ensure we register
-    after sphinxnotes.strike has registered the node.
-    """
-    del config
-    app.add_node(
-        node=strike_node,
-        override=True,
-        notion=(_visit_strike_node, _depart_strike_node),
-    )
+    msg = record.getMessage()
+    return msg != "latex package 'ulem' already included"
 
 
 @beartype
@@ -1731,8 +1721,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
-    app.connect(event="config-inited", callback=_register_strike_node_handlers)
-
     app.connect(
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
@@ -1744,6 +1732,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)
+
+    logger = logging.getLogger(name="sphinx.sphinx.registry")
+    logger.addFilter(filter=_filter_ulem)
+
+    sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
 
     # that we use. The ``sphinx-iframes`` extension implements a ``video``
     # directive that we don't use.
