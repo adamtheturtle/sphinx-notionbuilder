@@ -45,7 +45,7 @@ dependencies = [
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
     # Avoid https://github.com/sphinx-notes/strike/issues/14 in 1.4.
-    "sphinxnotes-strike>=1.3,<1.4",
+    "sphinxnotes-strike>=1.3,<=1.4",
     "ultimate-notion>=0.9.5",
 ]
 optional-dependencies.dev = [
