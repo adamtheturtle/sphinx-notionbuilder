@@ -194,10 +194,10 @@ def _serialize_block_with_children(
     Convert a block to a JSON-serializable format which includes its children.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.children:
+    if isinstance(block, ParentBlock) and block.blocks:
         serialized_obj[block.obj_ref.type]["children"] = [
             _serialize_block_with_children(block=child)
-            for child in block.children
+            for child in block.blocks
         ]
     return serialized_obj
 
@@ -659,9 +659,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         code=is_code,
         strikethrough=is_strikethrough,
         underline=is_underline,
-        # Ignore the type check here because Ultimate Notion has
-        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
-        color=color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        color=color,
     )
 
 
@@ -1599,8 +1597,10 @@ def _(
     """
     del section_level
     page_id = _validate_mention(mention_id=node.attributes["page_id"])
-    page_ref = PageRef(page_id=page_id)
-    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
+    page_ref = PageRef(type="page_id", page_id=page_id)
+    obj_link_to_page = ObjLinkToPage(
+        type="link_to_page", link_to_page=page_ref
+    )
 
     return [UnoLinkToPage.wrap_obj_ref(obj_link_to_page)]
 
