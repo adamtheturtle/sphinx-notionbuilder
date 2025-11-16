@@ -76,7 +76,7 @@ User Mention
 
 .. rest-example::
 
-   Hello :notion-mention-user:`c3b9ce7b60a483a28e8381d0fa17510a` there!
+   Hello :notion-mention-user:`fc820d21-80ec-4d06-878c-f991bc8070d2` there!
 
 Page Mention
 ^^^^^^^^^^^^
@@ -90,7 +90,7 @@ Database Mention
 
 .. rest-example::
 
-   Check the :notion-mention-database:`abcdef12-3456-7890-abcd-ef1234567890` database.
+   Check the :notion-mention-database:`27d9ce7b60a4804b9c5cfa002668952b` database.
 
 Date Mention
 ^^^^^^^^^^^^
