@@ -16,7 +16,7 @@ import anstrip
 import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
-from ultimate_notion import Emoji
+from ultimate_notion import Database, Emoji, Page
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -55,6 +55,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
+from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.obj_api.objects import (
     Annotations,
@@ -64,9 +65,7 @@ from ultimate_notion.obj_api.objects import (
     MentionObject,
     MentionPage,
     MentionUser,
-    ObjectRef,
     PageRef,
-    UserRef,
 )
 from ultimate_notion.rich_text import Text, math, text
 
@@ -74,15 +73,15 @@ from ultimate_notion.rich_text import Text, math, text
 @beartype
 def _details_from_block(
     *,
-    block: Block,
+    block: Block | Page | Database,
 ) -> dict[str, Any]:
     """
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.blocks:
+    if isinstance(block, ParentBlock) and block.children:
         serialized_obj[block.obj_ref.type]["children"] = [
-            _details_from_block(block=child) for child in block.blocks
+            _details_from_block(block=child) for child in block.children
         ]
     return serialized_obj
 
@@ -181,10 +180,8 @@ def test_notion_link_to_page(
         .. notion-link-to-page:: {test_page_id}
     """
 
-    page_ref = PageRef(type="page_id", page_id=UUID(hex=test_page_id))
-    obj_link_to_page = ObjLinkToPage(
-        type="link_to_page", link_to_page=page_ref
-    )
+    page_ref = PageRef(page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
     expected_objects: list[Block] = [
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
     ]
@@ -215,10 +212,8 @@ def test_notion_link_to_page_with_content_around(
         This is a paragraph after.
     """
 
-    page_ref = PageRef(type="page_id", page_id=UUID(hex=test_page_id))
-    obj_link_to_page = ObjLinkToPage(
-        type="link_to_page", link_to_page=page_ref
-    )
+    page_ref = PageRef(page_id=UUID(hex=test_page_id))
+    obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
     expected_objects: list[Block] = [
         UnoParagraph(text=text(text="This is a paragraph before.")),
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),

@@ -123,7 +123,7 @@ universal = true
 version_scheme = "post-release"
 
 [tool.uv.sources]
-ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", branch = "main" }
+ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", branch = "fix-166" }
 
 [tool.ruff]
 line-length = 79

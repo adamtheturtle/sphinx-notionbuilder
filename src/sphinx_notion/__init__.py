@@ -78,6 +78,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
+from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.obj_api.objects import (
     Annotations,
@@ -87,9 +88,7 @@ from ultimate_notion.obj_api.objects import (
     MentionObject,
     MentionPage,
     MentionUser,
-    ObjectRef,
     PageRef,
-    UserRef,
 )
 from ultimate_notion.rich_text import Text, math, text
 
@@ -532,7 +531,7 @@ def _(node: _MentionUserNode) -> Text:
     mention_obj = MentionObject(
         mention=mention_user,
         annotations=Annotations(),
-        plain_text=f"@{node.attributes['user_id']}",
+        plain_text=f"@{user_id}",
         href=None,
         type="mention",
     )
