@@ -38,7 +38,7 @@ from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     video_node,
 )
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji, Session
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -86,10 +86,12 @@ from ultimate_notion.obj_api.objects import (
     MentionDate,
     MentionObject,
     MentionPage,
+    MentionUser,
     ObjectRef,
     PageRef,
+    UserRef,
 )
-from ultimate_notion.rich_text import Text, math, mention, text
+from ultimate_notion.rich_text import Text, math, text
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -524,11 +526,17 @@ def _(node: _MentionUserNode) -> Text:
     """
     Process mention user nodes by creating user mention rich text.
     """
-    _validate_mention(mention_id=node.attributes["user_id"])
-
-    session = Session()
-    user = session.get_user(session.whoami().id)
-    return mention(target=user)
+    user_id = _validate_mention(mention_id=node.attributes["user_id"])
+    user_ref = UserRef(id=user_id)
+    mention_user = MentionUser(user=user_ref)
+    mention_obj = MentionObject(
+        mention=mention_user,
+        annotations=Annotations(),
+        plain_text=f"@{node.attributes['user_id']}",
+        href=None,
+        type="mention",
+    )
+    return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
 @beartype
