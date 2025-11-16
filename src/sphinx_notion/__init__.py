@@ -4,27 +4,23 @@ Sphinx Notion Builder.
 
 import datetime as dt
 import json
-import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import singledispatch
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 import bs4
-import sphinxnotes.strike
-import ultimate_notion
-from atsphinx.audioplayer.nodes import (  # pyright: ignore[reportMissingTypeStubs]
-    audio as audio_node,
-)
+from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
-from beartype._data.typing.datatyping import MethodDescriptorBuiltin
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
+from sphinx.config import Config
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
@@ -35,12 +31,14 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
+
+# See https://github.com/sphinx-contrib/video/pull/60.
 from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
     Video,
     video_node,
 )
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji
+from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -88,13 +86,10 @@ from ultimate_notion.obj_api.objects import (
     MentionDate,
     MentionObject,
     MentionPage,
-    MentionUser,
     ObjectRef,
     PageRef,
-    UserRef,
 )
 from ultimate_notion.rich_text import Text, math, mention, text
-from ultimate_notion.user import User
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -529,15 +524,11 @@ def _(node: _MentionUserNode) -> Text:
     """
     Process mention user nodes by creating user mention rich text.
     """
-    user_id = _validate_mention(mention_id=node.attributes["user_id"])
-
-    from ultimate_notion import Session
+    _validate_mention(mention_id=node.attributes["user_id"])
 
     session = Session()
     user = session.get_user(session.whoami().id)
-    me = mention(target=user)
-    return me
-    # return Text.wrap_obj_ref(obj_refs=[mention_obj])
+    return mention(target=user)
 
 
 @beartype
@@ -1927,22 +1918,29 @@ def _notion_register_mention_roles(
 
 
 @beartype
-def _filter_ulem(record: logging.LogRecord) -> bool:
-    """Filter out the warning about the `ulem package already being included`.
-
-    This warning is emitted by ``sphinxcontrib-text-styles`` or
-    ``sphinxnotes.strike`` when the ``ulem`` package is already included.
-
-    Our users may use both of these extensions, so we filter out the
-    warning.
-
-    See:
-
-    * https://github.com/sphinx-notes/strike/pull/10
-    * https://github.com/martinpriestley/sphinxcontrib-text-styles/pull/1
+def _visit_strike_node(_: NotionTranslator, __: strike_node) -> None:
     """
-    msg = record.getMessage()
-    return msg != "latex package 'ulem' already included"
+    Dummy visitor for strike nodes.
+    """
+
+
+@beartype
+def _depart_strike_node(_: NotionTranslator, __: strike_node) -> None:
+    """
+    Dummy depart for strike nodes.
+    """
+
+
+@beartype
+def _register_strike_node_handlers(app: Sphinx, __: Config) -> None:
+    """
+    Register strike_node handlers for the notion builder.
+    """
+    app.add_node(
+        node=strike_node,
+        override=True,
+        notion=(_visit_strike_node, _depart_strike_node),
+    )
 
 
 @beartype
@@ -2063,6 +2061,8 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
+    app.connect(event="config-inited", callback=_register_strike_node_handlers)
+
     app.connect(
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
@@ -2100,11 +2100,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         html=(_visit_mention_date_node_html, _depart_mention_date_node_html),
     )
 
-    logger = logging.getLogger(name="sphinx.sphinx.registry")
-    logger.addFilter(filter=_filter_ulem)
-
-    sphinxnotes.strike.SUPPORTED_BUILDERS.append(NotionBuilder)
-
     # that we use. The ``sphinx-iframes`` extension implements a ``video``
     # directive that we don't use.
     # Make sure that if they are both enabled, we use the
@@ -2112,4 +2107,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     if "sphinxcontrib.video" in app.extensions:
         app.add_directive(name="video", cls=Video, override=True)
 
-    return {"parallel_read_safe": True}
+    return {
+        "parallel_read_safe": True,
+        "version": version(distribution_name="sphinx-notionbuilder"),
+    }
