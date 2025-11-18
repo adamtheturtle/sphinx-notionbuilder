@@ -80,7 +80,7 @@ optional-dependencies.dev = [
     "shfmt-py==3.12.0.2",
     "sphinx-lint==1.0.1",
     "sphinx-pyproject==0.3.0",
-    "sphinx-substitution-extensions==2025.10.24",
+    "sphinx-substitution-extensions==2025.11.17",
     "sphinxcontrib-spelling==8.0.1",
     "sphinxcontrib-text-styles==0.2.1",
     "types-docutils==0.22.3.20251115",
