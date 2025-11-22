@@ -542,13 +542,9 @@ def _(node: _MentionPageNode) -> Text:
     """
     page_id = _validate_mention(mention_id=node.attributes["page_id"])
     page_obj_ref = ObjectRef(id=page_id)
-    mention_page = MentionPage(page=page_obj_ref)
-    mention_obj = MentionObject(
-        mention=mention_page,
-        annotations=Annotations(),
-        plain_text=node.attributes["page_id"],
-        href=None,
-        type="mention",
+    mention_obj = MentionPage.build_mention_from(
+        page=page_obj_ref,
+        style=Annotations(),
     )
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
@@ -561,13 +557,9 @@ def _(node: _MentionDatabaseNode) -> Text:
     """
     database_id = _validate_mention(mention_id=node.attributes["database_id"])
     database_obj_ref = ObjectRef(id=database_id)
-    mention_database = MentionDatabase(database=database_obj_ref)
-    mention_obj = MentionObject(
-        mention=mention_database,
-        annotations=Annotations(),
-        plain_text=node.attributes["database_id"],
-        href=None,
-        type="mention",
+    mention_obj = MentionDatabase.build_mention_from(
+        db=database_obj_ref,
+        style=Annotations(),
     )
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
