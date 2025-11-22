@@ -267,7 +267,7 @@ def _block_with_uploaded_file(
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
-    elif isinstance(block, ParentBlock) and block.children:
+    elif isinstance(block, ParentBlock) and block.blocks:
         new_child_blocks = [
             _block_with_uploaded_file(block=child_block, session=session)
             for child_block in block.blocks
