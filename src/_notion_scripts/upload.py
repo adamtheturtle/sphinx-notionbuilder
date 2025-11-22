@@ -41,7 +41,7 @@ def _block_without_children(
     Return a copy of a block without children.
     """
     serialized_block = block.obj_ref.serialize_for_api()
-    if block.children:
+    if block.blocks:
         serialized_block[serialized_block["type"]]["children"] = []
 
     # Delete the ID, else the block will have the children from Notion.
