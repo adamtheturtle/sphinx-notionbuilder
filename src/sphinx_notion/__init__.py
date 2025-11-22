@@ -527,13 +527,9 @@ def _(node: _MentionUserNode) -> Text:
     """
     user_id = _validate_mention(mention_id=node.attributes["user_id"])
     user_ref = UserRef(id=user_id)
-    mention_user = MentionUser(user=user_ref)
-    mention_obj = MentionObject(
-        mention=mention_user,
-        annotations=Annotations(),
-        plain_text=f"@{user_id}",
-        href=None,
-        type="mention",
+    mention_obj = MentionUser.build_mention_from(
+        user=user_ref,
+        style=Annotations(),
     )
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
