@@ -16,7 +16,7 @@ import anstrip
 import pytest
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
-from ultimate_notion import Database, Emoji, Page
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -71,17 +71,14 @@ from ultimate_notion.rich_text import Text, math, text
 
 
 @beartype
-def _details_from_block(
-    *,
-    block: Block | Page | Database,
-) -> dict[str, Any]:
+def _details_from_block(*, block: Block) -> dict[str, Any]:
     """
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.children:
+    if isinstance(block, ParentBlock) and block.blocks:
         serialized_obj[block.obj_ref.type]["children"] = [
-            _details_from_block(block=child) for child in block.children
+            _details_from_block(block=child) for child in block.blocks
         ]
     return serialized_obj
 
