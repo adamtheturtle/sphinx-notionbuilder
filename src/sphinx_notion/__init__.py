@@ -85,7 +85,6 @@ from ultimate_notion.obj_api.objects import (
     DateRange,
     MentionDatabase,
     MentionDate,
-    MentionObject,
     MentionPage,
     MentionUser,
     PageRef,
@@ -574,13 +573,9 @@ def _(node: _MentionDateNode) -> Text:
     parsed_date = dt.date.fromisoformat(date_str)
     date_range = DateRange.build(dt_spec=parsed_date)
 
-    mention_date = MentionDate(date=date_range)
-    mention_obj = MentionObject(
-        mention=mention_date,
-        annotations=Annotations(),
-        plain_text=date_str,
-        href=None,
-        type="mention",
+    mention_obj = MentionDate.build_mention_from(
+        date_range=date_range,
+        style=Annotations(),
     )
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
