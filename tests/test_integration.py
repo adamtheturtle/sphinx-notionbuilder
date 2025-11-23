@@ -3341,13 +3341,9 @@ def test_notion_mention_user(
     """
 
     user_ref = UserRef(id=UUID(hex=test_user_id))
-    mention_user = MentionUser(user=user_ref)
-    mention_obj = MentionObject(
-        mention=mention_user,
-        annotations=Annotations(),
-        plain_text=f"@{test_user_id}",
-        href=None,
-        type="mention",
+    mention_obj = MentionUser.build_mention_from(
+        user=user_ref,
+        style=Annotations(),
     )
     expected_objects: list[Block] = [
         UnoParagraph(
@@ -3380,13 +3376,9 @@ def test_notion_mention_page(
     """
 
     page_obj_ref = ObjectRef(id=UUID(hex=test_page_id))
-    mention_page = MentionPage(page=page_obj_ref)
-    mention_obj = MentionObject(
-        mention=mention_page,
-        annotations=Annotations(),
-        plain_text=test_page_id,
-        href=None,
-        type="mention",
+    mention_obj = MentionPage.build_mention_from(
+        page=page_obj_ref,
+        style=Annotations(),
     )
     expected_objects: list[Block] = [
         UnoParagraph(
@@ -3419,13 +3411,9 @@ def test_notion_mention_database(
     """
 
     database_obj_ref = ObjectRef(id=UUID(hex=test_database_id))
-    mention_database = MentionDatabase(database=database_obj_ref)
-    mention_obj = MentionObject(
-        mention=mention_database,
-        annotations=Annotations(),
-        plain_text=test_database_id,
-        href=None,
-        type="mention",
+    mention_obj = MentionDatabase.build_mention_from(
+        db=database_obj_ref,
+        style=Annotations(),
     )
     expected_objects: list[Block] = [
         UnoParagraph(
