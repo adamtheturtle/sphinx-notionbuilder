@@ -6,6 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import json
 import mimetypes
+from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -99,8 +100,8 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
 @beartype
 def _find_last_matching_block_index(
     *,
-    existing_blocks: list[Block] | tuple[Block, ...],
-    local_blocks: list[Block],
+    existing_blocks: Sequence[Block],
+    local_blocks: Sequence[Block],
 ) -> int | None:
     """Find the last index where existing blocks match local blocks.
 
