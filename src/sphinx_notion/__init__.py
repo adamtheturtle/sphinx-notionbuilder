@@ -81,7 +81,6 @@ from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
 from ultimate_notion.obj_api.objects import (
-    Annotations,
     DateRange,
     MentionDatabase,
     MentionDate,
@@ -526,10 +525,7 @@ def _(node: _MentionUserNode) -> Text:
     """
     user_id = _validate_mention(mention_id=node.attributes["user_id"])
     user_ref = UserRef(id=user_id)
-    mention_obj = MentionUser.build_mention_from(
-        user=user_ref,
-        style=Annotations(),
-    )
+    mention_obj = MentionUser.build_mention_from(user=user_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
@@ -541,10 +537,7 @@ def _(node: _MentionPageNode) -> Text:
     """
     page_id = _validate_mention(mention_id=node.attributes["page_id"])
     page_obj_ref = ObjectRef(id=page_id)
-    mention_obj = MentionPage.build_mention_from(
-        page=page_obj_ref,
-        style=Annotations(),
-    )
+    mention_obj = MentionPage.build_mention_from(page=page_obj_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
@@ -556,10 +549,7 @@ def _(node: _MentionDatabaseNode) -> Text:
     """
     database_id = _validate_mention(mention_id=node.attributes["database_id"])
     database_obj_ref = ObjectRef(id=database_id)
-    mention_obj = MentionDatabase.build_mention_from(
-        db=database_obj_ref,
-        style=Annotations(),
-    )
+    mention_obj = MentionDatabase.build_mention_from(db=database_obj_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
@@ -573,10 +563,7 @@ def _(node: _MentionDateNode) -> Text:
     parsed_date = dt.date.fromisoformat(date_str)
     date_range = DateRange.build(dt_spec=parsed_date)
 
-    mention_obj = MentionDate.build_mention_from(
-        date_range=date_range,
-        style=Annotations(),
-    )
+    mention_obj = MentionDate.build_mention_from(date_range=date_range)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
 
 
