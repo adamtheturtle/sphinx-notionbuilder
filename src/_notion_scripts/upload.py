@@ -371,11 +371,18 @@ def main(
         page.cover = None
 
     if page.subpages:
-        non_block_page_child_error = (
+        page_has_page_child_error = (
             "We only support pages which only contain Blocks. "
             "This page has subpages."
         )
-        raise click.ClickException(message=non_block_page_child_error)
+        raise click.ClickException(message=page_has_page_child_error)
+
+    if page.subdbs:
+        page_has_database_child_error = (
+            "We only support pages which only contain Blocks. "
+            "This page has databases."
+        )
+        raise click.ClickException(message=page_has_database_child_error)
 
     block_objs = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
