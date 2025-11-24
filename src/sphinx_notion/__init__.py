@@ -1566,7 +1566,7 @@ def _(
     """
     del section_level
     page_id = _validate_mention(mention_id=node.attributes["page_id"])
-    page_ref = PageRef(type="page_id", page_id=page_id)
+    page_ref = PageRef(page_id=page_id)
     obj_link_to_page = ObjLinkToPage(
         type="link_to_page", link_to_page=page_ref
     )

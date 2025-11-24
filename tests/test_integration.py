@@ -3337,7 +3337,7 @@ def test_notion_mention_user(
 
     user_ref = UserRef(id=UUID(hex=test_user_id))
     mention_obj = MentionUser.build_mention_from(user=user_ref)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(
             text=text(text="Hello ")
             + Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -3347,7 +3347,7 @@ def test_notion_mention_user(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -3369,7 +3369,7 @@ def test_notion_mention_page(
 
     page_obj_ref = ObjectRef(id=UUID(hex=test_page_id))
     mention_obj = MentionPage.build_mention_from(page=page_obj_ref)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(
             text=text(text="See ")
             + Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -3379,7 +3379,7 @@ def test_notion_mention_page(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -3401,7 +3401,7 @@ def test_notion_mention_database(
 
     database_obj_ref = ObjectRef(id=UUID(hex=test_database_id))
     mention_obj = MentionDatabase.build_mention_from(db=database_obj_ref)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(
             text=text(text="Check the ")
             + Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -3411,7 +3411,7 @@ def test_notion_mention_database(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -3434,7 +3434,7 @@ def test_notion_mention_date(
     parsed_date = dt.date.fromisoformat(test_date)
     date_range = DateRange.build(dt_spec=parsed_date)
     mention_obj = MentionDate.build_mention_from(date_range=date_range)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(
             text=text(text="The meeting is on ")
             + Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -3444,7 +3444,7 @@ def test_notion_mention_date(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
