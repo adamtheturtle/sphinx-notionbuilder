@@ -122,9 +122,6 @@ universal = true
 # Code to match this is in ``conf.py``.
 version_scheme = "post-release"
 
-[tool.uv.sources]
-ultimate-notion = { git = "https://github.com/ultimate-notion/ultimate-notion.git", branch = "fix-170" }
-
 [tool.ruff]
 line-length = 79
 
