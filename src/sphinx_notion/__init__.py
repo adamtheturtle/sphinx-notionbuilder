@@ -1935,13 +1935,15 @@ def _visit_mention_user_node_html(
 
 @beartype
 def _depart_mention_user_node_html(
-    self: HTML5Translator,  # pylint: disable=unused-argument
-    node: _MentionUserNode,  # pylint: disable=unused-argument
+    self: HTML5Translator,
+    node: _MentionUserNode,
 ) -> None:
     """Depart a user mention node for HTML builder.
 
     Not called due to SkipNode in visit.
     """
+    del self
+    del node
 
 
 @beartype
