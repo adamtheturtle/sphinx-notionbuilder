@@ -222,11 +222,7 @@ def _get_uploaded_cover(
 
 
 @beartype
-def _block_with_uploaded_file(
-    *,
-    block: Block,
-    session: Session,
-) -> Block:
+def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     """
     Replace a file block with an uploaded file block.
     """
