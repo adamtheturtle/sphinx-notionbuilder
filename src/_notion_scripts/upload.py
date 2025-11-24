@@ -5,7 +5,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import json
-import mimetypes
+from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -52,7 +52,7 @@ def _block_without_children(
         UnoObjAPIBlock.model_validate(obj=serialized_block)
     )
     assert isinstance(block_without_children, ParentBlock)
-    assert not block_without_children.children
+    assert not block_without_children.blocks
     return block_without_children
 
 
@@ -99,8 +99,8 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
 @beartype
 def _find_last_matching_block_index(
     *,
-    existing_blocks: list[Block] | tuple[Block, ...],
-    local_blocks: list[Block],
+    existing_blocks: Sequence[Block],
+    local_blocks: Sequence[Block],
 ) -> int | None:
     """Find the last index where existing blocks match local blocks.
 
@@ -193,20 +193,6 @@ def _is_existing_equivalent(
     return existing_page_block == local_block
 
 
-@beartype
-def _get_mime_type_for_upload(*, file_name: str) -> str | None:
-    """Get MIME type for file upload.
-
-    Ultimate Notion does not support SVG files, so we need to provide
-    the MIME type ourselves for SVG files. See
-    https://github.com/ultimate-notion/ultimate-notion/issues/141.
-    """
-    mime_type, _ = mimetypes.guess_type(url=file_name)
-    if mime_type != "image/svg+xml":
-        mime_type = None
-    return mime_type
-
-
 def _get_uploaded_cover(
     *,
     page: Page,
@@ -225,13 +211,10 @@ def _get_uploaded_cover(
     ):
         return None
 
-    mime_type = _get_mime_type_for_upload(file_name=cover.name)
-
     with cover.open(mode="rb") as file_stream:
         uploaded_cover = session.upload(
             file=file_stream,
             file_name=cover.name,
-            mime_type=mime_type,
         )
 
     uploaded_cover.wait_until_uploaded()
@@ -239,11 +222,7 @@ def _get_uploaded_cover(
 
 
 @beartype
-def _block_with_uploaded_file(
-    *,
-    block: Block,
-    session: Session,
-) -> Block:
+def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     """
     Replace a file block with an uploaded file block.
     """
@@ -254,13 +233,10 @@ def _block_with_uploaded_file(
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-            mime_type = _get_mime_type_for_upload(file_name=file_path.name)
-
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
                     file=file_stream,
                     file_name=file_path.name,
-                    mime_type=mime_type,
                 )
 
             uploaded_file.wait_until_uploaded()

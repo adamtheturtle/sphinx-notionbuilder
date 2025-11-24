@@ -140,7 +140,7 @@ def _get_background_color_classes() -> set[str]:
 
 
 @beartype
-def _color_from_css_classes(*, classes: list[str]) -> Color | None:
+def _color_from_css_classes(*, classes: Sequence[str]) -> Color | None:
     """Extract Notion color from CSS classes.
 
     Classes created by ``sphinxcontrib-text-styles``.
@@ -156,7 +156,7 @@ def _color_from_css_classes(*, classes: list[str]) -> Color | None:
 
 @beartype
 def _background_color_from_css_classes(
-    *, classes: list[str]
+    *, classes: Sequence[str]
 ) -> BGColor | None:
     """Extract Notion background color from CSS classes.
 

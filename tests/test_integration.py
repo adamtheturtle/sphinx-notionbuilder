@@ -7,7 +7,7 @@ import datetime as dt
 import json
 import re
 import textwrap
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -85,7 +85,7 @@ def _details_from_block(*, block: Block) -> dict[str, Any]:
 def _assert_rst_converts_to_notion_objects(
     *,
     rst_content: str,
-    expected_objects: list[Block],
+    expected_blocks: Sequence[Block],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
     extensions: tuple[str, ...] = ("sphinx_notion",),
@@ -130,7 +130,7 @@ def _assert_rst_converts_to_notion_objects(
 
     expected_json: list[dict[str, Any]] = [
         _details_from_block(block=expected_object)
-        for expected_object in expected_objects
+        for expected_object in expected_blocks
     ]
 
     assert generated_json == expected_json
@@ -149,13 +149,13 @@ def test_single_paragraph(
         This is a simple paragraph for testing.
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="This is a simple paragraph for testing."))
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -177,13 +177,13 @@ def test_notion_link_to_page(
 
     page_ref = PageRef(page_id=UUID(hex=test_page_id))
     obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -209,7 +209,7 @@ def test_notion_link_to_page_with_content_around(
 
     page_ref = PageRef(page_id=UUID(hex=test_page_id))
     obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="This is a paragraph before.")),
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
         UnoParagraph(text=text(text="This is a paragraph after.")),
@@ -217,7 +217,7 @@ def test_notion_link_to_page_with_content_around(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -268,7 +268,7 @@ def test_multiple_paragraphs(
         Third paragraph to test multiple blocks.
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="First paragraph with some text.")),
         UnoParagraph(
             text=text(text="Second paragraph with different content.")
@@ -280,7 +280,7 @@ def test_multiple_paragraphs(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -318,11 +318,11 @@ def test_inline_formatting(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -341,13 +341,13 @@ def test_single_heading(
         ==========
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoHeading1(text=text(text="Main Title")),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -378,7 +378,7 @@ def test_multiple_heading_levels(
         Content under subsection.
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoHeading1(text=text(text="Main Title")),
         UnoParagraph(text=text(text="Content under main title.")),
         UnoHeading2(text=text(text="Section Title")),
@@ -389,7 +389,7 @@ def test_multiple_heading_levels(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -417,13 +417,13 @@ def test_heading_with_formatting(
 
     expected_heading = UnoHeading1(text=combined_text)
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         expected_heading,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -449,11 +449,11 @@ def test_simple_link(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -487,11 +487,11 @@ def test_multiple_links(
     )
 
     expected_paragraph = UnoParagraph(text=combined_text)
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -517,13 +517,13 @@ def test_link_in_heading(
 
     expected_heading = UnoHeading1(text=combined_text)
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         expected_heading,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -561,11 +561,11 @@ def test_mixed_formatting_with_links(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -592,11 +592,11 @@ def test_unnamed_link_with_backticks(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -615,13 +615,13 @@ def test_simple_quote(
 
             This is a block quote.
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="Some content.")),
         UnoQuote(text=text(text="This is a block quote.")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -642,7 +642,7 @@ def test_multiline_quote(
             block quote with
             multiple lines.
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="Some content.")),
         UnoQuote(
             text=text(
@@ -652,7 +652,7 @@ def test_multiline_quote(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -695,14 +695,14 @@ def test_multi_paragraph_quote(
 
     quote.append(blocks=[nested_paragraph])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="Some content.")),
         quote,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -728,7 +728,7 @@ def test_table_of_contents(
         Second Section
         --------------
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoHeading1(text=text(text="Introduction")),
         UnoTableOfContents(),
         UnoHeading2(text=text(text="First Section")),
@@ -736,7 +736,7 @@ def test_table_of_contents(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -757,13 +757,13 @@ def test_toctree_directive(
         .. toctree::
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoHeading1(text=text(text="Introduction")),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -783,7 +783,7 @@ def test_simple_code_block(
            def hello():
                print("Hello, world!")
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoCode(
             text=text(text='def hello():\n    print("Hello, world!")'),
             language=CodeLang.PYTHON,
@@ -791,7 +791,7 @@ def test_simple_code_block(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -826,7 +826,7 @@ def test_code_block_language_mapping(
 
            Code with no language
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoCode(
             text=text(text="$ pip install example"), language=CodeLang.SHELL
         ),
@@ -845,7 +845,7 @@ def test_code_block_language_mapping(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -864,14 +864,14 @@ def test_flat_bullet_list(
         * Second bullet point
         * Third bullet point with longer text
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoBulletedItem(text=text(text="First bullet point")),
         UnoBulletedItem(text=text(text="Second bullet point")),
         UnoBulletedItem(text=text(text="Third bullet point with longer text")),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -896,13 +896,13 @@ def test_bullet_list_with_inline_formatting(
         )
     )
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         bullet,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -944,12 +944,12 @@ def test_admonition_single_line(
         color=background_color,
     )
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         callout,
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -996,12 +996,12 @@ def test_admonition_multiline(
 
     callout.append(blocks=[nested_paragraph])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         callout,
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1044,12 +1044,12 @@ def test_admonition_with_code_block(
     callout.append(blocks=[nested_code_block])
     callout.append(blocks=[nested_paragraph])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         callout,
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1093,10 +1093,10 @@ def test_admonition_with_code_block_first(
     callout.append(blocks=[nested_code_block])
     callout.append(blocks=[nested_paragraph])
 
-    expected_objects: list[Block] = [callout]
+    expected_blocks = [callout]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1135,13 +1135,13 @@ def test_admonition_with_bullet_points(
     callout.append(blocks=[bullet_a])
     callout.append(blocks=[bullet_b])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         callout,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1181,13 +1181,13 @@ def test_generic_admonition(
     callout.append(blocks=[nested_paragraph1])
     callout.append(blocks=[nested_paragraph2])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         callout,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1231,7 +1231,7 @@ def test_nested_bullet_list(
 
     top_level_3 = UnoBulletedItem(text=text(text="Another top level item"))
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         top_level_1,
         top_level_2,
         top_level_3,
@@ -1239,7 +1239,7 @@ def test_nested_bullet_list(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
@@ -1259,7 +1259,7 @@ def test_flat_numbered_list(
         2. Second numbered point
         3. Third numbered point with longer text
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoNumberedItem(text=text(text="First numbered point")),
         UnoNumberedItem(text=text(text="Second numbered point")),
         UnoNumberedItem(
@@ -1268,7 +1268,7 @@ def test_flat_numbered_list(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1298,13 +1298,13 @@ def test_numbered_list_with_inline_formatting(
         )
     )
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         numbered_item,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1348,7 +1348,7 @@ def test_nested_numbered_list(
 
     top_level_3 = UnoNumberedItem(text=text(text="Another top level item"))
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         top_level_1,
         top_level_2,
         top_level_3,
@@ -1356,7 +1356,7 @@ def test_nested_numbered_list(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1395,13 +1395,13 @@ def test_collapse_block(
     toggle_block.append(blocks=[nested_para1])
     toggle_block.append(blocks=[nested_para2])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         toggle_block,
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
@@ -1439,11 +1439,11 @@ def test_simple_table(
     table[2, 0] = text(text="Cell 3") + text(text="\n\n") + text(text="Cell 3")
     table[2, 1] = text(text="Cell 4") + text(text="\n\n") + text(text="Cell 4")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1470,11 +1470,11 @@ def test_table_without_header_row(
     table[1, 0] = text(text="Cell 3")
     table[1, 1] = text(text="Cell 4")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1504,11 +1504,11 @@ def test_table_inline_formatting(
     table[1, 0] = text(text="cell code", code=True)
     table[1, 1] = text(text="Normal cell")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1542,7 +1542,7 @@ def test_table_cell_non_paragraph_error(
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
-            expected_objects=[],
+            expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
         )
@@ -1560,7 +1560,7 @@ def test_simple_image(
         .. image:: https://www.example.com/path/to/image.png
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoImage(
             file=ExternalFile(url="https://www.example.com/path/to/image.png")
         ),
@@ -1568,7 +1568,7 @@ def test_simple_image(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1588,7 +1588,7 @@ def test_image_with_alt_text_only(
            :alt: Example image
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoImage(
             file=ExternalFile(url="https://www.example.com/path/to/image.png"),
         ),
@@ -1596,7 +1596,7 @@ def test_image_with_alt_text_only(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1621,7 +1621,7 @@ def test_literalinclude_without_caption(
         """,
     )
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoCode(
             text=text(text=conf_py_content),
             language=CodeLang.PYTHON,
@@ -1630,7 +1630,7 @@ def test_literalinclude_without_caption(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
@@ -1663,7 +1663,7 @@ def test_literalinclude_with_caption(
     normal_text = text(text=" Configuration File")
     caption_with_bold = bold_text + normal_text
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoCode(
             text=text(text=conf_py_content),
             language=CodeLang.PYTHON,
@@ -1673,7 +1673,7 @@ def test_literalinclude_with_caption(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
@@ -1715,7 +1715,7 @@ def test_heading_level_4_error(
     ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
-            expected_objects=[],
+            expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
         )
@@ -1741,13 +1741,13 @@ def test_local_image_file(
         .. image:: test_image.png
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1765,7 +1765,7 @@ def test_simple_video(
         .. video:: https://www.example.com/path/to/video.mp4
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoVideo(
             file=ExternalFile(url="https://www.example.com/path/to/video.mp4")
         ),
@@ -1773,7 +1773,7 @@ def test_simple_video(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
@@ -1794,7 +1794,7 @@ def test_video_with_caption(
            :caption: Example video
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoVideo(
             file=ExternalFile(url="https://www.example.com/path/to/video.mp4"),
             caption=text(text="Example video"),
@@ -1803,7 +1803,7 @@ def test_video_with_caption(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
@@ -1828,13 +1828,13 @@ def test_local_video_file(
         .. video:: test_video.mp4
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoVideo(file=ExternalFile(url=test_video_path.as_uri())),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib.video"),
@@ -1853,7 +1853,7 @@ def test_simple_audio(
         .. audio:: https://www.example.com/path/to/audio.mp3
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoAudio(
             file=ExternalFile(url="https://www.example.com/path/to/audio.mp3")
         ),
@@ -1861,7 +1861,7 @@ def test_simple_audio(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
@@ -1886,13 +1886,13 @@ def test_local_audio_file(
         .. audio:: test_audio.mp3
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoAudio(file=ExternalFile(url=test_audio_path.as_uri())),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
@@ -1921,14 +1921,14 @@ def test_strikethrough_text(
 
     combined_text = normal_text1 + strikethrough_text + normal_text2
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=combined_text),
         UnoParagraph(text=combined_text),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=(
@@ -1955,7 +1955,7 @@ def test_comment_ignored(
         This is another paragraph after the comment.
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="This is a paragraph with content.")),
         UnoParagraph(
             text=text(text="This is another paragraph after the comment.")
@@ -1964,7 +1964,7 @@ def test_comment_ignored(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -1994,11 +1994,11 @@ def test_list_table_header_one_allowed(
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2024,11 +2024,11 @@ def test_list_table_header_rows_zero_allowed(
     table[0, 0] = text(text="Cell 1")
     table[0, 1] = text(text="Cell 2")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2068,11 +2068,11 @@ def test_list_table_header_maximum_one_allowed(
     table[2, 0] = text(text="Cell a 1")
     table[2, 1] = text(text="Cell a 2")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
@@ -2117,11 +2117,11 @@ def test_list_table_stub_columns_one(
     table[2, 1] = text(text="Row 2, Col 2")
     table[2, 2] = text(text="Row 2, Col 3")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2168,11 +2168,11 @@ def test_list_table_stub_columns_two(
     table[2, 1] = text(text="Row 2, Col 2")
     table[2, 2] = text(text="Row 2, Col 3")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
@@ -2210,11 +2210,11 @@ def test_list_table_with_title_error(
     table[1, 0] = text(text="Cell 1")
     table[1, 1] = text(text="Cell 2")
 
-    expected_objects: list[Block] = [table]
+    expected_blocks = [table]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
@@ -2242,7 +2242,7 @@ def test_simple_pdf(
         .. pdf-include:: https://www.example.com/path/to/document.pdf
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoPDF(
             file=ExternalFile(
                 url="https://www.example.com/path/to/document.pdf"
@@ -2252,7 +2252,7 @@ def test_simple_pdf(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=extensions,
@@ -2273,7 +2273,7 @@ def test_pdf_with_options(
            :height: 300px
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoPDF(
             file=ExternalFile(
                 url="https://www.example.com/path/to/document.pdf"
@@ -2283,7 +2283,7 @@ def test_pdf_with_options(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
@@ -2308,13 +2308,13 @@ def test_local_pdf_file(
         .. pdf-include:: test_document.pdf
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoPDF(file=ExternalFile(url=test_pdf_path.as_uri())),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
@@ -2399,11 +2399,11 @@ and :text-green:`green text`.
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
@@ -2458,11 +2458,11 @@ def test_individual_colors(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
@@ -2495,11 +2495,11 @@ def test_text_styles_unsupported_color(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
@@ -2539,11 +2539,11 @@ def setup(app):
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
@@ -2580,11 +2580,11 @@ def test_text_styles_and_strike(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=(
@@ -2627,11 +2627,11 @@ def test_additional_text_styles(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
@@ -2653,7 +2653,7 @@ def test_flat_task_list(
            - [x] Checked task item
            - [ ] Another unchecked task with **bold text**
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoToDoItem(text=text(text="Unchecked task item"), checked=False),
         UnoToDoItem(text=text(text="Checked task item"), checked=True),
         UnoToDoItem(
@@ -2666,7 +2666,7 @@ def test_flat_task_list(
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
@@ -2714,13 +2714,13 @@ def test_bullet_list_with_nested_content(
     )
     second_bullet.append(blocks=[nested_paragraph_2])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         first_bullet,
         second_bullet,
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2762,11 +2762,11 @@ def test_task_list_with_nested_content(
     )
     task_item.append(blocks=[nested_bullet])
 
-    expected_objects: list[Block] = [task_item]
+    expected_blocks = [task_item]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
@@ -2829,14 +2829,14 @@ def test_nested_task_list(
     )
     task_b.append(blocks=[another_bullet])
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoToDoItem(text=text(text="Task A"), checked=True),
         task_b,
         UnoToDoItem(text=text(text="Task C"), checked=False),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
@@ -2862,7 +2862,7 @@ def test_task_list_quote(
 
     # The actual processing creates a flat structure where the quote
     # becomes a separate quote block
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoToDoItem(text=text(text="Task A"), checked=True),
         UnoToDoItem(text=text(text="Task B"), checked=False),
         UnoQuote(text=text(text="foo")),
@@ -2870,7 +2870,7 @@ def test_task_list_quote(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
@@ -2888,12 +2888,12 @@ def test_inline_single_backticks(
     rst_content = """
         A `B`
     """
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="A ") + text(text="B", italic=True)),
     ]
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2937,11 +2937,11 @@ def test_kbd_role(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -2968,11 +2968,11 @@ def test_file_role(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -3009,7 +3009,7 @@ def setup(app):
     with pytest.raises(expected_exception=ValueError, match=expected_message):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
-            expected_objects=[],
+            expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
             conf_py_content=conf_py_content,
@@ -3055,7 +3055,7 @@ def test_unsupported_node_types_in_process_node_to_blocks(
     ):
         _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
-            expected_objects=[],
+            expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
         )
@@ -3081,11 +3081,11 @@ def test_inline_equation(
 
     expected_paragraph = UnoParagraph(text=combined_text)
 
-    expected_objects: list[Block] = [expected_paragraph]
+    expected_blocks = [expected_paragraph]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
@@ -3106,13 +3106,13 @@ def test_block_equation(
            E = mc^2
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoEquation(latex="E = mc^2"),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
@@ -3185,11 +3185,11 @@ def test_rest_example_block(
     main_callout = UnoCallout(text=text(text="Example"))
     main_callout.append(blocks=[code_callout, output_callout])
 
-    expected_objects: list[Block] = [main_callout]
+    expected_blocks = [main_callout]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
@@ -3210,7 +3210,7 @@ def test_embed_block(
            :height: 400
     """
 
-    expected_objects: list[Block] = [UnoEmbed(url="https://example.com/embed")]
+    expected_blocks = [UnoEmbed(url="https://example.com/embed")]
 
     # Create the _static directory that ``sphinx-iframes`` expects
     static_dir = tmp_path / "build" / "notion" / "_static"
@@ -3218,7 +3218,7 @@ def test_embed_block(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
@@ -3243,14 +3243,14 @@ def test_embed_and_video(
         .. video:: https://example.com/video.mp4
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoEmbed(url="https://example.com/embed"),
         UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
     ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
@@ -3272,7 +3272,7 @@ def test_line_block(
         | preserved exactly as written
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(
             text=text(text="This is a line block")
             + text(text="\n")
@@ -3285,7 +3285,7 @@ def test_line_block(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
@@ -3307,7 +3307,7 @@ def test_transition_divider(
         Second paragraph.
     """
 
-    expected_objects: list[Block] = [
+    expected_blocks = [
         UnoParagraph(text=text(text="First paragraph.")),
         UnoDivider(),
         UnoParagraph(text=text(text="Second paragraph.")),
@@ -3315,7 +3315,7 @@ def test_transition_divider(
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
-        expected_objects=expected_objects,
+        expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
     )
