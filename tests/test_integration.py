@@ -68,9 +68,9 @@ def _details_from_block(
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.children:
+    if isinstance(block, ParentBlock) and block.blocks:
         serialized_obj[block.obj_ref.type]["children"] = [
-            _details_from_block(block=child) for child in block.children
+            _details_from_block(block=child) for child in block.blocks
         ]
     return serialized_obj
 
@@ -2444,9 +2444,7 @@ def test_individual_colors(
     normal_text = text(text="This is ")
     colored_text = text(
         text=f"{role} text",
-        # We ignore the type check here because Ultimate Notion has
-        # a bad type hint: https://github.com/ultimate-notion/ultimate-notion/issues/140
-        color=expected_color,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        color=expected_color,
     )
     normal_text2 = text(text=".")
 
