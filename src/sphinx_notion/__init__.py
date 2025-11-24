@@ -262,11 +262,11 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
         Create a Notion link-to-page block.
         """
         (page_id,) = self.arguments
-        UUID(hex=page_id)
+        page_uuid = UUID(hex=page_id)
 
         if isinstance(self.env.app.builder, NotionBuilder):
             node = _LinkToPageNode()
-            node.attributes["page_id"] = page_id
+            node.attributes["page_id"] = page_uuid
             return [node]
 
         notion_url = f"https://www.notion.so/{page_id}"
@@ -291,9 +291,9 @@ def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
     Create a Notion user mention role.
     """
     del name, rawtext, lineno, inliner, options, content
-    UUID(hex=text_content)
+    user_uuid = UUID(hex=text_content)
     node = _MentionUserNode()
-    node.attributes["user_id"] = text_content
+    node.attributes["user_id"] = user_uuid
     node += nodes.Text(data=f"@{text_content}")
     return [node], []
 
@@ -312,9 +312,9 @@ def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
     Create a Notion page mention role.
     """
     del name, rawtext, lineno, inliner, options, content
-    UUID(hex=text_content)
+    page_uuid = UUID(hex=text_content)
     node = _MentionPageNode()
-    node.attributes["page_id"] = text_content
+    node.attributes["page_id"] = page_uuid
     node += nodes.Text(data=text_content)
     return [node], []
 
@@ -333,9 +333,9 @@ def _notion_mention_database_role(  # pylint: disable=too-many-positional-argume
     Create a Notion database mention role.
     """
     del name, rawtext, lineno, inliner, options, content
-    UUID(hex=text_content)
+    database_uuid = UUID(hex=text_content)
     node = _MentionDatabaseNode()
-    node.attributes["database_id"] = text_content
+    node.attributes["database_id"] = database_uuid
     node += nodes.Text(data=text_content)
     return [node], []
 
@@ -354,8 +354,9 @@ def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
     Create a Notion date mention role.
     """
     del name, rawtext, lineno, inliner, options, content
+    date_obj = dt.date.fromisoformat(text_content)
     node = _MentionDateNode()
-    node.attributes["date"] = text_content
+    node.attributes["date"] = date_obj
     node += nodes.Text(data=text_content)
     return [node], []
 
@@ -515,7 +516,7 @@ def _(node: _MentionUserNode) -> Text:
     """
     Process mention user nodes by creating user mention rich text.
     """
-    user_id = UUID(hex=node.attributes["user_id"])
+    user_id = node.attributes["user_id"]
     user_ref = UserRef(id=user_id)
     mention_obj = MentionUser.build_mention_from(user=user_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -527,7 +528,7 @@ def _(node: _MentionPageNode) -> Text:
     """
     Process mention page nodes by creating page mention rich text.
     """
-    page_id = UUID(hex=node.attributes["page_id"])
+    page_id = node.attributes["page_id"]
     page_obj_ref = ObjectRef(id=page_id)
     mention_obj = MentionPage.build_mention_from(page=page_obj_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -539,7 +540,7 @@ def _(node: _MentionDatabaseNode) -> Text:
     """
     Process mention database nodes by creating database mention rich text.
     """
-    database_id = UUID(hex=node.attributes["database_id"])
+    database_id = node.attributes["database_id"]
     database_obj_ref = ObjectRef(id=database_id)
     mention_obj = MentionDatabase.build_mention_from(db=database_obj_ref)
     return Text.wrap_obj_ref(obj_refs=[mention_obj])
@@ -551,8 +552,7 @@ def _(node: _MentionDateNode) -> Text:
     """
     Process mention date nodes by creating date mention rich text.
     """
-    date_str = node.attributes["date"]
-    parsed_date = dt.date.fromisoformat(date_str)
+    parsed_date = node.attributes["date"]
     date_range = DateRange.build(dt_spec=parsed_date)
 
     mention_obj = MentionDate.build_mention_from(date_range=date_range)
@@ -1557,7 +1557,7 @@ def _(
     This handles nodes created by our custom NotionLinkToPageDirective.
     """
     del section_level
-    page_id = UUID(hex=node.attributes["page_id"])
+    page_id = node.attributes["page_id"]
     page_ref = PageRef(page_id=page_id)
     obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
 
@@ -1928,7 +1928,7 @@ def _visit_mention_user_node_html(
     Renders as a link to the Notion user page.
     """
     user_id = node.attributes["user_id"]
-    url = f"https://www.notion.so/{user_id.replace('-', '')}"
+    url = f"https://www.notion.so/{user_id.hex}"
     self.body.append(f'<a href="{url}">@{user_id}</a>')
     raise nodes.SkipNode
 
@@ -1943,7 +1943,7 @@ def _visit_mention_page_node_html(
     Renders as a link to the Notion page.
     """
     page_id = node.attributes["page_id"]
-    url = f"https://www.notion.so/{page_id.replace('-', '')}"
+    url = f"https://www.notion.so/{page_id.hex}"
     self.body.append(f'<a href="{url}">{page_id}</a>')
     raise nodes.SkipNode
 
@@ -1958,7 +1958,7 @@ def _visit_mention_database_node_html(
     Renders as a link to the Notion database.
     """
     database_id = node.attributes["database_id"]
-    url = f"https://www.notion.so/{database_id.replace('-', '')}"
+    url = f"https://www.notion.so/{database_id.hex}"
     self.body.append(f'<a href="{url}">{database_id}</a>')
     raise nodes.SkipNode
 
