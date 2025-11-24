@@ -5,7 +5,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import json
-import mimetypes
 from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
@@ -194,20 +193,6 @@ def _is_existing_equivalent(
     return existing_page_block == local_block
 
 
-@beartype
-def _get_mime_type_for_upload(*, file_name: str) -> str | None:
-    """Get MIME type for file upload.
-
-    Ultimate Notion does not support SVG files, so we need to provide
-    the MIME type ourselves for SVG files. See
-    https://github.com/ultimate-notion/ultimate-notion/issues/141.
-    """
-    mime_type, _ = mimetypes.guess_type(url=file_name)
-    if mime_type != "image/svg+xml":
-        mime_type = None
-    return mime_type
-
-
 def _get_uploaded_cover(
     *,
     page: Page,
@@ -226,13 +211,10 @@ def _get_uploaded_cover(
     ):
         return None
 
-    mime_type = _get_mime_type_for_upload(file_name=cover.name)
-
     with cover.open(mode="rb") as file_stream:
         uploaded_cover = session.upload(
             file=file_stream,
             file_name=cover.name,
-            mime_type=mime_type,
         )
 
     uploaded_cover.wait_until_uploaded()
@@ -255,13 +237,10 @@ def _block_with_uploaded_file(
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
 
-            mime_type = _get_mime_type_for_upload(file_name=file_path.name)
-
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
                     file=file_stream,
                     file_name=file_path.name,
-                    mime_type=mime_type,
                 )
 
             uploaded_file.wait_until_uploaded()
