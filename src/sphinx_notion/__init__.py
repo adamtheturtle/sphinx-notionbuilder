@@ -1934,17 +1934,6 @@ def _visit_mention_user_node_html(
 
 
 @beartype
-def _depart_mention_user_node_html(
-    self: HTML5Translator,  # pylint: disable=unused-argument
-    node: _MentionUserNode,  # pylint: disable=unused-argument
-) -> None:
-    """Depart a user mention node for HTML builder.
-
-    Not called due to SkipNode in visit.
-    """
-
-
-@beartype
 def _visit_mention_page_node_html(
     self: HTML5Translator,
     node: _MentionPageNode,
@@ -1957,17 +1946,6 @@ def _visit_mention_page_node_html(
     url = f"https://www.notion.so/{page_id.replace('-', '')}"
     self.body.append(f'<a href="{url}">{page_id}</a>')
     raise nodes.SkipNode
-
-
-@beartype
-def _depart_mention_page_node_html(
-    self: HTML5Translator,  # pylint: disable=unused-argument
-    node: _MentionPageNode,  # pylint: disable=unused-argument
-) -> None:
-    """Depart a page mention node for HTML builder.
-
-    Not called due to SkipNode in visit.
-    """
 
 
 @beartype
@@ -1986,17 +1964,6 @@ def _visit_mention_database_node_html(
 
 
 @beartype
-def _depart_mention_database_node_html(
-    self: HTML5Translator,  # pylint: disable=unused-argument
-    node: _MentionDatabaseNode,  # pylint: disable=unused-argument
-) -> None:
-    """Depart a database mention node for HTML builder.
-
-    Not called due to SkipNode in visit.
-    """
-
-
-@beartype
 def _visit_mention_date_node_html(
     self: HTML5Translator,
     node: _MentionDateNode,
@@ -2007,17 +1974,6 @@ def _visit_mention_date_node_html(
     """
     self.body.append(node.astext())
     raise nodes.SkipNode
-
-
-@beartype
-def _depart_mention_date_node_html(
-    self: HTML5Translator,  # pylint: disable=unused-argument
-    node: _MentionDateNode,  # pylint: disable=unused-argument
-) -> None:
-    """Depart a date mention node for HTML builder.
-
-    Not called due to SkipNode in visit.
-    """
 
 
 @beartype
@@ -2049,22 +2005,19 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     app.add_node(
         node=_MentionUserNode,
-        html=(_visit_mention_user_node_html, _depart_mention_user_node_html),
+        html=(_visit_mention_user_node_html, None),
     )
     app.add_node(
         node=_MentionPageNode,
-        html=(_visit_mention_page_node_html, _depart_mention_page_node_html),
+        html=(_visit_mention_page_node_html, None),
     )
     app.add_node(
         node=_MentionDatabaseNode,
-        html=(
-            _visit_mention_database_node_html,
-            _depart_mention_database_node_html,
-        ),
+        html=(_visit_mention_database_node_html, None),
     )
     app.add_node(
         node=_MentionDateNode,
-        html=(_visit_mention_date_node_html, _depart_mention_date_node_html),
+        html=(_visit_mention_date_node_html, None),
     )
 
     # that we use. The ``sphinx-iframes`` extension implements a ``video``
