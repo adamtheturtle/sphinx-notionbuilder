@@ -42,7 +42,7 @@ def _block_without_children(
     Return a copy of a block without children.
     """
     serialized_block = block.obj_ref.serialize_for_api()
-    if block.children:
+    if block.blocks:
         serialized_block[serialized_block["type"]]["children"] = []
 
     # Delete the ID, else the block will have the children from Notion.
@@ -53,7 +53,7 @@ def _block_without_children(
         UnoObjAPIBlock.model_validate(obj=serialized_block)
     )
     assert isinstance(block_without_children, ParentBlock)
-    assert not block_without_children.children
+    assert not block_without_children.blocks
     return block_without_children
 
 
@@ -176,7 +176,7 @@ def _is_existing_equivalent(
         if (
             existing_page_block_without_children
             != local_block_without_children
-        ) or (len(existing_page_block.children) != len(local_block.children)):
+        ) or (len(existing_page_block.blocks) != len(local_block.blocks)):
             return False
 
         return all(
@@ -185,8 +185,8 @@ def _is_existing_equivalent(
                 local_block=local_child_block,
             )
             for (existing_child_block, local_child_block) in zip(
-                existing_page_block.children,
-                local_block.children,
+                existing_page_block.blocks,
+                local_block.blocks,
                 strict=False,
             )
         )
@@ -268,10 +268,10 @@ def _block_with_uploaded_file(
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
-    elif isinstance(block, ParentBlock) and block.children:
+    elif isinstance(block, ParentBlock) and block.blocks:
         new_child_blocks = [
             _block_with_uploaded_file(block=child_block, session=session)
-            for child_block in block.children
+            for child_block in block.blocks
         ]
         block = _block_without_children(block=block)
         block.append(blocks=new_child_blocks)
@@ -408,7 +408,7 @@ def main(
     ]
 
     last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.children,
+        existing_blocks=page.blocks,
         local_blocks=block_objs,
     )
 
@@ -419,7 +419,7 @@ def main(
         ),
     )
     delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.children[delete_start_index:]
+    blocks_to_delete = page.blocks[delete_start_index:]
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
