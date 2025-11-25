@@ -116,10 +116,7 @@ def _find_last_matching_block_index(
             ),
         )
         if index < len(local_blocks) and (
-            _is_existing_equivalent(
-                existing_page_block=existing_page_block,
-                local_block=local_blocks[index],
-            )
+            existing_page_block == local_blocks[index]
         ):
             last_matching_index = index
         else:
@@ -128,69 +125,47 @@ def _find_last_matching_block_index(
 
 
 @beartype
-def _is_existing_equivalent(
-    *,
-    existing_page_block: Block,
-    local_block: Block,
-) -> bool:
+def _file_blocks_match(block: Block, other: Block | object) -> bool:
     """
-    Check if a local block is equivalent to an existing page block.
+    Whether two file blocks are equivalent.
     """
-    if type(existing_page_block) is not type(local_block):
+    assert isinstance(block, _FILE_BLOCK_TYPES)
+    if type(block) is not type(other):
         return False
 
-    if isinstance(local_block, _FILE_BLOCK_TYPES):
-        parsed = urlparse(url=local_block.url)
-        if parsed.scheme == "file":
-            assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+    parsed = urlparse(url=block.url)
+    if parsed.scheme != "file":
+        return False
 
-            if (
-                not isinstance(existing_page_block.file_info, NotionFile)
-                or (
-                    existing_page_block.file_info.name
-                    != local_block.file_info.name
-                )
-                or (
-                    existing_page_block.file_info.caption
-                    != local_block.file_info.caption
-                )
-            ):
-                return False
+    assert isinstance(other, UnoVideo)
 
-            local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            return _files_match(
-                existing_file_url=existing_page_block.file_info.url,
-                local_file_path=local_file_path,
-            )
-    elif isinstance(existing_page_block, ParentBlock):
-        assert isinstance(local_block, ParentBlock)
-        existing_page_block_without_children = _block_without_children(
-            block=existing_page_block,
-        )
+    if (
+        not isinstance(other.file_info, NotionFile)
+        or (other.file_info.name != block.file_info.name)
+        or (other.file_info.caption != block.file_info.caption)
+    ):
+        return False
 
-        local_block_without_children = _block_without_children(
-            block=local_block,
-        )
+    local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+    return _files_match(
+        existing_file_url=other.file_info.url,
+        local_file_path=local_file_path,
+    )
 
-        if (
-            existing_page_block_without_children
-            != local_block_without_children
-        ) or (len(existing_page_block.blocks) != len(local_block.blocks)):
-            return False
 
-        return all(
-            _is_existing_equivalent(
-                existing_page_block=existing_child_block,
-                local_block=local_child_block,
-            )
-            for (existing_child_block, local_child_block) in zip(
-                existing_page_block.blocks,
-                local_block.blocks,
-                strict=False,
-            )
-        )
+def _new_file_equality(self: Block, other: object) -> bool:
+    """
+    Whether two file blocks are equivalent.
+    """
+    return bool(
+        _file_blocks_match(block=self, other=other)
+        or self.__class__.__eq__(self, other)
+    )
 
-    return existing_page_block == local_block
+
+UnoImage.__eq__ = UnoVideo.__eq__ = UnoAudio.__eq__ = UnoPDF.__eq__ = (  # type: ignore[method-assign]
+    _new_file_equality
+)
 
 
 def _get_uploaded_cover(
