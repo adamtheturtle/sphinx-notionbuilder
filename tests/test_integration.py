@@ -74,7 +74,7 @@ def _details_from_block(*, block: Block) -> dict[str, Any]:
     Create a serialized block details from a Block.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.blocks:
+    if isinstance(block, ParentBlock) and block.has_children:
         serialized_obj[block.obj_ref.type]["children"] = [
             _details_from_block(block=child) for child in block.blocks
         ]

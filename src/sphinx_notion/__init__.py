@@ -183,7 +183,7 @@ def _serialize_block_with_children(
     Convert a block to a JSON-serializable format which includes its children.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.blocks:
+    if isinstance(block, ParentBlock) and block.has_children:
         serialized_obj[block.obj_ref.type]["children"] = [
             _serialize_block_with_children(block=child)
             for child in block.blocks

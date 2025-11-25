@@ -41,7 +41,7 @@ def _block_without_children(
     Return a copy of a block without children.
     """
     serialized_block = block.obj_ref.serialize_for_api()
-    if block.blocks:
+    if block.has_children:
         serialized_block[serialized_block["type"]]["children"] = []
 
     # Delete the ID, else the block will have the children from Notion.
@@ -243,7 +243,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
-    elif isinstance(block, ParentBlock) and block.blocks:
+    elif isinstance(block, ParentBlock) and block.has_children:
         new_child_blocks = [
             _block_with_uploaded_file(block=child_block, session=session)
             for child_block in block.blocks
