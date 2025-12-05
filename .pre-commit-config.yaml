@@ -188,7 +188,7 @@ repos:
 
       - id: ty
         name: ty
-        entry: uv run --extra=dev ty check
+        entry: uv run --extra=dev ty check .
         language: python
         types_or: [python, toml]
         pass_filenames: false
