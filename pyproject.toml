@@ -337,7 +337,6 @@ pep621_dev_dependency_groups = [
 # Ignore sphinx-metadata-figure as it is a transitive dependency of sphinx-iframes
 # but we need to pin it explicitly due to a bug in 1.2.0+.
 # See: https://github.com/TeachBooks/Sphinx-Metadata-Figure/issues/30
-ignore = [ "DEP002" ]
 per_rule_ignores = { DEP002 = [ "sphinx-metadata-figure" ] }
 
 [tool.pyproject-fmt]
