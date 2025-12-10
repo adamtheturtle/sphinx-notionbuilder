@@ -41,6 +41,10 @@ dependencies = [
     "sphinx>=8.2.3",
     "sphinx-iframes>=1.1.0",
     "sphinx-immaterial>=0.13.7",
+    # Pinned to <1.2.0 due to bug in 1.2.0+ where it unconditionally tries to
+    # register directives to the 'glue' domain even when MyST-NB is not loaded.
+    # See: https://github.com/TeachBooks/Sphinx-Metadata-Figure/issues/30
+    "sphinx-metadata-figure<1.2.0",
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
     "sphinxcontrib-video>=0.4.0",
@@ -330,6 +334,10 @@ pep621_dev_dependency_groups = [
     "release",
     "sample",
 ]
+# Ignore sphinx-metadata-figure as it is a transitive dependency of sphinx-iframes
+# but we need to pin it explicitly due to a bug in 1.2.0+.
+# See: https://github.com/TeachBooks/Sphinx-Metadata-Figure/issues/30
+per_rule_ignores = { DEP002 = [ "sphinx-metadata-figure" ] }
 
 [tool.pyproject-fmt]
 indent = 4
