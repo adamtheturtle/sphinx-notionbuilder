@@ -49,7 +49,8 @@ def _block_without_children(
         del serialized_block["id"]
 
     block_without_children = Block.wrap_obj_ref(
-        UnoObjAPIBlock.model_validate(obj=serialized_block)
+        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
+        UnoObjAPIBlock.model_validate(obj=serialized_block)  # ty: ignore[invalid-argument-type]
     )
     assert isinstance(block_without_children, ParentBlock)
     assert not block_without_children.blocks
@@ -385,7 +386,8 @@ def main(
         raise click.ClickException(message=page_has_database_child_error)
 
     block_objs = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
         for details in blocks
     ]
 
@@ -423,7 +425,8 @@ def main(
         existing_page_block.delete()
 
     block_objs_to_upload = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
         for details in blocks[delete_start_index:]
     ]
     block_objs_with_uploaded_files = [
