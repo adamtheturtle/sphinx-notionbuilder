@@ -17,3 +17,4 @@ reportUnknownMemberType
 reportUnknownVariableType
 reportUnnecessaryIsInstance
 strikethrough
+ty
