@@ -13,6 +13,23 @@ Autodoc
    .. autoclass:: example_module.Calculator
       :members:
 
+Definition Lists
+~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   term
+      Definition for a simple term.
+
+   ``code_term``
+      Definition lists preserve inline formatting like code in terms.
+
+   *emphasized* term
+      Terms can also have emphasis and other formatting.
+
+   term : classifier
+      Classifiers are appended to the term with colons.
+
 Describe
 ~~~~~~~~
 
