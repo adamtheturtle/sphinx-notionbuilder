@@ -3,6 +3,16 @@ Heading 1 with *bold*
 
 .. contents::
 
+Autodoc
+~~~~~~~
+
+.. rest-example::
+
+   .. autofunction:: example_module.greet
+
+   .. autoclass:: example_module.Calculator
+      :members:
+
 Describe
 ~~~~~~~~
 
