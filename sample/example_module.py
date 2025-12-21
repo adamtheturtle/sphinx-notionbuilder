@@ -40,3 +40,9 @@ class Calculator:
         """
         self.value += amount
         return self.value
+
+
+if __name__ == "__main__":
+    greet(name="World")
+    calculator = Calculator(initial_value=10)
+    calculator.add(amount=5)

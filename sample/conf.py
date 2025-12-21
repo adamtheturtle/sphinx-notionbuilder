@@ -2,11 +2,6 @@
 Configuration for Sphinx.
 """
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(object=Path(__file__).parent))
-
 extensions = [
     "sphinxcontrib.video",
     "sphinx_iframes",
