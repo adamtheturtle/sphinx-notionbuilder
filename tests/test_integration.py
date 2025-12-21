@@ -1154,8 +1154,7 @@ def test_definition_list(
     tmp_path: Path,
 ) -> None:
     """
-    Definition lists become bulleted lists with bold terms and nested
-    definitions.
+    Definition lists become bulleted lists with terms and nested definitions.
     """
     rst_content = """
         Term 1
@@ -1166,14 +1165,14 @@ def test_definition_list(
     """
 
     first_item = UnoBulletedItem(
-        text=text(text="Term 1", bold=True),
+        text=text(text="Term 1"),
     )
     first_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for term 1."))]
     )
 
     second_item = UnoBulletedItem(
-        text=text(text="Term 2", bold=True),
+        text=text(text="Term 2"),
     )
     second_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for term 2."))]
@@ -1208,7 +1207,7 @@ def test_definition_list_multiline(
     """
 
     item = UnoBulletedItem(
-        text=text(text="Term", bold=True),
+        text=text(text="Term"),
     )
     item.append(
         blocks=[UnoParagraph(text=text(text="First paragraph of definition."))]
@@ -1247,16 +1246,16 @@ def test_definition_list_with_inline_formatting(
            Definition for emphasized term.
     """
 
-    # Code term - both bold and code formatting
-    code_term_text = text(text="code_term", bold=True, code=True)
+    # Code term - code formatting preserved
+    code_term_text = text(text="code_term", code=True)
     first_item = UnoBulletedItem(text=code_term_text)
     first_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for code term."))]
     )
 
-    # Emphasized term - bold applied to all parts
-    emph_text = text(text="emphasized", bold=True, italic=True)
-    space_text = text(text=" term", bold=True)
+    # Emphasized term - italic preserved
+    emph_text = text(text="emphasized", italic=True)
+    space_text = text(text=" term")
     second_item = UnoBulletedItem(text=emph_text + space_text)
     second_item.append(
         blocks=[
@@ -1283,16 +1282,16 @@ def test_definition_list_with_classifier(
     tmp_path: Path,
 ) -> None:
     """
-    Definition lists with classifiers append classifiers to the term.
+    Definition lists with classifiers append italic classifiers to the term.
     """
     rst_content = """
         term : classifier
            Definition with classifier.
     """
 
-    term_text = text(text="term", bold=True)
-    separator = text(text=" : ", bold=True)
-    classifier_text = text(text="classifier")
+    term_text = text(text="term")
+    separator = text(text=" : ")
+    classifier_text = text(text="classifier", italic=True)
     item = UnoBulletedItem(text=term_text + separator + classifier_text)
     item.append(
         blocks=[UnoParagraph(text=text(text="Definition with classifier."))]

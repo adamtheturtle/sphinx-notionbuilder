@@ -1123,17 +1123,17 @@ def _(
 
 
 @beartype
-def _create_bold_rich_text_from_children(*, node: nodes.Element) -> Text:
-    """Create bold Notion rich text from node children.
+def _create_italic_rich_text_from_children(*, node: nodes.Element) -> Text:
+    """Create italic Notion rich text from node children.
 
-    This preserves inline formatting (code, links, etc.) while applying
-    bold styling to all text elements.
+    This preserves inline formatting while applying italic styling to
+    all text elements.
     """
     rich_text = _create_rich_text_from_children(node=node)
     for rt in rich_text.rich_texts:
         annotations = rt.obj_ref.annotations
         assert isinstance(annotations, Annotations)
-        annotations.bold = True
+        annotations.italic = True
     return rich_text
 
 
@@ -1146,9 +1146,9 @@ def _(
 ) -> list[Block]:
     """Process definition list nodes by creating Notion BulletedItem blocks.
 
-    Each definition list item becomes a bulleted item with the term in
-    bold and the definition content as nested blocks. Classifiers (if
-    present) are appended to the term with colons.
+    Each definition list item becomes a bulleted item with the term and
+    definition content as nested blocks. Classifiers (if present) are
+    appended to the term with colons and rendered in italic.
     """
     result: list[Block] = []
     for list_item in node.children:
@@ -1165,12 +1165,12 @@ def _(
         definition_node = list_item.children[-1]
         assert isinstance(definition_node, nodes.definition)
 
-        rich_text = _create_bold_rich_text_from_children(node=term_node)
+        rich_text = _create_rich_text_from_children(node=term_node)
         for classifier_node in classifier_nodes:
-            classifier_text = _create_rich_text_from_children(
+            classifier_text = _create_italic_rich_text_from_children(
                 node=classifier_node
             )
-            rich_text += text(text=" : ", bold=True) + classifier_text
+            rich_text += text(text=" : ") + classifier_text
 
         bulleted_item = UnoBulletedItem(text=rich_text)
 
