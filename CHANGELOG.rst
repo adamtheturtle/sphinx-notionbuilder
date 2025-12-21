@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+- Add support for the ``describe`` directive.
+
 2025.12.10.1
 ------------
 
