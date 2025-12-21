@@ -435,6 +435,8 @@ ignore_names = [
     "greet",
     "Calculator",
     "add",
+    # Notion rich text annotations
+    "bold",
     # Sphinx variables
     "has_content",
     "required_arguments",

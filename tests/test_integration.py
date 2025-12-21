@@ -1231,6 +1231,85 @@ def test_definition_list_multiline(
     )
 
 
+def test_definition_list_with_inline_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition list terms preserve inline formatting like code and emphasis.
+    """
+    rst_content = """
+        ``code_term``
+           Definition for code term.
+
+        *emphasized* term
+           Definition for emphasized term.
+    """
+
+    # Code term - both bold and code formatting
+    code_term_text = text(text="code_term", bold=True, code=True)
+    first_item = UnoBulletedItem(text=code_term_text)
+    first_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for code term."))]
+    )
+
+    # Emphasized term - bold applied to all parts
+    emph_text = text(text="emphasized", bold=True, italic=True)
+    space_text = text(text=" term", bold=True)
+    second_item = UnoBulletedItem(text=emph_text + space_text)
+    second_item.append(
+        blocks=[
+            UnoParagraph(text=text(text="Definition for emphasized term."))
+        ]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_definition_list_with_classifier(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists with classifiers append classifiers to the term.
+    """
+    rst_content = """
+        term : classifier
+           Definition with classifier.
+    """
+
+    term_text = text(text="term", bold=True)
+    separator = text(text=" : ", bold=True)
+    classifier_text = text(text="classifier")
+    item = UnoBulletedItem(text=term_text + separator + classifier_text)
+    item.append(
+        blocks=[UnoParagraph(text=text(text="Definition with classifier."))]
+    )
+
+    expected_blocks = [
+        item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],

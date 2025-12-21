@@ -1123,6 +1123,21 @@ def _(
 
 
 @beartype
+def _create_bold_rich_text_from_children(*, node: nodes.Element) -> Text:
+    """Create bold Notion rich text from node children.
+
+    This preserves inline formatting (code, links, etc.) while applying
+    bold styling to all text elements.
+    """
+    rich_text = _create_rich_text_from_children(node=node)
+    for rt in rich_text.rich_texts:
+        annotations = rt.obj_ref.annotations
+        assert isinstance(annotations, Annotations)
+        annotations.bold = True
+    return rich_text
+
+
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.definition_list,
@@ -1132,19 +1147,33 @@ def _(
     """Process definition list nodes by creating Notion BulletedItem blocks.
 
     Each definition list item becomes a bulleted item with the term in
-    bold and the definition content as nested blocks.
+    bold and the definition content as nested blocks. Classifiers (if
+    present) are appended to the term with colons.
     """
     result: list[Block] = []
     for list_item in node.children:
         assert isinstance(list_item, nodes.definition_list_item)
+
         term_node = list_item.children[0]
         assert isinstance(term_node, nodes.term)
-        term_text = term_node.astext()
-        rich_text = text(text=term_text, bold=True)
-        bulleted_item = UnoBulletedItem(text=rich_text)
 
+        classifier_nodes = [
+            child
+            for child in list_item.children
+            if isinstance(child, nodes.classifier)
+        ]
         definition_node = list_item.children[-1]
         assert isinstance(definition_node, nodes.definition)
+
+        rich_text = _create_bold_rich_text_from_children(node=term_node)
+        for classifier_node in classifier_nodes:
+            classifier_text = _create_rich_text_from_children(
+                node=classifier_node
+            )
+            rich_text += text(text=" : ", bold=True) + classifier_text
+
+        bulleted_item = UnoBulletedItem(text=rich_text)
+
         for child in definition_node.children:
             child_blocks = _process_node_to_blocks(
                 child,
