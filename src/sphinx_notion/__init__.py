@@ -1808,20 +1808,18 @@ def _(
     ``desc_signature`` child (containing the signature text) and a
     ``desc_content`` child (containing the body content).
     """
-    signature_text = ""
-    content_blocks: list[Block] = []
+    signature_nodes = node.traverse(condition=addnodes.desc_signature)
+    signature_text = signature_nodes[0].astext() if signature_nodes else ""
 
-    for child in node.children:
-        if isinstance(child, addnodes.desc_signature):
-            signature_text = child.astext()
-        elif isinstance(child, addnodes.desc_content):
-            for content_child in child.children:
-                content_blocks.extend(
-                    _process_node_to_blocks(
-                        content_child,
-                        section_level=section_level,
-                    )
+    content_blocks: list[Block] = []
+    for desc_content_node in node.traverse(condition=addnodes.desc_content):
+        for content_child in desc_content_node.children:
+            content_blocks.extend(
+                _process_node_to_blocks(
+                    content_child,
+                    section_level=section_level,
                 )
+            )
 
     callout = UnoCallout(
         text=text(text=signature_text, code=True),
