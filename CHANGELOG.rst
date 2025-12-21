@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.12.21
+----------
+
 - Add support for the ``describe`` directive.
 - Add support for definition lists.
 
