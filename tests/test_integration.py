@@ -1148,6 +1148,167 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_definition_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists become bulleted lists with terms and nested definitions.
+    """
+    rst_content = """
+        Term 1
+           Definition for term 1.
+
+        Term 2
+           Definition for term 2.
+    """
+
+    first_item = UnoBulletedItem(
+        text=text(text="Term 1"),
+    )
+    first_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for term 1."))]
+    )
+
+    second_item = UnoBulletedItem(
+        text=text(text="Term 2"),
+    )
+    second_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for term 2."))]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_definition_list_multiline(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists with multiple paragraphs in definitions.
+    """
+    rst_content = """
+        Term
+           First paragraph of definition.
+
+           Second paragraph of definition.
+    """
+
+    item = UnoBulletedItem(
+        text=text(text="Term"),
+    )
+    item.append(
+        blocks=[UnoParagraph(text=text(text="First paragraph of definition."))]
+    )
+    item.append(
+        blocks=[
+            UnoParagraph(text=text(text="Second paragraph of definition."))
+        ]
+    )
+
+    expected_blocks = [
+        item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_definition_list_with_inline_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition list terms preserve inline formatting like code and emphasis.
+    """
+    rst_content = """
+        ``code_term``
+           Definition for code term.
+
+        *emphasized* term
+           Definition for emphasized term.
+    """
+
+    # Code term - code formatting preserved
+    code_term_text = text(text="code_term", code=True)
+    first_item = UnoBulletedItem(text=code_term_text)
+    first_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for code term."))]
+    )
+
+    # Emphasized term - italic preserved
+    emph_text = text(text="emphasized", italic=True)
+    space_text = text(text=" term")
+    second_item = UnoBulletedItem(text=emph_text + space_text)
+    second_item.append(
+        blocks=[
+            UnoParagraph(text=text(text="Definition for emphasized term."))
+        ]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_definition_list_with_classifier(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists with classifiers append italic classifiers to the term.
+    """
+    rst_content = """
+        term : classifier
+           Definition with classifier.
+    """
+
+    term_text = text(text="term")
+    separator = text(text=" : ")
+    classifier_text = text(text="classifier", italic=True)
+    item = UnoBulletedItem(text=term_text + separator + classifier_text)
+    item.append(
+        blocks=[UnoParagraph(text=text(text="Definition with classifier."))]
+    )
+
+    expected_blocks = [
+        item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],

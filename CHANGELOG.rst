@@ -5,6 +5,7 @@ Next
 ----
 
 - Add support for the ``describe`` directive.
+- Add support for definition lists.
 
 2025.12.10.1
 ------------
