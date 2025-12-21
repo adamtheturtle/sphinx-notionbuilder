@@ -3,6 +3,14 @@ Heading 1 with *bold*
 
 .. contents::
 
+Describe
+~~~~~~~~
+
+.. rest-example::
+
+   .. describe:: Foo
+
+      This is a describe directive example.
 
 Comments
 ~~~~~~~~

@@ -18,6 +18,7 @@ from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst.states import Inliner
+from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.config import Config
@@ -1775,6 +1776,65 @@ def _(
     del node
     del section_level
     return [UnoDivider()]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.index,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process index nodes by ignoring them.
+
+    Index nodes are used for building the index but don't produce
+    visible output.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.desc,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process desc nodes by creating Notion Callout blocks.
+
+    The ``describe`` directive creates a ``desc`` node with a
+    ``desc_signature`` child (containing the signature text) and a
+    ``desc_content`` child (containing the body content).
+    """
+    signature_texts = [
+        child.astext()
+        for child in node.children
+        if isinstance(child, addnodes.desc_signature)
+    ]
+    signature_text = "\n".join(signature_texts)
+
+    content_blocks: list[Block] = []
+    for child in node.children:
+        if isinstance(child, addnodes.desc_content):
+            for content_child in child.children:
+                content_blocks.extend(
+                    _process_node_to_blocks(
+                        content_child,
+                        section_level=section_level,
+                    )
+                )
+
+    callout = UnoCallout(
+        text=text(text=signature_text, code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+
+    callout.append(blocks=content_blocks)
+
+    return [callout]
 
 
 @beartype

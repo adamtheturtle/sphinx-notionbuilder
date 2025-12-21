@@ -87,6 +87,7 @@ The following syntax is supported:
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 - Link to page blocks (using the ``notion-link-to-page`` directive)
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
+- Describe blocks (using the ``describe`` directive)
 
 See a `sample document source`_ and the `published Notion page`_.
 

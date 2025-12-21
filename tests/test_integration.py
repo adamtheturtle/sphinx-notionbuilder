@@ -3577,3 +3577,84 @@ def test_notion_mention_date_html_output(
     assert app.statuscode == 0
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
     assert test_date in index_html
+
+
+def test_describe_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``describe`` directive becomes a Notion Callout block with nested content.
+    """
+    rst_content = """
+        .. describe:: Foo
+
+           This is a describe directive example.
+    """
+
+    callout = UnoCallout(
+        text=text(text="Foo", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+
+    nested_paragraph = UnoParagraph(
+        text=text(text="This is a describe directive example.")
+    )
+
+    callout.append(blocks=[nested_paragraph])
+
+    expected_blocks = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_describe_directive_multiline(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    ``describe`` directive with multiple paragraphs nests all content.
+    """
+    rst_content = """
+        .. describe:: Bar
+
+           First paragraph of the description.
+
+           Second paragraph with more details.
+    """
+
+    callout = UnoCallout(
+        text=text(text="Bar", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+
+    paragraph1 = UnoParagraph(
+        text=text(text="First paragraph of the description.")
+    )
+    paragraph2 = UnoParagraph(
+        text=text(text="Second paragraph with more details.")
+    )
+
+    callout.append(blocks=[paragraph1, paragraph2])
+
+    expected_blocks = [
+        callout,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
