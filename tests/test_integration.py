@@ -1148,6 +1148,89 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_definition_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists become bulleted lists with bold terms and nested
+    definitions.
+    """
+    rst_content = """
+        Term 1
+           Definition for term 1.
+
+        Term 2
+           Definition for term 2.
+    """
+
+    first_item = UnoBulletedItem(
+        text=text(text="Term 1", bold=True),
+    )
+    first_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for term 1."))]
+    )
+
+    second_item = UnoBulletedItem(
+        text=text(text="Term 2", bold=True),
+    )
+    second_item.append(
+        blocks=[UnoParagraph(text=text(text="Definition for term 2."))]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_definition_list_multiline(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Definition lists with multiple paragraphs in definitions.
+    """
+    rst_content = """
+        Term
+           First paragraph of definition.
+
+           Second paragraph of definition.
+    """
+
+    item = UnoBulletedItem(
+        text=text(text="Term", bold=True),
+    )
+    item.append(
+        blocks=[UnoParagraph(text=text(text="First paragraph of definition."))]
+    )
+    item.append(
+        blocks=[
+            UnoParagraph(text=text(text="Second paragraph of definition."))
+        ]
+    )
+
+    expected_blocks = [
+        item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],

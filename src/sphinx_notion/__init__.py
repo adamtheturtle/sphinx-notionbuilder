@@ -1125,6 +1125,39 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.definition_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process definition list nodes by creating Notion BulletedItem blocks.
+
+    Each definition list item becomes a bulleted item with the term in
+    bold and the definition content as nested blocks.
+    """
+    result: list[Block] = []
+    for list_item in node.children:
+        assert isinstance(list_item, nodes.definition_list_item)
+        term_node = list_item.children[0]
+        assert isinstance(term_node, nodes.term)
+        term_text = term_node.astext()
+        rich_text = text(text=term_text, bold=True)
+        bulleted_item = UnoBulletedItem(text=rich_text)
+
+        definition_node = list_item.children[-1]
+        assert isinstance(definition_node, nodes.definition)
+        for child in definition_node.children:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+            bulleted_item.append(blocks=child_blocks)
+        result.append(bulleted_item)
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.topic,
     *,
     section_level: int,

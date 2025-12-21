@@ -88,6 +88,7 @@ The following syntax is supported:
 - Link to page blocks (using the ``notion-link-to-page`` directive)
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
 - Describe blocks (using the ``describe`` directive)
+- Definition lists
 
 See a `sample document source`_ and the `published Notion page`_.
 

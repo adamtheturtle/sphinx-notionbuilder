@@ -431,6 +431,10 @@ ignore_names = [
     "_",
     # CLI entry point
     "main",
+    # Sample autodoc module - used by autodoc for documentation
+    "greet",
+    "Calculator",
+    "add",
     # Sphinx variables
     "has_content",
     "required_arguments",
