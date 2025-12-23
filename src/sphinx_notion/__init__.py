@@ -405,10 +405,22 @@ def _(node: nodes.line) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.reference) -> Text:
+    """Process reference nodes by creating linked text.
+
+    External references have a ``refuri`` attribute and are rendered as
+    links. Internal references (e.g., from autosummary to autodoc targets)
+    have a ``refid`` attribute instead and are rendered without links
+    but preserving any child formatting (e.g., code from literal nodes).
     """
-    Process reference nodes by creating linked text.
-    """
-    link_url = node.attributes["refuri"]
+    link_url = node.attributes.get("refuri")
+    if link_url is None:
+        # Internal reference - process children to preserve formatting
+        # (e.g., literal nodes for code formatting)
+        result = Text.from_plain_text(text="")
+        for child in node.children:
+            result += _process_rich_text_node(child)
+        return result
+
     link_text = node.attributes.get("name", link_url)
 
     return text(
