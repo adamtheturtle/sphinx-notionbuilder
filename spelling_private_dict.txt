@@ -2,9 +2,11 @@ Args
 CLI
 SVG
 autodoc
+autosummary
 backtick
 backticks
 callout
+desc
 hardcode
 hardcodes
 href
@@ -13,6 +15,8 @@ preprocess
 pyright
 reStructuredText
 recurse
+refid
+refuri
 reportMissingTypeStubs
 reportUnknownArgumentType
 reportUnknownMemberType

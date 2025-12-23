@@ -3886,3 +3886,167 @@ def test_describe_directive_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_autosummary_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``autosummary`` directive becomes a Notion Table block.
+
+    The autosummary directive generates a table with function/class
+    names in the first column and their descriptions in the second
+    column.
+    """
+    # Create a simple module to document
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create example_module.py with documented items
+    example_module = srcdir / "example_module.py"
+    example_module.write_text(
+        data=textwrap.dedent(
+            text='''\
+            """Example module for autosummary testing."""
+
+
+            def greet(*, name: str) -> str:
+                """Return a greeting message."""
+                return f"Hello, {name}!"
+
+
+            class Calculator:
+                """A simple calculator class for demonstration."""
+
+                pass
+            ''',
+        ),
+    )
+
+    rst_content = textwrap.dedent(
+        text="""\
+        .. autosummary::
+           :nosignatures:
+
+           example_module.greet
+           example_module.Calculator
+        """,
+    )
+
+    # The autosummary directive produces a table with names and descriptions
+    table = UnoTable(n_rows=2, n_cols=2, header_row=False)
+    table[0, 0] = text(text="example_module.greet", code=True)
+    table[0, 1] = text(text="Return a greeting message.")
+    table[1, 0] = text(text="example_module.Calculator", code=True)
+    table[1, 1] = text(text="A simple calculator class for demonstration.")
+
+    expected_blocks = [table]
+
+    conf_py_content = textwrap.dedent(
+        text="""\
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        """,
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx.ext.autodoc",
+            "sphinx.ext.autosummary",
+            "sphinx_notion",
+        ),
+        conf_py_content=conf_py_content,
+    )
+
+
+def test_autosummary_with_internal_references(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``autosummary`` with internal references renders without links.
+
+    When ``autodoc`` creates targets for documented items and
+    ``autosummary`` references them, it generates internal references
+    (with ``refid`` instead of ``refuri``). These should be rendered as
+    code text without links.
+    """
+    # Create a simple module to document
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create example_module.py with documented items
+    example_module = srcdir / "example_module.py"
+    example_module.write_text(
+        data=textwrap.dedent(
+            text='''\
+            """Example module for autosummary testing."""
+
+
+            def greet(*, name: str) -> str:
+                """Return a greeting message."""
+                return f"Hello, {name}!"
+            ''',
+        ),
+    )
+
+    # When autodoc documents the function first, autosummary creates
+    # internal references to it
+    rst_content = textwrap.dedent(
+        text="""\
+        .. autofunction:: example_module.greet
+
+        .. autosummary::
+           :nosignatures:
+
+           example_module.greet
+        """,
+    )
+
+    # The autosummary table
+    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
+    table[0, 0] = text(text="example_module.greet", code=True)
+    table[0, 1] = text(text="Return a greeting message.")
+
+    # The autodoc output comes first (as a callout with the signature)
+    autodoc_callout = UnoCallout(
+        text=text(text="example_module.greet(*, name: str) -> str", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    autodoc_callout.append(
+        blocks=[UnoParagraph(text=text(text="Return a greeting message."))],
+    )
+
+    expected_blocks = [autodoc_callout, table]
+
+    conf_py_content = textwrap.dedent(
+        text="""\
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+
+        autosummary_generate = True
+        """,
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx.ext.autodoc",
+            "sphinx.ext.autosummary",
+            "sphinx_notion",
+        ),
+        conf_py_content=conf_py_content,
+    )

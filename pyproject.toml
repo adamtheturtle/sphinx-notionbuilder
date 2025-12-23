@@ -270,6 +270,7 @@ per-file-ignores = [
     "docs/source/conf.py:invalid-name",
     "docs/source/doccmd_*.py:invalid-name",
     "doccmd_README_rst_*.py:invalid-name",
+    "sample/conf.py:invalid-name",
 ]
 
 [tool.pylint.'FORMAT']
@@ -399,6 +400,7 @@ ignore_names = [
     "autoclass_content",
     "autoclass_content",
     "autodoc_member_order",
+    "autosummary_generate",
     "copybutton_exclude",
     "extensions",
     "html_show_copyright",
