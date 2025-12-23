@@ -1781,6 +1781,23 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.rubric,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process rubric nodes by creating bold Notion Paragraph blocks.
+
+    Rubrics are informal headings that don't appear in the table of
+    contents.
+    """
+    del section_level
+    rich_text = text(text=node.astext(), bold=True)
+    return [UnoParagraph(text=rich_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.target,
     *,
     section_level: int,

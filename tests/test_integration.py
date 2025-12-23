@@ -173,25 +173,19 @@ def test_rubric(
     rst_content = """
         .. rubric:: This is a rubric heading
 
-        Rubrics are informal headings that don't appear in the table of contents.
+        Rubrics are informal headings.
 
         .. rubric:: Another Rubric
 
-        They are commonly used by autodoc/autosummary for section headers.
+        They are used by autodoc for section headers.
     """
 
     expected_blocks = [
         UnoParagraph(text=text(text="This is a rubric heading", bold=True)),
-        UnoParagraph(
-            text=text(
-                text="Rubrics are informal headings that don't appear in the table of contents."
-            )
-        ),
+        UnoParagraph(text=text(text="Rubrics are informal headings.")),
         UnoParagraph(text=text(text="Another Rubric", bold=True)),
         UnoParagraph(
-            text=text(
-                text="They are commonly used by autodoc/autosummary for section headers."
-            )
+            text=text(text="They are used by autodoc for section headers.")
         ),
     ]
 
