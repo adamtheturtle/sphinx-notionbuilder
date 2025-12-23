@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+- Add support for rubric directives.
+
 2025.12.21
 ----------
 

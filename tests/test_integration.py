@@ -162,6 +162,73 @@ def test_single_paragraph(
     )
 
 
+def test_rubric(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rubric directive becomes bold paragraph (informal heading not in any table
+    of contents).
+    """
+    rst_content = """
+        .. rubric:: This is a rubric heading
+
+        Rubrics are informal headings.
+
+        .. rubric:: Another Rubric
+
+        They are used by autodoc for section headers.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="This is a rubric heading", bold=True)),
+        UnoParagraph(text=text(text="Rubrics are informal headings.")),
+        UnoParagraph(text=text(text="Another Rubric", bold=True)),
+        UnoParagraph(
+            text=text(text="They are used by autodoc for section headers.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_rubric_with_inline_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rubric with inline formatting preserves bold, italic, and code styles.
+    """
+    rst_content = """
+        .. rubric:: A rubric with ``code`` and *italic*
+    """
+
+    rubric_text = (
+        text(text="A rubric with ", bold=True)
+        + text(text="code", bold=True, code=True)
+        + text(text=" and ", bold=True)
+        + text(text="italic", bold=True, italic=True)
+    )
+
+    expected_blocks = [
+        UnoParagraph(text=rubric_text),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_notion_link_to_page(
     *,
     make_app: Callable[..., SphinxTestApp],
