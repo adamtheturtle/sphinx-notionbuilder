@@ -432,6 +432,7 @@ ignore_names = [
     # CLI entry point
     "main",
     # Notion rich text annotations
+    "bold",
     "italic",
     # Sphinx variables
     "has_content",
