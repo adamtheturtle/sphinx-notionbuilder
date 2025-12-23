@@ -408,9 +408,10 @@ def _(node: nodes.reference) -> Text:
     """Process reference nodes by creating linked text.
 
     External references have a ``refuri`` attribute and are rendered as
-    links. Internal references (e.g., from autosummary to autodoc targets)
-    have a ``refid`` attribute instead and are rendered without links
-    but preserving any child formatting (e.g., code from literal nodes).
+    links. Internal references (e.g., from ``autosummary`` to ``autodoc``
+    targets) have a ``refid`` attribute instead and are rendered without
+    links but preserving any child formatting (e.g., code from literal
+    nodes).
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:

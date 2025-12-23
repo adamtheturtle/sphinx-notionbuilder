@@ -3973,10 +3973,10 @@ def test_autosummary_with_internal_references(
 ) -> None:
     """``autosummary`` with internal references renders without links.
 
-    When autodoc creates targets for documented items and autosummary
-    references them, it generates internal references (with refid
-    instead of refuri). These should be rendered as code text without
-    links.
+    When ``autodoc`` creates targets for documented items and
+    ``autosummary`` references them, it generates internal references
+    (with ``refid`` instead of ``refuri``). These should be rendered as
+    code text without links.
     """
     # Create a simple module to document
     srcdir = tmp_path / "src"
