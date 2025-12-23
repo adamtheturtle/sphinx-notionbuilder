@@ -89,6 +89,7 @@ The following syntax is supported:
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
 - Describe blocks (using the ``describe`` directive)
 - Definition lists
+- Rubrics (informal headings that do not appear in the table of contents)
 
 See a `sample document source`_ and the `published Notion page`_.
 
