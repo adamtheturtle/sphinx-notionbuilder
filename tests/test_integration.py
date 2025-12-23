@@ -3975,7 +3975,7 @@ def test_autosummary_with_internal_references(
 
     When autodoc creates targets for documented items and autosummary
     references them, it generates internal references (with refid
-    instead of refuri). These should be rendered as plain text without
+    instead of refuri). These should be rendered as code text without
     links.
     """
     # Create a simple module to document
@@ -4003,44 +4003,17 @@ def test_autosummary_with_internal_references(
         text="""\
         .. autofunction:: example_module.greet
 
-        .. rest-example::
+        .. autosummary::
+           :nosignatures:
 
-           .. autosummary::
-              :nosignatures:
-
-              example_module.greet
+           example_module.greet
         """,
     )
 
-    # The rest-example produces a main callout with code and output callouts
-    code_callout = UnoCallout(text=text(text="Code"))
-    code_callout.append(
-        blocks=[
-            UnoCode(
-                text=text(
-                    text=textwrap.dedent(
-                        text="""\
-                        .. autosummary::
-                           :nosignatures:
-
-                           example_module.greet""",
-                    ),
-                ),
-                language="plain text",
-            ),
-        ],
-    )
-
-    # The output contains a table from autosummary
+    # The autosummary table
     table = UnoTable(n_rows=1, n_cols=2, header_row=False)
     table[0, 0] = text(text="example_module.greet", code=True)
     table[0, 1] = text(text="Return a greeting message.")
-
-    output_callout = UnoCallout(text=text(text="Output"))
-    output_callout.append(blocks=[table])
-
-    main_callout = UnoCallout(text=text(text="Example"))
-    main_callout.append(blocks=[code_callout, output_callout])
 
     # The autodoc output comes first (as a callout with the signature)
     autodoc_callout = UnoCallout(
@@ -4052,7 +4025,7 @@ def test_autosummary_with_internal_references(
         blocks=[UnoParagraph(text=text(text="Return a greeting message."))],
     )
 
-    expected_blocks = [autodoc_callout, main_callout]
+    expected_blocks = [autodoc_callout, table]
 
     conf_py_content = textwrap.dedent(
         text="""\
@@ -4073,7 +4046,6 @@ def test_autosummary_with_internal_references(
         extensions=(
             "sphinx.ext.autodoc",
             "sphinx.ext.autosummary",
-            "sphinx_toolbox.rest_example",
             "sphinx_notion",
         ),
         conf_py_content=conf_py_content,
