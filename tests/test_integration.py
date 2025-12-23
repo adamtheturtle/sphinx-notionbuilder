@@ -3906,28 +3906,33 @@ def test_autosummary_directive(
     # Create example_module.py with documented items
     example_module = srcdir / "example_module.py"
     example_module.write_text(
-        data='''"""Example module for autosummary testing."""
+        data=textwrap.dedent(
+            text='''\
+            """Example module for autosummary testing."""
 
 
-def greet(*, name: str) -> str:
-    """Return a greeting message."""
-    return f"Hello, {name}!"
+            def greet(*, name: str) -> str:
+                """Return a greeting message."""
+                return f"Hello, {name}!"
 
 
-class Calculator:
-    """A simple calculator class for demonstration."""
+            class Calculator:
+                """A simple calculator class for demonstration."""
 
-    pass
-'''
+                pass
+            ''',
+        ),
     )
 
-    rst_content = """
+    rst_content = textwrap.dedent(
+        text="""\
         .. autosummary::
            :nosignatures:
 
            example_module.greet
            example_module.Calculator
-    """
+        """,
+    )
 
     # The autosummary directive produces a table with names and descriptions
     table = UnoTable(n_rows=2, n_cols=2, header_row=False)
@@ -3938,12 +3943,14 @@ class Calculator:
 
     expected_blocks = [table]
 
-    conf_py_content = """
-import sys
-from pathlib import Path
+    conf_py_content = textwrap.dedent(
+        text="""\
+        import sys
+        from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-"""
+        sys.path.insert(0, str(Path(__file__).parent))
+        """,
+    )
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
