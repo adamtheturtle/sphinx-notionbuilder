@@ -399,6 +399,7 @@ ignore_names = [
     "autoclass_content",
     "autoclass_content",
     "autodoc_member_order",
+    "autosummary_generate",
     "copybutton_exclude",
     "extensions",
     "html_show_copyright",
