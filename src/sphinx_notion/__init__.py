@@ -22,6 +22,7 @@ from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.config import Config
+from sphinx.ext.autosummary import autosummary_table
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import ExtensionMetadata
@@ -611,10 +612,18 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         *color_mapping.keys(),
         *bg_color_classes,
     }
+    # Cross-reference classes used by autosummary and autodoc.
+    # These don't affect styling as the node type (literal) handles it.
+    ignored_style_classes = {
+        "xref",
+        "py",
+        "py-obj",
+    }
     unsupported_styles = [
         css_class
         for css_class in classes
         if css_class not in supported_style_classes
+        and css_class not in ignored_style_classes
     ]
 
     if unsupported_styles:
@@ -1876,6 +1885,44 @@ def _(
     del node
     del section_level
     return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.tabular_col_spec,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process tabular_col_spec nodes by ignoring them.
+
+    tabular_col_spec nodes specify column widths for LaTeX output but
+    don't produce visible output in other formats.
+    """
+    del node
+    del section_level
+    return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: autosummary_table,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process autosummary_table nodes by processing their children.
+
+    autosummary_table nodes wrap a regular table node, so we process the
+    children to extract the table.
+    """
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
 
 
 @beartype
