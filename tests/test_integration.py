@@ -168,7 +168,8 @@ def test_rubric(
     tmp_path: Path,
 ) -> None:
     """
-    Rubric directive becomes bold paragraph (informal heading not in TOC).
+    Rubric directive becomes bold paragraph (informal heading not in any table
+    of contents).
     """
     rst_content = """
         .. rubric:: This is a rubric heading
