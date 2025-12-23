@@ -3819,3 +3819,138 @@ def test_describe_directive_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
     )
+
+
+def test_rubric_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``rubric`` directive becomes a bold paragraph block.
+
+    Rubrics are informal headings that don't appear in the table of
+    contents. They are commonly used by autodoc/autosummary for section
+    headers like "Methods" or "Attributes". In HTML they render as bold
+    text.
+    """
+    rst_content = """
+        .. rubric:: This is a rubric heading
+
+        Some content after the rubric.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="This is a rubric heading", bold=True)),
+        UnoParagraph(text=text(text="Some content after the rubric.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_rubric_directive_multiple(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Multiple rubric directives each become bold paragraph blocks.
+    """
+    rst_content = """
+        .. rubric:: First Rubric
+
+        Content after first rubric.
+
+        .. rubric:: Second Rubric
+
+        Content after second rubric.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="First Rubric", bold=True)),
+        UnoParagraph(text=text(text="Content after first rubric.")),
+        UnoParagraph(text=text(text="Second Rubric", bold=True)),
+        UnoParagraph(text=text(text="Content after second rubric.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_autosummary_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``autosummary`` directive becomes a Notion Table block.
+
+    The autosummary directive generates a table with function/class
+    names in the first column and their descriptions in the second
+    column.
+    """
+    # Create a simple module to document
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create example_module.py with documented items
+    example_module = srcdir / "example_module.py"
+    example_module.write_text(
+        data='''"""Example module for autosummary testing."""
+
+
+def greet(*, name: str) -> str:
+    """Return a greeting message."""
+    return f"Hello, {name}!"
+
+
+class Calculator:
+    """A simple calculator class for demonstration."""
+
+    pass
+'''
+    )
+
+    rst_content = """
+        .. autosummary::
+           :nosignatures:
+
+           example_module.greet
+           example_module.Calculator
+    """
+
+    # The autosummary directive produces a table with names and descriptions
+    table = UnoTable(n_rows=2, n_cols=2, header_row=False)
+    table[0, 0] = text(text="example_module.greet", code=True)
+    table[0, 1] = text(text="Return a greeting message.")
+    table[1, 0] = text(text="example_module.Calculator", code=True)
+    table[1, 1] = text(text="A simple calculator class for demonstration.")
+
+    expected_blocks = [table]
+
+    conf_py_content = """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+"""
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx.ext.autodoc",
+            "sphinx.ext.autosummary",
+            "sphinx_notion",
+        ),
+        conf_py_content=conf_py_content,
+    )
