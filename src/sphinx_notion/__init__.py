@@ -1791,7 +1791,11 @@ def _(
     contents.
     """
     del section_level
-    rich_text = text(text=node.astext(), bold=True)
+    rich_text = _create_rich_text_from_children(node=node)
+    for rt in rich_text.rich_texts:
+        annotations = rt.obj_ref.annotations
+        assert isinstance(annotations, Annotations)
+        annotations.bold = True
     return [UnoParagraph(text=rich_text)]
 
 

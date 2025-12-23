@@ -22,9 +22,9 @@ Rubric
 
    Rubrics are informal headings that don't appear in the table of contents.
 
-   .. rubric:: Another Rubric
+   .. rubric:: A rubric with ``code`` and *italic*
 
-   They are commonly used by autodoc/autosummary for section headers like "Methods" or "Attributes".
+   Rubrics can contain inline formatting like code and emphasis.
 
 Definition Lists
 ~~~~~~~~~~~~~~~~
