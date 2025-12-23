@@ -162,6 +162,47 @@ def test_single_paragraph(
     )
 
 
+def test_rubric(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Rubric directive becomes bold paragraph (informal heading not in TOC).
+    """
+    rst_content = """
+        .. rubric:: This is a rubric heading
+
+        Rubrics are informal headings that don't appear in the table of contents.
+
+        .. rubric:: Another Rubric
+
+        They are commonly used by autodoc/autosummary for section headers.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="This is a rubric heading", bold=True)),
+        UnoParagraph(
+            text=text(
+                text="Rubrics are informal headings that don't appear in the table of contents."
+            )
+        ),
+        UnoParagraph(text=text(text="Another Rubric", bold=True)),
+        UnoParagraph(
+            text=text(
+                text="They are commonly used by autodoc/autosummary for section headers."
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_notion_link_to_page(
     *,
     make_app: Callable[..., SphinxTestApp],
