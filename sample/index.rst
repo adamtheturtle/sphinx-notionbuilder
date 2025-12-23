@@ -13,6 +13,19 @@ Autodoc
    .. autoclass:: example_module.Calculator
       :members:
 
+Rubric
+~~~~~~
+
+.. rest-example::
+
+   .. rubric:: This is a rubric heading
+
+   Rubrics are informal headings that don't appear in the table of contents.
+
+   .. rubric:: Another Rubric
+
+   They are commonly used by autodoc/autosummary for section headers like "Methods" or "Attributes".
+
 Definition Lists
 ~~~~~~~~~~~~~~~~
 
