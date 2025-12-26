@@ -423,6 +423,7 @@ def _(node: nodes.reference) -> Text:
         return result
 
     link_text = node.attributes.get("name", link_url)
+    assert isinstance(link_text, str)
 
     return text(
         text=link_text,
