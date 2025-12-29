@@ -10,6 +10,8 @@ concurrency:
   group: ci
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           lfs: true
 
       - name: Install uv
