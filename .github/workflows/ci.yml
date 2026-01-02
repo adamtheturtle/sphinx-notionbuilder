@@ -42,7 +42,7 @@ jobs:
 
       - name: Run lint
         run: |
-          uv run --extra=dev --python=${{ matrix.python-version }} pre-commit run --all-files --hook-stage ${{ matrix.lint-stage }} --verbose
+          uv run --extra=dev --python=${{ matrix.python-version }} prek run --all-files --hook-stage ${{ matrix.lint-stage }} --verbose
 
       - name: Run tests
         run: |
