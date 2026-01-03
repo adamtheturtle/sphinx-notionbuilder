@@ -1,4 +1,7 @@
 callout
+Autodoc
+Args
+Autosummary
 checkboxes
 reStructuredText
 Schrödinger
