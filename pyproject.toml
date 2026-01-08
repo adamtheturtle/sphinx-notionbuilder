@@ -86,7 +86,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "ty==0.0.9",
     "types-docutils==0.22.3.20251115",
-    "types-requests==2.32.4.20250913",
+    "types-requests==2.32.4.20260107",
     "vulture==2.14",
     "yamlfix==1.19.1",
     "zizmor==1.19.0",
