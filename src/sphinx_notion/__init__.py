@@ -767,8 +767,7 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 @beartype
 def _map_pygments_to_notion_language(
     *,
-    pygments_lang: str,
-    node: nodes.Node,
+    node: nodes.literal_block,
 ) -> CodeLang:
     """Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
 
@@ -776,6 +775,7 @@ def _map_pygments_to_notion_language(
     emits a warning with type='misc' and subtype='highlighting_failure'
     to match Sphinx's HTML builder behavior.
     """
+    pygments_lang: str = node.get(key="language", failobj="")
     language_mapping: dict[str, CodeLang] = {
         "abap": CodeLang.ABAP,
         "arduino": CodeLang.ARDUINO,
@@ -1055,11 +1055,7 @@ def _(
     """
     del section_level
     code_text = _create_rich_text_from_children(node=node)
-    pygments_lang = node.get(key="language", failobj="")
-    language = _map_pygments_to_notion_language(
-        pygments_lang=pygments_lang,
-        node=node,
-    )
+    language = _map_pygments_to_notion_language(node=node)
     return [UnoCode(text=code_text, language=language)]
 
 
@@ -1704,11 +1700,7 @@ def _(
         caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
         code_text = _create_rich_text_from_children(node=literal_node)
-        pygments_lang = literal_node.get(key="language", failobj="")
-        language = _map_pygments_to_notion_language(
-            pygments_lang=pygments_lang,
-            node=literal_node,
-        )
+        language = _map_pygments_to_notion_language(node=literal_node)
 
         return [
             UnoCode(
