@@ -1706,8 +1706,14 @@ def _(
 
         code_text = _create_rich_text_from_children(node=literal_node)
         pygments_lang = literal_node.get(key="language", failobj="")
+        location = (
+            (literal_node.source, literal_node.line)
+            if literal_node.source
+            else None
+        )
         language = _map_pygments_to_notion_language(
             pygments_lang=pygments_lang,
+            location=location,
         )
 
         return [
