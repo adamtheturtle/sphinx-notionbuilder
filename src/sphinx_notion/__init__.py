@@ -765,11 +765,11 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 
 
 @beartype
-def _map_pygments_to_notion_language(
+def _get_code_language(
     *,
     node: nodes.literal_block,
 ) -> CodeLang:
-    """Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
+    """Get the Notion CodeLang for a literal block node.
 
     If the language is not recognized, falls back to plain text and
     emits a warning with type='misc' and subtype='highlighting_failure'
@@ -1055,7 +1055,7 @@ def _(
     """
     del section_level
     code_text = _create_rich_text_from_children(node=node)
-    language = _map_pygments_to_notion_language(node=node)
+    language = _get_code_language(node=node)
     return [UnoCode(text=code_text, language=language)]
 
 
@@ -1700,7 +1700,7 @@ def _(
         caption_rich_text = _create_rich_text_from_children(node=caption_node)
 
         code_text = _create_rich_text_from_children(node=literal_node)
-        language = _map_pygments_to_notion_language(node=literal_node)
+        language = _get_code_language(node=literal_node)
 
         return [
             UnoCode(
