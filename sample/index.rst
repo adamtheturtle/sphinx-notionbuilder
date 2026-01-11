@@ -104,7 +104,7 @@ Link with a title
 
    Link to `Google <https://google.com>`_
 
-Link with no titl
+Link with no title
 ^^^^^^^^^^^^^^^^^^
 
 .. rest-example::
@@ -206,19 +206,6 @@ Including Files
    .. literalinclude:: conf.py
       :language: python
       :caption: Example **Configuration** File
-
-Unknown Language Code Block
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. rest-example::
-
-   This code block uses a language that doesn't exist:
-
-   .. code-block:: xyzgarbage123
-
-      some code here
-      that uses a fake language
-      xyz = 123
 
 Bullet Lists
 ~~~~~~~~~~~~
