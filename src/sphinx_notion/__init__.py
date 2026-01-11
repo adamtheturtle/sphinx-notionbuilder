@@ -765,10 +765,7 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 
 
 @beartype
-def _get_code_language(
-    *,
-    node: nodes.literal_block,
-) -> CodeLang:
+def _get_code_language(*, node: nodes.literal_block) -> CodeLang:
     """Get the Notion CodeLang for a literal block node.
 
     If the language is not recognized, falls back to plain text and
