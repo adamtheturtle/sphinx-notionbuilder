@@ -765,9 +765,16 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 
 
 @beartype
-def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
-    """
-    Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
+def _map_pygments_to_notion_language(
+    *,
+    pygments_lang: str,
+    location: tuple[str, int | None] | None = None,
+) -> CodeLang:
+    """Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
+
+    If the language is not recognized, falls back to plain text and
+    emits a warning with type='misc' and subtype='highlighting_failure'
+    to match Sphinx's HTML builder behavior.
     """
     language_mapping: dict[str, CodeLang] = {
         "abap": CodeLang.ABAP,
@@ -874,7 +881,18 @@ def _map_pygments_to_notion_language(*, pygments_lang: str) -> CodeLang:
         "yml": CodeLang.YAML,
     }
 
-    return language_mapping[pygments_lang.lower()]
+    lang_lower = pygments_lang.lower()
+    if lang_lower in language_mapping:
+        return language_mapping[lang_lower]
+
+    _LOGGER.warning(
+        "Unknown Notion code block language '%s'. Falling back to plain text.",
+        pygments_lang,
+        type="misc",
+        subtype="highlighting_failure",
+        location=location,
+    )
+    return CodeLang.PLAIN_TEXT
 
 
 @singledispatch
@@ -1038,8 +1056,10 @@ def _(
     del section_level
     code_text = _create_rich_text_from_children(node=node)
     pygments_lang = node.get(key="language", failobj="")
+    location = (node.source, node.line) if node.source else None
     language = _map_pygments_to_notion_language(
         pygments_lang=pygments_lang,
+        location=location,
     )
     return [UnoCode(text=code_text, language=language)]
 

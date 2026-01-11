@@ -882,10 +882,14 @@ def test_code_block_unknown_language(
            some code here
            that uses a fake language
     """
-    expected_warning = (
-        "index.rst:1: Unknown Notion code block language 'xyzgarbage123'. "
-        "Falling back to plain text. [misc.highlighting_failure]"
-    )
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}.rst:1:",
+        (
+            "Unknown Notion code block language 'xyzgarbage123'. "
+            "Falling back to plain text. [misc.highlighting_failure]"
+        ),
+    ]
     expected_blocks = [
         UnoCode(
             text=text(text="some code here\nthat uses a fake language"),
@@ -897,7 +901,7 @@ def test_code_block_unknown_language(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=[expected_warning],
+        expected_warnings=expected_warnings,
     )
 
 
