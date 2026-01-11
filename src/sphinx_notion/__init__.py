@@ -768,7 +768,7 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
 def _map_pygments_to_notion_language(
     *,
     pygments_lang: str,
-    location: tuple[str, int | None] | None = None,
+    location: nodes.Node | None = None,
 ) -> CodeLang:
     """Map ``Pygments`` language names to Notion CodeLang ``enum`` values.
 
@@ -1056,10 +1056,9 @@ def _(
     del section_level
     code_text = _create_rich_text_from_children(node=node)
     pygments_lang = node.get(key="language", failobj="")
-    location = (node.source, node.line) if node.source else None
     language = _map_pygments_to_notion_language(
         pygments_lang=pygments_lang,
-        location=location,
+        location=node,
     )
     return [UnoCode(text=code_text, language=language)]
 
@@ -1706,14 +1705,9 @@ def _(
 
         code_text = _create_rich_text_from_children(node=literal_node)
         pygments_lang = literal_node.get(key="language", failobj="")
-        location = (
-            (literal_node.source, literal_node.line)
-            if literal_node.source
-            else None
-        )
         language = _map_pygments_to_notion_language(
             pygments_lang=pygments_lang,
-            location=location,
+            location=literal_node,
         )
 
         return [

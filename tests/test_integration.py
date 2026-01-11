@@ -884,7 +884,7 @@ def test_code_block_unknown_language(
     """
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
-        f"{index_rst}.rst:1:",
+        f"{index_rst}:1:",
         (
             "Unknown Notion code block language 'xyzgarbage123'. "
             "Falling back to plain text. [misc.highlighting_failure]"
@@ -959,7 +959,7 @@ def test_code_block_unknown_language_with_caption(
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
-        f"{index_rst}.rst:1:",
+        f"{index_rst}:1:",
         (
             "Unknown Notion code block language 'xyzgarbage123'. "
             "Falling back to plain text. [misc.highlighting_failure]"
