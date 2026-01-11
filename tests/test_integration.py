@@ -865,6 +865,122 @@ def test_simple_code_block(
     )
 
 
+def test_code_block_unknown_language(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Unknown languages fall back to plain text with a warning.
+
+    The warning uses type='misc' and subtype='highlighting_failure' to
+    match Sphinx's HTML builder behavior, allowing users to suppress it
+    via suppress_warnings = ['misc.highlighting_failure'].
+    """
+    rst_content = """
+        .. code-block:: xyzgarbage123
+
+           some code here
+           that uses a fake language
+    """
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        (
+            "Unknown Notion code block language 'xyzgarbage123'. "
+            "Falling back to plain text. [misc.highlighting_failure]"
+        ),
+    ]
+    expected_blocks = [
+        UnoCode(
+            text=text(text="some code here\nthat uses a fake language"),
+            language=CodeLang.PLAIN_TEXT,
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_code_block_unknown_language_suppressed(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The unknown language warning can be suppressed via suppress_warnings.
+
+    This verifies that the warning uses the correct type='misc' and
+    subtype='highlighting_failure' parameters, not just text that looks
+    like it.
+    """
+    rst_content = """
+        .. code-block:: xyzgarbage123
+
+           some code here
+           that uses a fake language
+    """
+    expected_blocks = [
+        UnoCode(
+            text=text(text="some code here\nthat uses a fake language"),
+            language=CodeLang.PLAIN_TEXT,
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+        confoverrides={"suppress_warnings": ["misc.highlighting_failure"]},
+    )
+
+
+def test_code_block_unknown_language_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """
+    Captioned code blocks with unknown languages also emit warnings with
+    location info.
+    """
+    rst_content = """
+        .. literalinclude:: example.txt
+           :language: xyzgarbage123
+           :caption: My Caption
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "example.txt").write_text(data="some code here")
+    (srcdir / "conf.py").write_text(data="")
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        (
+            "Unknown Notion code block language 'xyzgarbage123'. "
+            "Falling back to plain text. [misc.highlighting_failure]"
+        ),
+    ]
+    expected_blocks = [
+        UnoCode(
+            text=text(text="some code here"),
+            language=CodeLang.PLAIN_TEXT,
+            caption=text(text="My Caption"),
+        ),
+    ]
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_code_block_language_mapping(
     *,
     make_app: Callable[..., SphinxTestApp],
