@@ -33,12 +33,7 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
-
-# See https://github.com/sphinx-contrib/video/pull/60.
-from sphinxcontrib.video import (  # pyright: ignore[reportMissingTypeStubs]
-    Video,
-    video_node,
-)
+from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
