@@ -2241,6 +2241,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         html=(_visit_mention_date_node_html, None),
     )
 
+    # ``sphinxcontrib.video`` implements a ``video`` directive
     # that we use. The ``sphinx-iframes`` extension implements a ``video``
     # directive that we don't use.
     # Make sure that if they are both enabled, we use the
