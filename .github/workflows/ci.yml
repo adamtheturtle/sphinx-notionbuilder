@@ -1,5 +1,4 @@
 ---
-
 name: Test
 
 on:
@@ -16,7 +15,6 @@ permissions: {}
 
 jobs:
   build:
-
     strategy:
       matrix:
         python-version: ['3.12', '3.13']
@@ -37,14 +35,23 @@ jobs:
           cache-dependency-glob: '**/pyproject.toml'
 
       - name: Build sample
+        # Use bash to ensure the step fails if any command fails.
+        # PowerShell does not fail on intermediate command failures by default.
+        shell: bash
         run: |
           uv run --extra=sample --python=${{ matrix.python-version }} sphinx-build -W -b notion sample/ build-sample/
 
       - name: Run lint
+        # Use bash to ensure the step fails if any command fails.
+        # PowerShell does not fail on intermediate command failures by default.
+        shell: bash
         run: |
           uv run --extra=dev --python=${{ matrix.python-version }} prek run --all-files --hook-stage ${{ matrix.lint-stage }} --verbose
 
       - name: Run tests
+        # Use bash to ensure the step fails if any command fails.
+        # PowerShell does not fail on intermediate command failures by default.
+        shell: bash
         run: |
           # We run tests against "." and not the tests directory as we test the README
           # and documentation.
