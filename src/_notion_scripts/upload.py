@@ -37,9 +37,7 @@ def _block_without_children(
     *,
     block: ParentBlock,
 ) -> ParentBlock:
-    """
-    Return a copy of a block without children.
-    """
+    """Return a copy of a block without children."""
     serialized_block = block.obj_ref.serialize_for_api()
     if block.has_children:
         serialized_block[serialized_block["type"]]["children"] = []
@@ -60,9 +58,7 @@ def _block_without_children(
 @beartype
 @cache
 def _calculate_file_sha(*, file_path: Path) -> str:
-    """
-    Calculate SHA-256 hash of a file.
-    """
+    """Calculate SHA-256 hash of a file."""
     sha256_hash = hashlib.sha256()
     with file_path.open(mode="rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -73,9 +69,7 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 @beartype
 @cache
 def _calculate_file_sha_from_url(*, file_url: str) -> str:
-    """
-    Calculate SHA-256 hash of a file from a URL.
-    """
+    """Calculate SHA-256 hash of a file from a URL."""
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
         response.raise_for_status()
@@ -88,7 +82,8 @@ def _calculate_file_sha_from_url(*, file_url: str) -> str:
 @beartype
 def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
     """
-    Check if an existing file matches a local file by comparing SHA-256 hashes.
+    Check if an existing file matches a local file by comparing SHA-256
+    hashes.
     """
     existing_file_sha = _calculate_file_sha_from_url(
         file_url=existing_file_url
@@ -134,9 +129,7 @@ def _is_existing_equivalent(
     existing_page_block: Block,
     local_block: Block,
 ) -> bool:
-    """
-    Check if a local block is equivalent to an existing page block.
-    """
+    """Check if a local block is equivalent to an existing page block."""
     if type(existing_page_block) is not type(local_block):
         return False
 
@@ -201,7 +194,8 @@ def _get_uploaded_cover(
     session: Session,
 ) -> UploadedFile | None:
     """
-    Get uploaded cover file, or None if it matches the existing cover.
+    Get uploaded cover file, or None if it matches the existing
+    cover.
     """
     if (
         page.cover is not None
@@ -224,9 +218,7 @@ def _get_uploaded_cover(
 
 @beartype
 def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
-    """
-    Replace a file block with an uploaded file block.
-    """
+    """Replace a file block with an uploaded file block."""
     if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
@@ -330,9 +322,7 @@ def main(
     cover_url: str | None,
     cancel_on_discussion: bool,
 ) -> None:
-    """
-    Upload documentation to Notion.
-    """
+    """Upload documentation to Notion."""
     session = Session()
 
     blocks = json.loads(s=file.read_text(encoding="utf-8"))

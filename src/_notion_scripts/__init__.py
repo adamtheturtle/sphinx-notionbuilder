@@ -1,3 +1,1 @@
-"""
-Scripts to interact with Notion.
-"""
+"""Scripts to interact with Notion."""

@@ -1,3 +1,1 @@
-"""
-Tests for Sphinx Notion Builder.
-"""
+"""Tests for Sphinx Notion Builder."""

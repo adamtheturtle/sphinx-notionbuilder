@@ -1,6 +1,4 @@
-"""
-Tests for the Sphinx builder.
-"""
+"""Tests for the Sphinx builder."""
 
 from collections.abc import Callable
 from importlib.metadata import version
@@ -18,7 +16,8 @@ def test_meta(
     tmp_path: Path,
 ) -> None:
     """
-    Builder metadata and setup returns expected values for Sphinx integration.
+    Builder metadata and setup returns expected values for Sphinx
+    integration.
     """
     builder_cls = sphinx_notion.NotionBuilder
     assert builder_cls.name == "notion"
