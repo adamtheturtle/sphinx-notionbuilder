@@ -1,6 +1,4 @@
-"""
-Sphinx Notion Builder.
-"""
+"""Sphinx Notion Builder."""
 
 import datetime as dt
 import json
@@ -93,9 +91,7 @@ _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 @beartype
 def _get_text_color_mapping() -> dict[str, Color]:
-    """
-    Get the mapping from CSS classes to Notion colors.
-    """
+    """Get the mapping from CSS classes to Notion colors."""
     return {
         "text-red": Color.RED,
         "text-blue": Color.BLUE,
@@ -112,9 +108,7 @@ def _get_text_color_mapping() -> dict[str, Color]:
 
 @beartype
 def _get_background_color_classes() -> set[str]:
-    """
-    Get the set of supported background color classes.
-    """
+    """Get the set of supported background color classes."""
     return {
         "bg-red",
         "bg-blue",
@@ -178,7 +172,8 @@ def _serialize_block_with_children(
     block: Block,
 ) -> dict[str, Any]:
     """
-    Convert a block to a JSON-serializable format which includes its children.
+    Convert a block to a JSON-serializable format which includes its
+    children.
     """
     serialized_obj = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.has_children:
@@ -191,21 +186,15 @@ def _serialize_block_with_children(
 
 @beartype
 class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
-    """
-    Custom PDF node for Notion PDF blocks.
-    """
+    """Custom PDF node for Notion PDF blocks."""
 
 
 @beartype
 class _NotionPdfIncludeDirective(PdfIncludeDirective):
-    """
-    PDF include directive that creates Notion PDF blocks.
-    """
+    """PDF include directive that creates Notion PDF blocks."""
 
     def run(self) -> list[nodes.raw]:
-        """
-        Create a Notion PDF block.
-        """
+        """Create a Notion PDF block."""
         (pdf_file,) = self.arguments
         node = _PdfNode()
         node.attributes["uri"] = pdf_file
@@ -214,51 +203,37 @@ class _NotionPdfIncludeDirective(PdfIncludeDirective):
 
 @beartype
 class _LinkToPageNode(nodes.Element):
-    """
-    Custom node for Notion link-to-page blocks.
-    """
+    """Custom node for Notion link-to-page blocks."""
 
 
 @beartype
 class _MentionUserNode(nodes.Inline, nodes.TextElement):
-    """
-    Custom node for Notion user mentions.
-    """
+    """Custom node for Notion user mentions."""
 
 
 @beartype
 class _MentionPageNode(nodes.Inline, nodes.TextElement):
-    """
-    Custom node for Notion page mentions.
-    """
+    """Custom node for Notion page mentions."""
 
 
 @beartype
 class _MentionDatabaseNode(nodes.Inline, nodes.TextElement):
-    """
-    Custom node for Notion database mentions.
-    """
+    """Custom node for Notion database mentions."""
 
 
 @beartype
 class _MentionDateNode(nodes.Inline, nodes.TextElement):
-    """
-    Custom node for Notion date mentions.
-    """
+    """Custom node for Notion date mentions."""
 
 
 @beartype
 class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
-    """
-    Link-to-page directive that creates Notion link-to-page blocks.
-    """
+    """Link-to-page directive that creates Notion link-to-page blocks."""
 
     required_arguments = 1
 
     def run(self) -> list[nodes.Element]:
-        """
-        Create a Notion link-to-page block.
-        """
+        """Create a Notion link-to-page block."""
         (page_id,) = self.arguments
         page_uuid = UUID(hex=page_id)
 
@@ -285,9 +260,7 @@ def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
     options: dict[str, Any] | None = None,
     content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
-    """
-    Create a Notion user mention role.
-    """
+    """Create a Notion user mention role."""
     del name, rawtext, lineno, inliner, options, content
     user_uuid = UUID(hex=text_content)
     node = _MentionUserNode()
@@ -306,9 +279,7 @@ def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
     options: dict[str, Any] | None = None,
     content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
-    """
-    Create a Notion page mention role.
-    """
+    """Create a Notion page mention role."""
     del name, rawtext, lineno, inliner, options, content
     page_uuid = UUID(hex=text_content)
     node = _MentionPageNode()
@@ -327,9 +298,7 @@ def _notion_mention_database_role(  # pylint: disable=too-many-positional-argume
     options: dict[str, Any] | None = None,
     content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
-    """
-    Create a Notion database mention role.
-    """
+    """Create a Notion database mention role."""
     del name, rawtext, lineno, inliner, options, content
     database_uuid = UUID(hex=text_content)
     node = _MentionDatabaseNode()
@@ -348,9 +317,7 @@ def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
     options: dict[str, Any] | None = None,
     content: Sequence[str] = (),
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
-    """
-    Create a Notion date mention role.
-    """
+    """Create a Notion date mention role."""
     del name, rawtext, lineno, inliner, options, content
     date_obj = dt.date.fromisoformat(text_content)
     node = _MentionDateNode()
@@ -361,9 +328,7 @@ def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
 
 @dataclass
 class _TableStructure:
-    """
-    Structure information extracted from a table node.
-    """
+    """Structure information extracted from a table node."""
 
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
@@ -391,9 +356,7 @@ def _process_rich_text_node(node: nodes.Node) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.line) -> Text:
-    """
-    Process line nodes by creating rich text.
-    """
+    """Process line nodes by creating rich text."""
     return _create_styled_text_from_node(node=node) + "\n"
 
 
@@ -433,7 +396,8 @@ def _(node: nodes.reference) -> Text:
 @_process_rich_text_node.register
 def _(node: nodes.target) -> Text:
     """
-    Process target nodes by returning empty text (targets are skipped).
+    Process target nodes by returning empty text (targets are
+    skipped).
     """
     del node  # Target nodes are skipped
     return Text.from_plain_text(text="")
@@ -453,81 +417,63 @@ def _(node: nodes.title_reference) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.Text) -> Text:
-    """
-    Process Text nodes by creating plain text.
-    """
+    """Process Text nodes by creating plain text."""
     return text(text=node.astext())
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.inline) -> Text:
-    """
-    Process inline nodes by creating styled text.
-    """
+    """Process inline nodes by creating styled text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.strong) -> Text:
-    """
-    Process strong nodes by creating bold text.
-    """
+    """Process strong nodes by creating bold text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.emphasis) -> Text:
-    """
-    Process emphasis nodes by creating italic text.
-    """
+    """Process emphasis nodes by creating italic text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.literal) -> Text:
-    """
-    Process literal nodes by creating code text.
-    """
+    """Process literal nodes by creating code text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: strike_node) -> Text:
-    """
-    Process strike nodes by creating strikethrough text.
-    """
+    """Process strike nodes by creating strikethrough text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.paragraph) -> Text:
-    """
-    Process paragraph nodes by creating styled text.
-    """
+    """Process paragraph nodes by creating styled text."""
     return _create_styled_text_from_node(node=node)
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: nodes.math) -> Text:
-    """
-    Process math nodes by creating math rich text.
-    """
+    """Process math nodes by creating math rich text."""
     return math(expression=node.astext())
 
 
 @beartype
 @_process_rich_text_node.register
 def _(node: _MentionUserNode) -> Text:
-    """
-    Process mention user nodes by creating user mention rich text.
-    """
+    """Process mention user nodes by creating user mention rich text."""
     user_id = node.attributes["user_id"]
     user_ref = UserRef(id=user_id)
     mention_obj = MentionUser.build_mention_from(
@@ -540,9 +486,7 @@ def _(node: _MentionUserNode) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: _MentionPageNode) -> Text:
-    """
-    Process mention page nodes by creating page mention rich text.
-    """
+    """Process mention page nodes by creating page mention rich text."""
     page_id = node.attributes["page_id"]
     page_obj_ref = ObjectRef(id=page_id)
     mention_obj = MentionPage.build_mention_from(
@@ -556,7 +500,8 @@ def _(node: _MentionPageNode) -> Text:
 @_process_rich_text_node.register
 def _(node: _MentionDatabaseNode) -> Text:
     """
-    Process mention database nodes by creating database mention rich text.
+    Process mention database nodes by creating database mention rich
+    text.
     """
     database_id = node.attributes["database_id"]
     database_obj_ref = ObjectRef(id=database_id)
@@ -570,9 +515,7 @@ def _(node: _MentionDatabaseNode) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: _MentionDateNode) -> Text:
-    """
-    Process mention date nodes by creating date mention rich text.
-    """
+    """Process mention date nodes by creating date mention rich text."""
     parsed_date = node.attributes["date"]
     date_range = DateRange.build(dt_spec=parsed_date)
 
@@ -679,9 +622,7 @@ def _extract_table_structure(
     *,
     node: nodes.table,
 ) -> _TableStructure:
-    """
-    Return table structure information for a table node.
-    """
+    """Return table structure information for a table node."""
     header_rows: list[nodes.row] = []
     body_rows: list[nodes.row] = []
     stub_columns = 0
@@ -894,9 +835,7 @@ def _process_node_to_blocks(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Required function for ``singledispatch``.
-    """
+    """Required function for ``singledispatch``."""
     del section_level
     line_number = node.line or node.parent.line
     source = node.source or node.parent.source
@@ -1022,9 +961,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process block quote nodes by creating Notion Quote blocks.
-    """
+    """Process block quote nodes by creating Notion Quote blocks."""
     first_child = node.children[0]
     rich_text = _process_rich_text_node(first_child)
     quote = UnoQuote(text=rich_text)
@@ -1042,9 +979,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process literal block nodes by creating Notion Code blocks.
-    """
+    """Process literal block nodes by creating Notion Code blocks."""
     del section_level
     code_text = _create_rich_text_from_children(node=node)
     language = _get_code_language(node=node)
@@ -1059,7 +994,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process bullet list nodes by creating Notion BulletedItem blocks.
+    Process bullet list nodes by creating Notion BulletedItem
+    blocks.
     """
     result: list[Block] = []
     for list_item in node.children:
@@ -1109,7 +1045,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process enumerated list nodes by creating Notion NumberedItem or ToDoItem
+    Process enumerated list nodes by creating Notion NumberedItem or
+    ToDoItem
     blocks.
     """
     result: list[Block] = []
@@ -1174,7 +1111,8 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process definition list nodes by creating Notion BulletedItem blocks.
+    """Process definition list nodes by creating Notion BulletedItem
+    blocks.
 
     Each definition list item becomes a bulleted item with the term and
     definition content as nested blocks. Classifiers (if present) are
@@ -1221,9 +1159,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process topic nodes, specifically for table of contents.
-    """
+    """Process topic nodes, specifically for table of contents."""
     del section_level  # Not used for topics
     # Later, we can support `.. topic::` directives, likely as
     # a callout with no icon.
@@ -1238,9 +1174,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process Sphinx ``toctree`` nodes.
-    """
+    """Process Sphinx ``toctree`` nodes."""
     del node
     del section_level
     # There are no specific Notion blocks for ``toctree`` nodes.
@@ -1257,7 +1191,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process title nodes by creating appropriate Notion heading blocks.
+    Process title nodes by creating appropriate Notion heading
+    blocks.
     """
     rich_text = _create_rich_text_from_children(node=node)
 
@@ -1326,9 +1261,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process note admonition nodes by creating Notion Callout blocks.
-    """
+    """Process note admonition nodes by creating Notion Callout blocks."""
     del section_level
     return _create_admonition_callout(
         node=node,
@@ -1345,7 +1278,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process warning admonition nodes by creating Notion Callout blocks.
+    Process warning admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1362,9 +1296,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process tip admonition nodes by creating Notion Callout blocks.
-    """
+    """Process tip admonition nodes by creating Notion Callout blocks."""
     del section_level
     return _create_admonition_callout(
         node=node,
@@ -1381,7 +1313,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process attention admonition nodes by creating Notion Callout blocks.
+    Process attention admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1399,7 +1332,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process caution admonition nodes by creating Notion Callout blocks.
+    Process caution admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1417,7 +1351,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process danger admonition nodes by creating Notion Callout blocks.
+    Process danger admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1435,7 +1370,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process error admonition nodes by creating Notion Callout blocks.
+    Process error admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1452,9 +1388,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process hint admonition nodes by creating Notion Callout blocks.
-    """
+    """Process hint admonition nodes by creating Notion Callout blocks."""
     del section_level
     return _create_admonition_callout(
         node=node,
@@ -1471,7 +1405,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process important admonition nodes by creating Notion Callout blocks.
+    Process important admonition nodes by creating Notion Callout
+    blocks.
     """
     del section_level
     return _create_admonition_callout(
@@ -1528,9 +1463,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process collapse nodes by creating Notion ToggleItem blocks.
-    """
+    """Process collapse nodes by creating Notion ToggleItem blocks."""
     del section_level
 
     title_text = node.attributes["label"]
@@ -1554,9 +1487,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process image nodes by creating Notion Image blocks.
-    """
+    """Process image nodes by creating Notion Image blocks."""
     del section_level
 
     image_url = node.attributes["uri"]
@@ -1577,9 +1508,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process video nodes by creating Notion Video blocks.
-    """
+    """Process video nodes by creating Notion Video blocks."""
     del section_level
 
     sources: list[tuple[str, str, bool]] = node.attributes["sources"]
@@ -1612,9 +1541,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process audio nodes by creating Notion Audio blocks.
-    """
+    """Process audio nodes by creating Notion Audio blocks."""
     del section_level
 
     audio_url = node.attributes["uri"]
@@ -1677,9 +1604,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process container nodes.
-    """
+    """Process container nodes."""
     num_children_for_captioned_literalinclude = 2
     if (
         len(node.children) == num_children_for_captioned_literalinclude
@@ -1726,7 +1651,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process raw nodes, specifically those containing HTML from the extension
+    Process raw nodes, specifically those containing HTML from the
+    extension
     ``sphinx-iframes``.
     """
     del section_level
@@ -1749,7 +1675,8 @@ def _process_rest_example_container(
     section_level: int,
 ) -> list[Block]:
     """
-    Process a ``rest-example`` container by creating nested callout blocks.
+    Process a ``rest-example`` container by creating nested callout
+    blocks.
     """
     rst_source_node = node.children[0]
     assert isinstance(rst_source_node, nodes.literal_block)
@@ -1797,9 +1724,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process math block nodes by creating Notion Equation blocks.
-    """
+    """Process math block nodes by creating Notion Equation blocks."""
     del section_level
     latex_content = node.astext()
     return [UnoEquation(latex=latex_content)]
@@ -1833,9 +1758,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process target nodes by ignoring them completely.
-    """
+    """Process target nodes by ignoring them completely."""
     del node
     del section_level
     return []
@@ -1848,9 +1771,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process document nodes by ignoring them completely.
-    """
+    """Process document nodes by ignoring them completely."""
     del node
     del section_level
     return []
@@ -1864,7 +1785,8 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """
-    Process line block nodes by creating separate paragraph blocks for each
+    Process line block nodes by creating separate paragraph blocks for
+    each
     line.
     """
     del section_level
@@ -1880,9 +1802,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process transition nodes by creating Notion Divider blocks.
-    """
+    """Process transition nodes by creating Notion Divider blocks."""
     del node
     del section_level
     return [UnoDivider()]
@@ -1987,14 +1907,10 @@ def _(
 
 @beartype
 class NotionTranslator(NodeVisitor):
-    """
-    Translate ``docutils`` nodes to Notion JSON.
-    """
+    """Translate ``docutils`` nodes to Notion JSON."""
 
     def __init__(self, document: nodes.document, builder: TextBuilder) -> None:
-        """
-        Initialize the translator with storage for blocks.
-        """
+        """Initialize the translator with storage for blocks."""
         del builder
         super().__init__(document=document)
         self._blocks: list[Block] = []
@@ -2002,9 +1918,7 @@ class NotionTranslator(NodeVisitor):
         self._section_level = 0
 
     def dispatch_visit(self, node: nodes.Node) -> None:
-        """
-        Handle nodes by creating appropriate Notion heading blocks.
-        """
+        """Handle nodes by creating appropriate Notion heading blocks."""
         if isinstance(node, nodes.section):
             self._section_level += 1
             return
@@ -2019,15 +1933,14 @@ class NotionTranslator(NodeVisitor):
 
     def depart_section(self, node: nodes.Element) -> None:
         """
-        Handle leaving section nodes by decreasing the section level.
+        Handle leaving section nodes by decreasing the section
+        level.
         """
         del node
         self._section_level -= 1
 
     def depart_document(self, node: nodes.Element) -> None:
-        """
-        Output collected block tree as JSON at document end.
-        """
+        """Output collected block tree as JSON at document end."""
         del node
 
         json_output = json.dumps(
@@ -2043,9 +1956,7 @@ class NotionTranslator(NodeVisitor):
 
 @beartype
 class NotionBuilder(TextBuilder):
-    """
-    Build Notion-compatible documents.
-    """
+    """Build Notion-compatible documents."""
 
     name = "notion"
     out_suffix = ".json"
@@ -2055,9 +1966,7 @@ class NotionBuilder(TextBuilder):
 def _notion_register_pdf_include_directive(
     app: Sphinx,
 ) -> None:
-    """
-    Register the PDF include directive.
-    """
+    """Register the PDF include directive."""
     if isinstance(app.builder, NotionBuilder):
         sphinx_docutils.register_directive(
             name="pdf-include",
@@ -2069,9 +1978,7 @@ def _notion_register_pdf_include_directive(
 def _notion_register_link_to_page_directive(
     app: Sphinx,
 ) -> None:
-    """
-    Register the link-to-page directive.
-    """
+    """Register the link-to-page directive."""
     del app
     sphinx_docutils.register_directive(
         name="notion-link-to-page",
@@ -2083,9 +1990,7 @@ def _notion_register_link_to_page_directive(
 def _notion_register_mention_roles(
     app: Sphinx,
 ) -> None:
-    """
-    Register the mention roles.
-    """
+    """Register the mention roles."""
     del app
     sphinx_docutils.register_role(
         name="notion-mention-user",
@@ -2107,23 +2012,17 @@ def _notion_register_mention_roles(
 
 @beartype
 def _visit_strike_node(_: NotionTranslator, __: strike_node) -> None:
-    """
-    Dummy visitor for strike nodes.
-    """
+    """Dummy visitor for strike nodes."""
 
 
 @beartype
 def _depart_strike_node(_: NotionTranslator, __: strike_node) -> None:
-    """
-    Dummy depart for strike nodes.
-    """
+    """Dummy depart for strike nodes."""
 
 
 @beartype
 def _register_strike_node_handlers(app: Sphinx, __: Config) -> None:
-    """
-    Register strike_node handlers for the notion builder.
-    """
+    """Register strike_node handlers for the notion builder."""
     app.add_node(
         node=strike_node,
         override=True,
@@ -2134,7 +2033,8 @@ def _register_strike_node_handlers(app: Sphinx, __: Config) -> None:
 @beartype
 def _make_static_dir(app: Sphinx) -> None:
     """
-    We make the ``_static`` directory that ``sphinx-iframes`` expects.
+    We make the ``_static`` directory that ``sphinx-iframes``
+    expects.
     """
     (app.outdir / "_static").mkdir(parents=True, exist_ok=True)
 
@@ -2199,9 +2099,7 @@ def _visit_mention_date_node_html(
 
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
-    """
-    Add the builder to Sphinx.
-    """
+    """Add the builder to Sphinx."""
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 

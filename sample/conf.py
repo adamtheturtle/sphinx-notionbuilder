@@ -1,6 +1,4 @@
-"""
-Configuration for Sphinx.
-"""
+"""Configuration for Sphinx."""
 
 import sys
 from pathlib import Path

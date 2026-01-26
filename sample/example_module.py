@@ -17,9 +17,7 @@ def greet(*, name: str) -> str:
 
 
 class Calculator:
-    """
-    A simple calculator class for demonstration.
-    """
+    """A simple calculator class for demonstration."""
 
     def __init__(self, *, initial_value: float = 0) -> None:
         """Initialize the calculator.

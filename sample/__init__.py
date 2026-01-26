@@ -1,3 +1,1 @@
-"""
-Sample documents to demonstrate Sphinx+Notion functionality.
-"""
+"""Sample documents to demonstrate Sphinx+Notion functionality."""

@@ -1,6 +1,4 @@
-"""
-Tests for the upload script.
-"""
+"""Tests for the upload script."""
 
 from click.testing import CliRunner
 from pytest_regressions.file_regression import FileRegressionFixture

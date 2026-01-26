@@ -1,6 +1,4 @@
-"""
-Integration tests for the Sphinx Notion Builder functionality.
-"""
+"""Integration tests for the Sphinx Notion Builder functionality."""
 
 import base64
 import datetime as dt
@@ -71,9 +69,7 @@ from ultimate_notion.rich_text import Text, math, text
 
 @beartype
 def _details_from_block(*, block: Block) -> dict[str, Any]:
-    """
-    Create a serialized block details from a Block.
-    """
+    """Create a serialized block details from a Block."""
     serialized_obj = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.has_children:
         serialized_obj[block.obj_ref.type]["children"] = [
@@ -95,7 +91,8 @@ def _assert_rst_converts_to_notion_objects(
     confoverrides: dict[str, Any] | None = None,
 ) -> SphinxTestApp:
     """
-    ReStructuredText content converts to expected Notion objects via Sphinx
+    ReStructuredText content converts to expected Notion objects via
+    Sphinx
     build process.
     """
     confoverrides = confoverrides or {}
@@ -143,9 +140,7 @@ def test_single_paragraph(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Single paragraph becomes Notion paragraph block.
-    """
+    """Single paragraph becomes Notion paragraph block."""
     rst_content = """
         This is a simple paragraph for testing.
     """
@@ -168,7 +163,8 @@ def test_rubric(
     tmp_path: Path,
 ) -> None:
     """
-    Rubric directive becomes bold paragraph (informal heading not in any table
+    Rubric directive becomes bold paragraph (informal heading not in any
+    table
     of contents).
     """
     rst_content = """
@@ -204,7 +200,8 @@ def test_rubric_with_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Rubric with inline formatting preserves bold, italic, and code styles.
+    Rubric with inline formatting preserves bold, italic, and code
+    styles.
     """
     rst_content = """
         .. rubric:: A rubric with ``code`` and *italic*
@@ -235,7 +232,8 @@ def test_notion_link_to_page(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-link-to-page`` directives become Notion link-to-page blocks.
+    ``notion-link-to-page`` directives become Notion link-to-page
+    blocks.
     """
     test_page_id = "12345678-1234-1234-1234-123456789abc"
 
@@ -263,7 +261,8 @@ def test_notion_link_to_page_with_content_around(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-link-to-page`` directive works with surrounding content.
+    ``notion-link-to-page`` directive works with surrounding
+    content.
     """
     test_page_id = "87654321-4321-4321-4321-cba987654321"
 
@@ -297,7 +296,8 @@ def test_notion_link_to_page_html_output(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-link-to-page`` directive with HTML builder creates a link.
+    ``notion-link-to-page`` directive with HTML builder creates a
+    link.
     """
     test_page_id = "12345678-1234-1234-1234-123456789abc"
     rst_content = f"""
@@ -325,9 +325,7 @@ def test_multiple_paragraphs(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Multiple paragraphs become separate Notion paragraph blocks.
-    """
+    """Multiple paragraphs become separate Notion paragraph blocks."""
     rst_content = """
         First paragraph with some text.
 
@@ -360,7 +358,8 @@ def test_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Inline formatting (bold, italic, code) becomes rich text annotations.
+    Inline formatting (bold, italic, code) becomes rich text
+    annotations.
     """
     rst_content = """
         This is **bold** and *italic* and ``inline code``.
@@ -401,9 +400,7 @@ def test_single_heading(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Single heading becomes Heading 1 block.
-    """
+    """Single heading becomes Heading 1 block."""
     rst_content = """
         Main Title
         ==========
@@ -427,7 +424,8 @@ def test_multiple_heading_levels(
     tmp_path: Path,
 ) -> None:
     """
-    Multiple heading levels become appropriate Notion heading blocks.
+    Multiple heading levels become appropriate Notion heading
+    blocks.
     """
     rst_content = """
         Main Title
@@ -469,7 +467,8 @@ def test_heading_with_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Headings with inline formatting become rich text in heading blocks.
+    Headings with inline formatting become rich text in heading
+    blocks.
     """
     rst_content = """
         **Bold** and *Italic* Title
@@ -502,9 +501,7 @@ def test_simple_link(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Simple links become rich text with href attributes.
-    """
+    """Simple links become rich text with href attributes."""
     rst_content = """
         This paragraph contains a `link to example <https://example.com>`_.
     """
@@ -533,7 +530,8 @@ def test_multiple_links(
     tmp_path: Path,
 ) -> None:
     """
-    Multiple links in a paragraph become separate rich text segments.
+    Multiple links in a paragraph become separate rich text
+    segments.
     """
     # Write proper rST content to file to avoid Python string escaping issues
     rst_file = tmp_path / "test_content.rst"
@@ -570,9 +568,7 @@ def test_link_in_heading(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Links in headings become rich text with href attributes.
-    """
+    """Links in headings become rich text with href attributes."""
     rst_content = """
         Check out `Notion API <https://developers.notion.com>`_
         ========================================================
@@ -602,9 +598,7 @@ def test_mixed_formatting_with_links(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Links mixed with other formatting preserve all annotations.
-    """
+    """Links mixed with other formatting preserve all annotations."""
     rst_content = """
         This has **bold** and a `link <https://example.com>`_ and *italic*.
     """
@@ -644,7 +638,8 @@ def test_unnamed_link_with_backticks(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Unnamed links with backticks become rich text with URL as display text.
+    """Unnamed links with backticks become rich text with URL as display
+    text.
 
     The display text excludes angle brackets from the URL.
     """
@@ -675,9 +670,7 @@ def test_simple_quote(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Block quotes become Notion Quote blocks.
-    """
+    """Block quotes become Notion Quote blocks."""
     rst_content = """
         Some content.
 
@@ -701,7 +694,8 @@ def test_multiline_quote(
     tmp_path: Path,
 ) -> None:
     """
-    Multi-line block quotes become single Notion Quote blocks with line breaks.
+    Multi-line block quotes become single Notion Quote blocks with line
+    breaks.
     """
     rst_content = """
         Some content.
@@ -732,7 +726,8 @@ def test_multi_paragraph_quote(
     tmp_path: Path,
 ) -> None:
     """
-    Block quotes with multiple paragraphs create Quote blocks with nested
+    Block quotes with multiple paragraphs create Quote blocks with
+    nested
     paragraph children.
     """
     rst_content = """
@@ -781,9 +776,7 @@ def test_table_of_contents(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``contents`` directive becomes Notion TableOfContents block.
-    """
+    """``contents`` directive becomes Notion TableOfContents block."""
     rst_content = """
         Introduction
         ============
@@ -816,7 +809,8 @@ def test_toctree_directive(
     tmp_path: Path,
 ) -> None:
     """
-    ``toctree`` directive produces no output as it's for navigation structure.
+    ``toctree`` directive produces no output as it's for navigation
+    structure.
     """
     rst_content = """
         Introduction
@@ -842,9 +836,7 @@ def test_simple_code_block(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Code blocks become Notion Code blocks with syntax highlighting.
-    """
+    """Code blocks become Notion Code blocks with syntax highlighting."""
     rst_content = """
         .. code-block:: python
 
@@ -910,7 +902,8 @@ def test_code_block_unknown_language_suppressed(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """The unknown language warning can be suppressed via suppress_warnings.
+    """The unknown language warning can be suppressed via
+    suppress_warnings.
 
     This verifies that the warning uses the correct type='misc' and
     subtype='highlighting_failure' parameters, not just text that looks
@@ -987,7 +980,8 @@ def test_code_block_language_mapping(
     tmp_path: Path,
 ) -> None:
     """
-    Various languages map to appropriate Notion code block languages.
+    Various languages map to appropriate Notion code block
+    languages.
     """
     rst_content = """
         .. code-block:: console
@@ -1040,9 +1034,7 @@ def test_flat_bullet_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Flat bullet lists become separate Notion BulletedItem blocks.
-    """
+    """Flat bullet lists become separate Notion BulletedItem blocks."""
     rst_content = """
         * First bullet point
         * Second bullet point
@@ -1066,9 +1058,7 @@ def test_bullet_list_with_inline_formatting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Bullet lists preserve inline formatting in rich text.
-    """
+    """Bullet lists preserve inline formatting in rich text."""
     rst_content = """
         * This is **bold text** in a bullet
     """
@@ -1116,7 +1106,8 @@ def test_admonition_single_line(
     tmp_path: Path,
 ) -> None:
     """
-    Admonitions become Notion Callout blocks with appropriate icons and colors.
+    Admonitions become Notion Callout blocks with appropriate icons and
+    colors.
     """
     rst_content = f"""
         .. {admonition_type}:: {message}
@@ -1196,9 +1187,7 @@ def test_admonition_with_code_block(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Admonitions contain code blocks as nested children.
-    """
+    """Admonitions contain code blocks as nested children."""
     rst_content = """
         .. note::
            This note contains a code example.
@@ -1244,7 +1233,8 @@ def test_admonition_with_code_block_first(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Admonition with code block as first child creates empty callout text.
+    """Admonition with code block as first child creates empty callout
+    text.
 
     When the first child is not a paragraph, the callout text remains
     empty.
@@ -1292,7 +1282,8 @@ def test_admonition_with_bullet_points(
     tmp_path: Path,
 ) -> None:
     """
-    Bullet points appear within admonitions as nested blocks (issue #78).
+    Bullet points appear within admonitions as nested blocks (issue
+    #78).
     """
     rst_content = """
         .. note::
@@ -1337,7 +1328,8 @@ def test_definition_list(
     tmp_path: Path,
 ) -> None:
     """
-    Definition lists become bulleted lists with terms and nested definitions.
+    Definition lists become bulleted lists with terms and nested
+    definitions.
     """
     rst_content = """
         Term 1
@@ -1379,9 +1371,7 @@ def test_definition_list_multiline(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Definition lists with multiple paragraphs in definitions.
-    """
+    """Definition lists with multiple paragraphs in definitions."""
     rst_content = """
         Term
            First paragraph of definition.
@@ -1419,7 +1409,8 @@ def test_definition_list_with_inline_formatting(
     tmp_path: Path,
 ) -> None:
     """
-    Definition list terms preserve inline formatting like code and emphasis.
+    Definition list terms preserve inline formatting like code and
+    emphasis.
     """
     rst_content = """
         ``code_term``
@@ -1465,7 +1456,8 @@ def test_definition_list_with_classifier(
     tmp_path: Path,
 ) -> None:
     """
-    Definition lists with classifiers append italic classifiers to the term.
+    Definition lists with classifiers append italic classifiers to the
+    term.
     """
     rst_content = """
         term : classifier
@@ -1497,7 +1489,8 @@ def test_generic_admonition(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Generic admonitions set callout text to the first line of the callout.
+    """Generic admonitions set callout text to the first line of the
+    callout.
 
     Generic admonitions require a title so are different from other
     admonitions.
@@ -1543,9 +1536,7 @@ def test_nested_bullet_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Deeply nested bullet lists create hierarchical block structures.
-    """
+    """Deeply nested bullet lists create hierarchical block structures."""
     rst_content = """
         * Top level item
         * Top level with children
@@ -1596,9 +1587,7 @@ def test_flat_numbered_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Flat numbered lists become separate Notion NumberedItem blocks.
-    """
+    """Flat numbered lists become separate Notion NumberedItem blocks."""
     rst_content = """
         1. First numbered point
         2. Second numbered point
@@ -1624,9 +1613,7 @@ def test_numbered_list_with_inline_formatting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Numbered lists preserve inline formatting in rich text.
-    """
+    """Numbered lists preserve inline formatting in rich text."""
     rst_content = """
         1. This is **bold text** in a numbered list
     """
@@ -1661,7 +1648,8 @@ def test_nested_numbered_list(
     tmp_path: Path,
 ) -> None:
     """
-    Deeply nested numbered lists create hierarchical block structures.
+    Deeply nested numbered lists create hierarchical block
+    structures.
     """
     rst_content = """
         1. Top level item
@@ -1713,7 +1701,8 @@ def test_collapse_block(
     tmp_path: Path,
 ) -> None:
     """
-    ``collapse`` directives become Notion ToggleItem blocks for expandable
+    ``collapse`` directives become Notion ToggleItem blocks for
+    expandable
     content.
     """
     rst_content = """
@@ -1758,9 +1747,7 @@ def test_simple_table(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Simple rST table becomes Notion Table block with header row.
-    """
+    """Simple rST table becomes Notion Table block with header row."""
     rst_content = """
         +----------+----------+
         | Header 1 | Header 2 |
@@ -1800,7 +1787,8 @@ def test_table_without_header_row(
     tmp_path: Path,
 ) -> None:
     """
-    Table without heading row becomes Notion Table block with header_row=False.
+    Table without heading row becomes Notion Table block with
+    header_row=False.
     """
     rst_content = """
         +--------+--------+
@@ -1830,9 +1818,7 @@ def test_table_inline_formatting(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Table headers and cells preserve inline formatting as rich text.
-    """
+    """Table headers and cells preserve inline formatting as rich text."""
     rst_content = """
         +----------------------+----------------------+
         | **Header Bold**      | *Header Italic*      |
@@ -1865,7 +1851,8 @@ def test_table_cell_non_paragraph_error(
     tmp_path: Path,
 ) -> None:
     """
-    Table cells with non-paragraph content raise a clear error message.
+    Table cells with non-paragraph content raise a clear error
+    message.
     """
     rst_content = """
         +----------+----------+
@@ -1898,9 +1885,7 @@ def test_simple_image(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``image`` directives become Notion Image blocks with URL.
-    """
+    """``image`` directives become Notion Image blocks with URL."""
     rst_content = """
         .. image:: https://www.example.com/path/to/image.png
     """
@@ -1925,7 +1910,8 @@ def test_image_with_alt_text_only(
     tmp_path: Path,
 ) -> None:
     """
-    ``image`` directives with only alt text become Notion Image blocks without
+    ``image`` directives with only alt text become Notion Image blocks
+    without
     captions.
     """
     rst_content = """
@@ -1952,7 +1938,8 @@ def test_literalinclude_without_caption(
     tmp_path: Path,
 ) -> None:
     """
-    ``literalinclude`` directives without captions become code blocks.
+    ``literalinclude`` directives without captions become code
+    blocks.
     """
     rst_content = """
         .. literalinclude:: conf.py
@@ -2030,9 +2017,7 @@ def test_heading_level_4_error(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Heading level 4+ raises a clear error message.
-    """
+    """Heading level 4+ raises a clear error message."""
     rst_content = """
         Main Title
         ==========
@@ -2072,7 +2057,8 @@ def test_local_image_file(
     tmp_path: Path,
 ) -> None:
     """
-    Local image files are converted to file:// URLs in the JSON output.
+    Local image files are converted to file:// URLs in the JSON
+    output.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -2103,9 +2089,7 @@ def test_simple_video(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``video`` directives become Notion Video blocks with URL.
-    """
+    """``video`` directives become Notion Video blocks with URL."""
     rst_content = """
         .. video:: https://www.example.com/path/to/video.mp4
     """
@@ -2131,7 +2115,8 @@ def test_video_with_caption(
     tmp_path: Path,
 ) -> None:
     """
-    Video directives with captions include the caption in the Notion Video
+    Video directives with captions include the caption in the Notion
+    Video
     block.
     """
     rst_content = """
@@ -2161,7 +2146,8 @@ def test_local_video_file(
     tmp_path: Path,
 ) -> None:
     """
-    Local video files are converted to file:// URLs in the JSON output.
+    Local video files are converted to file:// URLs in the JSON
+    output.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -2191,9 +2177,7 @@ def test_simple_audio(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``audio`` directives become Notion Audio blocks with URL.
-    """
+    """``audio`` directives become Notion Audio blocks with URL."""
     rst_content = """
         .. audio:: https://www.example.com/path/to/audio.mp3
     """
@@ -2219,7 +2203,8 @@ def test_local_audio_file(
     tmp_path: Path,
 ) -> None:
     """
-    Local audio files are converted to file:// URLs in the JSON output.
+    Local audio files are converted to file:// URLs in the JSON
+    output.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -2250,9 +2235,11 @@ def test_strikethrough_text(
     tmp_path: Path,
 ) -> None:
     """
-    Strikethrough text using
-    `sphinxnotes-strike <https://github.com/sphinx-toolbox/sphinxnotes-strike>`_
-    becomes rich text with strikethrough formatting.
+    Strikethrough text using ``sphinxnotes-strike`` becomes rich text
+    with
+    strikethrough formatting.
+
+    See https://github.com/sphinx-toolbox/sphinxnotes-strike.
     """
     rst_content = """
         This text has :strike:`strikethrough` formatting.
@@ -2289,7 +2276,8 @@ def test_comment_ignored(
     tmp_path: Path,
 ) -> None:
     """
-    Comments in reStructuredText are ignored and do not appear in output.
+    Comments in reStructuredText are ignored and do not appear in
+    output.
     """
     rst_content = """
         This is a paragraph with content.
@@ -2321,7 +2309,8 @@ def test_list_table_header_one_allowed(
     tmp_path: Path,
 ) -> None:
     """
-    List table with header-rows option other than 0 raises ValueError.
+    List table with header-rows option other than 0 raises
+    ValueError.
     """
     rst_content = """
         .. list-table::
@@ -2354,9 +2343,7 @@ def test_list_table_header_rows_zero_allowed(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    List table with header-rows: 0 should be allowed and processed.
-    """
+    """List table with header-rows: 0 should be allowed and processed."""
     rst_content = """
         .. list-table::
            :header-rows: 0
@@ -2385,7 +2372,8 @@ def test_list_table_header_maximum_one_allowed(
     tmp_path: Path,
 ) -> None:
     """
-    List table with header-rows option other than 0 or 1 emits a warning.
+    List table with header-rows option other than 0 or 1 emits a
+    warning.
     """
     rst_content = """
         .. list-table::
@@ -2430,7 +2418,8 @@ def test_list_table_stub_columns_one(
     tmp_path: Path,
 ) -> None:
     """
-    List table with :stub-columns: 1 creates table with header column.
+    List table with :stub-columns: 1 creates table with header
+    column.
     """
     rst_content = """
         .. list-table::
@@ -2477,9 +2466,7 @@ def test_list_table_stub_columns_two(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    List table with :stub-columns: 2 emits a warning.
-    """
+    """List table with :stub-columns: 2 emits a warning."""
     rst_content = """
         .. list-table::
            :header-rows: 1
@@ -2530,7 +2517,8 @@ def test_list_table_with_title_error(
     tmp_path: Path,
 ) -> None:
     """
-    List table with title emits a warning since Notion tables do not have
+    List table with title emits a warning since Notion tables do not
+    have
     titles.
     """
     rst_content = """
@@ -2580,9 +2568,7 @@ def test_simple_pdf(
     tmp_path: Path,
     extensions: tuple[str, ...],
 ) -> None:
-    """
-    ``pdf-include`` directives become Notion PDF blocks with URL.
-    """
+    """``pdf-include`` directives become Notion PDF blocks with URL."""
     rst_content = """
         .. pdf-include:: https://www.example.com/path/to/document.pdf
     """
@@ -2609,9 +2595,7 @@ def test_pdf_with_options(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    PDF directives with options (width, height) are processed correctly.
-    """
+    """PDF directives with options (width, height) are processed correctly."""
     rst_content = """
         .. pdf-include:: https://www.example.com/path/to/document.pdf
            :width: 50%
@@ -2641,7 +2625,8 @@ def test_local_pdf_file(
     tmp_path: Path,
 ) -> None:
     """
-    Local PDF files are converted to file:// URLs in the JSON output.
+    Local PDF files are converted to file:// URLs in the JSON
+    output.
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
@@ -2679,9 +2664,7 @@ def test_pdf_with_html(
     tmp_path: Path,
     extensions: tuple[str, ...],
 ) -> None:
-    """
-    PDF directives with HTML output are processed correctly.
-    """
+    """PDF directives with HTML output are processed correctly."""
     rst_content = """
         .. pdf-include:: https://www.example.com/path/to/document.pdf
     """
@@ -2717,7 +2700,8 @@ def test_colored_text(
     tmp_path: Path,
 ) -> None:
     """
-    Colored text from ``sphinxcontrib-text-styles`` becomes rich text.
+    Colored text from ``sphinxcontrib-text-styles`` becomes rich
+    text.
     """
     rst_content = """
         This is :text-red:`red text` and :text-blue:`blue text` \
@@ -2785,9 +2769,7 @@ def test_individual_colors(
     role: str,
     expected_color: Color | BGColor,
 ) -> None:
-    """
-    Each supported color is converted correctly.
-    """
+    """Each supported color is converted correctly."""
     rst_content = f"""
         This is :{role}:`{role} text`.
     """
@@ -2819,9 +2801,7 @@ def test_text_styles_unsupported_color(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Unsupported colors from ``sphinxcontrib-text-styles`` emit warnings.
-    """
+    """Unsupported colors from ``sphinxcontrib-text-styles`` emit warnings."""
     rst_content = """
         This is :text-cyan:`cyan text`.
     """
@@ -2857,9 +2837,7 @@ def test_inline_node_without_classes(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Inline nodes without classes are handled as plain text.
-    """
+    """Inline nodes without classes are handled as plain text."""
     # Using a custom role to create an inline node without classes
     conf_py_content = """
 from docutils import nodes
@@ -2958,7 +2936,8 @@ def test_additional_text_styles(
     expected_text: Text,
 ) -> None:
     """
-    Additional text styles from the ``sphinxcontrib_text_styles`` extension are
+    Additional text styles from the ``sphinxcontrib_text_styles``
+    extension are
     supported.
     """
     rst_content = f"""
@@ -2988,9 +2967,7 @@ def test_flat_task_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Flat task lists become separate Notion ToDoItem blocks.
-    """
+    """Flat task lists become separate Notion ToDoItem blocks."""
     rst_content = """
         .. task-list::
 
@@ -3024,7 +3001,8 @@ def test_bullet_list_with_nested_content(
     tmp_path: Path,
 ) -> None:
     """
-    Test that bullet lists can contain nested content like paragraphs and
+    Test that bullet lists can contain nested content like paragraphs
+    and
     nested bullets.
     """
     rst_content = """
@@ -3077,7 +3055,8 @@ def test_task_list_with_nested_content(
     tmp_path: Path,
 ) -> None:
     """
-    Task lists with nested content should create ToDoItem blocks with nested
+    Task lists with nested content should create ToDoItem blocks with
+    nested
     children.
     """
     rst_content = """
@@ -3123,9 +3102,7 @@ def test_nested_task_list(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Nested task lists should create nested ToDoItem blocks.
-    """
+    """Nested task lists should create nested ToDoItem blocks."""
     rst_content = """
         .. task-list::
 
@@ -3193,9 +3170,7 @@ def test_task_list_quote(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    A quote can exist within a task list.
-    """
+    """A quote can exist within a task list."""
     rst_content = """
     .. task-list::
 
@@ -3227,9 +3202,7 @@ def test_inline_single_backticks(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Reproduces a bug where we got confused by mismatching blocks.
-    """
+    """Reproduces a bug where we got confused by mismatching blocks."""
     rst_content = """
         A `B`
     """
@@ -3328,9 +3301,7 @@ def test_unsupported_node_types_in_rich_text(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Unsupported node types in rich text processing raise ValueError.
-    """
+    """Unsupported node types in rich text processing raise ValueError."""
     rst_content = """
         This is a test with :footnote:`footnote node`.
     """
@@ -3411,9 +3382,7 @@ def test_inline_equation(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Inline equations become Notion math rich text.
-    """
+    """Inline equations become Notion math rich text."""
     rst_content = """
         This is an inline equation :math:`E = mc^2` in a paragraph.
     """
@@ -3442,9 +3411,7 @@ def test_block_equation(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Block equations become Notion Equation blocks.
-    """
+    """Block equations become Notion Equation blocks."""
     rst_content = """
         .. math::
 
@@ -3470,7 +3437,8 @@ def test_rest_example_block(
     tmp_path: Path,
 ) -> None:
     """
-    Rest example blocks become Notion callout blocks with nested code and
+    Rest example blocks become Notion callout blocks with nested code
+    and
     description.
     """
     rst_content = """
@@ -3547,7 +3515,8 @@ def test_embed_block(
     tmp_path: Path,
 ) -> None:
     """
-    Blocks using the ``iframe`` directive become Notion Embed blocks.
+    Blocks using the ``iframe`` directive become Notion Embed
+    blocks.
     """
     rst_content = """
         .. iframe:: https://example.com/embed
@@ -3575,7 +3544,8 @@ def test_embed_and_video(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together in
+    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together
+    in
     this with ``sphinx-notionbuilder``.
 
     We check this because there was a conflict between the two
@@ -3608,7 +3578,8 @@ def test_line_block(
     tmp_path: Path,
 ) -> None:
     """
-    Line blocks (created with pipe character) become empty Notion paragraph
+    Line blocks (created with pipe character) become empty Notion
+    paragraph
     blocks.
     """
     rst_content = """
@@ -3641,9 +3612,7 @@ def test_transition_divider(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Transitions (horizontal rules) become Notion Divider blocks.
-    """
+    """Transitions (horizontal rules) become Notion Divider blocks."""
     rst_content = """
         First paragraph.
 
@@ -3671,9 +3640,7 @@ def test_notion_mention_user(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-user`` role creates user mention in paragraph.
-    """
+    """``notion-mention-user`` role creates user mention in paragraph."""
     test_user_id = "12345678-1234-1234-1234-123456789abc"
 
     rst_content = f"""
@@ -3707,9 +3674,7 @@ def test_notion_mention_page(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-page`` role creates page mention in paragraph.
-    """
+    """``notion-mention-page`` role creates page mention in paragraph."""
     test_page_id = "87654321-4321-4321-4321-cba987654321"
 
     rst_content = f"""
@@ -3743,7 +3708,8 @@ def test_notion_mention_database(
     tmp_path: Path,
 ) -> None:
     """
-    ``notion-mention-database`` role creates database mention in paragraph.
+    ``notion-mention-database`` role creates database mention in
+    paragraph.
     """
     test_database_id = "abcdef12-3456-7890-abcd-ef1234567890"
 
@@ -3777,9 +3743,7 @@ def test_notion_mention_date(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-date`` role creates date mention in paragraph.
-    """
+    """``notion-mention-date`` role creates date mention in paragraph."""
     test_date = "2025-11-09"
 
     rst_content = f"""
@@ -3813,9 +3777,7 @@ def test_notion_mention_user_html_output(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-user`` role with HTML builder generates a link.
-    """
+    """``notion-mention-user`` role with HTML builder generates a link."""
     test_user_id = "12345678-1234-1234-1234-123456789abc"
     rst_content = f"""
         Hello :notion-mention-user:`{test_user_id}` there!
@@ -3842,9 +3804,7 @@ def test_notion_mention_page_html_output(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-page`` role with HTML builder generates a link.
-    """
+    """``notion-mention-page`` role with HTML builder generates a link."""
     test_page_id = "87654321-4321-4321-4321-cba987654321"
     rst_content = f"""
         See :notion-mention-page:`{test_page_id}` for details.
@@ -3871,9 +3831,7 @@ def test_notion_mention_database_html_output(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-database`` role with HTML builder generates a link.
-    """
+    """``notion-mention-database`` role with HTML builder generates a link."""
     test_database_id = "abcdef12-3456-7890-abcd-ef1234567890"
     rst_content = f"""
         Check the :notion-mention-database:`{test_database_id}` database.
@@ -3900,9 +3858,7 @@ def test_notion_mention_date_html_output(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    ``notion-mention-date`` role with HTML builder shows the date.
-    """
+    """``notion-mention-date`` role with HTML builder shows the date."""
     test_date = "2025-11-09"
     rst_content = f"""
         The meeting is on :notion-mention-date:`{test_date}`.
@@ -3929,7 +3885,8 @@ def test_describe_directive(
     tmp_path: Path,
 ) -> None:
     """
-    ``describe`` directive becomes a Notion Callout block with nested content.
+    ``describe`` directive becomes a Notion Callout block with nested
+    content.
     """
     rst_content = """
         .. describe:: Foo
@@ -3967,7 +3924,8 @@ def test_describe_directive_multiline(
     tmp_path: Path,
 ) -> None:
     """
-    ``describe`` directive with multiple paragraphs nests all content.
+    ``describe`` directive with multiple paragraphs nests all
+    content.
     """
     rst_content = """
         .. describe:: Bar
