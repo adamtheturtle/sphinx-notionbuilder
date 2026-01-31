@@ -284,6 +284,23 @@ Arguments:
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
+Updating the Sample Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For contributors, a helper script is provided to build and publish the sample documentation from a local branch:
+
+.. code-block:: console
+
+   $ export NOTION_TOKEN="your_integration_token_here"
+   $ export NOTION_SAMPLE_PAGE_ID="your_sample_page_id_here"
+   $ uv run python scripts/update_sample.py
+
+Use ``--dry-run`` to see what commands would be executed without running them:
+
+.. code-block:: console
+
+   $ uv run python scripts/update_sample.py --dry-run
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
