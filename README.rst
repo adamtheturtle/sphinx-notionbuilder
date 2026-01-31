@@ -295,12 +295,6 @@ For contributors, a helper script is provided to build and publish the sample do
    $ export NOTION_SAMPLE_PAGE_ID="your_sample_page_id_here"
    $ uv run python scripts/update_sample.py
 
-Use ``--dry-run`` to see what commands would be executed without running them:
-
-.. code-block:: console
-
-   $ uv run python scripts/update_sample.py --dry-run
-
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg

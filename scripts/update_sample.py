@@ -11,10 +11,6 @@ Or pass them directly::
 
     NOTION_TOKEN=xxx NOTION_SAMPLE_PAGE_ID=yyy \
         uv run python scripts/update_sample.py
-
-For a dry-run (shows commands without executing)::
-
-    uv run python scripts/update_sample.py --dry-run
 """
 
 import shutil
@@ -38,17 +34,9 @@ import click
     required=True,
     help="ID of the parent Notion page",
 )
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    default=False,
-    help="Show the commands that would be run without executing them",
-)
 def main(
     notion_token: str,
     notion_page_id: str,
-    *,
-    dry_run: bool,
 ) -> None:
     """Build and publish the sample documentation to Notion."""
     del notion_token  # Used by environment, not directly
@@ -86,18 +74,6 @@ def main(
         "--icon",
         "🐍",
     ]
-
-    if dry_run:
-        click.echo(message="Would run:")
-        click.echo(message=f"  {' '.join(build_cmd)}")
-        click.echo()
-        click.echo(message="Then:")
-        click.echo(message=f"  {' '.join(upload_cmd)}")
-        click.echo()
-        click.echo(message="With environment:")
-        click.echo(message="  NOTION_TOKEN=***")
-        click.echo(message=f"  NOTION_SAMPLE_PAGE_ID={notion_page_id}")
-        return
 
     # Clean build directory
     if build_dir.exists():
