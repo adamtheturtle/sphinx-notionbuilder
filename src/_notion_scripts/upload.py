@@ -260,7 +260,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 def upload_to_notion(
     *,
     session: Session,
-    blocks: list[dict[str, object]],
+    blocks: Sequence[Block],
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
@@ -318,14 +318,9 @@ def upload_to_notion(
     if page.subdbs:
         raise PageHasDatabasesError
 
-    block_objs = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks
-    ]
-
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.blocks,
-        local_blocks=block_objs,
+        local_blocks=blocks,
     )
 
     delete_start_index = (last_matching_index or -1) + 1
@@ -350,13 +345,10 @@ def upload_to_notion(
     for existing_page_block in blocks_to_delete:
         existing_page_block.delete()
 
-    block_objs_to_upload = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks[delete_start_index:]
-    ]
+    blocks_to_upload = blocks[delete_start_index:]
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
-        for block in block_objs_to_upload
+        for block in blocks_to_upload
     ]
     page.append(blocks=block_objs_with_uploaded_files)
 
@@ -440,7 +432,11 @@ def main(
 ) -> None:
     """Upload documentation to Notion."""
     session = Session()
-    blocks = json.loads(s=file.read_text(encoding="utf-8"))
+    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
+        for details in block_dicts
+    ]
 
     try:
         page = upload_to_notion(
