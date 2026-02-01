@@ -23,4 +23,5 @@ reportUnknownMemberType
 reportUnknownVariableType
 reportUnnecessaryIsInstance
 strikethrough
+subpages
 ty
