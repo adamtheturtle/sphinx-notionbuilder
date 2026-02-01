@@ -34,7 +34,9 @@ class WireMockContainer:
 
     def __init__(self) -> None:
         """Initialize the WireMock container."""
-        self._container: Any = DockerContainer("wiremock/wiremock:latest")
+        self._container: Any = DockerContainer(
+            image="wiremock/wiremock:latest",
+        )
         self._container.with_exposed_ports(8080)
         self._base_url: str = ""
 
