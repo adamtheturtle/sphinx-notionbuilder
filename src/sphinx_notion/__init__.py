@@ -86,6 +86,8 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
+from sphinx_notion.upload import upload_to_notion
+
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
@@ -2142,8 +2144,6 @@ def _publish_to_notion(
 
     if app.builder.name != "notion":
         return
-
-    from _notion_scripts.upload import upload_to_notion  # noqa: PLC0415
 
     output_file = Path(app.outdir) / "index.json"
     if not output_file.exists():
