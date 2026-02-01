@@ -10,9 +10,7 @@ import pytest
 import requests
 from notion_client import Client as NotionClient
 from notion_client.client import ClientOptions
-from testcontainers.core.container import (
-    DockerContainer,  # type: ignore[import-untyped]
-)
+from testcontainers.core.container import DockerContainer
 from ultimate_notion import Session
 from ultimate_notion.blocks import Paragraph
 
@@ -139,8 +137,8 @@ def fixture_wiremock_reset(
     """Reset WireMock stubs before each test and close Session after."""
     fixture_wiremock.reset()
     yield fixture_wiremock
-    if Session._active_session is not None:  # type: ignore[reportPrivateUsage] # noqa: SLF001
-        Session._active_session.close()  # type: ignore[reportPrivateUsage] # noqa: SLF001
+    if Session._active_session is not None:  # noqa: SLF001
+        Session._active_session.close()  # noqa: SLF001
 
 
 def _page_response(
