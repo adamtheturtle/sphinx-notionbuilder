@@ -2143,10 +2143,7 @@ def _publish_to_notion(
     if app.builder.name != "notion":
         return
 
-    from _notion_scripts.upload import (  # noqa: PLC0415
-        NotionUploadError,
-        upload_to_notion,
-    )
+    from _notion_scripts.upload import upload_to_notion  # noqa: PLC0415
 
     output_file = Path(app.outdir) / "index.json"
     if not output_file.exists():
@@ -2155,19 +2152,15 @@ def _publish_to_notion(
 
     blocks = json.loads(s=output_file.read_text(encoding="utf-8"))
 
-    try:
-        result = upload_to_notion(
-            blocks=blocks,
-            parent_page_id=app.config.notion_parent_page_id,
-            parent_database_id=app.config.notion_parent_database_id,
-            title=app.config.notion_page_title,
-            icon=app.config.notion_page_icon,
-            cover_url=app.config.notion_page_cover_url,
-            cancel_on_discussion=app.config.notion_cancel_on_discussion,
-        )
-    except NotionUploadError:
-        _LOGGER.exception("Failed to publish to Notion")
-        return
+    result = upload_to_notion(
+        blocks=blocks,
+        parent_page_id=app.config.notion_parent_page_id,
+        parent_database_id=app.config.notion_parent_database_id,
+        title=app.config.notion_page_title,
+        icon=app.config.notion_page_icon,
+        cover_url=app.config.notion_page_cover_url,
+        cancel_on_discussion=app.config.notion_cancel_on_discussion,
+    )
 
     if result.created_new_page:
         _LOGGER.info(
