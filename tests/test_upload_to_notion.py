@@ -34,15 +34,15 @@ class WireMockContainer:
 
     def __init__(self) -> None:
         """Initialize the WireMock container."""
-        self._container = DockerContainer("wiremock/wiremock:latest")  # type: ignore[misc]
+        self._container: Any = DockerContainer("wiremock/wiremock:latest")
         self._container.with_exposed_ports(8080)
         self._base_url: str = ""
 
     def start(self) -> None:
         """Start the WireMock container."""
         self._container.start()
-        host = self._container.get_container_host_ip()
-        port = self._container.get_exposed_port(8080)  # type: ignore[misc]
+        host: str = self._container.get_container_host_ip()
+        port: str = self._container.get_exposed_port(8080)
         self._base_url = f"http://{host}:{port}"
 
         for _ in range(30):
