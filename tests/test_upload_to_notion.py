@@ -2,11 +2,13 @@
 
 import time
 from collections.abc import Generator
-from typing import Any
+from http import HTTPMethod
+from typing import Any, Final
 from uuid import UUID
 
 import pytest
 import requests
+from beartype import beartype
 from notion_client import Client as NotionClient
 from notion_client.client import ClientOptions
 from testcontainers.core.container import DockerContainer
@@ -19,15 +21,20 @@ from _notion_scripts.upload import (  # pylint: disable=import-private-name
     upload_to_notion,
 )
 
-PARENT_PAGE_ID = "12345678-1234-1234-1234-123456789001"
-NEW_PAGE_ID = "12345678-1234-1234-1234-123456789002"
-EXISTING_PAGE_ID = "12345678-1234-1234-1234-123456789003"
-SUBPAGE_ID = "12345678-1234-1234-1234-123456789004"
-CHILD_DB_ID = "12345678-1234-1234-1234-123456789005"
-NEW_BLOCK_ID = "12345678-1234-1234-1234-123456789006"
-USER_ID = "12345678-1234-1234-1234-123456789007"
+
+class _TestIds:
+    """Test IDs used in WireMock stubs."""
+
+    PARENT_PAGE: Final[str] = "12345678-1234-1234-1234-123456789001"
+    NEW_PAGE: Final[str] = "12345678-1234-1234-1234-123456789002"
+    EXISTING_PAGE: Final[str] = "12345678-1234-1234-1234-123456789003"
+    SUBPAGE: Final[str] = "12345678-1234-1234-1234-123456789004"
+    CHILD_DB: Final[str] = "12345678-1234-1234-1234-123456789005"
+    NEW_BLOCK: Final[str] = "12345678-1234-1234-1234-123456789006"
+    USER: Final[str] = "12345678-1234-1234-1234-123456789007"
 
 
+@beartype
 class WireMockContainer:
     """WireMock container wrapper for testing."""
 
@@ -74,7 +81,7 @@ class WireMockContainer:
     def stub(
         self,
         *,
-        method: str,
+        method: HTTPMethod,
         url: str | None = None,
         url_pattern: str | None = None,
         status: int,
@@ -83,7 +90,7 @@ class WireMockContainer:
         headers: dict[str, str] | None = None,
     ) -> None:
         """Create a stub mapping in WireMock."""
-        request_spec: dict[str, Any] = {"method": method}
+        request_spec: dict[str, Any] = {"method": method.value}
         if url is not None:
             request_spec["url"] = url
         if url_pattern is not None:
@@ -137,9 +144,11 @@ def fixture_wiremock_reset(
         Session._active_session.close()  # noqa: SLF001
 
 
+@beartype
 def _page_response(
     *,
     page_id: str,
+    user_id: str,
     parent_page_id: str | None = None,
     title: str = "Test Page",
     has_children: bool = False,
@@ -155,8 +164,8 @@ def _page_response(
         "id": page_id,
         "created_time": "2024-01-01T00:00:00.000Z",
         "last_edited_time": "2024-01-01T00:00:00.000Z",
-        "created_by": {"object": "user", "id": USER_ID},
-        "last_edited_by": {"object": "user", "id": USER_ID},
+        "created_by": {"object": "user", "id": user_id},
+        "last_edited_by": {"object": "user", "id": user_id},
         "cover": None,
         "icon": None,
         "parent": parent,
@@ -190,6 +199,7 @@ def _page_response(
     }
 
 
+@beartype
 def _blocks_response(*, blocks: list[dict[str, Any]]) -> dict[str, Any]:
     """Generate a Notion blocks response."""
     return {
@@ -202,10 +212,12 @@ def _blocks_response(*, blocks: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+@beartype
 def _paragraph_block(
     *,
     block_id: str,
     parent_page_id: str,
+    user_id: str,
     text: str,
 ) -> dict[str, Any]:
     """Generate a Notion paragraph block."""
@@ -215,8 +227,8 @@ def _paragraph_block(
         "parent": {"type": "page_id", "page_id": parent_page_id},
         "created_time": "2024-01-01T00:00:00.000Z",
         "last_edited_time": "2024-01-01T00:00:00.000Z",
-        "created_by": {"object": "user", "id": USER_ID},
-        "last_edited_by": {"object": "user", "id": USER_ID},
+        "created_by": {"object": "user", "id": user_id},
+        "last_edited_by": {"object": "user", "id": user_id},
         "has_children": False,
         "archived": False,
         "in_trash": False,
@@ -243,10 +255,12 @@ def _paragraph_block(
     }
 
 
+@beartype
 def _child_page_block(
     *,
     block_id: str,
     parent_page_id: str,
+    user_id: str,
     title: str,
 ) -> dict[str, Any]:
     """Generate a Notion child_page block."""
@@ -256,8 +270,8 @@ def _child_page_block(
         "parent": {"type": "page_id", "page_id": parent_page_id},
         "created_time": "2024-01-01T00:00:00.000Z",
         "last_edited_time": "2024-01-01T00:00:00.000Z",
-        "created_by": {"object": "user", "id": USER_ID},
-        "last_edited_by": {"object": "user", "id": USER_ID},
+        "created_by": {"object": "user", "id": user_id},
+        "last_edited_by": {"object": "user", "id": user_id},
         "has_children": False,
         "archived": False,
         "in_trash": False,
@@ -266,10 +280,12 @@ def _child_page_block(
     }
 
 
+@beartype
 def _child_database_block(
     *,
     block_id: str,
     parent_page_id: str,
+    user_id: str,
     title: str,
 ) -> dict[str, Any]:
     """Generate a Notion child_database block."""
@@ -279,8 +295,8 @@ def _child_database_block(
         "parent": {"type": "page_id", "page_id": parent_page_id},
         "created_time": "2024-01-01T00:00:00.000Z",
         "last_edited_time": "2024-01-01T00:00:00.000Z",
-        "created_by": {"object": "user", "id": USER_ID},
-        "last_edited_by": {"object": "user", "id": USER_ID},
+        "created_by": {"object": "user", "id": user_id},
+        "last_edited_by": {"object": "user", "id": user_id},
         "has_children": False,
         "archived": False,
         "in_trash": False,
@@ -289,10 +305,12 @@ def _child_database_block(
     }
 
 
+@beartype
 def _database_response(
     *,
     database_id: str,
     parent_page_id: str,
+    user_id: str,
     title: str,
 ) -> dict[str, Any]:
     """Generate a Notion database response."""
@@ -301,8 +319,8 @@ def _database_response(
         "id": database_id,
         "created_time": "2024-01-01T00:00:00.000Z",
         "last_edited_time": "2024-01-01T00:00:00.000Z",
-        "created_by": {"object": "user", "id": USER_ID},
-        "last_edited_by": {"object": "user", "id": USER_ID},
+        "created_by": {"object": "user", "id": user_id},
+        "last_edited_by": {"object": "user", "id": user_id},
         "cover": None,
         "icon": None,
         "parent": {"type": "page_id", "page_id": parent_page_id},
@@ -339,76 +357,81 @@ def test_upload_to_notion_creates_new_page(
     wm = fixture_wiremock_reset
     title = "Test Page"
 
-    parent_page_id_pattern = PARENT_PAGE_ID.replace("-", "-?")
-    new_page_id_pattern = NEW_PAGE_ID.replace("-", "-?")
+    parent_page_id_pattern = _TestIds.PARENT_PAGE.replace("-", "-?")
+    new_page_id_pattern = _TestIds.NEW_PAGE.replace("-", "-?")
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{parent_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.PARENT_PAGE,
+            user_id=_TestIds.USER,
             title="Parent Page",
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{parent_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(blocks=[]),
     )
 
     wm.stub(
-        method="POST",
+        method=HTTPMethod.POST,
         url="/v1/pages",
         status=200,
         json_body=_page_response(
-            page_id=NEW_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.NEW_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{new_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=NEW_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.NEW_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
         ),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/pages/{new_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=NEW_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.NEW_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{new_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(blocks=[]),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/blocks/{new_page_id_pattern}/children",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _paragraph_block(
-                    block_id=NEW_BLOCK_ID,
-                    parent_page_id=NEW_PAGE_ID,
+                    block_id=_TestIds.NEW_BLOCK,
+                    parent_page_id=_TestIds.NEW_PAGE,
+                    user_id=_TestIds.USER,
                     text="Hello",
                 )
             ]
@@ -427,7 +450,7 @@ def test_upload_to_notion_creates_new_page(
     page = upload_to_notion(
         session=session,
         blocks=blocks,
-        parent_page_id=PARENT_PAGE_ID,
+        parent_page_id=_TestIds.PARENT_PAGE,
         parent_database_id=None,
         title=title,
         icon=None,
@@ -436,7 +459,7 @@ def test_upload_to_notion_creates_new_page(
         cancel_on_discussion=False,
     )
 
-    assert page.id == UUID(NEW_PAGE_ID)  # type: ignore[misc]
+    assert page.id == UUID(_TestIds.NEW_PAGE)  # type: ignore[misc]
 
 
 def test_upload_to_notion_updates_existing_page(
@@ -446,29 +469,31 @@ def test_upload_to_notion_updates_existing_page(
     wm = fixture_wiremock_reset
     title = "Test Page"
 
-    parent_page_id_pattern = PARENT_PAGE_ID.replace("-", "-?")
-    existing_page_id_pattern = EXISTING_PAGE_ID.replace("-", "-?")
+    parent_page_id_pattern = _TestIds.PARENT_PAGE.replace("-", "-?")
+    existing_page_id_pattern = _TestIds.EXISTING_PAGE.replace("-", "-?")
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{parent_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.PARENT_PAGE,
+            user_id=_TestIds.USER,
             title="Parent Page",
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{parent_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _child_page_block(
-                    block_id=EXISTING_PAGE_ID,
-                    parent_page_id=PARENT_PAGE_ID,
+                    block_id=_TestIds.EXISTING_PAGE,
+                    parent_page_id=_TestIds.PARENT_PAGE,
+                    user_id=_TestIds.USER,
                     title=title,
                 )
             ]
@@ -476,43 +501,46 @@ def test_upload_to_notion_updates_existing_page(
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
         ),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{existing_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(blocks=[]),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/blocks/{existing_page_id_pattern}/children",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _paragraph_block(
-                    block_id=NEW_BLOCK_ID,
-                    parent_page_id=EXISTING_PAGE_ID,
+                    block_id=_TestIds.NEW_BLOCK,
+                    parent_page_id=_TestIds.EXISTING_PAGE,
+                    user_id=_TestIds.USER,
                     text="Updated content",
                 )
             ]
@@ -531,7 +559,7 @@ def test_upload_to_notion_updates_existing_page(
     page = upload_to_notion(
         session=session,
         blocks=blocks,
-        parent_page_id=PARENT_PAGE_ID,
+        parent_page_id=_TestIds.PARENT_PAGE,
         parent_database_id=None,
         title=title,
         icon=None,
@@ -540,7 +568,7 @@ def test_upload_to_notion_updates_existing_page(
         cancel_on_discussion=False,
     )
 
-    assert page.id == UUID(EXISTING_PAGE_ID)  # type: ignore[misc]
+    assert page.id == UUID(_TestIds.EXISTING_PAGE)  # type: ignore[misc]
 
 
 def test_upload_to_notion_raises_page_has_subpages_error(
@@ -550,29 +578,31 @@ def test_upload_to_notion_raises_page_has_subpages_error(
     wm = fixture_wiremock_reset
     title = "Test Page"
 
-    parent_page_id_pattern = PARENT_PAGE_ID.replace("-", "-?")
-    existing_page_id_pattern = EXISTING_PAGE_ID.replace("-", "-?")
+    parent_page_id_pattern = _TestIds.PARENT_PAGE.replace("-", "-?")
+    existing_page_id_pattern = _TestIds.EXISTING_PAGE.replace("-", "-?")
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{parent_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.PARENT_PAGE,
+            user_id=_TestIds.USER,
             title="Parent Page",
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{parent_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _child_page_block(
-                    block_id=EXISTING_PAGE_ID,
-                    parent_page_id=PARENT_PAGE_ID,
+                    block_id=_TestIds.EXISTING_PAGE,
+                    parent_page_id=_TestIds.PARENT_PAGE,
+                    user_id=_TestIds.USER,
                     title=title,
                 )
             ]
@@ -580,52 +610,56 @@ def test_upload_to_notion_raises_page_has_subpages_error(
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{existing_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _child_page_block(
-                    block_id=SUBPAGE_ID,
-                    parent_page_id=EXISTING_PAGE_ID,
+                    block_id=_TestIds.SUBPAGE,
+                    parent_page_id=_TestIds.EXISTING_PAGE,
+                    user_id=_TestIds.USER,
                     title="Subpage",
                 )
             ]
         ),
     )
 
-    subpage_id_pattern = SUBPAGE_ID.replace("-", "-?")
+    subpage_id_pattern = _TestIds.SUBPAGE.replace("-", "-?")
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{subpage_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=SUBPAGE_ID,
-            parent_page_id=EXISTING_PAGE_ID,
+            page_id=_TestIds.SUBPAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.EXISTING_PAGE,
             title="Subpage",
         ),
     )
@@ -643,7 +677,7 @@ def test_upload_to_notion_raises_page_has_subpages_error(
         upload_to_notion(
             session=session,
             blocks=blocks,
-            parent_page_id=PARENT_PAGE_ID,
+            parent_page_id=_TestIds.PARENT_PAGE,
             parent_database_id=None,
             title=title,
             icon=None,
@@ -662,29 +696,31 @@ def test_upload_to_notion_raises_page_has_databases_error(
     wm = fixture_wiremock_reset
     title = "Test Page"
 
-    parent_page_id_pattern = PARENT_PAGE_ID.replace("-", "-?")
-    existing_page_id_pattern = EXISTING_PAGE_ID.replace("-", "-?")
+    parent_page_id_pattern = _TestIds.PARENT_PAGE.replace("-", "-?")
+    existing_page_id_pattern = _TestIds.EXISTING_PAGE.replace("-", "-?")
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{parent_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.PARENT_PAGE,
+            user_id=_TestIds.USER,
             title="Parent Page",
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{parent_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _child_page_block(
-                    block_id=EXISTING_PAGE_ID,
-                    parent_page_id=PARENT_PAGE_ID,
+                    block_id=_TestIds.EXISTING_PAGE,
+                    parent_page_id=_TestIds.PARENT_PAGE,
+                    user_id=_TestIds.USER,
                     title=title,
                 )
             ]
@@ -692,52 +728,56 @@ def test_upload_to_notion_raises_page_has_databases_error(
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="PATCH",
+        method=HTTPMethod.PATCH,
         url_pattern=f"/v1/pages/{existing_page_id_pattern}",
         status=200,
         json_body=_page_response(
-            page_id=EXISTING_PAGE_ID,
-            parent_page_id=PARENT_PAGE_ID,
+            page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
+            parent_page_id=_TestIds.PARENT_PAGE,
             title=title,
             has_children=True,
         ),
     )
 
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/blocks/{existing_page_id_pattern}/children.*",
         status=200,
         json_body=_blocks_response(
             blocks=[
                 _child_database_block(
-                    block_id=CHILD_DB_ID,
-                    parent_page_id=EXISTING_PAGE_ID,
+                    block_id=_TestIds.CHILD_DB,
+                    parent_page_id=_TestIds.EXISTING_PAGE,
+                    user_id=_TestIds.USER,
                     title="Database",
                 )
             ]
         ),
     )
 
-    child_db_id_pattern = CHILD_DB_ID.replace("-", "-?")
+    child_db_id_pattern = _TestIds.CHILD_DB.replace("-", "-?")
     wm.stub(
-        method="GET",
+        method=HTTPMethod.GET,
         url_pattern=f"/v1/databases/{child_db_id_pattern}",
         status=200,
         json_body=_database_response(
-            database_id=CHILD_DB_ID,
-            parent_page_id=EXISTING_PAGE_ID,
+            database_id=_TestIds.CHILD_DB,
+            parent_page_id=_TestIds.EXISTING_PAGE,
+            user_id=_TestIds.USER,
             title="Database",
         ),
     )
@@ -755,7 +795,7 @@ def test_upload_to_notion_raises_page_has_databases_error(
         upload_to_notion(
             session=session,
             blocks=blocks,
-            parent_page_id=PARENT_PAGE_ID,
+            parent_page_id=_TestIds.PARENT_PAGE,
             parent_database_id=None,
             title=title,
             icon=None,
