@@ -57,6 +57,7 @@ optional-dependencies.dev = [
     "deptry==0.24.0",
     "doc8==2.0.0",
     "doccmd==2026.1.31.3",
+    "docker>=7.0.0",
     "freezegun==1.5.5",
     "furo==2025.12.19",
     "interrogate==1.7.0",
@@ -87,6 +88,7 @@ optional-dependencies.dev = [
     "sphinx-substitution-extensions==2026.1.12",
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
+    "testcontainers>=4.0.0",
     "ty==0.0.14",
     "types-docutils==0.22.3.20251115",
     "types-requests==2.32.4.20260107",
@@ -374,6 +376,7 @@ plugins = [
 enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
+ignore = [ "tests/test_upload_to_notion.py" ]
 
 [tool.ty.analysis]
 # Disable support for `type: ignore` comments
