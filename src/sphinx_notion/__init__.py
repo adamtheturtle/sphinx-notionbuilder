@@ -2156,7 +2156,7 @@ def _publish_to_notion(
     blocks = json.loads(s=output_file.read_text(encoding="utf-8"))
 
     try:
-        page_url, created_new_page = upload_to_notion(
+        result = upload_to_notion(
             blocks=blocks,
             parent_page_id=app.config.notion_parent_page_id,
             parent_database_id=app.config.notion_parent_database_id,
@@ -2169,17 +2169,17 @@ def _publish_to_notion(
         _LOGGER.exception("Failed to publish to Notion")
         return
 
-    if created_new_page:
+    if result.created_new_page:
         _LOGGER.info(
             "Created new page: '%s' (%s)",
             app.config.notion_page_title,
-            page_url,
+            result.page_url,
         )
     else:
         _LOGGER.info(
             "Updated existing page: '%s' (%s)",
             app.config.notion_page_title,
-            page_url,
+            result.page_url,
         )
 
 

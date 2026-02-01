@@ -26,6 +26,8 @@ Add the following to ``conf.py`` to enable the extension:
 
    extensions = ["sphinx_notion"]
 
+See `docs/configuration.rst`_ for configuration options to enable automatic publishing to Notion.
+
 ``sphinx-notionbuilder`` also works with a variety of Sphinx extensions:
 
 * `sphinx-toolbox collapse`_
@@ -290,6 +292,7 @@ The command will create a new page if one with the given title doesn't exist, or
    :target: https://badge.fury.io/py/Sphinx-Notion-Builder
 .. |minimum-python-version| replace:: 3.11
 
+.. _docs/configuration.rst: https://github.com/adamtheturtle/sphinx-notionbuilder/blob/main/docs/configuration.rst
 .. _atsphinx-audioplayer: https://github.com/atsphinx/atsphinx-audioplayer
 .. _notion-integrations: https://www.notion.so/my-integrations
 .. _published Notion page: https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55

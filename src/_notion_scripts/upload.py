@@ -6,9 +6,10 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -251,10 +252,18 @@ class NotionUploadError(Exception):
     """Error raised when uploading to Notion fails."""
 
 
+@dataclass(frozen=True)
+class UploadResult:
+    """Result of uploading documentation to Notion."""
+
+    page_url: str
+    created_new_page: bool
+
+
 @beartype
 def upload_to_notion(
     *,
-    blocks: Sequence[dict[str, Any]],
+    blocks: Sequence[dict[str, object]],
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
@@ -262,11 +271,8 @@ def upload_to_notion(
     cover_url: str | None,
     cover_path: Path | None = None,
     cancel_on_discussion: bool,
-) -> tuple[str, bool]:
+) -> UploadResult:
     """Upload documentation to Notion.
-
-    Returns:
-        A tuple of (page_url, created_new_page).
 
     Raises:
         NotionUploadError: If the upload fails due to invalid page state or
@@ -369,7 +375,7 @@ def upload_to_notion(
     ]
     page.append(blocks=block_objs_with_uploaded_files)
 
-    return (page.url, created_new_page)
+    return UploadResult(page_url=page.url, created_new_page=created_new_page)
 
 
 @cloup.command()
@@ -451,7 +457,7 @@ def main(
     blocks = json.loads(s=file.read_text(encoding="utf-8"))
 
     try:
-        page_url, created_new_page = upload_to_notion(
+        result = upload_to_notion(
             blocks=blocks,
             parent_page_id=parent_page_id,
             parent_database_id=parent_database_id,
@@ -464,7 +470,9 @@ def main(
     except NotionUploadError as e:
         raise click.ClickException(message=str(object=e)) from e
 
-    if created_new_page:
-        click.echo(message=f"Created new page: '{title}' ({page_url})")
+    if result.created_new_page:
+        click.echo(message=f"Created new page: '{title}' ({result.page_url})")
     else:
-        click.echo(message=f"Updated existing page: '{title}' ({page_url})")
+        click.echo(
+            message=f"Updated existing page: '{title}' ({result.page_url})"
+        )

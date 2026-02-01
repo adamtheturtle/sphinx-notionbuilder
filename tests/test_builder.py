@@ -53,8 +53,11 @@ def test_notion_publish_config_defaults(
     """Default configuration values are set correctly."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
-    app = make_app(srcdir=srcdir)
+    (srcdir / "conf.py").touch()
+    app = make_app(
+        srcdir=srcdir,
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
 
     assert app.config.notion_publish is False
     assert app.config.notion_parent_page_id is None
@@ -73,12 +76,13 @@ def test_notion_publish_requires_parent(
     """Enabling publish without parent raises error."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="neither notion_parent_page_id"):
         make_app(
             srcdir=srcdir,
             confoverrides={
+                "extensions": ["sphinx_notion"],
                 "notion_publish": True,
                 "notion_page_title": "Test Page",
             },
@@ -93,12 +97,13 @@ def test_notion_publish_mutually_exclusive_parents(
     """Setting both parent_page_id and parent_database_id raises error."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="mutually exclusive"):
         make_app(
             srcdir=srcdir,
             confoverrides={
+                "extensions": ["sphinx_notion"],
                 "notion_publish": True,
                 "notion_parent_page_id": "abc123",
                 "notion_parent_database_id": "def456",
@@ -115,12 +120,13 @@ def test_notion_publish_requires_title(
     """Enabling publish without title raises error."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="notion_page_title is not set"):
         make_app(
             srcdir=srcdir,
             confoverrides={
+                "extensions": ["sphinx_notion"],
                 "notion_publish": True,
                 "notion_parent_page_id": "abc123",
             },
@@ -135,11 +141,12 @@ def test_notion_publish_valid_config_with_page_id(
     """Valid configuration with parent_page_id passes validation."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     app = make_app(
         srcdir=srcdir,
         confoverrides={
+            "extensions": ["sphinx_notion"],
             "notion_publish": True,
             "notion_parent_page_id": "abc123",
             "notion_page_title": "Test Page",
@@ -159,11 +166,12 @@ def test_notion_publish_valid_config_with_database_id(
     """Valid configuration with parent_database_id passes validation."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     app = make_app(
         srcdir=srcdir,
         confoverrides={
+            "extensions": ["sphinx_notion"],
             "notion_publish": True,
             "notion_parent_database_id": "def456",
             "notion_page_title": "Test Page",
@@ -189,11 +197,12 @@ def test_notion_publish_disabled_skips_validation(
     """When publish is disabled, validation is skipped."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
-    (srcdir / "conf.py").write_text(data="extensions = ['sphinx_notion']")
+    (srcdir / "conf.py").touch()
 
     app = make_app(
         srcdir=srcdir,
         confoverrides={
+            "extensions": ["sphinx_notion"],
             "notion_publish": False,
         },
     )
