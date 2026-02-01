@@ -1,6 +1,5 @@
 """Tests for the upload_to_notion function using WireMock."""
 
-import os
 import time
 from collections.abc import Generator
 from typing import Any
@@ -59,6 +58,7 @@ class WireMockContainer:
                 pass
             time.sleep(1)
 
+        self._container.stop()
         msg = "WireMock container failed to start"
         raise RuntimeError(msg)
 
@@ -118,18 +118,12 @@ class WireMockContainer:
 @pytest.fixture(scope="module")
 def fixture_wiremock() -> Generator[WireMockContainer, None, None]:
     """Provide a WireMock container for testing."""
-    old_docker_host = os.environ.get("DOCKER_HOST")
-    os.environ["DOCKER_HOST"] = "unix:///Users/adam/.docker/run/docker.sock"
+    container = WireMockContainer()
+    container.start()
     try:
-        container = WireMockContainer()
-        container.start()
         yield container
-        container.stop()
     finally:
-        if old_docker_host is not None:
-            os.environ["DOCKER_HOST"] = old_docker_host
-        elif "DOCKER_HOST" in os.environ:
-            del os.environ["DOCKER_HOST"]
+        container.stop()
 
 
 @pytest.fixture
