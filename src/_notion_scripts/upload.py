@@ -433,6 +433,7 @@ def main(
     """Upload documentation to Notion."""
     session = Session()
     block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/177
     blocks = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
         for details in block_dicts
