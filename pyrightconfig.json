@@ -1,6 +1,0 @@
-{
-  "typeCheckingMode": "strict",
-  "enableTypeIgnoreComments": true,
-  "reportMissingTypeStubs": false,
-  "reportPrivateUsage": "warning"
-}
