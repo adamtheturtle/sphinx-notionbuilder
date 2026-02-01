@@ -32,6 +32,21 @@ if TYPE_CHECKING:
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
 
 
+class PageHasSubpagesError(Exception):
+    """Raised when a page has subpages, which is not supported."""
+
+
+class PageHasDatabasesError(Exception):
+    """Raised when a page has databases, which is not supported."""
+
+
+class DiscussionsExistError(Exception):
+    """Raised when blocks to delete have discussions and
+    cancel_on_discussion
+    is True.
+    """
+
+
 @beartype
 def _block_without_children(
     *,
@@ -105,12 +120,6 @@ def _find_last_matching_block_index(
     """
     last_matching_index: int | None = None
     for index, existing_page_block in enumerate(iterable=existing_blocks):
-        click.echo(
-            message=(
-                f"Checking block {index + 1} of {len(existing_blocks)} for "
-                "equivalence"
-            ),
-        )
         if index < len(local_blocks) and (
             _is_existing_equivalent(
                 existing_page_block=existing_page_block,
@@ -247,6 +256,105 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     return block
 
 
+@beartype
+def upload_to_notion(
+    *,
+    session: Session,
+    blocks: Sequence[Block],
+    parent_page_id: str | None,
+    parent_database_id: str | None,
+    title: str,
+    icon: str | None,
+    cover_path: Path | None,
+    cover_url: str | None,
+    cancel_on_discussion: bool,
+) -> Page:
+    """Upload documentation to Notion.
+
+    Returns the page that was created or updated.
+
+    Raises:
+        PageHasSubpagesError: If the page has subpages.
+        PageHasDatabasesError: If the page has databases.
+        DiscussionsExistError: If blocks to delete have discussions and
+            cancel_on_discussion is True.
+    """
+    parent: Page | Database
+    if parent_page_id:
+        parent = session.get_page(page_ref=parent_page_id)
+        subpages = parent.subpages
+    else:
+        assert parent_database_id is not None
+        parent = session.get_db(db_ref=parent_database_id)
+        subpages = parent.get_all_pages().to_pages()
+
+    pages_matching_title = [
+        child_page for child_page in subpages if child_page.title == title
+    ]
+
+    if pages_matching_title:
+        msg = (
+            f"Expected 1 page matching title {title}, but got "
+            f"{len(pages_matching_title)}"
+        )
+        assert len(pages_matching_title) == 1, msg
+        (page,) = pages_matching_title
+    else:
+        page = session.create_page(parent=parent, title=title)
+
+    page.icon = Emoji(emoji=icon) if icon else None
+    if cover_path:
+        page.cover = _get_uploaded_cover(
+            page=page, cover=cover_path, session=session
+        )
+    elif cover_url:
+        page.cover = ExternalFile(url=cover_url)
+    else:
+        page.cover = None
+
+    if page.subpages:
+        raise PageHasSubpagesError
+
+    if page.subdbs:
+        raise PageHasDatabasesError
+
+    last_matching_index = _find_last_matching_block_index(
+        existing_blocks=page.blocks,
+        local_blocks=blocks,
+    )
+
+    delete_start_index = (last_matching_index or -1) + 1
+    blocks_to_delete = page.blocks[delete_start_index:]
+    blocks_to_delete_with_discussions = [
+        block for block in blocks_to_delete if len(block.discussions) > 0
+    ]
+
+    if cancel_on_discussion and blocks_to_delete_with_discussions:
+        total_discussions = sum(
+            len(block.discussions)
+            for block in blocks_to_delete_with_discussions
+        )
+        error_message = (
+            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
+            f"block(s) to delete with {total_discussions} discussion "
+            "thread(s). "
+            f"Upload cancelled."
+        )
+        raise DiscussionsExistError(error_message)
+
+    for existing_page_block in blocks_to_delete:
+        existing_page_block.delete()
+
+    blocks_to_upload = blocks[delete_start_index:]
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in blocks_to_upload
+    ]
+    page.append(blocks=block_objs_with_uploaded_files)
+
+    return page
+
+
 @cloup.command()
 @cloup.option(
     "--file",
@@ -324,105 +432,38 @@ def main(
 ) -> None:
     """Upload documentation to Notion."""
     session = Session()
-
-    blocks = json.loads(s=file.read_text(encoding="utf-8"))
-
-    parent: Page | Database
-    if parent_page_id:
-        parent = session.get_page(page_ref=parent_page_id)
-        subpages = parent.subpages
-    else:
-        assert parent_database_id is not None
-        parent = session.get_db(db_ref=parent_database_id)
-        subpages = parent.get_all_pages().to_pages()
-
-    pages_matching_title = [
-        child_page for child_page in subpages if child_page.title == title
+    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/177
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
+        for details in block_dicts
     ]
 
-    if pages_matching_title:
-        msg = (
-            f"Expected 1 page matching title {title}, but got "
-            f"{len(pages_matching_title)}"
+    try:
+        page = upload_to_notion(
+            session=session,
+            blocks=blocks,
+            parent_page_id=parent_page_id,
+            parent_database_id=parent_database_id,
+            title=title,
+            icon=icon,
+            cover_path=cover_path,
+            cover_url=cover_url,
+            cancel_on_discussion=cancel_on_discussion,
         )
-        assert len(pages_matching_title) == 1, msg
-        (page,) = pages_matching_title
-    else:
-        page = session.create_page(parent=parent, title=title)
-        click.echo(message=f"Created new page: '{title}' ({page.url})")
-
-    page.icon = Emoji(emoji=icon) if icon else None
-    if cover_path:
-        page.cover = _get_uploaded_cover(
-            page=page, cover=cover_path, session=session
-        )
-    elif cover_url:
-        page.cover = ExternalFile(url=cover_url)
-    else:
-        page.cover = None
-
-    if page.subpages:
-        page_has_page_child_error = (
+    except PageHasSubpagesError:
+        error_message = (
             "We only support pages which only contain Blocks. "
             "This page has subpages."
         )
-        raise click.ClickException(message=page_has_page_child_error)
-
-    if page.subdbs:
-        page_has_database_child_error = (
+        raise click.ClickException(message=error_message) from None
+    except PageHasDatabasesError:
+        error_message = (
             "We only support pages which only contain Blocks. "
             "This page has databases."
         )
-        raise click.ClickException(message=page_has_database_child_error)
+        raise click.ClickException(message=error_message) from None
+    except DiscussionsExistError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
 
-    block_objs = [
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks
-    ]
-
-    last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.blocks,
-        local_blocks=block_objs,
-    )
-
-    click.echo(
-        message=(
-            f"Matching blocks until index {last_matching_index} for page "
-            f"'{title}'"
-        ),
-    )
-    delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.blocks[delete_start_index:]
-    blocks_to_delete_with_discussions = [
-        block for block in blocks_to_delete if len(block.discussions) > 0
-    ]
-
-    if cancel_on_discussion and blocks_to_delete_with_discussions:
-        total_discussions = sum(
-            len(block.discussions)
-            for block in blocks_to_delete_with_discussions
-        )
-        error_message = (
-            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
-            f"block(s) to delete with {total_discussions} discussion "
-            "thread(s). "
-            f"Upload cancelled."
-        )
-        raise click.ClickException(message=error_message)
-
-    for existing_page_block in blocks_to_delete:
-        existing_page_block.delete()
-
-    block_objs_to_upload = [
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks[delete_start_index:]
-    ]
-    block_objs_with_uploaded_files = [
-        _block_with_uploaded_file(block=block, session=session)
-        for block in block_objs_to_upload
-    ]
-    page.append(blocks=block_objs_with_uploaded_files)
-
-    click.echo(message=f"Updated existing page: '{title}' ({page.url})")
+    click.echo(message=f"Uploaded page: '{title}' ({page.url})")
