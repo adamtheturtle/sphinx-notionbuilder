@@ -86,6 +86,8 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
+from sphinx_notion.upload import upload_to_notion
+
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
 
@@ -2098,11 +2100,132 @@ def _visit_mention_date_node_html(
 
 
 @beartype
+def _validate_notion_config(
+    _app: Sphinx,
+    config: Config,
+) -> None:
+    """Validate Notion configuration values."""
+    if not config.notion_publish:
+        return
+
+    if (
+        not config.notion_parent_page_id
+        and not config.notion_parent_database_id
+    ):
+        msg = (
+            "notion_publish is enabled but neither notion_parent_page_id "
+            "nor notion_parent_database_id is set"
+        )
+        raise ValueError(msg)
+
+    if config.notion_parent_page_id and config.notion_parent_database_id:
+        msg = (
+            "notion_parent_page_id and notion_parent_database_id are "
+            "mutually exclusive"
+        )
+        raise ValueError(msg)
+
+    if not config.notion_page_title:
+        msg = "notion_publish is enabled but notion_page_title is not set"
+        raise ValueError(msg)
+
+
+@beartype
+def _publish_to_notion(
+    app: Sphinx,
+    exception: Exception | None,
+) -> None:
+    """Publish documentation to Notion after build completes."""
+    if exception is not None:
+        return
+
+    if not app.config.notion_publish:
+        return
+
+    if app.builder.name != "notion":
+        return
+
+    output_file = Path(app.outdir) / "index.json"
+    if not output_file.exists():
+        _LOGGER.warning("No index.json found, skipping publish")
+        return
+
+    blocks = json.loads(s=output_file.read_text(encoding="utf-8"))
+
+    result = upload_to_notion(
+        blocks=blocks,
+        parent_page_id=app.config.notion_parent_page_id,
+        parent_database_id=app.config.notion_parent_database_id,
+        title=app.config.notion_page_title,
+        icon=app.config.notion_page_icon,
+        cover_url=app.config.notion_page_cover_url,
+        cancel_on_discussion=app.config.notion_cancel_on_discussion,
+    )
+
+    if result.created_new_page:
+        _LOGGER.info(
+            "Created new page: '%s' (%s)",
+            app.config.notion_page_title,
+            result.page_url,
+        )
+    else:
+        _LOGGER.info(
+            "Updated existing page: '%s' (%s)",
+            app.config.notion_page_title,
+            result.page_url,
+        )
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """Add the builder to Sphinx."""
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
+    app.add_config_value(
+        name="notion_publish",
+        default=False,
+        rebuild="",
+        types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_parent_page_id",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_parent_database_id",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_title",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_icon",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_cover_url",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_cancel_on_discussion",
+        default=False,
+        rebuild="",
+        types=(bool,),
+    )
+
+    app.connect(event="config-inited", callback=_validate_notion_config)
     app.connect(event="config-inited", callback=_register_strike_node_handlers)
 
     app.connect(
@@ -2121,6 +2244,8 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)
+
+    app.connect(event="build-finished", callback=_publish_to_notion)
 
     app.add_node(
         node=_MentionUserNode,
