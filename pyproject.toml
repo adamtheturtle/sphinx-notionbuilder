@@ -307,6 +307,7 @@ spelling-store-unknown-words = 'no'
 ignore = [
     "CLAUDE.md",
     ".checkmake-config.ini",
+    "notion-sandbox-issue-*.md",
     ".cursor",
     ".cursor/**",
     ".prettierrc",
