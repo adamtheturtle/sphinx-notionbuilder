@@ -57,8 +57,16 @@ jobs:
           # and documentation.
           uv run --extra=dev --python=${{ matrix.python-version }} pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests/ .
 
+  pre-commit-ci:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: pre-commit-ci/lite-action@v1.1.0
-        if: always()
 
   completion-ci:
     needs: build
