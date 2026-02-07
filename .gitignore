@@ -211,3 +211,5 @@ uv.lock
 build-sample/
 
 *.DS_Store
+
+.secrets
