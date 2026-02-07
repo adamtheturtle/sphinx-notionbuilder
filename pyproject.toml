@@ -358,7 +358,12 @@ exclude_also = [
 [tool.coverage.run]
 
 branch = true
-omit = [ "src/_notion_scripts/upload.py" ]
+# These files interact with the Notion API and cannot be tested until we have
+# a Notion mock. See https://github.com/adamtheturtle/sphinx-notionbuilder/issues/525.
+omit = [
+    "src/_notion_scripts/upload.py",
+    "src/sphinx_notion/_upload.py",
+]
 
 [tool.mypy]
 
