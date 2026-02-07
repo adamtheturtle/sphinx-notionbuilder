@@ -284,6 +284,26 @@ Arguments:
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
+Publishing the Sample Document Locally
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A convenience script is provided to build and publish the sample documentation to a test Notion page.
+
+#. Create a ``.env`` file in the repository root with the following variables:
+
+   .. code-block:: shell
+
+      export NOTION_TOKEN=your_integration_token_here
+      export NOTION_SAMPLE_DATABASE_ID=your_database_id_here
+
+   This file is gitignored and will not be committed.
+
+#. Run the script:
+
+   .. code-block:: console
+
+      $ ./publish-sample.sh
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg

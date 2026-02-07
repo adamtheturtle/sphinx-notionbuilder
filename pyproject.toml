@@ -329,6 +329,7 @@ ignore = [
     "tests",
     "tests-pylintrc",
     "tests/**",
+    "publish-sample.sh",
     "zizmor.yml",
 ]
 
