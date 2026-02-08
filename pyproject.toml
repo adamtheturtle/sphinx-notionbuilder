@@ -259,6 +259,7 @@ lint.pydocstyle.convention = "google"
     "docs/source/doccmd_*.py:invalid-name",
     "doccmd_README_rst_*.py:invalid-name",
     "sample/conf.py:invalid-name",
+    "sample_warnings/conf.py:invalid-name",
 ]
 # Spelling dictionary name. Available dictionaries: none. To make it working
 # install python-enchant package.
@@ -280,6 +281,8 @@ ignore = [
     ".vscode/**",
     "sample/",
     "sample/**",
+    "sample_warnings/",
+    "sample_warnings/**",
     ".yamlfmt",
     "*.enc",
     ".pre-commit-config.yaml",
