@@ -2148,7 +2148,11 @@ def test_cross_reference_numref(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         "Table has a title 'My Table' on line 3 in "
-        f"{index_rst}, but Notion tables do not have titles.",
+        f"{index_rst}, but Notion tables do not have titles.\n"
+        f"{index_rst}:11:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
     ]
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
@@ -2240,41 +2244,6 @@ def test_cross_reference_option(
     )
 
 
-def test_cross_reference_term(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """:term: with a glossary renders the term as plain text."""
-    rst_content = """
-        .. glossary::
-
-           myterm
-              A glossary term definition.
-
-        Test :term:`myterm` here.
-    """
-
-    glossary_item = UnoBulletedItem(text=text(text="myterm"))
-    glossary_item.append(
-        blocks=[
-            UnoParagraph(text=text(text="A glossary term definition.")),
-        ],
-    )
-
-    expected_blocks = [
-        glossary_item,
-        UnoParagraph(text=text(text="Test myterm here.")),
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_blocks=expected_blocks,
-        make_app=make_app,
-        tmp_path=tmp_path,
-    )
-
-
 def test_cross_reference_envvar_unresolved(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2333,11 +2302,20 @@ def test_cross_reference_envvar_resolved(
         ),
     ]
 
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
     )
 
 
@@ -4412,6 +4390,156 @@ def test_autosummary_directive(
     )
 
 
+def test_glossary(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Glossary directives render as bulleted lists like definition
+    lists.
+    """
+    rst_content = """
+        .. glossary::
+
+           environment
+              A structure where information about all documents.
+
+           source directory
+              The directory which contains all source files.
+    """
+
+    first_item = UnoBulletedItem(
+        text=text(text="environment"),
+    )
+    first_item.append(
+        blocks=[
+            UnoParagraph(
+                text=text(
+                    text="A structure where information about all documents."
+                )
+            )
+        ]
+    )
+
+    second_item = UnoBulletedItem(
+        text=text(text="source directory"),
+    )
+    second_item.append(
+        blocks=[
+            UnoParagraph(
+                text=text(
+                    text="The directory which contains all source files."
+                )
+            )
+        ]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_glossary_term_same_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:term: references on the same page render as plain text with a
+    warning.
+    """
+    rst_content = """
+        .. glossary::
+
+           myterm
+              A glossary term definition.
+
+        See :term:`myterm` for details.
+    """
+
+    glossary_item = UnoBulletedItem(
+        text=text(text="myterm"),
+    )
+    glossary_item.append(
+        blocks=[UnoParagraph(text=text(text="A glossary term definition."))]
+    )
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    expected_blocks = [
+        glossary_item,
+        UnoParagraph(text=text(text="See myterm for details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_glossary_term_cross_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:term: references to another page render as plain text with a
+    warning.
+    """
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :term:`myterm` for details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(
+        data=(
+            "Other\n=====\n\n"
+            ".. glossary::\n\n"
+            "   myterm\n"
+            "      A glossary term definition.\n"
+        )
+    )
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See myterm for details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_autosummary_with_internal_references(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -4422,7 +4550,7 @@ def test_autosummary_with_internal_references(
     When ``autodoc`` creates targets for documented items and
     ``autosummary`` references them, it generates internal references
     (with ``refid`` instead of ``refuri``). These should be rendered as
-    code text without links.
+    code text without links, with a warning.
     """
     # Create a simple module to document
     srcdir = tmp_path / "src"
@@ -4484,6 +4612,14 @@ def test_autosummary_with_internal_references(
         """,
     )
 
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:<autosummary>:1:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
@@ -4495,4 +4631,5 @@ def test_autosummary_with_internal_references(
             "sphinx_notion",
         ),
         conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
     )

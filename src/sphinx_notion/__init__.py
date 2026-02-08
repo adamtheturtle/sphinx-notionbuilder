@@ -369,13 +369,18 @@ def _(node: nodes.reference) -> Text:
     links. Internal references (e.g., from ``autosummary`` to ``autodoc``
     targets) have a ``refid`` attribute instead and are rendered without
     links but preserving any child formatting (e.g., code from literal
-    nodes). Cross-references (e.g., from ``:doc:``) have
+    nodes), with a warning. Cross-references (e.g., from ``:doc:``) have
     ``internal=True`` and are rendered as plain text with a warning.
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:
-        # Internal reference - process children to preserve formatting
-        # (e.g., literal nodes for code formatting)
+        _LOGGER.warning(
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
         result = Text.from_plain_text(text="")
         for child in node.children:
             result += _process_rich_text_node(child)
@@ -436,7 +441,11 @@ def _(node: nodes.target) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: addnodes.index) -> Text:
-    """Process inline index nodes by returning empty text."""
+    """Process index nodes within rich text by returning empty text.
+
+    Index nodes appear as children of glossary term nodes but don't
+    produce visible output.
+    """
     del node
     return Text.from_plain_text(text="")
 
@@ -608,13 +617,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "download",
         "std",
         "std-envvar",
         "std-keyword",
         "std-numref",
         "std-option",
         "std-term",
-        "download",
     }
     unsupported_styles = [
         css_class
@@ -1873,25 +1882,6 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
-    node: addnodes.glossary,
-    *,
-    section_level: int,
-) -> list[Block]:
-    """Process glossary nodes by processing their children."""
-    result: list[Block] = []
-    for child in node.children:
-        result.extend(
-            _process_node_to_blocks(
-                child,
-                section_level=section_level,
-            )
-        )
-    return result
-
-
-@beartype
-@_process_node_to_blocks.register
-def _(
     node: addnodes.tabular_col_spec,
     *,
     section_level: int,
@@ -1917,6 +1907,27 @@ def _(
 
     autosummary_table nodes wrap a regular table node, so we process the
     children to extract the table.
+    """
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.glossary,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process glossary nodes by processing their children.
+
+    glossary nodes wrap a definition_list, so we process the children to
+    extract the definitions.
     """
     blocks: list[Block] = []
     for child in node.children:
