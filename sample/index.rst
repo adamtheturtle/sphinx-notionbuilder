@@ -127,13 +127,6 @@ Link to Notion Page Block
 
    .. notion-link-to-page:: 2a19ce7b60a4807dbae7c12161f12056
 
-Cross-references
-^^^^^^^^^^^^^^^^
-
-.. rest-example::
-
-   See :doc:`other` for more details.
-
 Admonitions
 ~~~~~~~~~~~
 
