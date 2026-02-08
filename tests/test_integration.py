@@ -2086,6 +2086,40 @@ def test_cross_reference_any(
     )
 
 
+def test_cross_reference_download(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references render as code text."""
+    rst_content = """
+        Download :download:`conf.py` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(text="conf.py", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        "Unsupported text style classes: download. "
+        f"Text on line 1 in {index_rst} "
+        "will be rendered without styling.",
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
