@@ -2280,7 +2280,7 @@ def test_cross_reference_term(
 
 
 @pytest.mark.xfail(
-    reason="envvar creates an unsupported index node",
+    reason=":envvar: role creates an unsupported index node inline",
     raises=ValueError,
 )
 def test_cross_reference_envvar(
@@ -2288,7 +2288,7 @@ def test_cross_reference_envvar(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:envvar: references create an unsupported index node."""
+    """:envvar: role creates an unsupported index node inline."""
     rst_content = """
         Test :envvar:`PATH` here.
     """
