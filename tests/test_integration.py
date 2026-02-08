@@ -1992,7 +1992,7 @@ def test_cross_reference_doc(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(
-            str(srcdir / "other.rst") + ":",
+            str(object=srcdir / "other.rst") + ":",
             "document isn't included in any toctree [toc.not_included]",
         ),
     )
