@@ -1976,6 +1976,10 @@ def test_cross_reference_doc(
 ) -> None:
     """Cross-references silently drop the reference text."""
     rst_content = """
+        .. toctree::
+
+           other
+
         See :doc:`other` for more details.
     """
 
@@ -1991,10 +1995,6 @@ def test_cross_reference_doc(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(
-            str(object=srcdir / "other.rst") + ":",
-            "document isn't included in any toctree [toc.not_included]",
-        ),
     )
 
 
