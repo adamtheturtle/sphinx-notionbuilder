@@ -2120,6 +2120,189 @@ def test_cross_reference_download(
     )
 
 
+def test_cross_reference_numref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:numref: references render as plain text via style class handling."""
+    rst_content = """
+        .. _my-table:
+
+        .. table:: My Table
+
+           ====== ======
+           Col1   Col2
+           ====== ======
+           A      B
+           ====== ======
+
+        See :numref:`my-table` for data.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        "Table has a title 'My Table' on line 3 in "
+        f"{index_rst}, but Notion tables do not have titles.",
+        "Unsupported text style classes: std, std-numref. "
+        "Text on line None in None will be rendered without styling.",
+    ]
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Col1")
+    table[0, 1] = text(text="Col2")
+    table[1, 0] = text(text="A")
+    table[1, 1] = text(text="B")
+
+    expected_blocks = [
+        table,
+        UnoParagraph(text=text(text="See Table 1 for data.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+        confoverrides={"numfig": True},
+    )
+
+
+def test_cross_reference_keyword(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:keyword: references render as plain text."""
+    rst_content = """
+        Test :keyword:`with` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "unknown keyword: 'with' [ref.keyword]",
+        "Unsupported text style classes: std, std-keyword. "
+        f"Text on line 1 in {index_rst} "
+        "will be rendered without styling.",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="with", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_option(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:option: references render as plain text."""
+    rst_content = """
+        .. program:: myprogram
+
+        Test :option:`myprogram --verbose` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:3:",
+        "unknown option: 'myprogram --verbose' [ref.option]",
+        "Unsupported text style classes: std, std-option. "
+        f"Text on line 3 in {index_rst} "
+        "will be rendered without styling.",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="myprogram --verbose", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+@pytest.mark.xfail(
+    reason="glossary directive is not supported",
+    raises=NotImplementedError,
+)
+def test_cross_reference_term(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:term: references require a glossary which is unsupported."""
+    rst_content = """
+        .. glossary::
+
+           myterm
+              A glossary term definition.
+
+        Test :term:`myterm` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="Test myterm here.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+@pytest.mark.xfail(
+    reason="envvar creates an unsupported index node",
+    raises=ValueError,
+)
+def test_cross_reference_envvar(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:envvar: references create an unsupported index node."""
+    rst_content = """
+        Test :envvar:`PATH` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="Test PATH here.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
