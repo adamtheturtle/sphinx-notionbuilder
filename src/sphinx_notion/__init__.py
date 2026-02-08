@@ -440,6 +440,14 @@ def _(node: nodes.target) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: addnodes.index) -> Text:
+    """Process inline index nodes by returning empty text."""
+    del node
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.title_reference) -> Text:
     """Process title reference nodes by creating italic text.
 
@@ -605,6 +613,12 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "std",
+        "std-envvar",
+        "std-keyword",
+        "std-numref",
+        "std-option",
+        "std-term",
         "download",
     }
     unsupported_styles = [
@@ -1859,6 +1873,25 @@ def _(
     del node
     del section_level
     return []
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.glossary,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process glossary nodes by processing their children."""
+    result: list[Block] = []
+    for child in node.children:
+        result.extend(
+            _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+        )
+    return result
 
 
 @beartype
