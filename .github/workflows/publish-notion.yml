@@ -25,17 +25,32 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Build documentation
+      - name: Build sample documentation
         run: |
           rm -rf ./build-sample
           uv run --extra=sample sphinx-build -W -b notion sample ./build-sample
 
-      - name: Publish to Notion
+      - name: Publish sample to Notion
         run: |
           uv run --all-extras notion-upload \
             --parent-page-id "${{ vars.NOTION_SAMPLE_PAGE_ID }}" \
             --file "./build-sample/index.json" \
             --title "Sphinx-Notionbuilder Sample" \
+            --icon "🐍"
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+
+      - name: Build sample-warnings documentation
+        run: |
+          rm -rf ./build-sample-warnings
+          uv run --extra=sample sphinx-build -W -b notion sample-warnings ./build-sample-warnings
+
+      - name: Publish sample-warnings to Notion
+        run: |
+          uv run --all-extras notion-upload \
+            --parent-page-id "${{ vars.NOTION_SAMPLE_PAGE_ID }}" \
+            --file "./build-sample-warnings/index.json" \
+            --title "Sphinx-Notionbuilder Suppressed Warnings Sample" \
             --icon "🐍"
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
