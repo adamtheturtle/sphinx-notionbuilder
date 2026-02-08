@@ -2125,7 +2125,9 @@ def test_cross_reference_numref(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:numref: references render as plain text via style class handling."""
+    """:numref: references render as plain text via style class
+    handling.
+    """
     rst_content = """
         .. _my-table:
 
