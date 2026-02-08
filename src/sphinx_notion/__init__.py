@@ -385,8 +385,8 @@ def _(node: nodes.reference) -> Text:
         _LOGGER.warning(
             "Cross-references are not supported by the Notion builder. "
             "Rendering as plain text.",
-            type="misc",
-            subtype="highlighting_failure",
+            type="ref",
+            subtype="notion",
             location=node,
         )
         return text(text=node.astext())

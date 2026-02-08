@@ -1992,7 +1992,7 @@ def test_cross_reference_doc(
     expected_warnings = [
         f"{index_rst}:5:",
         "Cross-references are not supported by the Notion builder. "
-        "Rendering as plain text. [misc.highlighting_failure]",
+        "Rendering as plain text. [ref.notion]",
     ]
 
     expected_blocks = [
