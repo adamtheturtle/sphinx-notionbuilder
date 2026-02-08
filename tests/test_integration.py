@@ -2086,6 +2086,40 @@ def test_cross_reference_any(
     )
 
 
+def test_cross_reference_download(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references render as code text with a warning."""
+    rst_content = """
+        Download :download:`conf.py` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Download references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(text="conf.py", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
