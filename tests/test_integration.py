@@ -1983,7 +1983,7 @@ def test_cross_reference_doc(
         See :doc:`other` for more details.
     """
 
-    # Create the other.rst file so the :doc: reference resolves
+    # Create the ``other.rst`` file so the ``:doc:`` reference resolves
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
     (srcdir / "other.rst").write_text(data="Other document\n==============\n")
@@ -2117,7 +2117,7 @@ def test_cross_reference_numref(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:numref: references render as plain text via style class
+    """``:numref:`` references render as plain text via style class
     handling.
     """
     rst_content = """
@@ -2272,7 +2272,7 @@ def test_cross_reference_envvar_unresolved(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:envvar: without a directive renders as code text."""
+    """``:envvar:`` without a directive renders as code text."""
     rst_content = """
         Test :envvar:`PATH` here.
     """
@@ -2298,7 +2298,7 @@ def test_cross_reference_envvar_resolved(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:envvar: with a directive renders as code text."""
+    """``:envvar:`` with a directive renders as code text."""
     rst_content = """
         .. envvar:: PATH
 
