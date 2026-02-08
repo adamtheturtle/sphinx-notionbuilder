@@ -4390,6 +4390,101 @@ def test_autosummary_directive(
     )
 
 
+def test_autosummary_with_internal_references(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``autosummary`` with internal references renders without links.
+
+    When ``autodoc`` creates targets for documented items and
+    ``autosummary`` references them, it generates internal references
+    (with ``refid`` instead of ``refuri``). These should be rendered as
+    code text without links, with a warning.
+    """
+    # Create a simple module to document
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    # Create example_module.py with documented items
+    example_module = srcdir / "example_module.py"
+    example_module.write_text(
+        data=textwrap.dedent(
+            text='''\
+            """Example module for autosummary testing."""
+
+
+            def greet(*, name: str) -> str:
+                """Return a greeting message."""
+                return f"Hello, {name}!"
+            ''',
+        ),
+    )
+
+    # When autodoc documents the function first, autosummary creates
+    # internal references to it
+    rst_content = textwrap.dedent(
+        text="""\
+        .. autofunction:: example_module.greet
+
+        .. autosummary::
+           :nosignatures:
+
+           example_module.greet
+        """,
+    )
+
+    # The autosummary table
+    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
+    table[0, 0] = text(text="example_module.greet", code=True)
+    table[0, 1] = text(text="Return a greeting message.")
+
+    # The autodoc output comes first (as a callout with the signature)
+    autodoc_callout = UnoCallout(
+        text=text(text="example_module.greet(*, name: str) -> str", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    autodoc_callout.append(
+        blocks=[UnoParagraph(text=text(text="Return a greeting message."))],
+    )
+
+    expected_blocks = [autodoc_callout, table]
+
+    conf_py_content = textwrap.dedent(
+        text="""\
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+
+        autosummary_generate = True
+        """,
+    )
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:<autosummary>:1:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=(
+            "sphinx.ext.autodoc",
+            "sphinx.ext.autosummary",
+            "sphinx_notion",
+        ),
+        conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_glossary(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -4536,100 +4631,5 @@ def test_glossary_term_cross_page(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=expected_warnings,
-    )
-
-
-def test_autosummary_with_internal_references(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """``autosummary`` with internal references renders without links.
-
-    When ``autodoc`` creates targets for documented items and
-    ``autosummary`` references them, it generates internal references
-    (with ``refid`` instead of ``refuri``). These should be rendered as
-    code text without links, with a warning.
-    """
-    # Create a simple module to document
-    srcdir = tmp_path / "src"
-    srcdir.mkdir(exist_ok=True)
-
-    # Create example_module.py with documented items
-    example_module = srcdir / "example_module.py"
-    example_module.write_text(
-        data=textwrap.dedent(
-            text='''\
-            """Example module for autosummary testing."""
-
-
-            def greet(*, name: str) -> str:
-                """Return a greeting message."""
-                return f"Hello, {name}!"
-            ''',
-        ),
-    )
-
-    # When autodoc documents the function first, autosummary creates
-    # internal references to it
-    rst_content = textwrap.dedent(
-        text="""\
-        .. autofunction:: example_module.greet
-
-        .. autosummary::
-           :nosignatures:
-
-           example_module.greet
-        """,
-    )
-
-    # The autosummary table
-    table = UnoTable(n_rows=1, n_cols=2, header_row=False)
-    table[0, 0] = text(text="example_module.greet", code=True)
-    table[0, 1] = text(text="Return a greeting message.")
-
-    # The autodoc output comes first (as a callout with the signature)
-    autodoc_callout = UnoCallout(
-        text=text(text="example_module.greet(*, name: str) -> str", code=True),
-        icon=Emoji(emoji="📋"),
-        color=BGColor.GRAY,
-    )
-    autodoc_callout.append(
-        blocks=[UnoParagraph(text=text(text="Return a greeting message."))],
-    )
-
-    expected_blocks = [autodoc_callout, table]
-
-    conf_py_content = textwrap.dedent(
-        text="""\
-        import sys
-        from pathlib import Path
-
-        sys.path.insert(0, str(Path(__file__).parent))
-
-        autosummary_generate = True
-        """,
-    )
-
-    index_rst = srcdir / "index.rst"
-    expected_warnings = [
-        f"{index_rst}:6:<autosummary>:1:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_blocks=expected_blocks,
-        make_app=make_app,
-        tmp_path=tmp_path,
-        extensions=(
-            "sphinx.ext.autodoc",
-            "sphinx.ext.autosummary",
-            "sphinx_notion",
-        ),
-        conf_py_content=conf_py_content,
         expected_warnings=expected_warnings,
     )
