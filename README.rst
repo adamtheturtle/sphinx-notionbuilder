@@ -216,8 +216,10 @@ Creates a Notion date mention inline.
 Cross-references
 ----------------
 
-Sphinx cross-reference roles like ``:doc:``, ``:ref:``, and ``:any:`` are not supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
+Sphinx cross-reference roles are not supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
 These references are rendered as plain text and a build warning is emitted.
+
+The affected roles include ``:doc:``, ``:ref:``, ``:any:``, ``:term:``, ``:numref:``, ``:keyword:``, ``:option:``, ``:envvar:``, and ``:download:``.
 
 Unsupported Notion Block Types
 ------------------------------
