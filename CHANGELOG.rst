@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+- Render cross-references as plain text instead of silently dropping them, and emit a build warning.
+- Add support for glossary directives.
+
 2026.01.11
 ----------
 
