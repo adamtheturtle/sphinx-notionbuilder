@@ -369,7 +369,8 @@ def _(node: nodes.reference) -> Text:
     links. Internal references (e.g., from ``autosummary`` to ``autodoc``
     targets) have a ``refid`` attribute instead and are rendered without
     links but preserving any child formatting (e.g., code from literal
-    nodes).
+    nodes). Cross-references (e.g., from ``:doc:``) have ``internal=True``
+    and are rendered as plain text with a warning.
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:
@@ -379,6 +380,16 @@ def _(node: nodes.reference) -> Text:
         for child in node.children:
             result += _process_rich_text_node(child)
         return result
+
+    if node.attributes.get("internal"):
+        _LOGGER.warning(
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return text(text=node.astext())
 
     link_text = node.attributes.get("name", link_url)
     assert isinstance(link_text, str)
@@ -400,6 +411,14 @@ def _(node: nodes.target) -> Text:
     skipped).
     """
     del node  # Target nodes are skipped
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: addnodes.index) -> Text:
+    """Process inline index nodes by returning empty text."""
+    del node
     return Text.from_plain_text(text="")
 
 
@@ -570,6 +589,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "std",
+        "std-envvar",
+        "std-keyword",
+        "std-numref",
+        "std-option",
+        "std-term",
+        "download",
     }
     unsupported_styles = [
         css_class

@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+- Render cross-references as plain text instead of silently dropping them, and emit a build warning.
+
 2026.01.11
 ----------
 

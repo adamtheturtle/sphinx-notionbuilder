@@ -1969,6 +1969,335 @@ def test_literalinclude_without_caption(
     )
 
 
+def test_cross_reference_doc(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :doc:`other` for more details.
+    """
+
+    # Create the ``other.rst`` file so the ``:doc:`` reference resolves
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_ref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:ref: cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :ref:`my-label` for more details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(
+        data=".. _my-label:\n\nOther document\n==============\n"
+    )
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_any(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:any: cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :any:`other` for more details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_download(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references render as code text."""
+    rst_content = """
+        Download :download:`conf.py` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(text="conf.py", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_cross_reference_numref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:numref:`` references render as plain text via style class
+    handling.
+    """
+    rst_content = """
+        .. _my-table:
+
+        .. table:: My Table
+
+           ====== ======
+           Col1   Col2
+           ====== ======
+           A      B
+           ====== ======
+
+        See :numref:`my-table` for data.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        "Table has a title 'My Table' on line 3 in "
+        f"{index_rst}, but Notion tables do not have titles.",
+    ]
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Col1")
+    table[0, 1] = text(text="Col2")
+    table[1, 0] = text(text="A")
+    table[1, 1] = text(text="B")
+
+    expected_blocks = [
+        table,
+        UnoParagraph(text=text(text="See Table 1 for data.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+        confoverrides={"numfig": True},
+    )
+
+
+def test_cross_reference_keyword(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:keyword: references render as plain text."""
+    rst_content = """
+        Test :keyword:`with` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "unknown keyword: 'with' [ref.keyword]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="with", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_option(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:option: references render as plain text."""
+    rst_content = """
+        .. program:: myprogram
+
+        Test :option:`myprogram --verbose` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:3:",
+        "unknown option: 'myprogram --verbose' [ref.option]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="myprogram --verbose", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_envvar_unresolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` without a directive renders as code text."""
+    rst_content = """
+        Test :envvar:`PATH` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_cross_reference_envvar_resolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` with a directive renders as code text."""
+    rst_content = """
+        .. envvar:: PATH
+
+           The system path.
+
+        Test :envvar:`PATH` here.
+    """
+
+    envvar_callout = UnoCallout(
+        text=text(text="PATH", code=True),
+        icon=Emoji(emoji="\U0001f4cb"),
+        color=BGColor.GRAY,
+    )
+    envvar_callout.append(
+        blocks=[UnoParagraph(text=text(text="The system path."))],
+    )
+
+    expected_blocks = [
+        envvar_callout,
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
