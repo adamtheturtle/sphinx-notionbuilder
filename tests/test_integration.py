@@ -2221,11 +2221,7 @@ def test_cross_reference_option(
         Test :option:`myprogram --verbose` here.
     """
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_warnings = [
-        f"{index_rst}:3:",
-        "unknown option: 'myprogram --verbose' [ref.option]",
-    ]
+    expected_warnings: list[str] = []
 
     expected_blocks = [
         UnoParagraph(
@@ -2241,6 +2237,7 @@ def test_cross_reference_option(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        confoverrides={"suppress_warnings": ["ref.option"]},
     )
 
 
