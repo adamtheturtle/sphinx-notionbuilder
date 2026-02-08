@@ -13,6 +13,14 @@ A reference to a document: :doc:`other`.
 
 A download reference: :download:`example.txt <_static/example.txt>`.
 
+Autosummary
+~~~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+
+   example_module.greet
+
 .. toctree::
 
    other
