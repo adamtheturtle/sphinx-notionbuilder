@@ -2279,22 +2279,29 @@ def test_cross_reference_term(
     )
 
 
-@pytest.mark.xfail(
-    reason=":envvar: role creates an unsupported index node inline",
-    raises=ValueError,
-)
 def test_cross_reference_envvar(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:envvar: role creates an unsupported index node inline."""
+    """:envvar: references render as code text."""
     rst_content = """
         Test :envvar:`PATH` here.
     """
 
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        "Unsupported text style classes: std, std-envvar. "
+        f"Text on line 1 in {index_rst} "
+        "will be rendered without styling.",
+    ]
+
     expected_blocks = [
-        UnoParagraph(text=text(text="Test PATH here.")),
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -2302,6 +2309,7 @@ def test_cross_reference_envvar(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
     )
 
 
