@@ -369,13 +369,18 @@ def _(node: nodes.reference) -> Text:
     links. Internal references (e.g., from ``autosummary`` to ``autodoc``
     targets) have a ``refid`` attribute instead and are rendered without
     links but preserving any child formatting (e.g., code from literal
-    nodes). Cross-references (e.g., from ``:doc:``) have ``internal=True``
-    and are rendered as plain text with a warning.
+    nodes), with a warning. Cross-references (e.g., from ``:doc:``) have
+    ``internal=True`` and are rendered as plain text with a warning.
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:
-        # Internal reference - process children to preserve formatting
-        # (e.g., literal nodes for code formatting)
+        _LOGGER.warning(
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
         result = Text.from_plain_text(text="")
         for child in node.children:
             result += _process_rich_text_node(child)

@@ -4201,7 +4201,7 @@ def test_autosummary_with_internal_references(
     When ``autodoc`` creates targets for documented items and
     ``autosummary`` references them, it generates internal references
     (with ``refid`` instead of ``refuri``). These should be rendered as
-    code text without links.
+    code text without links, with a warning.
     """
     # Create a simple module to document
     srcdir = tmp_path / "src"
@@ -4263,6 +4263,14 @@ def test_autosummary_with_internal_references(
         """,
     )
 
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:<autosummary>:1:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
@@ -4274,4 +4282,5 @@ def test_autosummary_with_internal_references(
             "sphinx_notion",
         ),
         conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
     )
