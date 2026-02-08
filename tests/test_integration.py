@@ -1974,7 +1974,7 @@ def test_cross_reference_doc(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Cross-references silently drop the reference text."""
+    """Cross-references render as plain text with a warning."""
     rst_content = """
         .. toctree::
 
@@ -1988,13 +1988,23 @@ def test_cross_reference_doc(
     srcdir.mkdir(exist_ok=True)
     (srcdir / "other.rst").write_text(data="Other document\n==============\n")
 
-    expected_blocks = [UnoParagraph(text=text(text="See  for more details."))]
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [misc.highlighting_failure]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
 
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
     )
 
 
