@@ -1969,6 +1969,35 @@ def test_literalinclude_without_caption(
     )
 
 
+def test_cross_reference_doc(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Cross-references silently drop the reference text."""
+    rst_content = """
+        See :doc:`other` for more details.
+    """
+
+    # Create the other.rst file so the :doc: reference resolves
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+
+    expected_blocks = [UnoParagraph(text=text(text="See  for more details."))]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(
+            str(srcdir / "other.rst") + ":",
+            "document isn't included in any toctree [toc.not_included]",
+        ),
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
