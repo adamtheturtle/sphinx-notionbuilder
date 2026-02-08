@@ -7,19 +7,23 @@ The warnings are suppressed via ``suppress_warnings = ["ref.notion"]`` in ``conf
 Cross-references
 ~~~~~~~~~~~~~~~~
 
-A reference to a label: :ref:`other-doc-label`.
+.. rest-example::
 
-A reference to a document: :doc:`other`.
+   A reference to a label: :ref:`other-doc-label`.
 
-A download reference: :download:`example.txt <_static/example.txt>`.
+   A reference to a document: :doc:`other`.
+
+   A download reference: :download:`example.txt <_static/example.txt>`.
 
 Autosummary
 ~~~~~~~~~~~
 
-.. autosummary::
-   :nosignatures:
+.. rest-example::
 
-   example_module.greet
+   .. autosummary::
+      :nosignatures:
+
+      example_module.greet
 
 .. toctree::
 

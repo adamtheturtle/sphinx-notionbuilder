@@ -8,6 +8,7 @@ sys.path.insert(0, str(object=Path(__file__).parent))
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx_toolbox.rest_example",
     "sphinx_notion",
 ]
 
