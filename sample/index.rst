@@ -13,17 +13,6 @@ Autodoc
    .. autoclass:: example_module.Calculator
       :members:
 
-Autosummary
-~~~~~~~~~~~
-
-.. rest-example::
-
-   .. autosummary::
-      :nosignatures:
-
-      example_module.greet
-      example_module.Calculator
-
 Rubric
 ~~~~~~
 
