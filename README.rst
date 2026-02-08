@@ -213,6 +213,12 @@ Creates a Notion date mention inline.
 
    The meeting is on :notion-mention-date:`2025-11-09`.
 
+Cross-references
+----------------
+
+Sphinx cross-reference roles like ``:doc:``, ``:ref:``, and ``:any:`` are not supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
+These references are rendered as plain text and a build warning is emitted.
+
 Unsupported Notion Block Types
 ------------------------------
 
