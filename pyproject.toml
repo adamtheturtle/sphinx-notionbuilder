@@ -143,7 +143,7 @@ lint.ignore = [
     "D212",
     # Ruff warns that this conflicts with the formatter.
     "ISC001",
-    # Ignore "too-many-*" errors as they seem to get in the way more than
+    # Ignore 'too-many-*' errors as they seem to get in the way more than
     # helping.
     "PLR0913",
     # We use asserts for type narrowing.
@@ -250,28 +250,28 @@ enable = [
 # --disable=W"
 
 disable = [
-    'too-few-public-methods',
-    'too-many-locals',
-    'too-many-arguments',
-    'too-many-instance-attributes',
-    'too-many-return-statements',
-    'too-many-lines',
-    'locally-disabled',
+    "too-few-public-methods",
+    "too-many-locals",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-return-statements",
+    "too-many-lines",
+    "locally-disabled",
     # Let ruff handle long lines
-    'line-too-long',
+    "line-too-long",
     # Let ruff handle unused imports
-    'unused-import',
+    "unused-import",
     # Let ruff deal with sorting
-    'ungrouped-imports',
+    "ungrouped-imports",
     # We don't need everything to be documented because of mypy
-    'missing-type-doc',
-    'missing-return-type-doc',
+    "missing-type-doc",
+    "missing-return-type-doc",
     # Too difficult to please
-    'duplicate-code',
+    "duplicate-code",
     # Let ruff handle imports
-    'wrong-import-order',
+    "wrong-import-order",
     # mypy does not want untyped parameters.
-    'useless-type-doc',
+    "useless-type-doc",
     # interacts poorly with singledispatch
     "bad-dunder-name",
 ]
