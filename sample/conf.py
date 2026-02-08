@@ -17,8 +17,5 @@ extensions = [
     "sphinx_immaterial.task_lists",
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
     "sphinx_notion",
 ]
-
-autosummary_generate = True

@@ -369,8 +369,8 @@ def _(node: nodes.reference) -> Text:
     links. Internal references (e.g., from ``autosummary`` to ``autodoc``
     targets) have a ``refid`` attribute instead and are rendered without
     links but preserving any child formatting (e.g., code from literal
-    nodes). Cross-references (e.g., from ``:doc:``) have ``internal=True``
-    and are rendered as plain text with a warning.
+    nodes). Cross-references (e.g., from ``:doc:``) have
+    ``internal=True`` and are rendered as plain text with a warning.
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:
