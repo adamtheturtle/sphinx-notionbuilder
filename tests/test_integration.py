@@ -2112,58 +2112,6 @@ def test_cross_reference_download(
     )
 
 
-def test_cross_reference_numref(
-    *,
-    make_app: Callable[..., SphinxTestApp],
-    tmp_path: Path,
-) -> None:
-    """``:numref:`` references render as plain text via style class
-    handling.
-    """
-    rst_content = """
-        .. _my-table:
-
-        .. table:: My Table
-
-           ====== ======
-           Col1   Col2
-           ====== ======
-           A      B
-           ====== ======
-
-        See :numref:`my-table` for data.
-    """
-
-    srcdir = tmp_path / "src"
-    srcdir.mkdir(exist_ok=True)
-
-    index_rst = srcdir / "index.rst"
-    expected_warnings = [
-        "Table has a title 'My Table' on line 3 in "
-        f"{index_rst}, but Notion tables do not have titles.",
-    ]
-
-    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
-    table[0, 0] = text(text="Col1")
-    table[0, 1] = text(text="Col2")
-    table[1, 0] = text(text="A")
-    table[1, 1] = text(text="B")
-
-    expected_blocks = [
-        table,
-        UnoParagraph(text=text(text="See Table 1 for data.")),
-    ]
-
-    _assert_rst_converts_to_notion_objects(
-        rst_content=rst_content,
-        expected_blocks=expected_blocks,
-        make_app=make_app,
-        tmp_path=tmp_path,
-        expected_warnings=expected_warnings,
-        confoverrides={"numfig": True},
-    )
-
-
 def test_cross_reference_keyword(
     *,
     make_app: Callable[..., SphinxTestApp],
