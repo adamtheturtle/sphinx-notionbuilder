@@ -416,14 +416,6 @@ def _(node: nodes.target) -> Text:
 
 @beartype
 @_process_rich_text_node.register
-def _(node: addnodes.index) -> Text:
-    """Process inline index nodes by returning empty text."""
-    del node
-    return Text.from_plain_text(text="")
-
-
-@beartype
-@_process_rich_text_node.register
 def _(node: nodes.title_reference) -> Text:
     """Process title reference nodes by creating italic text.
 
