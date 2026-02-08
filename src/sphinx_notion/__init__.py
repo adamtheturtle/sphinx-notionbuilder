@@ -1854,6 +1854,25 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.glossary,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process glossary nodes by processing their children."""
+    result: list[Block] = []
+    for child in node.children:
+        result.extend(
+            _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+        )
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: addnodes.tabular_col_spec,
     *,
     section_level: int,

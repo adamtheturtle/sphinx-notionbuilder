@@ -2232,16 +2232,12 @@ def test_cross_reference_option(
     )
 
 
-@pytest.mark.xfail(
-    reason="glossary directive is not supported",
-    raises=NotImplementedError,
-)
 def test_cross_reference_term(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:term: references require a glossary which is unsupported."""
+    """:term: with a glossary renders the term as plain text."""
     rst_content = """
         .. glossary::
 
@@ -2251,7 +2247,15 @@ def test_cross_reference_term(
         Test :term:`myterm` here.
     """
 
+    glossary_item = UnoBulletedItem(text=text(text="myterm"))
+    glossary_item.append(
+        blocks=[
+            UnoParagraph(text=text(text="A glossary term definition.")),
+        ],
+    )
+
     expected_blocks = [
+        glossary_item,
         UnoParagraph(text=text(text="Test myterm here.")),
     ]
 
