@@ -2091,10 +2091,17 @@ def test_cross_reference_download(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:download: references render as code text."""
+    """:download: references render as code text with a warning."""
     rst_content = """
         Download :download:`conf.py` here.
     """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Download references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
 
     expected_blocks = [
         UnoParagraph(
@@ -2109,6 +2116,7 @@ def test_cross_reference_download(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
     )
 
 
