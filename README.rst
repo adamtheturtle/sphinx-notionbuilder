@@ -221,6 +221,14 @@ Cross-references that resolve to internal links are rendered as plain text and a
 
 The affected roles include ``:doc:``, ``:ref:``, ``:any:``, and ``:download:``.
 
+To suppress these warnings, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["ref.notion"]
+
 Unsupported Notion Block Types
 ------------------------------
 
