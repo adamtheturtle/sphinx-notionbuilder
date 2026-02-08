@@ -405,6 +405,25 @@ def _(node: nodes.reference) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: addnodes.download_reference) -> Text:
+    """Process download reference nodes by rendering children with a
+    warning.
+    """
+    _LOGGER.warning(
+        "Download references are not supported by the Notion builder. "
+        "Rendering as plain text.",
+        type="ref",
+        subtype="notion",
+        location=node,
+    )
+    result = Text.from_plain_text(text="")
+    for child in node.children:
+        result += _process_rich_text_node(child)
+    return result
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.target) -> Text:
     """
     Process target nodes by returning empty text (targets are
@@ -581,6 +600,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "download",
     }
     unsupported_styles = [
         css_class
