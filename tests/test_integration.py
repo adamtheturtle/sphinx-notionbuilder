@@ -2104,19 +2104,11 @@ def test_cross_reference_download(
         ),
     ]
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_warnings = [
-        "Unsupported text style classes: download. "
-        f"Text on line 1 in {index_rst} "
-        "will be rendered without styling.",
-    ]
-
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=expected_warnings,
     )
 
 
@@ -2149,8 +2141,6 @@ def test_cross_reference_numref(
     expected_warnings = [
         "Table has a title 'My Table' on line 3 in "
         f"{index_rst}, but Notion tables do not have titles.",
-        "Unsupported text style classes: std, std-numref. "
-        "Text on line None in None will be rendered without styling.",
     ]
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
@@ -2188,9 +2178,6 @@ def test_cross_reference_keyword(
     expected_warnings = [
         f"{index_rst}:1:",
         "unknown keyword: 'with' [ref.keyword]",
-        "Unsupported text style classes: std, std-keyword. "
-        f"Text on line 1 in {index_rst} "
-        "will be rendered without styling.",
     ]
 
     expected_blocks = [
@@ -2226,9 +2213,6 @@ def test_cross_reference_option(
     expected_warnings = [
         f"{index_rst}:3:",
         "unknown option: 'myprogram --verbose' [ref.option]",
-        "Unsupported text style classes: std, std-option. "
-        f"Text on line 3 in {index_rst} "
-        "will be rendered without styling.",
     ]
 
     expected_blocks = [
@@ -2289,13 +2273,6 @@ def test_cross_reference_envvar(
         Test :envvar:`PATH` here.
     """
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_warnings = [
-        "Unsupported text style classes: std, std-envvar. "
-        f"Text on line 1 in {index_rst} "
-        "will be rendered without styling.",
-    ]
-
     expected_blocks = [
         UnoParagraph(
             text=text(text="Test ")
@@ -2309,7 +2286,6 @@ def test_cross_reference_envvar(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=expected_warnings,
     )
 
 

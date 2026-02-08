@@ -589,6 +589,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "std",
+        "std-envvar",
+        "std-keyword",
+        "std-numref",
+        "std-option",
+        "std-term",
+        "download",
     }
     unsupported_styles = [
         css_class
