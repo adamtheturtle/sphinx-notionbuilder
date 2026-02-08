@@ -219,7 +219,7 @@ Cross-references
 Sphinx cross-reference roles are not fully supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
 Cross-references that resolve to internal links are rendered as plain text and a build warning is emitted.
 
-The affected roles include ``:doc:``, ``:ref:``, and ``:any:``.
+The affected roles include ``:doc:``, ``:ref:``, ``:any:``, and ``:download:``.
 
 Unsupported Notion Block Types
 ------------------------------
