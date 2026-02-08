@@ -89,6 +89,7 @@ The following syntax is supported:
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
 - Describe blocks (using the ``describe`` directive)
 - Definition lists
+- Glossary definitions (using the ``glossary`` directive)
 - Rubrics (informal headings that do not appear in the table of contents)
 
 See a `sample document source`_ and the `published Notion page`_.
@@ -219,7 +220,7 @@ Cross-references
 Sphinx cross-reference roles are not fully supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
 Cross-references that resolve to internal links are rendered as plain text and a build warning is emitted.
 
-The affected roles include ``:doc:``, ``:ref:``, ``:any:``, and ``:download:``.
+The affected roles include ``:doc:``, ``:ref:``, ``:term:``, ``:any:``, and ``:download:``.
 
 To suppress these warnings, add the following to your ``conf.py``:
 
