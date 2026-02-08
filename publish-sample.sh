@@ -18,11 +18,11 @@ uv run --all-extras notion-upload \
     --title "Test page title during testing" \
     --icon "🐍"
 
-rm -rf "${SCRIPT_DIR}/build-sample-warnings"
-uv run --extra=sample sphinx-build -W -b notion "${SCRIPT_DIR}/sample-warnings" "${SCRIPT_DIR}/build-sample-warnings"
+rm -rf "${SCRIPT_DIR}/build-sample_warnings"
+uv run --extra=sample sphinx-build -W -b notion "${SCRIPT_DIR}/sample_warnings" "${SCRIPT_DIR}/build-sample_warnings"
 
 uv run --all-extras notion-upload \
     --parent-database-id "$NOTION_SAMPLE_DATABASE_ID" \
-    --file "${SCRIPT_DIR}/build-sample-warnings/index.json" \
+    --file "${SCRIPT_DIR}/build-sample_warnings/index.json" \
     --title "Test suppressed warnings page title during testing" \
     --icon "🐍"
