@@ -15,6 +15,18 @@ Cross-references
 
    A download reference: :download:`example.txt <_static/example.txt>`.
 
+Glossary term references
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. glossary::
+
+   sample term
+      A sample glossary term used to demonstrate :term: cross-references.
+
+.. rest-example::
+
+   A reference to a glossary term: :term:`sample term`.
+
 Autosummary
 ~~~~~~~~~~~
 

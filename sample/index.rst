@@ -43,6 +43,20 @@ Definition Lists
    term : classifier
       Classifiers are appended to the term with colons.
 
+Glossary
+~~~~~~~~
+
+.. Not wrapped in rest-example because glossary is incompatible with it.
+.. https://github.com/sphinx-toolbox/sphinx-toolbox/issues/207
+
+.. glossary::
+
+   environment
+      A structure where information about all documents under the root is saved, and used for cross-referencing.
+
+   source directory
+      The directory which, including its subdirectories, contains all source files for one Sphinx project.
+
 Describe
 ~~~~~~~~
 

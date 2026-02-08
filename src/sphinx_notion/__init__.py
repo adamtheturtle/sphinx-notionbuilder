@@ -440,6 +440,18 @@ def _(node: nodes.target) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: addnodes.index) -> Text:
+    """Process index nodes within rich text by returning empty text.
+
+    Index nodes appear as children of glossary term nodes but don't
+    produce visible output.
+    """
+    del node
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.title_reference) -> Text:
     """Process title reference nodes by creating italic text.
 
@@ -606,6 +618,8 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "py",
         "py-obj",
         "download",
+        "std",
+        "std-term",
     }
     unsupported_styles = [
         css_class
@@ -1889,6 +1903,27 @@ def _(
 
     autosummary_table nodes wrap a regular table node, so we process the
     children to extract the table.
+    """
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.glossary,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process glossary nodes by processing their children.
+
+    glossary nodes wrap a definition_list, so we process the children to
+    extract the definitions.
     """
     blocks: list[Block] = []
     for child in node.children:
