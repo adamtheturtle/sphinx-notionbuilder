@@ -2131,7 +2131,7 @@ def test_cross_reference_numref(
     rst_content = """
         .. _my-table:
 
-        .. table:: My Table
+        .. table::
 
            ====== ======
            Col1   Col2
@@ -2142,17 +2142,14 @@ def test_cross_reference_numref(
         See :numref:`my-table` for data.
     """
 
-    srcdir = tmp_path / "src"
-    srcdir.mkdir(exist_ok=True)
-
-    index_rst = srcdir / "index.rst"
+    # The table has no title because Notion tables don't support titles.
+    # Without a title, Sphinx can't assign a figure number, so numref
+    # falls back to rendering the label name as literal code.
+    index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
-        "Table has a title 'My Table' on line 3 in "
-        f"{index_rst}, but Notion tables do not have titles.\n"
         f"{index_rst}:11:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        "Failed to create a cross reference. "
+        "Any number is not assigned: my-table",
     ]
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
@@ -2163,7 +2160,11 @@ def test_cross_reference_numref(
 
     expected_blocks = [
         table,
-        UnoParagraph(text=text(text="See Table 1 for data.")),
+        UnoParagraph(
+            text=text(text="See ")
+            + text(text="my-table", code=True)
+            + text(text=" for data.")
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -2183,16 +2184,24 @@ def test_cross_reference_keyword(
 ) -> None:
     """:keyword: references render as plain text."""
     rst_content = """
+        .. _with:
+
+        Keywords
+        ========
+
         Test :keyword:`with` here.
     """
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
-        f"{index_rst}:1:",
-        "unknown keyword: 'with' [ref.keyword]",
+        f"{index_rst}:6:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
     ]
 
     expected_blocks = [
+        UnoHeading1(text=text(text="Keywords")),
         UnoParagraph(
             text=text(text="Test ")
             + text(text="with", code=True)
@@ -2218,12 +2227,32 @@ def test_cross_reference_option(
     rst_content = """
         .. program:: myprogram
 
+        .. option:: --verbose
+
+           Enable verbose output.
+
         Test :option:`myprogram --verbose` here.
     """
 
-    expected_warnings: list[str] = []
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:7:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    callout = UnoCallout(
+        text=text(text="--verbose", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    callout.append(
+        blocks=UnoParagraph(text=text(text="Enable verbose output."))
+    )
 
     expected_blocks = [
+        callout,
         UnoParagraph(
             text=text(text="Test ")
             + text(text="myprogram --verbose", code=True)
@@ -2237,7 +2266,6 @@ def test_cross_reference_option(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
-        confoverrides={"suppress_warnings": ["ref.option"]},
     )
 
 
@@ -2283,7 +2311,7 @@ def test_cross_reference_envvar_resolved(
 
     envvar_callout = UnoCallout(
         text=text(text="PATH", code=True),
-        icon=Emoji(emoji="\U0001f4cb"),
+        icon=Emoji(emoji="📋"),
         color=BGColor.GRAY,
     )
     envvar_callout.append(
