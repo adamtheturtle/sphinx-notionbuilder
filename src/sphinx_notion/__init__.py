@@ -251,7 +251,6 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
         notion_url = f"https://www.notion.so/{page_id}"
         reference = nodes.reference(refuri=notion_url, text=notion_url)
-        reference += nodes.Text(data=notion_url)
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]
@@ -279,7 +278,6 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
             return [node]
 
         reference = nodes.reference(refuri=file_url, text=file_url)
-        reference += nodes.Text(data=file_url)
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]

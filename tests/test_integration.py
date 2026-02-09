@@ -4996,3 +4996,8 @@ def test_file_html_output(
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
     expected_url = "https://www.example.com/path/to/document.zip"
     assert expected_url in index_html
+    expected_link = (
+        f'<a class="reference external"'
+        f' href="{expected_url}">{expected_url}</a>'
+    )
+    assert expected_link in index_html
