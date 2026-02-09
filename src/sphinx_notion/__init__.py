@@ -1571,21 +1571,41 @@ def _(
     ):
         mermaid_child = node.children[0]
         caption_node = node.children[1]
-        assert isinstance(mermaid_child, mermaid_node)
-        assert isinstance(caption_node, nodes.caption)
         code: str = mermaid_child["code"]
-        caption_rich_text = _create_rich_text_from_children(node=caption_node)
         return [
             UnoCode(
                 text=text(text=code),
                 language=CodeLang.MERMAID,
-                caption=caption_rich_text,
+                caption=_create_rich_text_from_children(node=caption_node),
             )
         ]
+
+    caption_children = [
+        child for child in node.children if isinstance(child, nodes.caption)
+    ]
+    caption_rich_text: Text | None = (
+        _create_rich_text_from_children(node=caption_children[0])
+        if caption_children
+        else None
+    )
 
     blocks: list[Block] = []
     for child in node.children:
         if isinstance(child, nodes.caption):
+            continue
+        if isinstance(child, nodes.image) and caption_rich_text is not None:
+            image_url = child.attributes["uri"]
+            assert isinstance(image_url, str)
+            assert child.document is not None
+            if "://" not in image_url:
+                abs_path = Path(child.document.settings.env.srcdir) / image_url
+                image_url = abs_path.as_uri()
+            blocks.append(
+                UnoImage(
+                    file=ExternalFile(url=image_url),
+                    caption=caption_rich_text,
+                )
+            )
             continue
         child_blocks = _process_node_to_blocks(
             child, section_level=section_level
