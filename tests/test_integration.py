@@ -4823,3 +4823,36 @@ def test_glossary_term_cross_page(
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
     )
+
+
+def test_mermaid_diagram(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives become Notion Code blocks with Mermaid
+    language.
+    """
+    rst_content = """
+        .. mermaid::
+
+           graph LR
+               A --> B
+               B --> C
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B\n    B --> C"),
+            language=CodeLang.MERMAID,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
+        expected_warnings=(),
+    )

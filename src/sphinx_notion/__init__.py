@@ -31,6 +31,7 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
+from sphinxcontrib.mermaid import mermaid as mermaid_node
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
@@ -1534,6 +1535,19 @@ def _(
         )
 
     return [toggle_block]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: mermaid_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process mermaid diagram nodes by creating Notion Code blocks."""
+    del section_level
+    code: str = node["code"]
+    return [UnoCode(text=text(text=code), language=CodeLang.MERMAID)]
 
 
 @beartype

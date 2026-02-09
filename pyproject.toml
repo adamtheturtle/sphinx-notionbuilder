@@ -46,6 +46,7 @@ dependencies = [
     "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
     "sphinx-toolbox>=4.0.0",
+    "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
     "ultimate-notion>=0.9.6",
