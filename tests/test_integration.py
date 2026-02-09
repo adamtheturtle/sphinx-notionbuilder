@@ -2138,22 +2138,61 @@ def test_cross_reference_download(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:download: references render as code text with a warning."""
+    """:download: references render as linked text."""
     rst_content = """
         Download :download:`conf.py` here.
     """
 
-    index_rst = tmp_path / "src" / "index.rst"
-    expected_warnings = [
-        f"{index_rst}:1:",
-        "Download references are not supported by the Notion builder. "
-        "Rendering as plain text. [ref.notion]",
-    ]
+    srcdir = tmp_path / "src"
+    conf_py_url = (srcdir / "conf.py").as_uri()
+
+    expected_warnings: list[str] = []
 
     expected_blocks = [
         UnoParagraph(
             text=text(text="Download ")
-            + text(text="conf.py", code=True)
+            + text(
+                text="conf.py",
+                href=conf_py_url,
+                bold=False,
+                italic=False,
+                code=False,
+            )
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_download_external_url(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references with external URLs render as linked text."""
+    rst_content = """
+        Download :download:`https://example.com/file.zip` here.
+    """
+
+    expected_warnings: list[str] = []
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(
+                text="https://example.com/file.zip",
+                href="https://example.com/file.zip",
+                bold=False,
+                italic=False,
+                code=False,
+            )
             + text(text=" here.")
         ),
     ]
