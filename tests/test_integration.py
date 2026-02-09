@@ -2138,25 +2138,28 @@ def test_cross_reference_download(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:download: references render as linked text."""
+    """:download: references render as plain text with a warning."""
     rst_content = """
         Download :download:`conf.py` here.
     """
 
     srcdir = tmp_path / "src"
-    conf_py_url = (srcdir / "conf.py").as_uri()
+    index_rst = srcdir / "index.rst"
 
-    expected_warnings: list[str] = []
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Local file download references are not supported by the "
+        "Notion builder. Rendering as plain text. [ref.notion]",
+    ]
 
     expected_blocks = [
         UnoParagraph(
             text=text(text="Download ")
             + text(
                 text="conf.py",
-                href=conf_py_url,
                 bold=False,
                 italic=False,
-                code=False,
+                code=True,
             )
             + text(text=" here.")
         ),

@@ -414,10 +414,7 @@ def _(node: nodes.reference) -> Text:
             subtype="notion",
             location=node,
         )
-        result = Text.from_plain_text(text="")
-        for child in node.children:
-            result += _process_rich_text_node(child)
-        return result
+        return _create_rich_text_from_children(node=node)
 
     if node.attributes.get("internal"):
         _LOGGER.warning(
@@ -444,15 +441,22 @@ def _(node: nodes.reference) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: addnodes.download_reference) -> Text:
-    """Process download reference nodes by creating linked text."""
+    """Process download reference nodes.
+
+    External URLs are rendered as linked text.
+    Local file references are rendered as plain text with a warning,
+    since Notion does not support file:// URIs.
+    """
     link_url = node.attributes.get("refuri")
     if link_url is None:
-        reftarget: str = node["reftarget"]
-        assert node.document is not None
-        env = node.document.settings.env
-        refdoc: str = node.attributes.get("refdoc", "")
-        _, abs_filename = env.relfn2path(reftarget, refdoc)
-        link_url = Path(abs_filename).as_uri()
+        _LOGGER.warning(
+            "Local file download references are not supported by the "
+            "Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return _create_rich_text_from_children(node=node)
 
     return text(
         text=node.astext(),
