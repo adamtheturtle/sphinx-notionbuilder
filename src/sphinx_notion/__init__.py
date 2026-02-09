@@ -444,20 +444,23 @@ def _(node: nodes.reference) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: addnodes.download_reference) -> Text:
-    """Process download reference nodes by rendering children with a
-    warning.
-    """
-    _LOGGER.warning(
-        "Download references are not supported by the Notion builder. "
-        "Rendering as plain text.",
-        type="ref",
-        subtype="notion",
-        location=node,
+    """Process download reference nodes by creating linked text."""
+    link_url = node.attributes.get("refuri")
+    if link_url is None:
+        reftarget: str = node["reftarget"]
+        assert node.document is not None
+        env = node.document.settings.env
+        refdoc: str = node.attributes.get("refdoc", "")
+        _, abs_filename = env.relfn2path(reftarget, refdoc)
+        link_url = Path(abs_filename).as_uri()
+
+    return text(
+        text=node.astext(),
+        href=link_url,
+        bold=False,
+        italic=False,
+        code=False,
     )
-    result = Text.from_plain_text(text="")
-    for child in node.children:
-        result += _process_rich_text_node(child)
-    return result
 
 
 @beartype
