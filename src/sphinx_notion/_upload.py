@@ -17,6 +17,7 @@ from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import UploadedFile
@@ -26,7 +27,7 @@ from ultimate_notion.page import Page
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
 
-_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
+_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 
 
 class PageHasSubpagesError(Exception):
