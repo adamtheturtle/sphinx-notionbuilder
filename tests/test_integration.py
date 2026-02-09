@@ -2131,7 +2131,7 @@ def test_cross_reference_numref(
     rst_content = """
         .. _my-table:
 
-        .. table::
+        .. table:: My Table
 
            ====== ======
            Col1   Col2
@@ -2142,14 +2142,14 @@ def test_cross_reference_numref(
         See :numref:`my-table` for data.
     """
 
-    # The table has no title because Notion tables don't support titles.
-    # Without a title, Sphinx can't assign a figure number, so numref
-    # falls back to rendering the label name as literal code.
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
+        "Table has a title 'My Table' on line 3 in "
+        f"{index_rst}, but Notion tables do not have titles.\n"
         f"{index_rst}:11:",
-        "Failed to create a cross reference. "
-        "Any number is not assigned: my-table",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
     ]
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
@@ -2160,11 +2160,7 @@ def test_cross_reference_numref(
 
     expected_blocks = [
         table,
-        UnoParagraph(
-            text=text(text="See ")
-            + text(text="my-table", code=True)
-            + text(text=" for data.")
-        ),
+        UnoParagraph(text=text(text="See Table 1 for data.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -2341,6 +2337,81 @@ def test_cross_reference_envvar_resolved(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_confval(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:confval: references render as plain text."""
+    rst_content = """
+        .. confval:: my_setting
+
+           Description of the setting.
+
+        See :confval:`my_setting` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    confval_callout = UnoCallout(
+        text=text(text="my_setting", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    confval_callout.append(
+        blocks=[UnoParagraph(text=text(text="Description of the setting."))],
+    )
+
+    expected_blocks = [
+        confval_callout,
+        UnoParagraph(
+            text=text(text="See ")
+            + text(text="my_setting", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_token(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:token: references render as code text."""
+    rst_content = """
+        Test :token:`expr` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="expr", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
     )
 
 
