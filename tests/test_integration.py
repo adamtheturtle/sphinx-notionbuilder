@@ -5043,3 +5043,93 @@ def test_file_html_output(
         f' href="{expected_url}">{expected_url}</a>'
     )
     assert expected_link in index_html
+
+
+def test_figure_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives preserve captions on images."""
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+
+           This is a caption.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=text(text="This is a caption."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_figure_directive_local_image(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives with local images preserve captions."""
+    rst_content = """
+        .. figure:: test-image.png
+
+           A local image caption.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "test-image.png").write_bytes(data=b"fake png data")
+
+    expected_url = (srcdir / "test-image.png").as_uri()
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url=expected_url),
+            caption=text(text="A local image caption."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_figure_directive_without_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives without captions process children
+    normally.
+    """
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=None,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
