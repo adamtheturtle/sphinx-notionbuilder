@@ -79,6 +79,7 @@ The following syntax is supported:
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
+- Files (with URLs or local paths)
 - Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
 - Dividers (horizontal rules / transitions)
@@ -123,6 +124,38 @@ Creates a Notion "link to page" block that references another page in your Notio
    .. notion-link-to-page:: 12345678-1234-1234-1234-123456789abc
 
 This creates a clickable link block in Notion that navigates to the specified page when clicked.
+
+``notion-file``
+~~~~~~~~~~~~~~~
+
+Creates a Notion File block that links to an external file by URL, or uploads a local file.
+
+**Usage:**
+
+.. code-block:: rst
+
+   .. notion-file:: FILE_URL_OR_PATH
+
+**Parameters:**
+
+- ``FILE_URL_OR_PATH``: A URL to an external file, or a local file path relative to the source directory
+
+**Options:**
+
+- ``:name:``: (Optional) Display name for the file in Notion
+- ``:caption:``: (Optional) Caption text displayed below the file block
+
+**Examples:**
+
+.. code-block:: rst
+
+   .. notion-file:: https://example.com/document.zip
+
+   .. notion-file:: _static/data.csv
+      :name: Project Data
+      :caption: CSV export of the project data
+
+When not using the Notion builder (e.g. HTML), the directive renders as a link to the file.
 
 Roles
 -----
@@ -238,7 +271,6 @@ Unsupported Notion Block Types
 - Child database
 - Child page
 - Column and column list
-- File
 - Link preview
 - Synced block
 - Template

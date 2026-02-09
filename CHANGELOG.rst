@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+- Add support for the ``notion-file`` directive for Notion File blocks.
+
 2026.02.09
 ----------
 

@@ -24,6 +24,7 @@ from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -4823,3 +4824,180 @@ def test_glossary_term_cross_page(
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
     )
+
+
+def test_simple_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives become Notion File blocks with URL."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_name(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with ``:name:`` option set the file name."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :name: My Document
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            name="My Document",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with ``:caption:`` option set the
+    caption.
+    """
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :caption: Download this file
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            caption="Download this file",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_name_and_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with both name and caption."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :name: My Document
+           :caption: Download this file
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            name="My Document",
+            caption="Download this file",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_local_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Local files are converted to file:// URLs in the JSON output."""
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_file_path = srcdir / "test_document.zip"
+    test_file_path.write_bytes(data=b"fake zip content")
+
+    rst_content = """
+        .. notion-file:: test_document.zip
+    """
+
+    expected_blocks = [
+        UnoFile(file=ExternalFile(url=test_file_path.as_uri())),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directive with HTML builder creates a link."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_url = "https://www.example.com/path/to/document.zip"
+    assert expected_url in index_html
+    expected_link = (
+        f'<a class="reference external"'
+        f' href="{expected_url}">{expected_url}</a>'
+    )
+    assert expected_link in index_html
