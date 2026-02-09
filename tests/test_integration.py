@@ -2345,7 +2345,7 @@ def test_cross_reference_confval(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:confval: references render as plain text."""
+    """``:confval:`` references render as plain text."""
     rst_content = """
         .. confval:: my_setting
 
@@ -2394,7 +2394,7 @@ def test_cross_reference_token(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """:token: references render as code text."""
+    """``:token:`` references render as code text."""
     rst_content = """
         Test :token:`expr` here.
     """
