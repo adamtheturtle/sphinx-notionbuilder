@@ -4868,6 +4868,39 @@ def test_glossary_term_cross_page(
     )
 
 
+def test_mermaid_diagram(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives become Notion Code blocks with Mermaid
+    language.
+    """
+    rst_content = """
+        .. mermaid::
+
+           graph LR
+               A --> B
+               B --> C
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B\n    B --> C"),
+            language=CodeLang.MERMAID,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
+        expected_warnings=(),
+    )
+
+
 def test_simple_file(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -5131,5 +5164,39 @@ def test_figure_directive_without_caption(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_mermaid_diagram_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives with captions become captioned Notion Code
+    blocks.
+    """
+    rst_content = """
+        .. mermaid::
+           :caption: My Flowchart
+
+           graph LR
+               A --> B
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B"),
+            language=CodeLang.MERMAID,
+            caption=text(text="My Flowchart"),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
         expected_warnings=(),
     )

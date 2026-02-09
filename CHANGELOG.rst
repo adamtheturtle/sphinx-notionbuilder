@@ -4,6 +4,7 @@ Changelog
 Next
 ----
 
+- Add support for `sphinxcontrib-mermaid`_ diagrams.
 - Add support for the ``notion-file`` directive for Notion File blocks.
 
 2026.02.09
@@ -241,3 +242,5 @@ Next
 
 2025.08.19
 ----------
+
+.. _sphinxcontrib-mermaid: https://github.com/mgaitan/sphinxcontrib-mermaid

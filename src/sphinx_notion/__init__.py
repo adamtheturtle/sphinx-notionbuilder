@@ -32,6 +32,9 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
+from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
+    mermaid as mermaid_node,
+)
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
@@ -1579,11 +1582,44 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: mermaid_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process mermaid diagram nodes by creating Notion Code blocks."""
+    del section_level
+    code: str = node["code"]
+    return [UnoCode(text=text(text=code), language=CodeLang.MERMAID)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.figure,
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process figure nodes."""
+    """Process figure nodes.
+
+    Handles mermaid diagrams wrapped in figures (when :caption: is used).
+    """
+    num_children_for_captioned_mermaid = 2
+    if (
+        len(node.children) == num_children_for_captioned_mermaid
+        and isinstance(node.children[0], mermaid_node)
+        and isinstance(node.children[1], nodes.caption)
+    ):
+        mermaid_child = node.children[0]
+        caption_node = node.children[1]
+        code: str = mermaid_child["code"]
+        return [
+            UnoCode(
+                text=text(text=code),
+                language=CodeLang.MERMAID,
+                caption=_create_rich_text_from_children(node=caption_node),
+            )
+        ]
+
     caption_children = [
         child for child in node.children if isinstance(child, nodes.caption)
     ]

@@ -15,6 +15,7 @@ extensions = [
     "sphinx_toolbox.rest_example",
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
+    "sphinxcontrib.mermaid",
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
     "sphinx_notion",

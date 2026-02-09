@@ -38,6 +38,7 @@ Add the following to ``conf.py`` to enable the extension:
 * `sphinx-simplepdf`_
 * `sphinx-iframes`_
 * `sphinxcontrib-text-styles`_
+* `sphinxcontrib-mermaid`_
 
 See a `sample document source`_ and the `published Notion page`_ for an example of each of these.
 
@@ -55,6 +56,7 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx_simplepdf",
        "sphinx_toolbox.collapse",
        "sphinx_toolbox.rest_example",
+       "sphinxcontrib.mermaid",
        "sphinxcontrib.video",
        "sphinxcontrib_text_styles",
        "sphinxnotes.strike",
@@ -85,6 +87,7 @@ The following syntax is supported:
 - Dividers (horizontal rules / transitions)
 - Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
 - Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
+- Mermaid diagrams (using the ``mermaid`` directive from `sphinxcontrib-mermaid`_ )
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 - Link to page blocks (using the ``notion-link-to-page`` directive)
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
@@ -370,6 +373,7 @@ A convenience script is provided to build and publish the sample documentation t
 .. _sphinx-toolbox rest_example: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html
 .. _sphinx-toolbox: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/
 .. _sphinx.ext.mathjax: https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax
+.. _sphinxcontrib-mermaid: https://github.com/mgaitan/sphinxcontrib-mermaid
 .. _sphinxcontrib-text-styles: https://sphinxcontrib-text-styles.readthedocs.io/
 .. _sphinxcontrib-video: https://sphinxcontrib-video.readthedocs.io
 .. _sphinxnotes-strike: https://github.com/sphinx-toolbox/sphinxnotes-strike
