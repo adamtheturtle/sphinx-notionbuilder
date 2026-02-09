@@ -2120,6 +2120,301 @@ def test_cross_reference_download(
     )
 
 
+def test_cross_reference_numref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:numref:`` references render as plain text via style class
+    handling.
+    """
+    rst_content = """
+        .. _my-table:
+
+        .. table:: My Table
+
+           ====== ======
+           Col1   Col2
+           ====== ======
+           A      B
+           ====== ======
+
+        See :numref:`my-table` for data.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        "Table has a title 'My Table' on line 3 in "
+        f"{index_rst}, but Notion tables do not have titles.\n"
+        f"{index_rst}:11:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Col1")
+    table[0, 1] = text(text="Col2")
+    table[1, 0] = text(text="A")
+    table[1, 1] = text(text="B")
+
+    expected_blocks = [
+        table,
+        UnoParagraph(text=text(text="See Table 1 for data.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+        confoverrides={"numfig": True},
+    )
+
+
+def test_cross_reference_keyword(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:keyword: references render as plain text."""
+    rst_content = """
+        .. _with:
+
+        Keywords
+        ========
+
+        Test :keyword:`with` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoHeading1(text=text(text="Keywords")),
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="with", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_option(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:option: references render as plain text."""
+    rst_content = """
+        .. program:: myprogram
+
+        .. option:: --verbose
+
+           Enable verbose output.
+
+        Test :option:`myprogram --verbose` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:7:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    callout = UnoCallout(
+        text=text(text="--verbose", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    callout.append(
+        blocks=UnoParagraph(text=text(text="Enable verbose output."))
+    )
+
+    expected_blocks = [
+        callout,
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="myprogram --verbose", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_envvar_unresolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` without a directive renders as code text."""
+    rst_content = """
+        Test :envvar:`PATH` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
+def test_cross_reference_envvar_resolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` with a directive renders as code text."""
+    rst_content = """
+        .. envvar:: PATH
+
+           The system path.
+
+        Test :envvar:`PATH` here.
+    """
+
+    envvar_callout = UnoCallout(
+        text=text(text="PATH", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    envvar_callout.append(
+        blocks=[UnoParagraph(text=text(text="The system path."))],
+    )
+
+    expected_blocks = [
+        envvar_callout,
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_confval(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:confval:`` references render as plain text."""
+    rst_content = """
+        .. confval:: my_setting
+
+           Description of the setting.
+
+        See :confval:`my_setting` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    confval_callout = UnoCallout(
+        text=text(text="my_setting", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    confval_callout.append(
+        blocks=[UnoParagraph(text=text(text="Description of the setting."))],
+    )
+
+    expected_blocks = [
+        confval_callout,
+        UnoParagraph(
+            text=text(text="See ")
+            + text(text="my_setting", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_token(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:token:`` references render as code text."""
+    rst_content = """
+        Test :token:`expr` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="expr", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+    )
+
+
 def test_literalinclude_with_caption(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,

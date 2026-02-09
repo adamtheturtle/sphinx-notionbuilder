@@ -619,7 +619,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "py-obj",
         "download",
         "std",
+        "std-confval",
+        "std-envvar",
+        "std-keyword",
+        "std-numref",
+        "std-option",
         "std-term",
+        "std-token",
     }
     unsupported_styles = [
         css_class
