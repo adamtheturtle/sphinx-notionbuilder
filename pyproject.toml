@@ -344,7 +344,6 @@ plugins = [
 
 [tool.pyright]
 enableTypeIgnoreComments = false
-reportMissingTypeStubs = false
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
 

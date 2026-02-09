@@ -27,9 +27,13 @@ from sphinx.util.typing import ExtensionMetadata
 from sphinx.writers.html5 import HTML5Translator
 from sphinx_iframes import iframe_node
 from sphinx_immaterial.task_lists import checkbox_label
-from sphinx_simplepdf.directives.pdfinclude import PdfIncludeDirective
+from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
+    PdfIncludeDirective,
+)
 from sphinx_toolbox.collapse import CollapseNode
-from sphinxcontrib.mermaid import mermaid as mermaid_node
+from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
+    mermaid as mermaid_node,
+)
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji
