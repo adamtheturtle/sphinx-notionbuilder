@@ -1579,6 +1579,48 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.figure,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process figure nodes."""
+    caption_children = [
+        child for child in node.children if isinstance(child, nodes.caption)
+    ]
+    caption_rich_text: Text | None = (
+        _create_rich_text_from_children(node=caption_children[0])
+        if caption_children
+        else None
+    )
+
+    blocks: list[Block] = []
+    for child in node.children:
+        if isinstance(child, nodes.caption):
+            continue
+        if isinstance(child, nodes.image) and caption_rich_text is not None:
+            image_url = child.attributes["uri"]
+            assert isinstance(image_url, str)
+            assert child.document is not None
+            if "://" not in image_url:
+                abs_path = Path(child.document.settings.env.srcdir) / image_url
+                image_url = abs_path.as_uri()
+            blocks.append(
+                UnoImage(
+                    file=ExternalFile(url=image_url),
+                    caption=caption_rich_text,
+                )
+            )
+            continue
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.image,
     *,
     section_level: int,
