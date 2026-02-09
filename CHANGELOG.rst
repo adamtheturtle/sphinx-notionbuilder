@@ -4,6 +4,10 @@ Changelog
 Next
 ----
 
+2026.02.09
+----------
+
+
 - Render cross-references as plain text instead of silently dropping them, and emit a build warning.
 - Add support for the ``glossary`` directive and ``:term:`` cross-references.
 
