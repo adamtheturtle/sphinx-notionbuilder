@@ -426,8 +426,6 @@ Downloads
 
 .. rest-example::
 
-   Download :download:`conf.py` here.
-
    Download an external file :download:`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` here.
 
 Mathematical Equations
