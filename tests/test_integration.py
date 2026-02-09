@@ -4849,6 +4849,7 @@ def test_simple_file(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=[],
     )
 
 
@@ -4877,6 +4878,7 @@ def test_file_with_name(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=[],
     )
 
 
@@ -4907,6 +4909,7 @@ def test_file_with_caption(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=[],
     )
 
 
@@ -4937,6 +4940,7 @@ def test_file_with_name_and_caption(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=[],
     )
 
 
@@ -4964,6 +4968,7 @@ def test_local_file(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=[],
     )
 
 
