@@ -419,6 +419,8 @@ Files
       :name: Dummy PDF
       :caption: An external file with a name and caption
 
+   .. notion-file:: _static/test-file.txt
+
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 
