@@ -408,6 +408,26 @@ PDF
 
    .. pdf-include:: _static/test.pdf
 
+Files
+~~~~~
+
+.. rest-example::
+
+   .. notion-file:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+
+   .. notion-file:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+      :name: Dummy PDF
+      :caption: An external file with a name and caption
+
+   .. notion-file:: _static/test-file.txt
+
+Downloads
+~~~~~~~~~
+
+.. rest-example::
+
+   Download an external file :download:`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` here.
+
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 

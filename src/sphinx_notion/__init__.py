@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 import bs4
@@ -15,6 +15,7 @@ from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import directives as rst_directives
 from docutils.parsers.rst.states import Inliner
 from sphinx import addnodes
 from sphinx.application import Sphinx
@@ -46,6 +47,7 @@ from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -205,6 +207,11 @@ class _NotionPdfIncludeDirective(PdfIncludeDirective):
 
 
 @beartype
+class _FileNode(nodes.Element):
+    """Custom node for Notion File blocks."""
+
+
+@beartype
 class _LinkToPageNode(nodes.Element):
     """Custom node for Notion link-to-page blocks."""
 
@@ -247,7 +254,33 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
         notion_url = f"https://www.notion.so/{page_id}"
         reference = nodes.reference(refuri=notion_url, text=notion_url)
-        reference += nodes.Text(data=notion_url)
+        paragraph = nodes.paragraph()
+        paragraph += reference
+        return [paragraph]
+
+
+@beartype
+class _NotionFileDirective(sphinx_docutils.SphinxDirective):
+    """File directive that creates Notion File blocks."""
+
+    required_arguments = 1
+    option_spec: ClassVar = {
+        "name": rst_directives.unchanged,
+        "caption": rst_directives.unchanged,
+    }
+
+    def run(self) -> list[nodes.Element]:
+        """Create a Notion File block."""
+        (file_url,) = self.arguments
+
+        if isinstance(self.env.app.builder, NotionBuilder):
+            node = _FileNode()
+            node.attributes["uri"] = file_url
+            node.attributes["name"] = self.options.get("name")
+            node.attributes["caption"] = self.options.get("caption")
+            return [node]
+
+        reference = nodes.reference(refuri=file_url, text=file_url)
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]
@@ -384,10 +417,7 @@ def _(node: nodes.reference) -> Text:
             subtype="notion",
             location=node,
         )
-        result = Text.from_plain_text(text="")
-        for child in node.children:
-            result += _process_rich_text_node(child)
-        return result
+        return _create_rich_text_from_children(node=node)
 
     if node.attributes.get("internal"):
         _LOGGER.warning(
@@ -414,20 +444,30 @@ def _(node: nodes.reference) -> Text:
 @beartype
 @_process_rich_text_node.register
 def _(node: addnodes.download_reference) -> Text:
-    """Process download reference nodes by rendering children with a
-    warning.
+    """Process download reference nodes.
+
+    External URLs are rendered as linked text.
+    Local file references are rendered as plain text with a warning,
+    since Notion does not support file:// URIs.
     """
-    _LOGGER.warning(
-        "Download references are not supported by the Notion builder. "
-        "Rendering as plain text.",
-        type="ref",
-        subtype="notion",
-        location=node,
+    link_url = node.attributes.get("refuri")
+    if link_url is None:
+        _LOGGER.warning(
+            "Local file download references are not supported by the "
+            "Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return _create_rich_text_from_children(node=node)
+
+    return text(
+        text=node.astext(),
+        href=link_url,
+        bold=False,
+        italic=False,
+        code=False,
     )
-    result = Text.from_plain_text(text="")
-    for child in node.children:
-        result += _process_rich_text_node(child)
-    return result
 
 
 @beartype
@@ -1715,6 +1755,35 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: _FileNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process File nodes by creating Notion File blocks.
+
+    This handles nodes created by our custom NotionFileDirective.
+    """
+    del section_level
+
+    file_url = node.attributes["uri"]
+
+    if "://" not in file_url:
+        assert node.document is not None
+        abs_path = Path(node.document.settings.env.srcdir) / file_url
+        file_url = abs_path.as_uri()
+
+    return [
+        UnoFile(
+            file=ExternalFile(url=file_url),
+            name=node.attributes.get("name"),
+            caption=node.attributes.get("caption"),
+        )
+    ]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: _LinkToPageNode,
     *,
     section_level: int,
@@ -2142,6 +2211,18 @@ def _notion_register_link_to_page_directive(
 
 
 @beartype
+def _notion_register_file_directive(
+    app: Sphinx,
+) -> None:
+    """Register the file directive."""
+    del app
+    sphinx_docutils.register_directive(
+        name="notion-file",
+        directive=_NotionFileDirective,
+    )
+
+
+@beartype
 def _notion_register_mention_roles(
     app: Sphinx,
 ) -> None:
@@ -2268,6 +2349,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.connect(
         event="builder-inited",
         callback=_notion_register_link_to_page_directive,
+    )
+
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_file_directive,
     )
 
     app.connect(
