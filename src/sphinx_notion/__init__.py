@@ -1553,6 +1553,48 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.figure,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process figure nodes.
+
+    Handles mermaid diagrams wrapped in figures (when :caption: is used).
+    """
+    num_children_for_captioned_mermaid = 2
+    if (
+        len(node.children) == num_children_for_captioned_mermaid
+        and isinstance(node.children[0], mermaid_node)
+        and isinstance(node.children[1], nodes.caption)
+    ):
+        mermaid_child = node.children[0]
+        caption_node = node.children[1]
+        assert isinstance(mermaid_child, mermaid_node)
+        assert isinstance(caption_node, nodes.caption)
+        code: str = mermaid_child["code"]
+        caption_rich_text = _create_rich_text_from_children(node=caption_node)
+        return [
+            UnoCode(
+                text=text(text=code),
+                language=CodeLang.MERMAID,
+                caption=caption_rich_text,
+            )
+        ]
+
+    blocks: list[Block] = []
+    for child in node.children:
+        if isinstance(child, nodes.caption):
+            continue
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.image,
     *,
     section_level: int,

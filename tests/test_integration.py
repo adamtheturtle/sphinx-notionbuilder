@@ -4856,3 +4856,64 @@ def test_mermaid_diagram(
         extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
         expected_warnings=(),
     )
+
+
+def test_figure_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives process their children."""
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+
+           This is a caption.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_mermaid_diagram_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives with captions become captioned Notion Code
+    blocks.
+    """
+    rst_content = """
+        .. mermaid::
+           :caption: My Flowchart
+
+           graph LR
+               A --> B
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B"),
+            language=CodeLang.MERMAID,
+            caption=text(text="My Flowchart"),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
+        expected_warnings=(),
+    )
