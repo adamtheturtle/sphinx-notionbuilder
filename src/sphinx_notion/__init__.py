@@ -414,10 +414,7 @@ def _(node: nodes.reference) -> Text:
             subtype="notion",
             location=node,
         )
-        result = Text.from_plain_text(text="")
-        for child in node.children:
-            result += _process_rich_text_node(child)
-        return result
+        return _create_rich_text_from_children(node=node)
 
     if node.attributes.get("internal"):
         _LOGGER.warning(
@@ -459,10 +456,7 @@ def _(node: addnodes.download_reference) -> Text:
             subtype="notion",
             location=node,
         )
-        result = Text.from_plain_text(text="")
-        for child in node.children:
-            result += _process_rich_text_node(child)
-        return result
+        return _create_rich_text_from_children(node=node)
 
     return text(
         text=node.astext(),
