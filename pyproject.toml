@@ -322,15 +322,15 @@ ini_options.xfail_strict = true
 ini_options.log_cli = true
 
 [tool.coverage]
-report.exclude_also = [
-    "if TYPE_CHECKING:",
-]
 run.branch = true
 # These files interact with the Notion API and cannot be tested until we have
 # a Notion mock. See https://github.com/adamtheturtle/sphinx-notionbuilder/issues/525.
 run.omit = [
     "src/_notion_scripts/upload.py",
     "src/sphinx_notion/_upload.py",
+]
+report.exclude_also = [
+    "if TYPE_CHECKING:",
 ]
 
 [tool.mypy]
