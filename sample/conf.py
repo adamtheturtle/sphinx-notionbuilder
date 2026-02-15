@@ -20,3 +20,10 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_notion",
 ]
+
+# `example.com` links are placeholder/demo links in docs and can intermittently
+# fail certificate validation in CI environments.
+linkcheck_ignore = [
+    r"https://example\.com/?",
+    r"https://www\.example\.com/.*",
+]

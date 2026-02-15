@@ -5,6 +5,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 from collections.abc import Sequence
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -28,6 +29,14 @@ if TYPE_CHECKING:
     from ultimate_notion.database import Database
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+
+
+@dataclass(frozen=True, slots=True)
+class _MatchLengths:
+    """Matching prefix/suffix lengths for block diffing."""
+
+    prefix: int
+    suffix: int
 
 
 class PageHasSubpagesError(Exception):
@@ -110,13 +119,13 @@ def _find_matching_prefix_and_suffix_lengths(
     *,
     existing_blocks: Sequence[Block],
     local_blocks: Sequence[Block],
-) -> tuple[int, int]:
+) -> _MatchLengths:
     """Find the lengths of matching prefix and suffix between block lists.
 
-    Returns a tuple of (prefix_length, suffix_length) where:
-    - prefix_length: number of matching blocks from the start
-    - suffix_length: number of matching blocks from the end (not
-      overlapping with prefix)
+    Returns matching lengths where:
+    - `prefix`: number of matching blocks from the start
+    - `suffix`: number of matching blocks from the end (not overlapping
+      with prefix)
     """
     min_len = min(len(existing_blocks), len(local_blocks))
 
@@ -140,7 +149,7 @@ def _find_matching_prefix_and_suffix_lengths(
         else:
             break
 
-    return prefix_len, suffix_len
+    return _MatchLengths(prefix=prefix_len, suffix=suffix_len)
 
 
 @beartype
@@ -278,10 +287,12 @@ def _sync_blocks(
 ) -> None:
     """Sync local blocks to a Notion page using prefix+suffix matching."""
     existing_blocks = page.blocks
-    prefix_len, suffix_len = _find_matching_prefix_and_suffix_lengths(
+    match_lengths = _find_matching_prefix_and_suffix_lengths(
         existing_blocks=existing_blocks,
         local_blocks=blocks,
     )
+    prefix_len = match_lengths.prefix
+    suffix_len = match_lengths.suffix
 
     # Can't use suffix matching without a prefix because the Notion API
     # has no way to insert before the first block.
