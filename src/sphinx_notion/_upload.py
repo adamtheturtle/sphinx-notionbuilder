@@ -285,6 +285,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
 
 @beartype
+# pylint: disable-next=too-complex,too-many-branches,too-many-statements
 def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     *,
     session: Session,
