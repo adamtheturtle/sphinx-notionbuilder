@@ -285,15 +285,73 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
 
 @beartype
-def _sync_blocks(
+def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     *,
-    page: Page,
-    blocks: Sequence[Block],
-    title: str,
-    cancel_on_discussion: bool,
     session: Session,
-) -> None:
-    """Sync local blocks to a Notion page using prefix+suffix matching."""
+    blocks: Sequence[Block],
+    parent_page_id: str | None,
+    parent_database_id: str | None,
+    title: str,
+    icon: str | None,
+    cover_path: Path | None,
+    cover_url: str | None,
+    cancel_on_discussion: bool,
+) -> Page:
+    """Upload documentation to Notion.
+
+    Returns the page that was created or updated.
+
+    Raises:
+        PageHasSubpagesError: If the page has subpages.
+        PageHasDatabasesError: If the page has databases.
+        DiscussionsExistError: If blocks to delete have discussions and
+            cancel_on_discussion is True.
+    """
+    parent: Page | Database
+    if parent_page_id:
+        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
+        parent = session.get_page(page_ref=parent_page_id)
+        subpages = parent.subpages
+    else:
+        assert parent_database_id is not None
+        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
+        parent = session.get_db(db_ref=parent_database_id)
+        subpages = parent.get_all_pages().to_pages()
+
+    pages_matching_title = [
+        child_page for child_page in subpages if child_page.title == title
+    ]
+
+    if pages_matching_title:
+        msg = (
+            f"Expected 1 page matching title {title}, but got "
+            f"{len(pages_matching_title)}"
+        )
+        assert len(pages_matching_title) == 1, msg
+        (page,) = pages_matching_title
+        _LOGGER.info("Found existing page '%s'", title)
+    else:
+        _LOGGER.info("Creating new page '%s'", title)
+        page = session.create_page(parent=parent, title=title)
+
+    _LOGGER.info("Setting page icon and cover")
+    page.icon = Emoji(emoji=icon) if icon else None
+    if cover_path:
+        page.cover = _get_uploaded_cover(
+            page=page, cover=cover_path, session=session
+        )
+    elif cover_url:
+        page.cover = ExternalFile(url=cover_url)
+    else:
+        page.cover = None
+
+    if page.subpages:
+        raise PageHasSubpagesError
+
+    if page.subdbs:
+        raise PageHasDatabasesError
+
+    _LOGGER.info("Syncing page blocks")
     existing_blocks = page.blocks
     _LOGGER.info(
         "Comparing %d existing blocks with %d local blocks",
@@ -369,81 +427,4 @@ def _sync_blocks(
             blocks=block_objs_with_uploaded_files,
             after=after_block,
         )
-
-
-@beartype
-def upload_to_notion(
-    *,
-    session: Session,
-    blocks: Sequence[Block],
-    parent_page_id: str | None,
-    parent_database_id: str | None,
-    title: str,
-    icon: str | None,
-    cover_path: Path | None,
-    cover_url: str | None,
-    cancel_on_discussion: bool,
-) -> Page:
-    """Upload documentation to Notion.
-
-    Returns the page that was created or updated.
-
-    Raises:
-        PageHasSubpagesError: If the page has subpages.
-        PageHasDatabasesError: If the page has databases.
-        DiscussionsExistError: If blocks to delete have discussions and
-            cancel_on_discussion is True.
-    """
-    parent: Page | Database
-    if parent_page_id:
-        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
-        parent = session.get_page(page_ref=parent_page_id)
-        subpages = parent.subpages
-    else:
-        assert parent_database_id is not None
-        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
-        parent = session.get_db(db_ref=parent_database_id)
-        subpages = parent.get_all_pages().to_pages()
-
-    pages_matching_title = [
-        child_page for child_page in subpages if child_page.title == title
-    ]
-
-    if pages_matching_title:
-        msg = (
-            f"Expected 1 page matching title {title}, but got "
-            f"{len(pages_matching_title)}"
-        )
-        assert len(pages_matching_title) == 1, msg
-        (page,) = pages_matching_title
-        _LOGGER.info("Found existing page '%s'", title)
-    else:
-        _LOGGER.info("Creating new page '%s'", title)
-        page = session.create_page(parent=parent, title=title)
-
-    _LOGGER.info("Setting page icon and cover")
-    page.icon = Emoji(emoji=icon) if icon else None
-    if cover_path:
-        page.cover = _get_uploaded_cover(
-            page=page, cover=cover_path, session=session
-        )
-    elif cover_url:
-        page.cover = ExternalFile(url=cover_url)
-    else:
-        page.cover = None
-
-    if page.subpages:
-        raise PageHasSubpagesError
-
-    if page.subdbs:
-        raise PageHasDatabasesError
-
-    _LOGGER.info("Syncing page blocks")
-    _sync_blocks(
-        page=page,
-        blocks=blocks,
-        title=title,
-        cancel_on_discussion=cancel_on_discussion,
-        session=session,
-    )
     return page
