@@ -106,28 +106,41 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
 
 
 @beartype
-def _find_last_matching_block_index(
+def _find_matching_prefix_and_suffix_lengths(
     *,
     existing_blocks: Sequence[Block],
     local_blocks: Sequence[Block],
-) -> int | None:
-    """Find the last index where existing blocks match local blocks.
+) -> tuple[int, int]:
+    """Find the lengths of matching prefix and suffix between block lists.
 
-    Returns the last index where blocks are equivalent, or None if no
-    blocks match.
+    Returns a tuple of (prefix_length, suffix_length) where:
+    - prefix_length: number of matching blocks from the start
+    - suffix_length: number of matching blocks from the end (not
+      overlapping with prefix)
     """
-    last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=existing_blocks):
-        if index < len(local_blocks) and (
-            _is_existing_equivalent(
-                existing_page_block=existing_page_block,
-                local_block=local_blocks[index],
-            )
+    min_len = min(len(existing_blocks), len(local_blocks))
+
+    prefix_len = 0
+    for i in range(min_len):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[i],
+            local_block=local_blocks[i],
         ):
-            last_matching_index = index
+            prefix_len += 1
         else:
             break
-    return last_matching_index
+
+    suffix_len = 0
+    for i in range(1, min_len - prefix_len + 1):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[-i],
+            local_block=local_blocks[-i],
+        ):
+            suffix_len += 1
+        else:
+            break
+
+    return prefix_len, suffix_len
 
 
 @beartype
@@ -255,6 +268,67 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
 
 @beartype
+def _sync_blocks(
+    *,
+    page: Page,
+    blocks: Sequence[Block],
+    title: str,
+    cancel_on_discussion: bool,
+    session: Session,
+) -> None:
+    """Sync local blocks to a Notion page using prefix+suffix matching."""
+    existing_blocks = page.blocks
+    prefix_len, suffix_len = _find_matching_prefix_and_suffix_lengths(
+        existing_blocks=existing_blocks,
+        local_blocks=blocks,
+    )
+
+    # Can't use suffix matching without a prefix because the Notion API
+    # has no way to insert before the first block.
+    if prefix_len == 0:
+        suffix_len = 0
+
+    existing_end = len(existing_blocks) - suffix_len
+    local_end = len(blocks) - suffix_len
+
+    blocks_to_delete = existing_blocks[prefix_len:existing_end]
+    blocks_to_delete_with_discussions = [
+        block for block in blocks_to_delete if len(block.discussions) > 0
+    ]
+
+    if cancel_on_discussion and blocks_to_delete_with_discussions:
+        total_discussions = sum(
+            len(block.discussions)
+            for block in blocks_to_delete_with_discussions
+        )
+        error_message = (
+            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
+            f"block(s) to delete with {total_discussions} discussion "
+            "thread(s). "
+            f"Upload cancelled."
+        )
+        raise DiscussionsExistError(error_message)
+
+    for existing_page_block in blocks_to_delete:
+        existing_page_block.delete()
+
+    blocks_to_upload = blocks[prefix_len:local_end]
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in blocks_to_upload
+    ]
+
+    if block_objs_with_uploaded_files:
+        after_block = (
+            existing_blocks[prefix_len - 1] if prefix_len > 0 else None
+        )
+        page.append(
+            blocks=block_objs_with_uploaded_files,
+            after=after_block,
+        )
+
+
+@beartype
 def upload_to_notion(
     *,
     session: Session,
@@ -316,38 +390,12 @@ def upload_to_notion(
     if page.subdbs:
         raise PageHasDatabasesError
 
-    last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.blocks,
-        local_blocks=blocks,
+    _sync_blocks(
+        page=page,
+        blocks=blocks,
+        title=title,
+        cancel_on_discussion=cancel_on_discussion,
+        session=session,
     )
-
-    delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.blocks[delete_start_index:]
-    blocks_to_delete_with_discussions = [
-        block for block in blocks_to_delete if len(block.discussions) > 0
-    ]
-
-    if cancel_on_discussion and blocks_to_delete_with_discussions:
-        total_discussions = sum(
-            len(block.discussions)
-            for block in blocks_to_delete_with_discussions
-        )
-        error_message = (
-            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
-            f"block(s) to delete with {total_discussions} discussion "
-            "thread(s). "
-            f"Upload cancelled."
-        )
-        raise DiscussionsExistError(error_message)
-
-    for existing_page_block in blocks_to_delete:
-        existing_page_block.delete()
-
-    blocks_to_upload = blocks[delete_start_index:]
-    block_objs_with_uploaded_files = [
-        _block_with_uploaded_file(block=block, session=session)
-        for block in blocks_to_upload
-    ]
-    page.append(blocks=block_objs_with_uploaded_files)
 
     return page
