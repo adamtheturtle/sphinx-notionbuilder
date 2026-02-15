@@ -787,8 +787,8 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     # that preserves all content and rich text formatting.
     combined = nodes.paragraph()
 
-    for i, child in enumerate(iterable=entry.children):
-        if i > 0:
+    for child_index, child in enumerate(iterable=entry.children):
+        if child_index > 0:
             # Add double newline between paragraphs to maintain separation
             combined += nodes.Text(data="\n\n")
 
