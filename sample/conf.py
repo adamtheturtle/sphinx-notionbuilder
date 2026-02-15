@@ -20,6 +20,3 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_notion",
 ]
-
-# This URL is used as placeholder content in the sample docs.
-linkcheck_ignore = [r"https://example\.com/?"]
