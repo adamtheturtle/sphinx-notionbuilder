@@ -6,6 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 from collections.abc import Sequence
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -31,6 +32,14 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+
+
+@dataclass(frozen=True, slots=True)
+class _MatchLengths:
+    """Matching prefix/suffix lengths for block diffing."""
+
+    prefix: int
+    suffix: int
 
 
 class PageHasSubpagesError(Exception):
@@ -109,28 +118,41 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
 
 
 @beartype
-def _find_last_matching_block_index(
+def _find_matching_prefix_and_suffix_lengths(
     *,
     existing_blocks: Sequence[Block],
     local_blocks: Sequence[Block],
-) -> int | None:
-    """Find the last index where existing blocks match local blocks.
+) -> _MatchLengths:
+    """Find the lengths of matching prefix and suffix between block lists.
 
-    Returns the last index where blocks are equivalent, or None if no
-    blocks match.
+    Returns matching lengths where:
+    - `prefix`: number of matching blocks from the start
+    - `suffix`: number of matching blocks from the end (not overlapping
+      with prefix)
     """
-    last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=existing_blocks):
-        if index < len(local_blocks) and (
-            _is_existing_equivalent(
-                existing_page_block=existing_page_block,
-                local_block=local_blocks[index],
-            )
+    min_len = min(len(existing_blocks), len(local_blocks))
+
+    prefix_len = 0
+    for i in range(min_len):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[i],
+            local_block=local_blocks[i],
         ):
-            last_matching_index = index
+            prefix_len += 1
         else:
             break
-    return last_matching_index
+
+    suffix_len = 0
+    for i in range(1, min_len - prefix_len + 1):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[-i],
+            local_block=local_blocks[-i],
+        ):
+            suffix_len += 1
+        else:
+            break
+
+    return _MatchLengths(prefix=prefix_len, suffix=suffix_len)
 
 
 @beartype
@@ -263,7 +285,8 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
 
 @beartype
-def upload_to_notion(
+# pylint: disable-next=too-complex,too-many-branches,too-many-statements
+def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     *,
     session: Session,
     blocks: Sequence[Block],
@@ -329,25 +352,37 @@ def upload_to_notion(
     if page.subdbs:
         raise PageHasDatabasesError
 
+    _LOGGER.info("Syncing page blocks")
+    existing_blocks = page.blocks
     _LOGGER.info(
         "Comparing %d existing blocks with %d local blocks",
-        len(page.blocks),
+        len(existing_blocks),
         len(blocks),
     )
-    last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.blocks,
+    match_lengths = _find_matching_prefix_and_suffix_lengths(
+        existing_blocks=existing_blocks,
         local_blocks=blocks,
     )
+    prefix_len = match_lengths.prefix
+    suffix_len = match_lengths.suffix
 
-    delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.blocks[delete_start_index:]
+    # Can't use suffix matching without a prefix because the Notion API
+    # has no way to insert before the first block.
+    if prefix_len == 0:
+        suffix_len = 0
+
+    existing_end = len(existing_blocks) - suffix_len
+    local_end = len(blocks) - suffix_len
+
+    blocks_to_delete = existing_blocks[prefix_len:existing_end]
+    blocks_to_upload = blocks[prefix_len:local_end]
     _LOGGER.info(
-        "%d blocks match, %d to delete, %d to upload",
-        delete_start_index,
+        "%d prefix and %d suffix blocks match, %d to delete, %d to upload",
+        prefix_len,
+        suffix_len,
         len(blocks_to_delete),
-        len(blocks) - delete_start_index,
+        len(blocks_to_upload),
     )
-
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
@@ -375,16 +410,22 @@ def upload_to_notion(
         )
         existing_page_block.delete()
 
-    blocks_to_upload = blocks[delete_start_index:]
     _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
         for block in blocks_to_upload
     ]
-    _LOGGER.info(
-        "Appending %d blocks to page",
-        len(block_objs_with_uploaded_files),
-    )
-    page.append(blocks=block_objs_with_uploaded_files)
 
+    if block_objs_with_uploaded_files:
+        _LOGGER.info(
+            "Appending %d blocks to page",
+            len(block_objs_with_uploaded_files),
+        )
+        after_block = (
+            existing_blocks[prefix_len - 1] if prefix_len > 0 else None
+        )
+        page.append(
+            blocks=block_objs_with_uploaded_files,
+            after=after_block,
+        )
     return page
