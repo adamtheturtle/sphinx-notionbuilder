@@ -365,10 +365,12 @@ def upload_to_notion(
         )
         raise DiscussionsExistError(error_message)
 
-    for i, existing_page_block in enumerate(iterable=blocks_to_delete):
+    for block_index, existing_page_block in enumerate(
+        iterable=blocks_to_delete
+    ):
         _LOGGER.info(
             "Deleting block %d/%d",
-            i + 1,
+            block_index + 1,
             len(blocks_to_delete),
         )
         existing_page_block.delete()
