@@ -4,6 +4,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
 import hashlib
+import logging
 from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
@@ -26,6 +27,8 @@ from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
+
+_LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 
@@ -211,8 +214,10 @@ def _get_uploaded_cover(
             existing_file_url=page.cover.url, local_file_path=cover
         )
     ):
+        _LOGGER.info("Cover image unchanged, skipping upload")
         return None
 
+    _LOGGER.info("Uploading cover image '%s'", cover.name)
     with cover.open(mode="rb") as file_stream:
         uploaded_cover = session.upload(
             file=file_stream,
@@ -220,6 +225,7 @@ def _get_uploaded_cover(
         )
 
     uploaded_cover.wait_until_uploaded()
+    _LOGGER.info("Cover image uploaded")
     return uploaded_cover
 
 
@@ -232,6 +238,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             # Ignore ``mypy`` error as the keyword arguments are different
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
@@ -240,6 +247,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
                 )
 
             uploaded_file.wait_until_uploaded()
+            _LOGGER.info("File '%s' uploaded", file_path.name)
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
@@ -279,10 +287,12 @@ def upload_to_notion(
     """
     parent: Page | Database
     if parent_page_id:
+        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
         parent = session.get_page(page_ref=parent_page_id)
         subpages = parent.subpages
     else:
         assert parent_database_id is not None
+        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
         parent = session.get_db(db_ref=parent_database_id)
         subpages = parent.get_all_pages().to_pages()
 
@@ -297,9 +307,12 @@ def upload_to_notion(
         )
         assert len(pages_matching_title) == 1, msg
         (page,) = pages_matching_title
+        _LOGGER.info("Found existing page '%s'", title)
     else:
+        _LOGGER.info("Creating new page '%s'", title)
         page = session.create_page(parent=parent, title=title)
 
+    _LOGGER.info("Setting page icon and cover")
     page.icon = Emoji(emoji=icon) if icon else None
     if cover_path:
         page.cover = _get_uploaded_cover(
@@ -316,6 +329,11 @@ def upload_to_notion(
     if page.subdbs:
         raise PageHasDatabasesError
 
+    _LOGGER.info(
+        "Comparing %d existing blocks with %d local blocks",
+        len(page.blocks),
+        len(blocks),
+    )
     last_matching_index = _find_last_matching_block_index(
         existing_blocks=page.blocks,
         local_blocks=blocks,
@@ -323,6 +341,13 @@ def upload_to_notion(
 
     delete_start_index = (last_matching_index or -1) + 1
     blocks_to_delete = page.blocks[delete_start_index:]
+    _LOGGER.info(
+        "%d blocks match, %d to delete, %d to upload",
+        delete_start_index,
+        len(blocks_to_delete),
+        len(blocks) - delete_start_index,
+    )
+
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
@@ -340,14 +365,24 @@ def upload_to_notion(
         )
         raise DiscussionsExistError(error_message)
 
-    for existing_page_block in blocks_to_delete:
+    for i, existing_page_block in enumerate(iterable=blocks_to_delete):
+        _LOGGER.info(
+            "Deleting block %d/%d",
+            i + 1,
+            len(blocks_to_delete),
+        )
         existing_page_block.delete()
 
     blocks_to_upload = blocks[delete_start_index:]
+    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
         for block in blocks_to_upload
     ]
+    _LOGGER.info(
+        "Appending %d blocks to page",
+        len(block_objs_with_uploaded_files),
+    )
     page.append(blocks=block_objs_with_uploaded_files)
 
     return page
