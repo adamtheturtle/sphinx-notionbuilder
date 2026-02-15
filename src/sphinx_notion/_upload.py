@@ -4,6 +4,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
 import hashlib
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
@@ -27,6 +28,8 @@ from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
+
+_LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 
@@ -233,8 +236,10 @@ def _get_uploaded_cover(
             existing_file_url=page.cover.url, local_file_path=cover
         )
     ):
+        _LOGGER.info("Cover image unchanged, skipping upload")
         return None
 
+    _LOGGER.info("Uploading cover image '%s'", cover.name)
     with cover.open(mode="rb") as file_stream:
         uploaded_cover = session.upload(
             file=file_stream,
@@ -242,6 +247,7 @@ def _get_uploaded_cover(
         )
 
     uploaded_cover.wait_until_uploaded()
+    _LOGGER.info("Cover image uploaded")
     return uploaded_cover
 
 
@@ -254,6 +260,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             # Ignore ``mypy`` error as the keyword arguments are different
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
@@ -262,6 +269,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
                 )
 
             uploaded_file.wait_until_uploaded()
+            _LOGGER.info("File '%s' uploaded", file_path.name)
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
@@ -287,6 +295,11 @@ def _sync_blocks(
 ) -> None:
     """Sync local blocks to a Notion page using prefix+suffix matching."""
     existing_blocks = page.blocks
+    _LOGGER.info(
+        "Comparing %d existing blocks with %d local blocks",
+        len(existing_blocks),
+        len(blocks),
+    )
     match_lengths = _find_matching_prefix_and_suffix_lengths(
         existing_blocks=existing_blocks,
         local_blocks=blocks,
@@ -303,6 +316,14 @@ def _sync_blocks(
     local_end = len(blocks) - suffix_len
 
     blocks_to_delete = existing_blocks[prefix_len:existing_end]
+    blocks_to_upload = blocks[prefix_len:local_end]
+    _LOGGER.info(
+        "%d prefix and %d suffix blocks match, %d to delete, %d to upload",
+        prefix_len,
+        suffix_len,
+        len(blocks_to_delete),
+        len(blocks_to_upload),
+    )
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
@@ -320,16 +341,27 @@ def _sync_blocks(
         )
         raise DiscussionsExistError(error_message)
 
-    for existing_page_block in blocks_to_delete:
+    for block_index, existing_page_block in enumerate(
+        iterable=blocks_to_delete
+    ):
+        _LOGGER.info(
+            "Deleting block %d/%d",
+            block_index + 1,
+            len(blocks_to_delete),
+        )
         existing_page_block.delete()
 
-    blocks_to_upload = blocks[prefix_len:local_end]
+    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
         for block in blocks_to_upload
     ]
 
     if block_objs_with_uploaded_files:
+        _LOGGER.info(
+            "Appending %d blocks to page",
+            len(block_objs_with_uploaded_files),
+        )
         after_block = (
             existing_blocks[prefix_len - 1] if prefix_len > 0 else None
         )
@@ -364,10 +396,12 @@ def upload_to_notion(
     """
     parent: Page | Database
     if parent_page_id:
+        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
         parent = session.get_page(page_ref=parent_page_id)
         subpages = parent.subpages
     else:
         assert parent_database_id is not None
+        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
         parent = session.get_db(db_ref=parent_database_id)
         subpages = parent.get_all_pages().to_pages()
 
@@ -382,9 +416,12 @@ def upload_to_notion(
         )
         assert len(pages_matching_title) == 1, msg
         (page,) = pages_matching_title
+        _LOGGER.info("Found existing page '%s'", title)
     else:
+        _LOGGER.info("Creating new page '%s'", title)
         page = session.create_page(parent=parent, title=title)
 
+    _LOGGER.info("Setting page icon and cover")
     page.icon = Emoji(emoji=icon) if icon else None
     if cover_path:
         page.cover = _get_uploaded_cover(
@@ -401,6 +438,7 @@ def upload_to_notion(
     if page.subdbs:
         raise PageHasDatabasesError
 
+    _LOGGER.info("Syncing page blocks")
     _sync_blocks(
         page=page,
         blocks=blocks,
@@ -408,5 +446,4 @@ def upload_to_notion(
         cancel_on_discussion=cancel_on_discussion,
         session=session,
     )
-
     return page

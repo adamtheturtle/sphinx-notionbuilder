@@ -4,6 +4,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
 import json
+import logging
 from pathlib import Path
 
 import click
@@ -97,6 +98,10 @@ def main(
     cancel_on_discussion: bool,
 ) -> None:
     """Upload documentation to Notion."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
     session = Session()
     block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
     # See https://github.com/ultimate-notion/ultimate-notion/issues/177
