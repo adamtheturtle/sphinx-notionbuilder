@@ -6,3 +6,4 @@ checkboxes
 reStructuredText
 Schrödinger
 SVG
+subdirectories
