@@ -1,11 +1,11 @@
 """Opt-in Microcks integration test for upload synchronization."""
 
+import importlib
 import os
-import shutil
 import socket
-import subprocess
 import time
 from pathlib import Path
+from types import ModuleType
 from typing import Any, cast
 
 import pytest
@@ -26,6 +26,14 @@ _HTTP_OK = 200
 _OPENAPI_PATH = Path(__file__).parent / "notion_sandbox" / "notion-openapi.yml"
 
 
+def _docker_module() -> ModuleType | None:
+    """Return the docker module, or None if unavailable."""
+    try:
+        return importlib.import_module(name="docker")
+    except ModuleNotFoundError:
+        return None
+
+
 def _is_enabled() -> bool:
     """Return whether Microcks integration tests are explicitly
     enabled.
@@ -43,48 +51,47 @@ def _find_free_port() -> int:
 
 
 def _docker_is_available() -> bool:
-    """Return whether the Docker CLI and daemon are available."""
-    if shutil.which(cmd="docker") is None:
+    """Return whether docker-py can talk to a Docker daemon."""
+    docker_module = _docker_module()
+    if docker_module is None:
         return False
 
-    result = subprocess.run(
-        args=["docker", "info"],
-        check=False,
-        capture_output=True,
-        text=True,
+    docker_client = cast("Any", docker_module).from_env()
+    try:
+        docker_client.ping()
+    except cast("Any", docker_module).errors.DockerException:
+        return False
+    finally:
+        docker_client.close()
+    return True
+
+
+def _start_microcks(*, port: int) -> tuple[object, object]:
+    """Start Microcks and return `(docker_client, container)` handles."""
+    docker_module = _docker_module()
+    assert docker_module is not None
+
+    docker_client = cast("Any", docker_module).from_env()
+    container = docker_client.containers.run(
+        image=_MICROCKS_IMAGE,
+        detach=True,
+        remove=True,
+        ports={"8080/tcp": ("127.0.0.1", port)},
     )
-    return result.returncode == 0
+    return docker_client, container
 
 
-def _start_microcks(*, port: int) -> str:
-    """Start Microcks and return its container ID."""
-    result = subprocess.run(
-        args=[
-            "docker",
-            "run",
-            "--detach",
-            "--rm",
-            "--publish",
-            f"{port}:8080",
-            _MICROCKS_IMAGE,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    container_id = result.stdout.strip()
-    assert container_id
-    return container_id
+def _stop_microcks(*, docker_client: object, container: object) -> None:
+    """Stop a Microcks container and close docker client."""
+    docker_module = _docker_module()
+    assert docker_module is not None
 
-
-def _stop_microcks(*, container_id: str) -> None:
-    """Stop a Microcks container."""
-    subprocess.run(
-        args=["docker", "rm", "--force", container_id],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        cast("Any", container).remove(force=True)
+    except cast("Any", docker_module).errors.DockerException:
+        pass
+    finally:
+        cast("Any", docker_client).close()
 
 
 def _wait_for_microcks(*, base_url: str, timeout_seconds: int = 120) -> None:
@@ -166,7 +173,7 @@ def test_upload_to_notion_with_microcks(
 
     port = _find_free_port()
     base_url = f"http://127.0.0.1:{port}"
-    container_id = _start_microcks(port=port)
+    docker_client, container = _start_microcks(port=port)
     try:
         _wait_for_microcks(base_url=base_url)
         _upload_openapi(base_url=base_url, openapi_path=_OPENAPI_PATH)
@@ -210,4 +217,4 @@ def test_upload_to_notion_with_microcks(
         assert page.title == "Upload Title"
         assert page.url == "https://www.notion.so/Upload-Title-59833787"
     finally:
-        _stop_microcks(container_id=container_id)
+        _stop_microcks(docker_client=docker_client, container=container)
