@@ -125,10 +125,14 @@ def _wait_for_uploaded_service(
 @pytest.fixture(name="microcks_base_url")
 def fixture_microcks_base_url_fixture(
     # This `yield` fixture tears down docker resources.
+    request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
     openapi_path = (
-        Path(__file__).parent / "notion_sandbox" / "notion-openapi.yml"
+        request.config.rootpath
+        / "tests"
+        / "notion_sandbox"
+        / "notion-openapi.yml"
     )
     assert openapi_path.is_file()
 
