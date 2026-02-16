@@ -34,15 +34,15 @@ def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
         wait=wait_fixed(wait=0.1),
         reraise=True,
     )
-    def _check() -> None:
-        """Check if the mock service API responds."""
+    def _get_services() -> None:
+        """GET the services endpoint, raising on non-OK status."""
         response = requests.get(
             url=f"{base_url}/api/services",
             timeout=2,
         )
         response.raise_for_status()
 
-    _check()
+    _get_services()
 
 
 def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
@@ -80,15 +80,16 @@ def _wait_for_uploaded_service(
         wait=wait_fixed(wait=0.1),
         reraise=True,
     )
-    def _check() -> None:
-        """Check if the service appears in the mock service."""
+    def _find_service() -> None:
+        """GET the services endpoint and assert the service is listed."""
         response = requests.get(
             url=f"{base_url}/api/services",
             timeout=3,
         )
         response.raise_for_status()
         payload = response.text
-        if service_name not in payload or service_version not in payload:
+        service_found = service_name in payload and service_version in payload
+        if not service_found:  # pragma: no cover
             msg = (
                 f"Service '{service_name}' version "
                 f"'{service_version}' "
@@ -96,7 +97,7 @@ def _wait_for_uploaded_service(
             )
             raise RuntimeError(msg)
 
-    _check()
+    _find_service()
 
 
 @pytest.fixture(name="microcks_base_url", scope="module")
