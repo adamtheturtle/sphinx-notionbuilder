@@ -26,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
+def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
     """Wait until the mock service API responds."""
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
@@ -37,15 +37,19 @@ def wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
             )
             if response.status_code == HTTPStatus.OK:
                 return
-        except requests.RequestException:
+        # Startup race: only reached while the service is booting.
+        except requests.RequestException:  # pragma: no cover
             pass
-        time.sleep(0.1)
+        time.sleep(0.1)  # pragma: no cover
 
-    message = f"Mock service did not become ready: {base_url}"
-    raise RuntimeError(message)
+    # Defensive: only reached if the service never responds.
+    message = (  # pragma: no cover
+        f"Mock service did not become ready: {base_url}"
+    )
+    raise RuntimeError(message)  # pragma: no cover
 
 
-def upload_openapi(*, base_url: str, openapi_path: Path) -> None:
+def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
     """Upload an OpenAPI artifact to the mock service."""
     with openapi_path.open(mode="rb") as file_obj:
         response = requests.post(
@@ -58,14 +62,15 @@ def upload_openapi(*, base_url: str, openapi_path: Path) -> None:
         HTTPStatus.OK,
         HTTPStatus.CREATED,
     ):
-        message = (
+        # Defensive: only reached if the Microcks upload endpoint fails.
+        message = (  # pragma: no cover
             "OpenAPI upload failed with "
             f"{response.status_code}: {response.text}"
         )
-        raise RuntimeError(message)
+        raise RuntimeError(message)  # pragma: no cover
 
 
-def wait_for_uploaded_service(
+def _wait_for_uploaded_service(
     *,
     base_url: str,
     service_name: str,
@@ -85,14 +90,15 @@ def wait_for_uploaded_service(
             return
         time.sleep(0.1)
 
-    message = (
+    # Defensive: only reached if the uploaded service never appears.
+    message = (  # pragma: no cover
         f"Service '{service_name}' version '{service_version}' "
         "did not appear in the mock service."
     )
-    raise RuntimeError(message)
+    raise RuntimeError(message)  # pragma: no cover
 
 
-@pytest.fixture(name="microcks_base_url")
+@pytest.fixture(name="microcks_base_url", scope="module")
 def fixture_microcks_base_url_fixture(
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
@@ -117,9 +123,9 @@ def fixture_microcks_base_url_fixture(
     assert isinstance(host_port, str)
     base_url = f"http://127.0.0.1:{host_port}"
 
-    wait_for_microcks(base_url=base_url, timeout_seconds=120)
-    upload_openapi(base_url=base_url, openapi_path=openapi_path)
-    wait_for_uploaded_service(
+    _wait_for_microcks(base_url=base_url, timeout_seconds=120)
+    _upload_openapi(base_url=base_url, openapi_path=openapi_path)
+    _wait_for_uploaded_service(
         base_url=base_url,
         service_name="notion-api",
         service_version="1.1.0",
