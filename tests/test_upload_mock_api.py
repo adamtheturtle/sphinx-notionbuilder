@@ -11,7 +11,12 @@ from pathlib import Path
 import docker
 import pytest
 import requests
-from tenacity import retry, stop_after_delay, wait_fixed
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_delay,
+    wait_fixed,
+)
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -64,6 +69,7 @@ def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
 @retry(
     stop=stop_after_delay(max_delay=30),
     wait=wait_fixed(wait=0.1),
+    retry=retry_if_exception_type(exception_types=AssertionError),
     reraise=True,
 )
 def _wait_for_uploaded_service(
@@ -79,14 +85,8 @@ def _wait_for_uploaded_service(
     )
     response.raise_for_status()
     payload = response.text
-    service_found = service_name in payload and service_version in payload
-    if not service_found:  # pragma: no cover
-        msg = (
-            f"Service '{service_name}' version "
-            f"'{service_version}' "
-            "did not appear in the mock service."
-        )
-        raise RuntimeError(msg)
+    assert service_name in payload
+    assert service_version in payload
 
 
 @pytest.fixture(name="microcks_base_url", scope="module")
