@@ -137,10 +137,9 @@ def fixture_microcks_base_url_fixture(
 
     try:
         docker_client: DockerClient = docker.from_env()
+        container = _start_microcks(docker_client=docker_client)
     except DockerException:
-        pytest.skip(reason="Docker daemon is not available for this test.")
-
-    container = _start_microcks(docker_client=docker_client)
+        pytest.skip(reason="Docker is not available for this test.")
     port = _get_microcks_port(container=container)
     base_url = f"http://127.0.0.1:{port}"
 
