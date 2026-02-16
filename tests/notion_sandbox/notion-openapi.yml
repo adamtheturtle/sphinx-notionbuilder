@@ -390,6 +390,1512 @@ paths:
                     has_more: false
                     results: []
 
+  /v1/blocks/30f89f8f-57ff-4f6c-a13d-4720d0d4f123/children:
+    get:
+      operationId: listChildrenForAppendedBlock
+      responses:
+        '200':
+          description: Child blocks for appended block (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+    patch:
+      operationId: appendChildrenForAppendedBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended child blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: 30f89f8f-57ff-4f6c-a13d-4720d0d4f124
+                        parent:
+                          type: block_id
+                          block_id: 30f89f8f-57ff-4f6c-a13d-4720d0d4f123
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: image
+                        image:
+                          type: file_upload
+                          file_upload:
+                            id: ff000000-0000-0000-0000-000000000001
+
+  # --- Page with subpages (for PageHasSubpagesError) ---
+
+  /v1/pages/aaaa0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveSubpageParent
+      responses:
+        '200':
+          description: Parent page for subpage test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Subpage Parent
+                            plain_text: Subpage Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Subpage-Parent-aaaa0001
+    patch:
+      operationId: updateSubpageParent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Subpage Parent
+                            plain_text: Subpage Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Subpage-Parent-aaaa0001
+
+  /v1/pages/aaaa0000000000000000000000000001:
+    patch:
+      operationId: updateSubpageParentHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Subpage Parent
+                            plain_text: Subpage Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Subpage-Parent-aaaa0001
+
+  /v1/blocks/aaaa0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listSubpageParentChildren
+      responses:
+        '200':
+          description: >-
+            Children of the subpage parent — includes a child_page block
+            so that page.subpages detects subpages.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aaaa0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: aaaa0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+    patch:
+      operationId: appendSubpageParentChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/pages/aaaa0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveSubpageChild
+      responses:
+        '200':
+          description: The child page (found as existing page)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aaaa0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aaaa0002
+    patch:
+      operationId: updateSubpageChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aaaa0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aaaa0002
+
+  /v1/pages/aaaa0000000000000000000000000002:
+    patch:
+      operationId: updateSubpageChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aaaa0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aaaa0002
+
+  /v1/blocks/aaaa0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listSubpageChildChildren
+      responses:
+        '200':
+          description: >-
+            Children of the subpage child — includes another child_page
+            block so that page.subpages is non-empty, triggering
+            PageHasSubpagesError.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aaaa0000-0000-0000-0000-000000000099
+                        parent:
+                          type: page_id
+                          page_id: aaaa0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Nested Subpage
+    patch:
+      operationId: appendSubpageChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/pages/aaaa0000-0000-0000-0000-000000000099:
+    get:
+      operationId: retrieveNestedSubpage
+      responses:
+        '200':
+          description: The nested subpage (so page.subpages can resolve it)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aaaa0000-0000-0000-0000-000000000099
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aaaa0000-0000-0000-0000-000000000002
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Nested Subpage
+                            plain_text: Nested Subpage
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Nested-Subpage-aaaa0099
+
+  # --- Page with child databases (for PageHasDatabasesError) ---
+
+  /v1/pages/bbbb0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveDbChildParent
+      responses:
+        '200':
+          description: Parent page for child-database test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: DB Child Parent
+                            plain_text: DB Child Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/DB-Child-Parent-bbbb0001
+    patch:
+      operationId: updateDbChildParent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: DB Child Parent
+                            plain_text: DB Child Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/DB-Child-Parent-bbbb0001
+
+  /v1/pages/bbbb0000000000000000000000000001:
+    patch:
+      operationId: updateDbChildParentHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: DB Child Parent
+                            plain_text: DB Child Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/DB-Child-Parent-bbbb0001
+
+  /v1/blocks/bbbb0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listDbChildParentChildren
+      responses:
+        '200':
+          description: >-
+            Children of the parent — includes a child_page block
+            so that page.subpages finds the existing child page.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: bbbb0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: bbbb0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+    patch:
+      operationId: appendDbChildParentChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/pages/bbbb0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveDbChildSubpage
+      responses:
+        '200':
+          description: The child page whose children include a child_database
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: bbbb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-bbbb0002
+    patch:
+      operationId: updateDbChildSubpage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: bbbb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-bbbb0002
+
+  /v1/pages/bbbb0000000000000000000000000002:
+    patch:
+      operationId: updateDbChildSubpageHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: bbbb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: bbbb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-bbbb0002
+
+  /v1/blocks/bbbb0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listDbChildSubpageChildren
+      responses:
+        '200':
+          description: >-
+            Children — includes a child_database block so that
+            page.subdbs is non-empty, triggering PageHasDatabasesError.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: bbbb0000-0000-0000-0000-000000000099
+                        parent:
+                          type: page_id
+                          page_id: bbbb0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_database
+                        child_database:
+                          title: Inline Database
+    patch:
+      operationId: appendDbChildSubpageChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/databases/bbbb0000-0000-0000-0000-000000000099:
+    get:
+      operationId: retrieveInlineDatabase
+      responses:
+        '200':
+          description: Inline database (so page.subdbs can resolve it)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: database
+                    id: bbbb0000-0000-0000-0000-000000000099
+                    created_time: '2023-01-10T08:00:00.000Z'
+                    last_edited_time: '2023-01-12T10:00:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    title:
+                      - type: text
+                        text:
+                          content: Inline Database
+                        plain_text: Inline Database
+                        annotations:
+                          bold: false
+                          italic: false
+                          strikethrough: false
+                          underline: false
+                          code: false
+                          color: default
+                    description: []
+                    url: https://www.notion.so/bbbb0099
+                    archived: false
+                    in_trash: false
+                    is_inline: true
+                    parent:
+                      type: page_id
+                      page_id: bbbb0000-0000-0000-0000-000000000002
+                    properties:
+                      Name:
+                        id: title
+                        name: Name
+                        type: title
+                        title: {}
+
+  # --- Page with discussions (for DiscussionsExistError) ---
+
+  /v1/pages/cccc0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveDiscussionParent
+      responses:
+        '200':
+          description: Parent page for discussion test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Discussion Parent
+                            plain_text: Discussion Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Discussion-Parent-cccc0001
+    patch:
+      operationId: updateDiscussionParent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Discussion Parent
+                            plain_text: Discussion Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Discussion-Parent-cccc0001
+
+  /v1/pages/cccc0000000000000000000000000001:
+    patch:
+      operationId: updateDiscussionParentHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Discussion Parent
+                            plain_text: Discussion Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Discussion-Parent-cccc0001
+
+  /v1/blocks/cccc0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listDiscussionParentChildren
+      responses:
+        '200':
+          description: >-
+            Children of the discussion parent — includes a child_page
+            block so page.subpages finds the existing child page.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: cccc0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: cccc0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+    patch:
+      operationId: appendDiscussionParentChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/pages/cccc0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveDiscussionChild
+      responses:
+        '200':
+          description: Page with a block that has a discussion
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: cccc0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-cccc0002
+    patch:
+      operationId: updateDiscussionChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: cccc0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-cccc0002
+
+  /v1/pages/cccc0000000000000000000000000002:
+    patch:
+      operationId: updateDiscussionChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex path)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: cccc0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: cccc0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-cccc0002
+
+  /v1/blocks/cccc0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listDiscussionChildChildren
+      responses:
+        '200':
+          description: >-
+            Children of the discussion page — a paragraph block that has
+            a discussion thread.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: cccc0000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: cccc0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: paragraph
+                        paragraph:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: Block with a discussion
+                              plain_text: Block with a discussion
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+    patch:
+      operationId: appendDiscussionChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/blocks/cccc0000-0000-0000-0000-000000000010:
+    delete:
+      operationId: deleteDiscussionBlock
+      responses:
+        '200':
+          description: Deleted block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: block
+                    id: cccc0000-0000-0000-0000-000000000010
+                    parent:
+                      type: page_id
+                      page_id: cccc0000-0000-0000-0000-000000000002
+                    created_time: '2023-02-24T21:06:00.000Z'
+                    last_edited_time: '2023-02-24T21:06:00.000Z'
+                    has_children: false
+                    archived: true
+                    in_trash: true
+                    type: paragraph
+                    paragraph:
+                      rich_text: []
+                      color: default
+
+  /v1/blocks/cccc0000-0000-0000-0000-000000000010/children:
+    get:
+      operationId: listDiscussionBlockChildren
+      responses:
+        '200':
+          description: Children for discussion block (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  # --- Comments endpoint (URI_PARAMS dispatcher) ---
+
   /v1/comments:
     get:
       operationId: listComments
@@ -427,3 +1933,2118 @@ paths:
                     comment: {}
                     has_more: false
                     results: []
+
+  # --- Database endpoints ---
+
+  /v1/databases/db000000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveDatabase
+      responses:
+        '200':
+          description: Database object
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: database
+                    id: db000000-0000-0000-0000-000000000001
+                    created_time: '2023-01-10T08:00:00.000Z'
+                    last_edited_time: '2023-01-12T10:00:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    title:
+                      - type: text
+                        text:
+                          content: Test Database
+                        plain_text: Test Database
+                        annotations:
+                          bold: false
+                          italic: false
+                          strikethrough: false
+                          underline: false
+                          code: false
+                          color: default
+                    description: []
+                    url: https://www.notion.so/db000001
+                    archived: false
+                    in_trash: false
+                    is_inline: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        name: Name
+                        type: title
+                        title: {}
+
+  /v1/databases/db000000-0000-0000-0000-000000000001/query:
+    post:
+      operationId: queryDatabase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Query results with one page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: page_or_database
+                    page_or_database: {}
+                    has_more: false
+                    results:
+                      - object: page
+                        id: 59833787-2cf9-4fdf-8782-e53db20768a5
+                        created_time: '2023-01-15T10:30:00.000Z'
+                        last_edited_time: '2023-01-16T14:22:00.000Z'
+                        created_by:
+                          object: user
+                          id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                        last_edited_by:
+                          object: user
+                          id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                        archived: false
+                        in_trash: false
+                        parent:
+                          type: database_id
+                          database_id: db000000-0000-0000-0000-000000000001
+                        properties:
+                          Name:
+                            id: title
+                            type: title
+                            title:
+                              - type: text
+                                text:
+                                  content: Upload Title
+                                plain_text: Upload Title
+                                annotations:
+                                  bold: false
+                                  italic: false
+                                  strikethrough: false
+                                  underline: false
+                                  code: false
+                                  color: default
+                        url: https://www.notion.so/Upload-Title-59833787
+
+  # --- File upload endpoints ---
+
+  /v1/file_uploads:
+    post:
+      operationId: createFileUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Created file upload session
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: file_upload
+                    id: ff000000-0000-0000-0000-000000000001
+                    created_time: '2023-03-01T12:00:00.000Z'
+                    last_edited_time: '2023-03-01T12:00:00.000Z'
+                    expiry_time: '2023-03-01T13:00:00.000Z'
+                    status: pending
+                    filename: test.png
+                    content_type: image/png
+                    content_length:
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
+                    archived: false
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+
+  /v1/file_uploads/ff000000-0000-0000-0000-000000000001/send:
+    post:
+      operationId: sendFileUpload
+      responses:
+        '200':
+          description: File data sent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: file_upload
+                    id: ff000000-0000-0000-0000-000000000001
+                    created_time: '2023-03-01T12:00:00.000Z'
+                    last_edited_time: '2023-03-01T12:00:05.000Z'
+                    expiry_time: '2023-03-01T13:00:00.000Z'
+                    status: uploaded
+                    filename: test.png
+                    content_type: image/png
+                    content_length: 1024
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
+                    archived: false
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+
+  /v1/file_uploads/ff000000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveFileUpload
+      responses:
+        '200':
+          description: File upload status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: file_upload
+                    id: ff000000-0000-0000-0000-000000000001
+                    created_time: '2023-03-01T12:00:00.000Z'
+                    last_edited_time: '2023-03-01T12:00:05.000Z'
+                    expiry_time: '2023-03-01T13:00:00.000Z'
+                    status: uploaded
+                    filename: test.png
+                    content_type: image/png
+                    content_length: 1024
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
+                    archived: false
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+  # --- Page for prefix/suffix matching (dddd) ---
+
+  /v1/pages/dddd0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveDdddParent
+      responses:
+        '200':
+          description: Parent page for prefix/suffix test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: dddd0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Dddd Parent
+                            plain_text: Dddd Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Dddd-Parent-dddd0001
+  /v1/blocks/dddd0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listDdddParentChildren
+      responses:
+        '200':
+          description: Children of prefix/suffix parent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+  /v1/pages/dddd0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveDdddChild
+      responses:
+        '200':
+          description: Child page for prefix/suffix test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: dddd0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: dddd0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-dddd0002
+    patch:
+      operationId: updateDdddChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: dddd0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: dddd0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-dddd0002
+  /v1/pages/dddd0000000000000000000000000002:
+    patch:
+      operationId: updateDdddChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: dddd0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: dddd0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-dddd0002
+  /v1/blocks/dddd0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listDdddChildChildren
+      responses:
+        '200':
+          description: Children of prefix/suffix child page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: paragraph
+                        paragraph:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: same
+                              plain_text: same
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000011
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: paragraph
+                        paragraph:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: old
+                              plain_text: old
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000012
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: divider
+                        divider: {}
+    patch:
+      operationId: appendDdddChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000020
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: paragraph
+                        paragraph:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: new
+                              plain_text: new
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+                      - object: block
+                        id: dddd0000-0000-0000-0000-000000000012
+                        parent:
+                          type: page_id
+                          page_id: dddd0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: divider
+                        divider: {}
+  /v1/blocks/dddd0000-0000-0000-0000-000000000010/children:
+    get:
+      operationId: listDdddParaSameChildren
+      responses:
+        '200':
+          description: Children for paragraph same (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+  /v1/blocks/dddd0000-0000-0000-0000-000000000011/children:
+    get:
+      operationId: listDdddParaOldChildren
+      responses:
+        '200':
+          description: Children for paragraph old (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+  /v1/blocks/dddd0000-0000-0000-0000-000000000011:
+    delete:
+      operationId: deleteDdddParaOld
+      responses:
+        '200':
+          description: Deleted block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: block
+                    id: dddd0000-0000-0000-0000-000000000011
+                    parent:
+                      type: page_id
+                      page_id: dddd0000-0000-0000-0000-000000000002
+                    created_time: '2023-02-24T21:06:00.000Z'
+                    last_edited_time: '2023-02-24T21:06:00.000Z'
+                    has_children: false
+                    archived: true
+                    in_trash: true
+                    type: paragraph
+                    paragraph:
+                      rich_text: []
+                      color: default
+  /v1/blocks/dddd0000-0000-0000-0000-000000000020/children:
+    get:
+      operationId: listDdddAppendedChildren
+      responses:
+        '200':
+          description: Children for appended paragraph (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  # --- Page with NotionFile cover (aa11) ---
+
+  /v1/pages/aa110000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveAa11Parent
+      responses:
+        '200':
+          description: Parent page for cover unchanged test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aa110000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Aa11 Parent
+                            plain_text: Aa11 Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Aa11-Parent-aa110001
+  /v1/blocks/aa110000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listAa11ParentChildren
+      responses:
+        '200':
+          description: Children of cover unchanged parent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aa110000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: aa110000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+  /v1/pages/aa110000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveAa11Child
+      responses:
+        '200':
+          description: Child page with NotionFile cover
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aa110000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    cover:
+                      type: file
+                      file:
+                        url: https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png
+                        expiry_time: '2025-01-01T00:00:00.000Z'
+                    parent:
+                      type: page_id
+                      page_id: aa110000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aa110002
+    patch:
+      operationId: updateAa11Child
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aa110000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    cover:
+                      type: file
+                      file:
+                        url: https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png
+                        expiry_time: '2025-01-01T00:00:00.000Z'
+                    parent:
+                      type: page_id
+                      page_id: aa110000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aa110002
+  /v1/pages/aa110000000000000000000000000002:
+    patch:
+      operationId: updateAa11ChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aa110000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    cover:
+                      type: file
+                      file:
+                        url: https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png
+                        expiry_time: '2025-01-01T00:00:00.000Z'
+                    parent:
+                      type: page_id
+                      page_id: aa110000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aa110002
+  /v1/blocks/aa110000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listAa11ChildChildren
+      responses:
+        '200':
+          description: Children of cover unchanged child page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aa110000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: aa110000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: paragraph
+                        paragraph:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: Hello from Microcks upload test
+                              plain_text: Hello from Microcks upload test
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+  /v1/blocks/aa110000-0000-0000-0000-000000000010/children:
+    get:
+      operationId: listAa11ParaChildren
+      responses:
+        '200':
+          description: Children for cover page paragraph (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  # --- Page with NotionFile image block (eeee) ---
+
+  /v1/pages/eeee0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveEeeeParent
+      responses:
+        '200':
+          description: Parent page for file block test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: eeee0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Eeee Parent
+                            plain_text: Eeee Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Eeee-Parent-eeee0001
+  /v1/blocks/eeee0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listEeeeParentChildren
+      responses:
+        '200':
+          description: Children of file block parent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: eeee0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: eeee0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+  /v1/pages/eeee0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveEeeeChild
+      responses:
+        '200':
+          description: Child page with NotionFile image block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: eeee0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: eeee0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-eeee0002
+    patch:
+      operationId: updateEeeeChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: eeee0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: eeee0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-eeee0002
+  /v1/pages/eeee0000000000000000000000000002:
+    patch:
+      operationId: updateEeeeChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: eeee0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: eeee0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-eeee0002
+  /v1/blocks/eeee0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listEeeeChildChildren
+      responses:
+        '200':
+          description: Children of file block child page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: eeee0000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: eeee0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: image
+                        image:
+                          type: file
+                          file:
+                            url: https://prod-files-secure.s3.us-west-2.amazonaws.com/test.png
+                            expiry_time: '2025-01-01T00:00:00.000Z'
+                          caption: []
+    patch:
+      operationId: appendEeeeChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: eeee0000-0000-0000-0000-000000000020
+                        parent:
+                          type: page_id
+                          page_id: eeee0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: image
+                        image:
+                          type: file_upload
+                          file_upload:
+                            id: ff000000-0000-0000-0000-000000000001
+  /v1/blocks/eeee0000-0000-0000-0000-000000000010:
+    delete:
+      operationId: deleteEeeeImage
+      responses:
+        '200':
+          description: Deleted block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: block
+                    id: eeee0000-0000-0000-0000-000000000010
+                    parent:
+                      type: page_id
+                      page_id: eeee0000-0000-0000-0000-000000000002
+                    created_time: '2023-02-24T21:06:00.000Z'
+                    last_edited_time: '2023-02-24T21:06:00.000Z'
+                    has_children: false
+                    archived: true
+                    in_trash: true
+                    type: image
+                    image:
+                      type: file
+                      file:
+                        url: https://prod-files-secure.s3.us-west-2.amazonaws.com/test.png
+                        expiry_time: '2025-01-01T00:00:00.000Z'
+                      caption: []
+
+  # --- Page with ExternalFile image block (ffff) ---
+
+  /v1/pages/ffff0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveFfffParent
+      responses:
+        '200':
+          description: Parent page for external file block test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: ffff0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Ffff Parent
+                            plain_text: Ffff Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Ffff-Parent-ffff0001
+  /v1/blocks/ffff0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listFfffParentChildren
+      responses:
+        '200':
+          description: Children of external file block parent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: ffff0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: ffff0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+  /v1/pages/ffff0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveFfffChild
+      responses:
+        '200':
+          description: Child page with ExternalFile image block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: ffff0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: ffff0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-ffff0002
+    patch:
+      operationId: updateFfffChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: ffff0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: ffff0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-ffff0002
+  /v1/pages/ffff0000000000000000000000000002:
+    patch:
+      operationId: updateFfffChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: ffff0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: ffff0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-ffff0002
+  /v1/blocks/ffff0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listFfffChildChildren
+      responses:
+        '200':
+          description: Children of external file block child page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: ffff0000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: ffff0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: image
+                        image:
+                          type: external
+                          external:
+                            url: https://example.com/image.png
+                          caption: []
+    patch:
+      operationId: appendFfffChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: ffff0000-0000-0000-0000-000000000020
+                        parent:
+                          type: page_id
+                          page_id: ffff0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: image
+                        image:
+                          type: file_upload
+                          file_upload:
+                            id: ff000000-0000-0000-0000-000000000001
+  /v1/blocks/ffff0000-0000-0000-0000-000000000010:
+    delete:
+      operationId: deleteFfffImage
+      responses:
+        '200':
+          description: Deleted block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: block
+                    id: ffff0000-0000-0000-0000-000000000010
+                    parent:
+                      type: page_id
+                      page_id: ffff0000-0000-0000-0000-000000000002
+                    created_time: '2023-02-24T21:06:00.000Z'
+                    last_edited_time: '2023-02-24T21:06:00.000Z'
+                    has_children: false
+                    archived: true
+                    in_trash: true
+                    type: image
+                    image:
+                      type: external
+                      external:
+                        url: https://example.com/image.png
+                      caption: []
+
+  # --- Page with parent block + children (aabb) ---
+
+  /v1/pages/aabb0000-0000-0000-0000-000000000001:
+    get:
+      operationId: retrieveAabbParent
+      responses:
+        '200':
+          description: Parent page for parent block test
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aabb0000-0000-0000-0000-000000000001
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Aabb Parent
+                            plain_text: Aabb Parent
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Aabb-Parent-aabb0001
+  /v1/blocks/aabb0000-0000-0000-0000-000000000001/children:
+    get:
+      operationId: listAabbParentChildren
+      responses:
+        '200':
+          description: Children of parent block parent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000002
+                        parent:
+                          type: page_id
+                          page_id: aabb0000-0000-0000-0000-000000000001
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: child_page
+                        child_page:
+                          title: Upload Title
+  /v1/pages/aabb0000-0000-0000-0000-000000000002:
+    get:
+      operationId: retrieveAabbChild
+      responses:
+        '200':
+          description: Child page with parent block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aabb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aabb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aabb0002
+    patch:
+      operationId: updateAabbChild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aabb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aabb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aabb0002
+  /v1/pages/aabb0000000000000000000000000002:
+    patch:
+      operationId: updateAabbChildHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page (hex)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: aabb0000-0000-0000-0000-000000000002
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: page_id
+                      page_id: aabb0000-0000-0000-0000-000000000001
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-aabb0002
+  /v1/blocks/aabb0000-0000-0000-0000-000000000002/children:
+    get:
+      operationId: listAabbChildChildren
+      responses:
+        '200':
+          description: Children of parent block child page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000010
+                        parent:
+                          type: page_id
+                          page_id: aabb0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: true
+                        archived: false
+                        in_trash: false
+                        type: bulleted_list_item
+                        bulleted_list_item:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: item
+                              plain_text: item
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+    patch:
+      operationId: appendAabbChildChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000020
+                        parent:
+                          type: page_id
+                          page_id: aabb0000-0000-0000-0000-000000000002
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: true
+                        archived: false
+                        in_trash: false
+                        type: bulleted_list_item
+                        bulleted_list_item:
+                          rich_text:
+                            - type: text
+                              text:
+                                content: item
+                              plain_text: item
+                              annotations:
+                                bold: false
+                                italic: false
+                                strikethrough: false
+                                underline: false
+                                code: false
+                                color: default
+                          color: default
+  /v1/blocks/aabb0000-0000-0000-0000-000000000010/children:
+    get:
+      operationId: listAabbBulletChildren
+      responses:
+        '200':
+          description: Children of bulleted item (one divider)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000011
+                        parent:
+                          type: block_id
+                          block_id: aabb0000-0000-0000-0000-000000000010
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: divider
+                        divider: {}
+  /v1/blocks/aabb0000-0000-0000-0000-000000000010:
+    delete:
+      operationId: deleteAabbBullet
+      responses:
+        '200':
+          description: Deleted block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: block
+                    id: aabb0000-0000-0000-0000-000000000010
+                    parent:
+                      type: page_id
+                      page_id: aabb0000-0000-0000-0000-000000000002
+                    created_time: '2023-02-24T21:06:00.000Z'
+                    last_edited_time: '2023-02-24T21:06:00.000Z'
+                    has_children: false
+                    archived: true
+                    in_trash: true
+                    type: bulleted_list_item
+                    bulleted_list_item:
+                      rich_text: []
+                      color: default
+  /v1/blocks/aabb0000-0000-0000-0000-000000000020/children:
+    get:
+      operationId: listAabbAppendedChildren
+      responses:
+        '200':
+          description: Children of appended bulleted item (empty)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+    patch:
+      operationId: appendAabbAppendedChildren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Appended children to bulleted item
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results:
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000021
+                        parent:
+                          type: block_id
+                          block_id: aabb0000-0000-0000-0000-000000000020
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: divider
+                        divider: {}
+                      - object: block
+                        id: aabb0000-0000-0000-0000-000000000022
+                        parent:
+                          type: block_id
+                          block_id: aabb0000-0000-0000-0000-000000000020
+                        created_time: '2023-02-24T21:06:00.000Z'
+                        last_edited_time: '2023-02-24T21:06:00.000Z'
+                        has_children: false
+                        archived: false
+                        in_trash: false
+                        type: divider
+                        divider: {}
