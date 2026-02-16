@@ -26,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
+def wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
     """Wait until the mock service API responds."""
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
@@ -45,7 +45,7 @@ def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
     raise RuntimeError(message)
 
 
-def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
+def upload_openapi(*, base_url: str, openapi_path: Path) -> None:
     """Upload an OpenAPI artifact to the mock service."""
     with openapi_path.open(mode="rb") as file_obj:
         response = requests.post(
@@ -65,7 +65,7 @@ def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
         raise RuntimeError(message)
 
 
-def _wait_for_uploaded_service(
+def wait_for_uploaded_service(
     *,
     base_url: str,
     service_name: str,
@@ -117,9 +117,9 @@ def fixture_microcks_base_url_fixture(
     assert isinstance(host_port, str)
     base_url = f"http://127.0.0.1:{host_port}"
 
-    _wait_for_microcks(base_url=base_url, timeout_seconds=120)
-    _upload_openapi(base_url=base_url, openapi_path=openapi_path)
-    _wait_for_uploaded_service(
+    wait_for_microcks(base_url=base_url, timeout_seconds=120)
+    upload_openapi(base_url=base_url, openapi_path=openapi_path)
+    wait_for_uploaded_service(
         base_url=base_url,
         service_name="notion-api",
         service_version="1.1.0",
