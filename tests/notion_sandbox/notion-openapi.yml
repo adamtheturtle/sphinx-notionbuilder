@@ -12,7 +12,7 @@ servers:
     description: Microcks REST mock base
 
 paths:
-  /pages:
+  /v1/pages:
     post:
       operationId: createPage
       requestBody:
@@ -45,11 +45,9 @@ paths:
                       id: 71e95936-2737-4e11-b03d-f174f6f13e90
                     archived: false
                     in_trash: false
-                    icon:
-                    cover:
                     parent:
-                      type: page_id
-                      page_id: 59833787-2cf9-4fdf-8782-e53db20768a5
+                      type: workspace
+                      workspace: true
                     properties:
                       Name:
                         # Workaround for naftiko/notion-sandbox#4:
@@ -69,17 +67,10 @@ paths:
                               code: false
                               color: default
                     url: https://www.notion.so/Upload-Title-59833787
-                    public_url:
 
-  /pages/{page_id}:
+  /v1/pages/59833787-2cf9-4fdf-8782-e53db20768a5:
     get:
       operationId: retrievePage
-      parameters:
-        - name: page_id
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: Page
@@ -103,11 +94,9 @@ paths:
                       id: 71e95936-2737-4e11-b03d-f174f6f13e90
                     archived: false
                     in_trash: false
-                    icon:
-                    cover:
                     parent:
-                      type: page_id
-                      page_id: 59833787-2cf9-4fdf-8782-e53db20768a5
+                      type: workspace
+                      workspace: true
                     properties:
                       Name:
                         id: title
@@ -125,15 +114,8 @@ paths:
                               code: false
                               color: default
                     url: https://www.notion.so/Upload-Title-59833787
-                    public_url:
     patch:
       operationId: updatePage
-      parameters:
-        - name: page_id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -164,11 +146,9 @@ paths:
                       id: 71e95936-2737-4e11-b03d-f174f6f13e90
                     archived: false
                     in_trash: false
-                    icon:
-                    cover:
                     parent:
-                      type: page_id
-                      page_id: 59833787-2cf9-4fdf-8782-e53db20768a5
+                      type: workspace
+                      workspace: true
                     properties:
                       Name:
                         id: title
@@ -186,17 +166,64 @@ paths:
                               code: false
                               color: default
                     url: https://www.notion.so/Upload-Title-59833787
-                    public_url:
 
-  /blocks/{block_id}/children:
+  /v1/pages/598337872cf94fdf8782e53db20768a5:
+    patch:
+      operationId: updatePageHex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: page
+                    id: 59833787-2cf9-4fdf-8782-e53db20768a5
+                    created_time: '2023-01-15T10:30:00.000Z'
+                    last_edited_time: '2023-01-16T14:22:00.000Z'
+                    created_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    last_edited_by:
+                      object: user
+                      id: 71e95936-2737-4e11-b03d-f174f6f13e90
+                    archived: false
+                    in_trash: false
+                    parent:
+                      type: workspace
+                      workspace: true
+                    properties:
+                      Name:
+                        id: title
+                        type: title
+                        title:
+                          - type: text
+                            text:
+                              content: Upload Title
+                            plain_text: Upload Title
+                            annotations:
+                              bold: false
+                              italic: false
+                              strikethrough: false
+                              underline: false
+                              code: false
+                              color: default
+                    url: https://www.notion.so/Upload-Title-59833787
+
+  /v1/blocks/59833787-2cf9-4fdf-8782-e53db20768a5/children:
     get:
       operationId: listChildren
-      parameters:
-        - name: block_id
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: Child blocks
@@ -210,8 +237,8 @@ paths:
                   value:
                     object: list
                     type: block
+                    block: {}
                     has_more: false
-                    next_cursor:
                     results:
                       - object: block
                         id: c02fc1d3-db8b-45c5-a222-27595b15aea7
@@ -228,8 +255,8 @@ paths:
                           rich_text:
                             - type: text
                               text:
-                                content: Existing paragraph from mock
-                              plain_text: Existing paragraph from mock
+                                content: Hello from Microcks upload test
+                              plain_text: Hello from Microcks upload test
                               annotations:
                                 bold: false
                                 italic: false
@@ -240,12 +267,6 @@ paths:
                           color: default
     patch:
       operationId: appendChildren
-      parameters:
-        - name: block_id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -266,8 +287,8 @@ paths:
                   value:
                     object: list
                     type: block
+                    block: {}
                     has_more: false
-                    next_cursor:
                     results:
                       - object: block
                         id: 30f89f8f-57ff-4f6c-a13d-4720d0d4f123
@@ -284,8 +305,8 @@ paths:
                           rich_text:
                             - type: text
                               text:
-                                content: Uploaded paragraph from mock
-                              plain_text: Uploaded paragraph from mock
+                                content: Hello from Microcks upload test
+                              plain_text: Hello from Microcks upload test
                               annotations:
                                 bold: false
                                 italic: false
@@ -295,15 +316,9 @@ paths:
                                 color: default
                           color: default
 
-  /blocks/{block_id}:
+  /v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7:
     delete:
       operationId: deleteBlock
-      parameters:
-        - name: block_id
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: Deleted block
@@ -330,8 +345,8 @@ paths:
                       rich_text:
                         - type: text
                           text:
-                            content: Existing paragraph from mock
-                          plain_text: Existing paragraph from mock
+                            content: Hello from Microcks upload test
+                          plain_text: Hello from Microcks upload test
                           annotations:
                             bold: false
                             italic: false
@@ -340,3 +355,59 @@ paths:
                             code: false
                             color: default
                       color: default
+
+  /v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7/children:
+    get:
+      operationId: listChildrenForParagraph
+      responses:
+        '200':
+          description: Child blocks for nested paragraph
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: block
+                    block: {}
+                    has_more: false
+                    results: []
+
+  /v1/comments:
+    get:
+      operationId: listComments
+      parameters:
+        - name: block_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: start_cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comments for a block
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                Success:
+                  value:
+                    object: list
+                    type: comment
+                    comment: {}
+                    has_more: false
+                    results: []
