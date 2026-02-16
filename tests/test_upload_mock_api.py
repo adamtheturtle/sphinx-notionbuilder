@@ -5,8 +5,10 @@ API.
 import logging
 import os
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
+from typing import BinaryIO
 from unittest.mock import MagicMock
 
 import docker
@@ -29,6 +31,7 @@ from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
 from ultimate_notion.file import UploadedFile
+from ultimate_notion.obj_api.objects import FileUpload as UnoFileUpload
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
@@ -360,16 +363,41 @@ def _patch_file_uploads(
     monkeypatch: pytest.MonkeyPatch,
     notion_session: Session,
 ) -> None:
-    """Patch file upload send (Microcks cannot handle multipart)."""
+    """Patch file upload handling for Microcks file-upload limitations."""
+    upload_id = 0
+
+    def _mock_upload(
+        file: BinaryIO,  # noqa: ARG001
+        *,
+        file_name: str | None = None,
+        mime_type: str | None = None,
+    ) -> UploadedFile:
+        """Return a completed uploaded file object without API calls."""
+        nonlocal upload_id
+        upload_id += 1
+        file_upload_obj = UnoFileUpload.model_validate(
+            {
+                "object": "file_upload",
+                "id": f"ff000000-0000-0000-0000-{upload_id:012d}",
+                "created_time": datetime.now(tz=UTC).isoformat(),
+                "last_edited_time": datetime.now(tz=UTC).isoformat(),
+                "status": "uploaded",
+                "filename": file_name or "uploaded-file.bin",
+                "content_type": mime_type or "application/octet-stream",
+                "content_length": 1,
+                "archived": False,
+                "created_by": {
+                    "object": "user",
+                    "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
+                },
+            },
+        )
+        return UploadedFile.from_file_upload(file_upload=file_upload_obj)
+
     monkeypatch.setattr(
-        target=notion_session.api.uploads,
-        name="send",
-        value=lambda **_kwargs: None,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
-    )
-    monkeypatch.setattr(
-        target=UploadedFile,
-        name="poll_interval",
-        value=0,
+        target=notion_session,
+        name="upload",
+        value=_mock_upload,
     )
 
 
