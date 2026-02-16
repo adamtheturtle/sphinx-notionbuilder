@@ -286,8 +286,6 @@ ignore = [
     "sample/**",
     "sample_warnings/",
     "sample_warnings/**",
-    "sandbox_issues/",
-    "sandbox_issues/**",
     ".yamlfmt",
     "*.enc",
     ".pre-commit-config.yaml",
