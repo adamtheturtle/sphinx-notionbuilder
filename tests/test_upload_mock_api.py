@@ -12,6 +12,7 @@ from typing import Any, cast
 import docker
 import pytest
 import requests
+from docker.errors import DockerException
 from ultimate_notion import Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -54,7 +55,7 @@ def _stop_microcks(*, docker_client: object, container: object) -> None:
     """Stop the mock service container and close the docker client."""
     try:
         cast("Any", container).remove(force=True)
-    except docker.errors.DockerException:
+    except DockerException:
         pass
     finally:
         cast("Any", docker_client).close()
@@ -137,7 +138,7 @@ def fixture_microcks_base_url_fixture(
     base_url = f"http://127.0.0.1:{port}"
     try:
         docker_client, container = _start_microcks(port=port)
-    except docker.errors.DockerException:
+    except DockerException:
         pytest.skip(reason="Docker daemon is not available for this test.")
 
     _wait_for_microcks(base_url=base_url)
