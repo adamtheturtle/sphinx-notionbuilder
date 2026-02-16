@@ -158,6 +158,8 @@ lint.per-file-ignores."docs/source/*.py" = [
     "S101",
 ]
 lint.per-file-ignores."tests/*.py" = [
+    # Test function names describe what they test, no need for docstrings.
+    "D103",
     # Allow asserts in tests.
     "S101",
 ]
@@ -326,11 +328,8 @@ ini_options.log_cli = true
 
 [tool.coverage]
 run.branch = true
-# These files interact with the Notion API and cannot be tested until we have
-# a Notion mock. See https://github.com/adamtheturtle/sphinx-notionbuilder/issues/525.
 run.omit = [
     "src/_notion_scripts/upload.py",
-    "src/sphinx_notion/_upload.py",
 ]
 report.exclude_also = [
     "if TYPE_CHECKING:",
@@ -440,6 +439,12 @@ ignore_names = [
     "final_argument_whitespace",
     "option_spec",
     "run",
+    # Mock context manager attributes (used in tests)
+    "__enter__",
+    "__exit__",
+    # Mock attributes/parameters (used in tests)
+    "iter_content",
+    "_part",
 ]
 # Duplicate some of .gitignore
 exclude = [ ".venv" ]

@@ -24,5 +24,5 @@ The file includes workarounds for issues in the upstream
 - `naftiko/notion-sandbox#4` &mdash; `SimplePage.properties.Name` includes the
   required `id` and `type` fields that the upstream sandbox omits.
 - The `/v1/comments` endpoint uses `x-microcks-operation: dispatcher: FALLBACK`
-  to avoid Microcks switching to `URI_PARAMS` dispatching when query parameters
-  are defined.
+  so that all `block_id` query parameter values return the same empty response.
+  Tests that need non-empty comments monkeypatch at the SDK level.

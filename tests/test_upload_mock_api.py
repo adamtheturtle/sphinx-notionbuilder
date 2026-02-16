@@ -7,6 +7,7 @@ import os
 from collections.abc import Iterator
 from http import HTTPStatus
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import docker
 import pytest
@@ -19,11 +20,22 @@ from tenacity import (
 )
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
+    Block,
+    BulletedItem,
+)
+from ultimate_notion.blocks import Image as UnoImage
+from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.file import UploadedFile
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
+from sphinx_notion._upload import (
+    DiscussionsExistError,
+    PageHasDatabasesError,
+    PageHasSubpagesError,
+)
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("SKIP_DOCKER_TESTS") == "1",
@@ -250,3 +262,209 @@ def test_upload_with_cover_url(
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
+
+
+def test_upload_page_has_subpages_error(
+    notion_session: Session,
+) -> None:
+    """PageHasSubpagesError raised when the target page has subpages."""
+    with pytest.raises(expected_exception=PageHasSubpagesError):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[],
+            parent_page_id="aaaa0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_upload_page_has_databases_error(
+    notion_session: Session,
+) -> None:
+    """PageHasDatabasesError raised when the target page has databases."""
+    with pytest.raises(expected_exception=PageHasDatabasesError):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[],
+            parent_page_id="bbbb0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_upload_discussions_exist_error(
+    notion_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DiscussionsExistError raised when blocks to delete have discussions."""
+    monkeypatch.setattr(
+        target=Block,
+        name="_generate_comments_cache",
+        value=lambda _self: [MagicMock()],
+    )
+    with pytest.raises(
+        expected_exception=DiscussionsExistError,
+        match=r"1 block.*1 discussion",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Different content triggers sync"),
+                ),
+            ],
+            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=True,
+        )
+
+
+def test_upload_with_database_parent(
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """Upload with a database parent exercises the database query path."""
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=None,
+        parent_database_id="db000000-0000-0000-0000-000000000001",
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+
+
+def _patch_file_uploads(
+    *,
+    monkeypatch: pytest.MonkeyPatch,
+    notion_session: Session,
+) -> None:
+    """Patch file upload send (Microcks cannot handle multipart)."""
+    monkeypatch.setattr(
+        target=notion_session.api.uploads,
+        name="send",
+        value=lambda _file_upload, _file, _part=None: None,
+    )
+    monkeypatch.setattr(
+        target=UploadedFile,
+        name="poll_interval",
+        value=0,
+    )
+
+
+def test_upload_with_cover_path(
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Upload with a cover_path exercises the file upload flow."""
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=b"fake-png-data")
+
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=cover_file,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+
+
+def test_upload_with_file_block(
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Upload with a file:// image block exercises
+    _block_with_uploaded_file.
+    """
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    img_file = tmp_path / "test.png"
+    img_file.write_bytes(data=b"fake-image-data")
+
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(file=ExternalFile(url=img_file.as_uri())),
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+
+
+def test_upload_with_nested_file_block(
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Upload with a parent block containing a file child block."""
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    img_file = tmp_path / "nested.png"
+    img_file.write_bytes(data=b"fake-nested-image-data")
+
+    parent_block = BulletedItem(text=text(text="Item with image"))
+    parent_block.append(
+        blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
+    )
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[parent_block],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
