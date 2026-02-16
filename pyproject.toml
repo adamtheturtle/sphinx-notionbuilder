@@ -328,6 +328,7 @@ run.branch = true
 run.omit = [
     "src/_notion_scripts/upload.py",
     "src/sphinx_notion/_upload.py",
+    "tests/test_upload_microcks.py",
 ]
 report.exclude_also = [
     "if TYPE_CHECKING:",
