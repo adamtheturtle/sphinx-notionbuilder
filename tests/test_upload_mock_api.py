@@ -376,7 +376,7 @@ def _patch_file_uploads(
         nonlocal upload_id
         upload_id += 1
         file_upload_obj = UnoFileUpload.model_validate(
-            {
+            obj={
                 "object": "file_upload",
                 "id": f"ff000000-0000-0000-0000-{upload_id:012d}",
                 "created_time": datetime.now(tz=UTC).isoformat(),
