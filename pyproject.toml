@@ -89,6 +89,7 @@ optional-dependencies.dev = [
     "sphinx-substitution-extensions==2026.1.12",
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
+    "tenacity==9.1.4",
     "ty==0.0.17",
     "types-docker==7.1.0.20260109",
     "types-docutils==0.22.3.20251115",
