@@ -2077,11 +2077,11 @@ paths:
                     status: pending
                     filename: test.png
                     content_type: image/png
-                    content_length: null
-                    number_of_parts: null
-                    upload_url: null
-                    complete_url: null
-                    file_import_result: null
+                    content_length:
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
                     archived: false
                     created_by:
                       object: user
@@ -2110,10 +2110,10 @@ paths:
                     filename: test.png
                     content_type: image/png
                     content_length: 1024
-                    number_of_parts: null
-                    upload_url: null
-                    complete_url: null
-                    file_import_result: null
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
                     archived: false
                     created_by:
                       object: user
@@ -2142,10 +2142,10 @@ paths:
                     filename: test.png
                     content_type: image/png
                     content_length: 1024
-                    number_of_parts: null
-                    upload_url: null
-                    complete_url: null
-                    file_import_result: null
+                    number_of_parts:
+                    upload_url:
+                    complete_url:
+                    file_import_result:
                     archived: false
                     created_by:
                       object: user
