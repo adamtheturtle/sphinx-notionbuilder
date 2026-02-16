@@ -47,7 +47,12 @@ jobs:
         run: |
           # We run tests against "." and not the tests directory as we test the README
           # and documentation.
-          uv run --extra=dev --python=${{ matrix.python-version }} pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests/ .
+          #
+          # Docker is not available on Windows CI runners, so Docker-dependent
+          # tests are skipped there. This means test_upload_mock_api.py has no
+          # coverage on Windows, so we cannot enforce 100% coverage.
+          COV_FAIL_UNDER=${{ matrix.platform == 'windows-latest' && '0' || '100' }}
+          uv run --extra=dev --python=${{ matrix.python-version }} pytest -s -vvv --cov-fail-under "$COV_FAIL_UNDER" --cov=src/ --cov=tests/ .
         env:
           SKIP_DOCKER_TESTS: ${{ matrix.platform == 'windows-latest' && '1' || '0' }}
 
