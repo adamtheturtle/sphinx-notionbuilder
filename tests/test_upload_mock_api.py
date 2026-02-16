@@ -31,7 +31,6 @@ from ultimate_notion.blocks import (
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.rich_text import text
 
-import sphinx_notion._upload as _upload_mod
 import sphinx_notion._upload as notion_upload
 from sphinx_notion._upload import (
     DiscussionsExistError,
@@ -507,8 +506,8 @@ def test_upload_with_cover_unchanged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Cover unchanged skips re-upload when SHA hashes match."""
-    _upload_mod._calculate_file_sha.cache_clear()  # pyright: ignore[reportPrivateUsage]
-    _upload_mod._calculate_file_sha_from_url.cache_clear()  # pyright: ignore[reportPrivateUsage]
+    notion_upload._calculate_file_sha.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
+    notion_upload._calculate_file_sha_from_url.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
 
     cover_content = b"matching-cover-data"
     cover_file = tmp_path / "cover.png"
@@ -523,7 +522,7 @@ def test_upload_with_cover_unchanged(
     )
 
     monkeypatch.setattr(
-        target=_upload_mod.requests,  # type: ignore[attr-defined]
+        target=notion_upload.requests,  # type: ignore[attr-defined]
         name="get",
         value=lambda **_kwargs: mock_response,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
@@ -559,7 +558,7 @@ def test_upload_matching_file_blocks(
     img_file.write_bytes(data=b"image-data")
 
     monkeypatch.setattr(
-        target=_upload_mod,
+        target=notion_upload,
         name="_files_match",
         value=lambda **_kwargs: True,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
