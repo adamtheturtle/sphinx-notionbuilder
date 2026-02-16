@@ -367,12 +367,14 @@ def _patch_file_uploads(
     upload_id = 0
 
     def _mock_upload(
-        file: BinaryIO,  # noqa: ARG001
+        file: BinaryIO,
         *,
         file_name: str | None = None,
         mime_type: str | None = None,
     ) -> UploadedFile:
         """Return a completed uploaded file object without API calls."""
+        # Keep the same signature as ``Session.upload`` and mark ``file`` used.
+        _ = file
         nonlocal upload_id
         upload_id += 1
         file_upload_obj = UnoFileUpload.model_validate(
@@ -533,7 +535,7 @@ def test_upload_with_cover_unchanged(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Cover unchanged skips re-upload when SHA hashes match."""
+    """Cover unchanged skips re-upload when file hashes match."""
     notion_upload._calculate_file_sha.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
     notion_upload._calculate_file_sha_from_url.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
 
