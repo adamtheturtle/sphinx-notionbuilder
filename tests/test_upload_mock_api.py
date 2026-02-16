@@ -4,7 +4,6 @@ API.
 
 import logging
 import os
-import time
 from collections.abc import Iterator
 from http import HTTPStatus
 from pathlib import Path
@@ -12,6 +11,7 @@ from pathlib import Path
 import docker
 import pytest
 import requests
+from tenacity import retry, stop_after_delay, wait_fixed
 from ultimate_notion import Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -28,25 +28,21 @@ pytestmark = pytest.mark.skipif(
 
 def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
     """Wait until the mock service API responds."""
-    deadline = time.monotonic() + timeout_seconds
-    while time.monotonic() < deadline:
-        try:
-            response = requests.get(
-                url=f"{base_url}/api/services",
-                timeout=2,
-            )
-            if response.status_code == HTTPStatus.OK:
-                return
-        # Startup race: only reached while the service is booting.
-        except requests.RequestException:  # pragma: no cover
-            pass
-        time.sleep(0.1)  # pragma: no cover
 
-    # Defensive: only reached if the service never responds.
-    message = (  # pragma: no cover
-        f"Mock service did not become ready: {base_url}"
+    @retry(
+        stop=stop_after_delay(max_delay=timeout_seconds),
+        wait=wait_fixed(wait=0.1),
+        reraise=True,
     )
-    raise RuntimeError(message)  # pragma: no cover
+    def _get_services() -> None:
+        """GET the services endpoint, raising on non-OK status."""
+        response = requests.get(
+            url=f"{base_url}/api/services",
+            timeout=2,
+        )
+        response.raise_for_status()
+
+    _get_services()
 
 
 def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
@@ -78,25 +74,30 @@ def _wait_for_uploaded_service(
     timeout_seconds: int,
 ) -> None:
     """Wait until a specific service appears in the mock service."""
-    deadline = time.monotonic() + timeout_seconds
-    while time.monotonic() < deadline:
+
+    @retry(
+        stop=stop_after_delay(max_delay=timeout_seconds),
+        wait=wait_fixed(wait=0.1),
+        reraise=True,
+    )
+    def _find_service() -> None:
+        """GET the services endpoint and assert the service is listed."""
         response = requests.get(
             url=f"{base_url}/api/services",
             timeout=3,
         )
         response.raise_for_status()
         payload = response.text
-        if service_name in payload and service_version in payload:
-            return
-        # Poll race: only reached if the service isn't registered yet.
-        time.sleep(0.1)  # pragma: no cover
+        service_found = service_name in payload and service_version in payload
+        if not service_found:  # pragma: no cover
+            msg = (
+                f"Service '{service_name}' version "
+                f"'{service_version}' "
+                "did not appear in the mock service."
+            )
+            raise RuntimeError(msg)
 
-    # Defensive: only reached if the uploaded service never appears.
-    message = (  # pragma: no cover
-        f"Service '{service_name}' version '{service_version}' "
-        "did not appear in the mock service."
-    )
-    raise RuntimeError(message)  # pragma: no cover
+    _find_service()
 
 
 @pytest.fixture(name="microcks_base_url", scope="module")
