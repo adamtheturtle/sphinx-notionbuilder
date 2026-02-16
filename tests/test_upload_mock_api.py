@@ -88,7 +88,8 @@ def _wait_for_uploaded_service(
         payload = response.text
         if service_name in payload and service_version in payload:
             return
-        time.sleep(0.1)
+        # Poll race: only reached if the service isn't registered yet.
+        time.sleep(0.1)  # pragma: no cover
 
     # Defensive: only reached if the uploaded service never appears.
     message = (  # pragma: no cover
