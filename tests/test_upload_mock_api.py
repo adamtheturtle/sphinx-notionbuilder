@@ -12,7 +12,7 @@ import docker
 import pytest
 import requests
 from tenacity import retry, stop_after_delay, wait_fixed
-from ultimate_notion import Session
+from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -216,55 +216,49 @@ def test_upload_deletes_and_replaces_changed_blocks(
 
 
 def test_upload_with_icon(
-    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Upload with an emoji icon exercises the icon PATCH path."""
-    with caplog.at_level(level=logging.INFO):
-        page = notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoParagraph(text=text(text="Hello from Microcks upload test"))
-            ],
-            parent_page_id=parent_page_id,
-            parent_database_id=None,
-            title="Upload Title",
-            icon="\N{MEMO}",
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon="\N{MEMO}",
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
-    assert "Setting page icon to '\N{MEMO}'" in caplog.text
+    assert page.icon == "\N{MEMO}"
 
 
 def test_upload_with_cover_url(
-    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Upload with a cover URL exercises the ExternalFile cover path."""
-    with caplog.at_level(level=logging.INFO):
-        page = notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoParagraph(text=text(text="Hello from Microcks upload test"))
-            ],
-            parent_page_id=parent_page_id,
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url="https://example.com/cover.png",
-            cancel_on_discussion=False,
-        )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url="https://example.com/cover.png",
+        cancel_on_discussion=False,
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
-    expected_cover_log = (
-        "Setting page cover to 'https://example.com/cover.png'"
-    )
-    assert expected_cover_log in caplog.text
+    assert isinstance(page.cover, ExternalFile)
+    assert page.cover.url == "https://example.com/cover.png"
