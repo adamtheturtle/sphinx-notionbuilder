@@ -449,6 +449,5 @@ ignore_names = [
 exclude = [ ".venv" ]
 
 [tool.yamlfix]
-none_representation = "null"
 section_whitelines = 1
 whitelines = 1
