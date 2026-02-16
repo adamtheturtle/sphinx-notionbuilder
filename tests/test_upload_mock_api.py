@@ -26,23 +26,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
+@retry(
+    stop=stop_after_delay(max_delay=120),
+    wait=wait_fixed(wait=0.1),
+    reraise=True,
+)
+def _wait_for_microcks(*, base_url: str) -> None:
     """Wait until the mock service API responds."""
-
-    @retry(
-        stop=stop_after_delay(max_delay=timeout_seconds),
-        wait=wait_fixed(wait=0.1),
-        reraise=True,
+    response = requests.get(
+        url=f"{base_url}/api/services",
+        timeout=2,
     )
-    def _get_services() -> None:
-        """GET the services endpoint, raising on non-OK status."""
-        response = requests.get(
-            url=f"{base_url}/api/services",
-            timeout=2,
-        )
-        response.raise_for_status()
-
-    _get_services()
+    response.raise_for_status()
 
 
 def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
@@ -66,38 +61,32 @@ def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
         raise RuntimeError(message)  # pragma: no cover
 
 
+@retry(
+    stop=stop_after_delay(max_delay=30),
+    wait=wait_fixed(wait=0.1),
+    reraise=True,
+)
 def _wait_for_uploaded_service(
     *,
     base_url: str,
     service_name: str,
     service_version: str,
-    timeout_seconds: int,
 ) -> None:
     """Wait until a specific service appears in the mock service."""
-
-    @retry(
-        stop=stop_after_delay(max_delay=timeout_seconds),
-        wait=wait_fixed(wait=0.1),
-        reraise=True,
+    response = requests.get(
+        url=f"{base_url}/api/services",
+        timeout=3,
     )
-    def _find_service() -> None:
-        """GET the services endpoint and assert the service is listed."""
-        response = requests.get(
-            url=f"{base_url}/api/services",
-            timeout=3,
+    response.raise_for_status()
+    payload = response.text
+    service_found = service_name in payload and service_version in payload
+    if not service_found:  # pragma: no cover
+        msg = (
+            f"Service '{service_name}' version "
+            f"'{service_version}' "
+            "did not appear in the mock service."
         )
-        response.raise_for_status()
-        payload = response.text
-        service_found = service_name in payload and service_version in payload
-        if not service_found:  # pragma: no cover
-            msg = (
-                f"Service '{service_name}' version "
-                f"'{service_version}' "
-                "did not appear in the mock service."
-            )
-            raise RuntimeError(msg)
-
-    _find_service()
+        raise RuntimeError(msg)
 
 
 @pytest.fixture(name="microcks_base_url", scope="module")
@@ -125,13 +114,12 @@ def fixture_microcks_base_url_fixture(
     assert isinstance(host_port, str)
     base_url = f"http://127.0.0.1:{host_port}"
 
-    _wait_for_microcks(base_url=base_url, timeout_seconds=120)
+    _wait_for_microcks(base_url=base_url)
     _upload_openapi(base_url=base_url, openapi_path=openapi_path)
     _wait_for_uploaded_service(
         base_url=base_url,
         service_name="notion-api",
         service_version="1.1.0",
-        timeout_seconds=30,
     )
     yield base_url
     container.remove(force=True)
