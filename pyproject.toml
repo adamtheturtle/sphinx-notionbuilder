@@ -162,6 +162,8 @@ lint.per-file-ignores."tests/*.py" = [
     "D103",
     # Allow asserts in tests.
     "S101",
+    # Tests access private members for cache clearing and monkeypatching.
+    "SLF001",
 ]
 # Do not automatically remove commented out code.
 # We comment out code during development, and with VSCode auto-save, this code
@@ -442,13 +444,11 @@ ignore_names = [
     # Mock context manager attributes (used in tests)
     "__enter__",
     "__exit__",
-    # Mock attributes/parameters (used in tests)
-    "iter_content",
-    "_part",
 ]
 # Duplicate some of .gitignore
 exclude = [ ".venv" ]
 
 [tool.yamlfix]
+none_representation = "null"
 section_whitelines = 1
 whitelines = 1

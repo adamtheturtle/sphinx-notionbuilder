@@ -22,6 +22,7 @@ from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     Block,
     BulletedItem,
+    Divider,
 )
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
@@ -30,6 +31,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.rich_text import text
 
+import sphinx_notion._upload as _upload_mod
 import sphinx_notion._upload as notion_upload
 from sphinx_notion._upload import (
     DiscussionsExistError,
@@ -308,7 +310,7 @@ def test_upload_discussions_exist_error(
     monkeypatch.setattr(
         target=Block,
         name="_generate_comments_cache",
-        value=lambda _self: [MagicMock()],
+        value=lambda _self: [MagicMock()],  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
     with pytest.raises(
         expected_exception=DiscussionsExistError,
@@ -363,7 +365,7 @@ def _patch_file_uploads(
     monkeypatch.setattr(
         target=notion_session.api.uploads,
         name="send",
-        value=lambda _file_upload, _file, _part=None: None,
+        value=lambda **_kwargs: None,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
     monkeypatch.setattr(
         target=UploadedFile,
@@ -467,4 +469,286 @@ def test_upload_with_nested_file_block(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+    )
+
+
+def test_upload_prefix_suffix_matching(
+    caplog: pytest.LogCaptureFixture,
+    notion_session: Session,
+) -> None:
+    """Prefix and suffix matching skips unchanged blocks."""
+    with caplog.at_level(level=logging.INFO):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="same")),
+                UnoParagraph(text=text(text="new")),
+                Divider(),
+            ],
+            parent_page_id="dddd0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert (
+        "1 prefix and 1 suffix blocks match, 1 to delete, 1 to upload"
+        in caplog.text
+    )
+
+
+def test_upload_with_cover_unchanged(
+    caplog: pytest.LogCaptureFixture,
+    notion_session: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cover unchanged skips re-upload when SHA hashes match."""
+    _upload_mod._calculate_file_sha.cache_clear()  # pyright: ignore[reportPrivateUsage]
+    _upload_mod._calculate_file_sha_from_url.cache_clear()  # pyright: ignore[reportPrivateUsage]
+
+    cover_content = b"matching-cover-data"
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=cover_content)
+
+    mock_response = MagicMock()
+    mock_response.__enter__ = MagicMock(return_value=mock_response)
+    mock_response.__exit__ = MagicMock(return_value=False)
+    mock_response.raise_for_status = MagicMock()
+    mock_response.iter_content = MagicMock(
+        return_value=[cover_content, b""],
+    )
+
+    monkeypatch.setattr(
+        target=_upload_mod.requests,  # type: ignore[attr-defined]
+        name="get",
+        value=lambda **_kwargs: mock_response,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
+    )
+
+    with caplog.at_level(level=logging.INFO):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Hello from Microcks upload test"),
+                ),
+            ],
+            parent_page_id="aa110000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=cover_file,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert "Cover image unchanged, skipping upload" in caplog.text
+
+
+def test_upload_matching_file_blocks(
+    caplog: pytest.LogCaptureFixture,
+    notion_session: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Matching file blocks are not re-uploaded."""
+    img_file = tmp_path / "test.png"
+    img_file.write_bytes(data=b"image-data")
+
+    monkeypatch.setattr(
+        target=_upload_mod,
+        name="_files_match",
+        value=lambda **_kwargs: True,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
+    )
+
+    with caplog.at_level(level=logging.INFO):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoImage(file=ExternalFile(url=img_file.as_uri())),
+            ],
+            parent_page_id="eeee0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert (
+        "1 prefix and 0 suffix blocks match, 0 to delete, 0 to upload"
+        in caplog.text
+    )
+
+
+def test_upload_file_block_name_mismatch(
+    notion_session: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """File block with name mismatch triggers re-upload."""
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    img_file = tmp_path / "different.png"
+    img_file.write_bytes(data=b"image-data")
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(
+                file=ExternalFile(
+                    url=img_file.as_uri(),
+                    name="different.png",
+                ),
+            ),
+        ],
+        parent_page_id="eeee0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+
+def test_upload_file_block_caption_mismatch(
+    notion_session: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """File block with caption mismatch triggers re-upload."""
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    img_file = tmp_path / "test.png"
+    img_file.write_bytes(data=b"image-data")
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(
+                file=ExternalFile(url=img_file.as_uri()),
+                caption="new caption",
+            ),
+        ],
+        parent_page_id="eeee0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+
+def test_upload_file_block_external_url(
+    notion_session: Session,
+) -> None:
+    """File block with external URL skips upload and compares directly."""
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(
+                file=ExternalFile(
+                    url="https://example.com/different.png",
+                ),
+            ),
+        ],
+        parent_page_id="eeee0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+
+def test_upload_file_block_existing_is_external(
+    notion_session: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """File block with existing ExternalFile triggers re-upload."""
+    _patch_file_uploads(
+        monkeypatch=monkeypatch,
+        notion_session=notion_session,
+    )
+    img_file = tmp_path / "test.png"
+    img_file.write_bytes(data=b"image-data")
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(file=ExternalFile(url=img_file.as_uri())),
+        ],
+        parent_page_id="ffff0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+
+def test_upload_matching_parent_blocks(
+    caplog: pytest.LogCaptureFixture,
+    notion_session: Session,
+) -> None:
+    """Matching parent blocks with children are not re-uploaded."""
+    local_block = BulletedItem(text=text(text="item"))
+    local_block.append(blocks=[Divider()])
+
+    with caplog.at_level(level=logging.INFO):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[local_block],
+            parent_page_id="aabb0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert (
+        "1 prefix and 0 suffix blocks match, 0 to delete, 0 to upload"
+        in caplog.text
+    )
+
+
+def test_upload_parent_block_different_children_count(
+    caplog: pytest.LogCaptureFixture,
+    notion_session: Session,
+) -> None:
+    """Parent block with different children count triggers re-upload."""
+    local_block = BulletedItem(text=text(text="item"))
+    local_block.append(blocks=[Divider(), Divider()])
+
+    with caplog.at_level(level=logging.INFO):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[local_block],
+            parent_page_id="aabb0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert (
+        "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
+        in caplog.text
     )
