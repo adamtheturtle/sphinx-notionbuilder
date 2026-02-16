@@ -11,7 +11,9 @@ from pathlib import Path
 import docker
 import pytest
 import requests
+from docker.client import DockerClient
 from docker.errors import DockerException
+from docker.models.containers import Container
 from ultimate_notion import Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -21,32 +23,36 @@ from ultimate_notion.rich_text import text
 import sphinx_notion._upload as notion_upload
 
 
-def _start_microcks(*, docker_client: object) -> object:
+def _start_microcks(*, docker_client: DockerClient) -> Container:
     """Start mock service container and return the container handle."""
-    return docker_client.containers.run(  # type: ignore[attr-defined]
+    return docker_client.containers.run(
         image="quay.io/microcks/microcks-uber:latest-native",
         detach=True,
         remove=True,
-        ports={"8080/tcp": ("127.0.0.1",)},
+        ports={"8080/tcp": ("127.0.0.1", 0)},
     )
 
 
-def _get_microcks_port(*, container: object) -> str:
+def _get_microcks_port(*, container: Container) -> str:
     """Get the host port assigned by Docker for the mock service."""
-    container.reload()  # type: ignore[attr-defined]
-    host_port = container.ports["8080/tcp"][0]["HostPort"]  # type: ignore[attr-defined]
+    container.reload()
+    host_port = container.ports["8080/tcp"][0]["HostPort"]
     assert isinstance(host_port, str)
     return host_port
 
 
-def _stop_microcks(*, docker_client: object, container: object) -> None:
+def _stop_microcks(
+    *,
+    docker_client: DockerClient,
+    container: Container,
+) -> None:
     """Stop the mock service container and close the docker client."""
     try:
-        container.remove(force=True)  # type: ignore[attr-defined]
+        container.remove(force=True)
     except DockerException:
         pass
     finally:
-        docker_client.close()  # type: ignore[attr-defined]
+        docker_client.close()
 
 
 def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
@@ -130,7 +136,7 @@ def fixture_microcks_base_url_fixture(
     assert openapi_path.is_file()
 
     try:
-        docker_client = docker.from_env()
+        docker_client: DockerClient = docker.from_env()
     except DockerException:
         pytest.skip(reason="Docker daemon is not available for this test.")
 
