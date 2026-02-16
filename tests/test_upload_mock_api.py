@@ -1,14 +1,15 @@
-"""Opt-in Microcks integration test for upload synchronization."""
+"""Opt-in integration test for upload synchronization against a mock
+API.
+"""
 
-import importlib
 import socket
 import time
 from collections.abc import Iterator
 from http import HTTPStatus
 from pathlib import Path
-from types import ModuleType
 from typing import Any, cast
 
+import docker
 import pytest
 import requests
 from ultimate_notion import Session
@@ -26,16 +27,8 @@ _PARENT_PAGE_ID = "59833787-2cf9-4fdf-8782-e53db20768a5"
 _OPENAPI_PATH = Path(__file__).parent / "notion_sandbox" / "notion-openapi.yml"
 
 
-def _docker_module() -> ModuleType | None:
-    """Return the docker module, or None if unavailable."""
-    try:
-        return importlib.import_module(name="docker")
-    except ModuleNotFoundError:
-        return None
-
-
 def _find_free_port() -> int:
-    """Find an available local TCP port."""
+    """Find an available local network port."""
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
@@ -44,11 +37,10 @@ def _find_free_port() -> int:
 
 
 def _start_microcks(*, port: int) -> tuple[object, object]:
-    """Start Microcks and return `(docker_client, container)` handles."""
-    docker_module = _docker_module()
-    assert docker_module is not None
-
-    docker_client = cast("Any", docker_module).from_env()
+    """Start mock service and return `(docker_client, container)`
+    handles.
+    """
+    docker_client = cast("Any", docker).from_env()
     container = docker_client.containers.run(
         image=_MICROCKS_IMAGE,
         detach=True,
@@ -59,20 +51,17 @@ def _start_microcks(*, port: int) -> tuple[object, object]:
 
 
 def _stop_microcks(*, docker_client: object, container: object) -> None:
-    """Stop a Microcks container and close docker client."""
-    docker_module = _docker_module()
-    assert docker_module is not None
-
+    """Stop the mock service container and close the docker client."""
     try:
         cast("Any", container).remove(force=True)
-    except cast("Any", docker_module).errors.DockerException:
+    except docker.errors.DockerException:
         pass
     finally:
         cast("Any", docker_client).close()
 
 
 def _wait_for_microcks(*, base_url: str, timeout_seconds: int = 120) -> None:
-    """Wait until the Microcks API responds."""
+    """Wait until the mock service API responds."""
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
         try:
@@ -86,12 +75,12 @@ def _wait_for_microcks(*, base_url: str, timeout_seconds: int = 120) -> None:
             pass
         time.sleep(1)
 
-    message = f"Microcks did not become ready: {base_url}"
+    message = f"Mock service did not become ready: {base_url}"
     raise RuntimeError(message)
 
 
 def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
-    """Upload an OpenAPI artifact to Microcks."""
+    """Upload an OpenAPI artifact to the mock service."""
     with openapi_path.open(mode="rb") as file_obj:
         response = requests.post(
             url=f"{base_url}/api/artifact/upload?mainArtifact=true",
@@ -117,7 +106,7 @@ def _wait_for_uploaded_service(
     service_version: str,
     timeout_seconds: int = 30,
 ) -> None:
-    """Wait until a specific service appears in Microcks."""
+    """Wait until a specific service appears in the mock service."""
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
         response = requests.get(
@@ -132,28 +121,24 @@ def _wait_for_uploaded_service(
 
     message = (
         f"Service '{service_name}' version '{service_version}' "
-        "did not appear in Microcks."
+        "did not appear in the mock service."
     )
     raise RuntimeError(message)
 
 
-@pytest.fixture
-def fixture_microcks_base_url(
-    # `yield` fixture manages teardown of Docker resources.
+@pytest.fixture(name="microcks_base_url")
+def fixture_microcks_base_url_fixture(
+    # This `yield` fixture tears down docker resources.
 ) -> Iterator[str]:
-    """Provide a prepared Microcks base URL."""
-    docker_module = _docker_module()
-    if docker_module is None:
-        pytest.skip(reason="docker-py is not installed.")
-
+    """Provide a prepared mock service base URL."""
     assert _OPENAPI_PATH.is_file()
 
     port = _find_free_port()
     base_url = f"http://127.0.0.1:{port}"
     try:
         docker_client, container = _start_microcks(port=port)
-    except cast("Any", docker_module).errors.DockerException:
-        pytest.skip(reason="Docker daemon is not available for Microcks.")
+    except docker.errors.DockerException:
+        pytest.skip(reason="Docker daemon is not available for this test.")
 
     _wait_for_microcks(base_url=base_url)
     _upload_openapi(base_url=base_url, openapi_path=_OPENAPI_PATH)
@@ -166,17 +151,17 @@ def fixture_microcks_base_url(
     _stop_microcks(docker_client=docker_client, container=container)
 
 
-@pytest.fixture
-def fixture_session(
+@pytest.fixture(name="notion_session")
+def fixture_notion_session_fixture(
     *,
-    fixture_microcks_base_url: str,
+    microcks_base_url: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
     monkeypatch.setenv(name="NOTION_TOKEN", value="microcks-test-token")
     session = Session(
         base_url=(
-            f"{fixture_microcks_base_url}/rest/"
+            f"{microcks_base_url}/rest/"
             f"{_MICROCKS_SERVICE_NAME}/{_MICROCKS_SERVICE_VERSION}"
         )
     )
@@ -185,17 +170,15 @@ def fixture_session(
 
 
 def test_upload_to_notion_with_microcks(
-    fixture_session: Session,
+    notion_session: Session,
 ) -> None:
-    """Run upload synchronization against a Microcks-backed Notion
-    mock.
-    """
+    """Run upload synchronization against a mock API."""
     upload_to_notion_impl = cast(
         "Any", notion_upload.upload_to_notion
     ).__wrapped__
 
     page = upload_to_notion_impl(
-        session=fixture_session,
+        session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
