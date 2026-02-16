@@ -3,7 +3,7 @@
 ## Summary
 
 The `GET /v1/blocks/{block_id}/children` endpoint examples only return
-`paragraph` blocks. To test error handling for pages that contain subpages or
+`paragraph` blocks. To test handling for pages that contain subpages or
 inline databases, the sandbox needs examples that include `child_page` and
 `child_database` block types.
 
