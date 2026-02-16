@@ -24,6 +24,10 @@ from ultimate_notion.blocks import (
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
+from sphinx_notion._upload import (
+    PageHasDatabasesError,
+    PageHasSubpagesError,
+)
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("SKIP_DOCKER_TESTS") == "1",
@@ -250,3 +254,39 @@ def test_upload_with_cover_url(
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
+
+
+def test_upload_page_has_subpages_error(
+    notion_session: Session,
+) -> None:
+    """PageHasSubpagesError raised when the target page has subpages."""
+    with pytest.raises(expected_exception=PageHasSubpagesError):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[],
+            parent_page_id="aaaa0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_upload_page_has_databases_error(
+    notion_session: Session,
+) -> None:
+    """PageHasDatabasesError raised when the target page has databases."""
+    with pytest.raises(expected_exception=PageHasDatabasesError):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[],
+            parent_page_id="bbbb0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
