@@ -21,12 +21,6 @@ from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
 
-_MICROCKS_IMAGE = "quay.io/microcks/microcks-uber:latest-native"
-_MICROCKS_SERVICE_NAME = "notion-api"
-_MICROCKS_SERVICE_VERSION = "1.1.0"
-_PARENT_PAGE_ID = "59833787-2cf9-4fdf-8782-e53db20768a5"
-_OPENAPI_PATH = Path(__file__).parent / "notion_sandbox" / "notion-openapi.yml"
-
 
 def _find_free_port() -> int:
     """Find an available local network port."""
@@ -43,7 +37,7 @@ def _start_microcks(*, port: int) -> tuple[object, object]:
     """
     docker_client = cast("Any", docker).from_env()
     container = docker_client.containers.run(
-        image=_MICROCKS_IMAGE,
+        image="quay.io/microcks/microcks-uber:latest-native",
         detach=True,
         remove=True,
         ports={"8080/tcp": ("127.0.0.1", port)},
@@ -61,7 +55,7 @@ def _stop_microcks(*, docker_client: object, container: object) -> None:
         cast("Any", docker_client).close()
 
 
-def _wait_for_microcks(*, base_url: str, timeout_seconds: int = 120) -> None:
+def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
     """Wait until the mock service API responds."""
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
@@ -74,7 +68,7 @@ def _wait_for_microcks(*, base_url: str, timeout_seconds: int = 120) -> None:
                 return
         except requests.RequestException:
             pass
-        time.sleep(1)
+        time.sleep(0.1)
 
     message = f"Mock service did not become ready: {base_url}"
     raise RuntimeError(message)
@@ -105,7 +99,7 @@ def _wait_for_uploaded_service(
     base_url: str,
     service_name: str,
     service_version: str,
-    timeout_seconds: int = 30,
+    timeout_seconds: int,
 ) -> None:
     """Wait until a specific service appears in the mock service."""
     deadline = time.monotonic() + timeout_seconds
@@ -118,7 +112,7 @@ def _wait_for_uploaded_service(
         payload = response.text
         if service_name in payload and service_version in payload:
             return
-        time.sleep(1)
+        time.sleep(0.1)
 
     message = (
         f"Service '{service_name}' version '{service_version}' "
@@ -132,7 +126,10 @@ def fixture_microcks_base_url_fixture(
     # This `yield` fixture tears down docker resources.
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
-    assert _OPENAPI_PATH.is_file()
+    openapi_path = (
+        Path(__file__).parent / "notion_sandbox" / "notion-openapi.yml"
+    )
+    assert openapi_path.is_file()
 
     port = _find_free_port()
     base_url = f"http://127.0.0.1:{port}"
@@ -141,12 +138,13 @@ def fixture_microcks_base_url_fixture(
     except DockerException:
         pytest.skip(reason="Docker daemon is not available for this test.")
 
-    _wait_for_microcks(base_url=base_url)
-    _upload_openapi(base_url=base_url, openapi_path=_OPENAPI_PATH)
+    _wait_for_microcks(base_url=base_url, timeout_seconds=120)
+    _upload_openapi(base_url=base_url, openapi_path=openapi_path)
     _wait_for_uploaded_service(
         base_url=base_url,
-        service_name=_MICROCKS_SERVICE_NAME,
-        service_version=_MICROCKS_SERVICE_VERSION,
+        service_name="notion-api",
+        service_version="1.1.0",
+        timeout_seconds=30,
     )
     yield base_url
     _stop_microcks(docker_client=docker_client, container=container)
@@ -160,30 +158,28 @@ def fixture_notion_session_fixture(
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
     monkeypatch.setenv(name="NOTION_TOKEN", value="microcks-test-token")
-    session = Session(
-        base_url=(
-            f"{microcks_base_url}/rest/"
-            f"{_MICROCKS_SERVICE_NAME}/{_MICROCKS_SERVICE_VERSION}"
-        )
-    )
+    session = Session(base_url=f"{microcks_base_url}/rest/notion-api/1.1.0")
     yield session
     session.close()
 
 
+@pytest.fixture(name="parent_page_id")
+def fixture_parent_page_id() -> str:
+    """The page ID used by the mock API fixtures."""
+    return "59833787-2cf9-4fdf-8782-e53db20768a5"
+
+
 def test_upload_to_notion_with_microcks(
     notion_session: Session,
+    parent_page_id: str,
 ) -> None:
     """Run upload synchronization against a mock API."""
-    upload_to_notion_impl = cast(
-        "Any", notion_upload.upload_to_notion
-    ).__wrapped__
-
-    page = upload_to_notion_impl(
+    page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
-        parent_page_id=_PARENT_PAGE_ID,
+        parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
         icon=None,
@@ -198,18 +194,15 @@ def test_upload_to_notion_with_microcks(
 
 def test_upload_deletes_and_replaces_changed_blocks(
     notion_session: Session,
+    parent_page_id: str,
 ) -> None:
     """Changed content triggers block deletion and re-upload."""
-    upload_to_notion_impl = cast(
-        "Any", notion_upload.upload_to_notion
-    ).__wrapped__
-
-    page = upload_to_notion_impl(
+    page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Different content triggers sync"))
         ],
-        parent_page_id=_PARENT_PAGE_ID,
+        parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
         icon=None,
@@ -223,18 +216,15 @@ def test_upload_deletes_and_replaces_changed_blocks(
 
 def test_upload_with_icon(
     notion_session: Session,
+    parent_page_id: str,
 ) -> None:
     """Upload with an emoji icon exercises the icon PATCH path."""
-    upload_to_notion_impl = cast(
-        "Any", notion_upload.upload_to_notion
-    ).__wrapped__
-
-    page = upload_to_notion_impl(
+    page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
-        parent_page_id=_PARENT_PAGE_ID,
+        parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
         icon="\N{MEMO}",
@@ -248,18 +238,15 @@ def test_upload_with_icon(
 
 def test_upload_with_cover_url(
     notion_session: Session,
+    parent_page_id: str,
 ) -> None:
     """Upload with a cover URL exercises the ExternalFile cover path."""
-    upload_to_notion_impl = cast(
-        "Any", notion_upload.upload_to_notion
-    ).__wrapped__
-
-    page = upload_to_notion_impl(
+    page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
-        parent_page_id=_PARENT_PAGE_ID,
+        parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
         icon=None,
