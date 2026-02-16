@@ -4,6 +4,7 @@ import importlib
 import os
 import socket
 import time
+from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
@@ -157,12 +158,11 @@ def _wait_for_uploaded_service(
     raise RuntimeError(message)
 
 
-def test_upload_to_notion_with_microcks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Run upload synchronization against a Microcks-backed Notion
-    mock.
-    """
+@pytest.fixture
+def fixture_microcks_base_url(
+    # `yield` fixture manages teardown of Docker resources.
+) -> Iterator[str]:
+    """Provide a prepared Microcks base URL."""
     if not _is_enabled():
         pytest.skip(reason="Set RUN_MICROCKS_TESTS=1 to enable this test.")
 
@@ -174,47 +174,59 @@ def test_upload_to_notion_with_microcks(
     port = _find_free_port()
     base_url = f"http://127.0.0.1:{port}"
     docker_client, container = _start_microcks(port=port)
-    try:
-        _wait_for_microcks(base_url=base_url)
-        _upload_openapi(base_url=base_url, openapi_path=_OPENAPI_PATH)
-        _wait_for_uploaded_service(
-            base_url=base_url,
-            service_name=_MICROCKS_SERVICE_NAME,
-            service_version=_MICROCKS_SERVICE_VERSION,
+
+    _wait_for_microcks(base_url=base_url)
+    _upload_openapi(base_url=base_url, openapi_path=_OPENAPI_PATH)
+    _wait_for_uploaded_service(
+        base_url=base_url,
+        service_name=_MICROCKS_SERVICE_NAME,
+        service_version=_MICROCKS_SERVICE_VERSION,
+    )
+    yield base_url
+    _stop_microcks(docker_client=docker_client, container=container)
+
+
+@pytest.fixture
+def fixture_session(
+    *,
+    fixture_microcks_base_url: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[Session]:
+    """Provide an `ultimate_notion` session wired to the mock API."""
+    monkeypatch.setenv(name="NOTION_TOKEN", value="microcks-test-token")
+    session = Session(
+        base_url=(
+            f"{fixture_microcks_base_url}/rest/"
+            f"{_MICROCKS_SERVICE_NAME}/{_MICROCKS_SERVICE_VERSION}"
         )
+    )
+    yield session
+    session.close()
 
-        monkeypatch.setenv(name="NOTION_TOKEN", value="microcks-test-token")
 
-        session = Session(
-            base_url=(
-                f"{base_url}/rest/"
-                f"{_MICROCKS_SERVICE_NAME}/{_MICROCKS_SERVICE_VERSION}"
-            )
-        )
-        try:
-            upload_to_notion_impl = cast(
-                "Any", notion_upload.upload_to_notion
-            ).__wrapped__
+def test_upload_to_notion_with_microcks(
+    fixture_session: Session,
+) -> None:
+    """Run upload synchronization against a Microcks-backed Notion
+    mock.
+    """
+    upload_to_notion_impl = cast(
+        "Any", notion_upload.upload_to_notion
+    ).__wrapped__
 
-            page = upload_to_notion_impl(
-                session=session,
-                blocks=[
-                    UnoParagraph(
-                        text=text(text="Hello from Microcks upload test")
-                    )
-                ],
-                parent_page_id=_PARENT_PAGE_ID,
-                parent_database_id=None,
-                title="Upload Title",
-                icon=None,
-                cover_path=None,
-                cover_url=None,
-                cancel_on_discussion=False,
-            )
-        finally:
-            session.close()
+    page = upload_to_notion_impl(
+        session=fixture_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=_PARENT_PAGE_ID,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
 
-        assert page.title == "Upload Title"
-        assert page.url == "https://www.notion.so/Upload-Title-59833787"
-    finally:
-        _stop_microcks(docker_client=docker_client, container=container)
+    assert page.title == "Upload Title"
+    assert page.url == "https://www.notion.so/Upload-Title-59833787"
