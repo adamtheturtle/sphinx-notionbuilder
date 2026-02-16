@@ -146,6 +146,13 @@ paths:
                       id: 71e95936-2737-4e11-b03d-f174f6f13e90
                     archived: false
                     in_trash: false
+                    icon:
+                      type: emoji
+                      emoji: 📝
+                    cover:
+                      type: external
+                      external:
+                        url: https://example.com/cover.png
                     parent:
                       type: workspace
                       workspace: true
@@ -200,6 +207,13 @@ paths:
                       id: 71e95936-2737-4e11-b03d-f174f6f13e90
                     archived: false
                     in_trash: false
+                    icon:
+                      type: emoji
+                      emoji: 📝
+                    cover:
+                      type: external
+                      external:
+                        url: https://example.com/cover.png
                     parent:
                       type: workspace
                       workspace: true
