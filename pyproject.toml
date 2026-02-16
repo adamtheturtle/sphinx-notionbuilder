@@ -58,6 +58,7 @@ optional-dependencies.dev = [
     "deptry==0.24.0",
     "doc8==2.0.0",
     "doccmd==2026.2.15",
+    "docker==7.1.0",
     "freezegun==1.5.5",
     "furo==2025.12.19",
     "interrogate==1.7.0",
@@ -89,6 +90,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
     "ty==0.0.17",
+    "types-docker==7.1.0.20260109",
     "types-docutils==0.22.3.20251115",
     "types-requests==2.32.4.20260107",
     "vulture==2.14",
@@ -387,6 +389,7 @@ ignore_names = [
     "pytest_collect_file",
     "pytest_collection_modifyitems",
     "pytest_plugins",
+    "pytestmark",
     # pytest fixtures - we name fixtures like this for this purpose
     "fixture_*",
     # Sphinx
