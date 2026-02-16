@@ -12,9 +12,6 @@ from pathlib import Path
 import docker
 import pytest
 import requests
-from docker.client import DockerClient
-from docker.errors import DockerException
-from docker.models.containers import Container
 from ultimate_notion import Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -27,38 +24,6 @@ pytestmark = pytest.mark.skipif(
     os.environ.get("SKIP_DOCKER_TESTS") == "1",
     reason="SKIP_DOCKER_TESTS is set",
 )
-
-
-def _start_microcks(*, docker_client: DockerClient) -> Container:
-    """Start mock service container and return the container handle."""
-    return docker_client.containers.run(
-        image="quay.io/microcks/microcks-uber:latest-native",
-        detach=True,
-        remove=True,
-        ports={"8080/tcp": ("127.0.0.1", 0)},
-    )
-
-
-def _get_microcks_port(*, container: Container) -> str:
-    """Get the host port assigned by Docker for the mock service."""
-    container.reload()
-    host_port = container.ports["8080/tcp"][0]["HostPort"]
-    assert isinstance(host_port, str)
-    return host_port
-
-
-def _stop_microcks(
-    *,
-    docker_client: DockerClient,
-    container: Container,
-) -> None:
-    """Stop the mock service container and close the docker client."""
-    try:
-        container.remove(force=True)
-    except DockerException:
-        pass
-    finally:
-        docker_client.close()
 
 
 def _wait_for_microcks(*, base_url: str, timeout_seconds: int) -> None:
@@ -129,7 +94,6 @@ def _wait_for_uploaded_service(
 
 @pytest.fixture(name="microcks_base_url")
 def fixture_microcks_base_url_fixture(
-    # This `yield` fixture tears down docker resources.
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
@@ -141,14 +105,17 @@ def fixture_microcks_base_url_fixture(
     )
     assert openapi_path.is_file()
 
-    try:
-        docker_client: DockerClient = docker.from_env()
-    except DockerException:
-        pytest.skip(reason="Docker is not available for this test.")
-
-    container = _start_microcks(docker_client=docker_client)
-    port = _get_microcks_port(container=container)
-    base_url = f"http://127.0.0.1:{port}"
+    docker_client = docker.from_env()
+    container = docker_client.containers.run(
+        image="quay.io/microcks/microcks-uber:latest-native",
+        detach=True,
+        remove=True,
+        ports={"8080/tcp": ("127.0.0.1", 0)},
+    )
+    container.reload()
+    host_port = container.ports["8080/tcp"][0]["HostPort"]
+    assert isinstance(host_port, str)
+    base_url = f"http://127.0.0.1:{host_port}"
 
     _wait_for_microcks(base_url=base_url, timeout_seconds=120)
     _upload_openapi(base_url=base_url, openapi_path=openapi_path)
@@ -159,7 +126,8 @@ def fixture_microcks_base_url_fixture(
         timeout_seconds=30,
     )
     yield base_url
-    _stop_microcks(docker_client=docker_client, container=container)
+    container.remove(force=True)
+    docker_client.close()
 
 
 @pytest.fixture(name="notion_session")
