@@ -379,6 +379,8 @@ paths:
   /v1/comments:
     get:
       operationId: listComments
+      x-microcks-operation:
+        dispatcher: FALLBACK
       parameters:
         - name: block_id
           in: query

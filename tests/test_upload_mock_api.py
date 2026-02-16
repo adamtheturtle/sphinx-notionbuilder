@@ -194,3 +194,78 @@ def test_upload_to_notion_with_microcks(
 
     assert page.title == "Upload Title"
     assert page.url == "https://www.notion.so/Upload-Title-59833787"
+
+
+def test_upload_deletes_and_replaces_changed_blocks(
+    notion_session: Session,
+) -> None:
+    """Changed content triggers block deletion and re-upload."""
+    upload_to_notion_impl = cast(
+        "Any", notion_upload.upload_to_notion
+    ).__wrapped__
+
+    page = upload_to_notion_impl(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Different content triggers sync"))
+        ],
+        parent_page_id=_PARENT_PAGE_ID,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=True,
+    )
+
+    assert page.title == "Upload Title"
+
+
+def test_upload_with_icon(
+    notion_session: Session,
+) -> None:
+    """Upload with an emoji icon exercises the icon PATCH path."""
+    upload_to_notion_impl = cast(
+        "Any", notion_upload.upload_to_notion
+    ).__wrapped__
+
+    page = upload_to_notion_impl(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=_PARENT_PAGE_ID,
+        parent_database_id=None,
+        title="Upload Title",
+        icon="\N{MEMO}",
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+
+
+def test_upload_with_cover_url(
+    notion_session: Session,
+) -> None:
+    """Upload with a cover URL exercises the ExternalFile cover path."""
+    upload_to_notion_impl = cast(
+        "Any", notion_upload.upload_to_notion
+    ).__wrapped__
+
+    page = upload_to_notion_impl(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=_PARENT_PAGE_ID,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url="https://example.com/cover.png",
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"

@@ -49,6 +49,14 @@ Some typed Notion clients validate list envelopes using `type` plus the
 matching type object field. Without the field, mock responses can be rejected
 even though the endpoint and business logic are otherwise correct.
 
+## Official reference
+
+The official Notion API docs show this list-envelope pattern in endpoint
+examples:
+
+- [Retrieve block children](https://developers.notion.com/reference/get-block-children)
+- [List comments](https://developers.notion.com/reference/get-comments)
+
 ## Scope note
 
 This request is specifically about response examples matching the strict Notion
