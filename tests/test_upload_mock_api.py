@@ -3,6 +3,7 @@ API.
 """
 
 import logging
+import os
 import time
 from collections.abc import Iterator
 from http import HTTPStatus
@@ -21,6 +22,11 @@ from ultimate_notion.blocks import (
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("SKIP_DOCKER_TESTS") == "1",
+    reason="SKIP_DOCKER_TESTS is set",
+)
 
 
 def _start_microcks(*, docker_client: DockerClient) -> Container:
@@ -137,9 +143,10 @@ def fixture_microcks_base_url_fixture(
 
     try:
         docker_client: DockerClient = docker.from_env()
-        container = _start_microcks(docker_client=docker_client)
     except DockerException:
         pytest.skip(reason="Docker is not available for this test.")
+
+    container = _start_microcks(docker_client=docker_client)
     port = _get_microcks_port(container=container)
     base_url = f"http://127.0.0.1:{port}"
 

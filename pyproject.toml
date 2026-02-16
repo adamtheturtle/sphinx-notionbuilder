@@ -390,6 +390,7 @@ ignore_names = [
     "pytest_collect_file",
     "pytest_collection_modifyitems",
     "pytest_plugins",
+    "pytestmark",
     # pytest fixtures - we name fixtures like this for this purpose
     "fixture_*",
     # Sphinx
