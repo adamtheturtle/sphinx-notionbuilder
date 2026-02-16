@@ -335,13 +335,15 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         _LOGGER.info("Creating new page '%s'", title)
         page = session.create_page(parent=parent, title=title)
 
-    _LOGGER.info("Setting page icon and cover")
+    if icon:
+        _LOGGER.info("Setting page icon to '%s'", icon)
     page.icon = Emoji(emoji=icon) if icon else None
     if cover_path:
         page.cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
         )
     elif cover_url:
+        _LOGGER.info("Setting page cover to '%s'", cover_url)
         page.cover = ExternalFile(url=cover_url)
     else:
         page.cover = None

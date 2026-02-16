@@ -2,6 +2,7 @@
 API.
 """
 
+import logging
 import socket
 import time
 from collections.abc import Iterator
@@ -190,69 +191,93 @@ def test_upload_to_notion_with_microcks(
 
     assert page.title == "Upload Title"
     assert page.url == "https://www.notion.so/Upload-Title-59833787"
+    assert str(page.id) == parent_page_id
+    assert len(page.blocks) == 1
+    assert isinstance(page.blocks[0], UnoParagraph)
+    assert page.blocks[0].rich_text == "Hello from Microcks upload test"
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
+    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Changed content triggers block deletion and re-upload."""
-    page = notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoParagraph(text=text(text="Different content triggers sync"))
-        ],
-        parent_page_id=parent_page_id,
-        parent_database_id=None,
-        title="Upload Title",
-        icon=None,
-        cover_path=None,
-        cover_url=None,
-        cancel_on_discussion=True,
-    )
+    with caplog.at_level(level=logging.INFO):
+        page = notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Different content triggers sync"))
+            ],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=True,
+        )
 
     assert page.title == "Upload Title"
+    assert str(page.id) == parent_page_id
+    expected_match_log = (
+        "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
+    )
+    assert expected_match_log in caplog.text
+    assert "Deleting block 1/1" in caplog.text
+    assert "Appending 1 blocks to page" in caplog.text
 
 
 def test_upload_with_icon(
+    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Upload with an emoji icon exercises the icon PATCH path."""
-    page = notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoParagraph(text=text(text="Hello from Microcks upload test"))
-        ],
-        parent_page_id=parent_page_id,
-        parent_database_id=None,
-        title="Upload Title",
-        icon="\N{MEMO}",
-        cover_path=None,
-        cover_url=None,
-        cancel_on_discussion=False,
-    )
+    with caplog.at_level(level=logging.INFO):
+        page = notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            ],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon="\N{MEMO}",
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
 
     assert page.title == "Upload Title"
+    assert str(page.id) == parent_page_id
+    assert "Setting page icon to '\N{MEMO}'" in caplog.text
 
 
 def test_upload_with_cover_url(
+    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Upload with a cover URL exercises the ExternalFile cover path."""
-    page = notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoParagraph(text=text(text="Hello from Microcks upload test"))
-        ],
-        parent_page_id=parent_page_id,
-        parent_database_id=None,
-        title="Upload Title",
-        icon=None,
-        cover_path=None,
-        cover_url="https://example.com/cover.png",
-        cancel_on_discussion=False,
-    )
+    with caplog.at_level(level=logging.INFO):
+        page = notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            ],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url="https://example.com/cover.png",
+            cancel_on_discussion=False,
+        )
 
     assert page.title == "Upload Title"
+    assert str(page.id) == parent_page_id
+    expected_cover_log = (
+        "Setting page cover to 'https://example.com/cover.png'"
+    )
+    assert expected_cover_log in caplog.text
