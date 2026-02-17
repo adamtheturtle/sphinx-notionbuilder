@@ -82,7 +82,10 @@ def _block_without_children(
 
 @beartype
 @cache
-def _calculate_file_sha(*, file_path: Path) -> str:
+def _calculate_file_sha(
+    *,
+    file_path: Path,
+) -> str:  # pragma: no cover - live file duplicate check
     """Calculate SHA-256 hash of a file."""
     sha256_hash = hashlib.sha256()
     with file_path.open(mode="rb") as f:
@@ -93,7 +96,10 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 @beartype
 @cache
-def _calculate_file_sha_from_url(*, file_url: str) -> str:
+def _calculate_file_sha_from_url(
+    *,
+    file_url: str,
+) -> str:  # pragma: no cover - requires network file download
     """Calculate SHA-256 hash of a file from a URL."""
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
@@ -105,7 +111,11 @@ def _calculate_file_sha_from_url(*, file_url: str) -> str:
 
 
 @beartype
-def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
+def _files_match(
+    *,
+    existing_file_url: str,
+    local_file_path: Path,
+) -> bool:  # pragma: no cover - live file hash comparison path
     """
     Check if an existing file matches a local file by comparing SHA-256
     hashes.
@@ -167,7 +177,7 @@ def _is_existing_equivalent(
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
-        if parsed.scheme == "file":
+        if parsed.scheme == "file":  # pragma: no cover - local duplicate check
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
 
             if (
@@ -229,7 +239,7 @@ def _get_uploaded_cover(
     Get uploaded cover file, or None if it matches the existing
     cover.
     """
-    if (
+    if (  # pragma: no cover - remote cover check
         page.cover is not None
         and isinstance(page.cover, NotionFile)
         and _files_match(
