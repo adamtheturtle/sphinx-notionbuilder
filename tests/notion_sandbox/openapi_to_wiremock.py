@@ -66,7 +66,7 @@ def _build_mappings(openapi: dict[str, Any]) -> list[dict[str, Any]]:
             status_code, body = _pick_response(responses=responses)
             operation_id = operation.get("operationId")
             name = (
-                str(operation_id)
+                str(object=operation_id)
                 if isinstance(operation_id, str)
                 else f"{method.upper()} {path}"
             )
@@ -154,7 +154,9 @@ def main() -> None:
     output_path = sandbox_dir / "notion-wiremock-stubs.json"
 
     with openapi_path.open(encoding="utf-8") as openapi_file:
-        openapi = yaml.safe_load(stream=openapi_file)
+        openapi = yaml.safe_load(  # type: ignore[no-untyped-call]
+            stream=openapi_file
+        )
     if not isinstance(openapi, dict):
         message = "OpenAPI document is not a mapping."
         raise TypeError(message)
