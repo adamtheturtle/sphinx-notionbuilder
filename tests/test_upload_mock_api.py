@@ -142,25 +142,15 @@ def fixture_mock_api_base_url_fixture(
 def fixture_notion_session_fixture(
     *,
     mock_api_base_url: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
-    previous_notion_token = os.environ.get("NOTION_TOKEN")
-    session: Session | None = None
+    monkeypatch.setenv(name="NOTION_TOKEN", value=uuid4().hex)
+    session = Session(base_url=mock_api_base_url)
     try:
-        os.environ["NOTION_TOKEN"] = uuid4().hex
-        session = Session(base_url=mock_api_base_url)
-        assert session is not None
         yield session
     finally:
-        if session is not None:
-            session.close()
-        if previous_notion_token is None:
-            if "NOTION_TOKEN" in os.environ:
-                del os.environ["NOTION_TOKEN"]
-        else:
-            os.environ["NOTION_TOKEN"] = (
-                previous_notion_token  # pragma: no cover - token restore path
-            )
+        session.close()
 
 
 @pytest.fixture(name="parent_page_id")
