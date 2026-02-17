@@ -145,14 +145,17 @@ def fixture_notion_session_fixture(
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
     previous_notion_token = os.environ.get("NOTION_TOKEN")
-    os.environ["NOTION_TOKEN"] = uuid4().hex
-    session = Session(base_url=mock_api_base_url)
+    session: Session | None = None
     try:
+        os.environ["NOTION_TOKEN"] = uuid4().hex
+        session = Session(base_url=mock_api_base_url)
+        assert session is not None
         yield session
     finally:
-        session.close()
+        if session is not None:
+            session.close()
         if previous_notion_token is None:
-            del os.environ["NOTION_TOKEN"]
+            os.environ.pop("NOTION_TOKEN", None)
         else:
             os.environ["NOTION_TOKEN"] = (
                 previous_notion_token  # pragma: no cover - token restore path
