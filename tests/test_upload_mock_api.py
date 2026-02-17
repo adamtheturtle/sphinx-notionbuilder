@@ -389,23 +389,12 @@ def test_upload_with_cover_path(
 
 def test_upload_with_file_block(
     notion_session: Session,
-    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
     """It is possible to upload a page with a file:// image block."""
     img_file = tmp_path / "test.png"
     img_file.write_bytes(data=b"fake-image-data")
-
-    before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
-    before_file_block_patch_count = _wiremock_request_count(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path=f"/v1/blocks/{parent_page_id}/children",
-        body_contains='"file_upload"',
-    )
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -420,25 +409,23 @@ def test_upload_with_file_block(
         cover_url=None,
         cancel_on_discussion=False,
     )
-    after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
-    after_file_block_patch_count = _wiremock_request_count(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path=f"/v1/blocks/{parent_page_id}/children",
-        body_contains='"file_upload"',
-    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
-    assert after_upload_count == before_upload_count + 1
-    assert after_file_block_patch_count == before_file_block_patch_count + 1
+    assert len(page.blocks) == 1
+    uploaded_image_block = page.blocks[0]
+    assert isinstance(uploaded_image_block, UnoImage)
+    assert str(object=uploaded_image_block.id) == (
+        "30f89f8f-57ff-4f6c-a13d-4720d0d4f123"
+    )
+    assert uploaded_image_block.obj_ref.image.type == "file_upload"
+    assert str(object=uploaded_image_block.obj_ref.image.file_upload.id) == (
+        "ff000000-0000-0000-0000-000000000001"
+    )
 
 
 def test_upload_with_nested_file_block(
     notion_session: Session,
-    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
@@ -451,9 +438,6 @@ def test_upload_with_nested_file_block(
         blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
     )
 
-    before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[parent_block],
@@ -465,13 +449,19 @@ def test_upload_with_nested_file_block(
         cover_url=None,
         cancel_on_discussion=False,
     )
-    after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
-    assert after_upload_count == before_upload_count + 1
+    assert len(page.blocks) == 1
+    uploaded_parent_block = page.blocks[0]
+    assert isinstance(uploaded_parent_block, BulletedItem)
+    assert len(uploaded_parent_block.children) == 1
+    uploaded_child_block = uploaded_parent_block.children[0]
+    assert isinstance(uploaded_child_block, UnoImage)
+    assert uploaded_child_block.obj_ref.image.type == "file_upload"
+    assert str(object=uploaded_child_block.obj_ref.image.file_upload.id) == (
+        "ff000000-0000-0000-0000-000000000001"
+    )
 
 
 def test_upload_prefix_suffix_matching(
@@ -548,7 +538,7 @@ def test_upload_with_cover_unchanged(
     )
 
     with caplog.at_level(level=logging.INFO):
-        notion_upload.upload_to_notion(
+        page = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(
@@ -576,6 +566,10 @@ def test_upload_with_cover_unchanged(
     assert "Cover image unchanged, skipping upload" in caplog.text
     assert after_upload_count == before_upload_count
     assert after_cover_patch_count == before_cover_patch_count
+    assert page.cover is not None
+    assert page.cover.url == (
+        "https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png"
+    )
 
 
 def test_upload_matching_file_blocks(
