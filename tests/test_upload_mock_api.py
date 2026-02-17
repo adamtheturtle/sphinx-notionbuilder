@@ -3,7 +3,6 @@ API.
 """
 
 import json
-import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -196,34 +195,49 @@ def test_upload_to_notion_with_wiremock(
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
-    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Changed content triggers block deletion and re-upload."""
-    with caplog.at_level(level=logging.INFO):
-        page = notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoParagraph(text=text(text="Different content triggers sync"))
-            ],
-            parent_page_id=parent_page_id,
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=True,
-        )
+    before_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
+    )
+    before_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/blocks/{parent_page_id}/children",
+    )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Different content triggers sync"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=True,
+    )
+    after_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
+    )
+    after_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/blocks/{parent_page_id}/children",
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
-    expected_match_log = (
-        "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
-    )
-    assert expected_match_log in caplog.text
-    assert "Deleting block 1/1" in caplog.text
-    assert "Appending 1 blocks to page" in caplog.text
+    assert after_delete_count == before_delete_count + 1
+    assert after_append_count == before_append_count + 1
 
 
 def test_upload_with_icon(
@@ -490,35 +504,51 @@ def test_upload_with_nested_file_block(
 
 
 def test_upload_prefix_suffix_matching(
-    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
     """Prefix and suffix matching skips unchanged blocks."""
-    with caplog.at_level(level=logging.INFO):
-        notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoParagraph(text=text(text="same")),
-                UnoParagraph(text=text(text="new")),
-                Divider(),
-            ],
-            parent_page_id="dddd0000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
-
-    assert (
-        "1 prefix and 1 suffix blocks match, 1 to delete, 1 to upload"
-        in caplog.text
+    before_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000011",
     )
+    before_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000002/children",
+    )
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="same")),
+            UnoParagraph(text=text(text="new")),
+            Divider(),
+        ],
+        parent_page_id="dddd0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+    after_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000011",
+    )
+    after_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000002/children",
+    )
+
+    assert after_delete_count == before_delete_count + 1
+    assert after_append_count == before_append_count + 1
 
 
 def test_upload_with_cover_unchanged(
-    caplog: pytest.LogCaptureFixture,
     notion_session: Session,
     mock_api_base_url: str,
     tmp_path: Path,
@@ -562,22 +592,21 @@ def test_upload_with_cover_unchanged(
         value=lambda **_kwargs: mock_response,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
 
-    with caplog.at_level(level=logging.INFO):
-        page = notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoParagraph(
-                    text=text(text="Hello from WireMock upload test"),
-                ),
-            ],
-            parent_page_id="aa110000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=cover_file,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(
+                text=text(text="Hello from WireMock upload test"),
+            ),
+        ],
+        parent_page_id="aa110000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=cover_file,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
     after_upload_count = _file_upload_create_count(
         base_url=mock_api_base_url,
     )
@@ -588,7 +617,6 @@ def test_upload_with_cover_unchanged(
         body_contains='"cover":{"type":"file_upload"',
     )
 
-    assert "Cover image unchanged, skipping upload" in caplog.text
     assert after_upload_count == before_upload_count
     assert after_cover_patch_count == before_cover_patch_count
     assert page.cover is not None
@@ -598,7 +626,7 @@ def test_upload_with_cover_unchanged(
 
 
 def test_upload_matching_file_blocks(
-    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
     notion_session: Session,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -613,25 +641,42 @@ def test_upload_matching_file_blocks(
         value=lambda **_kwargs: True,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
     )
 
-    with caplog.at_level(level=logging.INFO):
-        notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[
-                UnoImage(file=ExternalFile(url=img_file.as_uri())),
-            ],
-            parent_page_id="eeee0000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
-
-    assert (
-        "1 prefix and 0 suffix blocks match, 0 to delete, 0 to upload"
-        in caplog.text
+    before_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000010",
     )
+    before_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000002/children",
+    )
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoImage(file=ExternalFile(url=img_file.as_uri())),
+        ],
+        parent_page_id="eeee0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+    after_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000010",
+    )
+    after_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000002/children",
+    )
+
+    assert after_delete_count == before_delete_count
+    assert after_append_count == before_append_count
 
 
 def test_upload_file_block_name_mismatch(
@@ -771,54 +816,99 @@ def test_upload_file_block_existing_is_external(
 
 
 def test_upload_matching_parent_blocks(
-    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
     """Matching parent blocks with children are not re-uploaded."""
     local_block = BulletedItem(text=text(text="item"))
     local_block.append(blocks=[Divider()])
 
-    with caplog.at_level(level=logging.INFO):
-        notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[local_block],
-            parent_page_id="aabb0000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
-
-    assert (
-        "1 prefix and 0 suffix blocks match, 0 to delete, 0 to upload"
-        in caplog.text
+    before_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
+    before_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
+    )
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[local_block],
+        parent_page_id="aabb0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+    after_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
+    )
+    after_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
+    )
+
+    assert after_delete_count == before_delete_count
+    assert after_append_count == before_append_count
 
 
 def test_upload_parent_block_different_children_count(
-    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
     """Parent block with different children count triggers re-upload."""
     local_block = BulletedItem(text=text(text="item"))
     local_block.append(blocks=[Divider(), Divider()])
 
-    with caplog.at_level(level=logging.INFO):
-        notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[local_block],
-            parent_page_id="aabb0000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-        )
-
-    assert (
-        "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
-        in caplog.text
+    before_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
+    before_parent_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
+    )
+    before_child_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000020/children",
+    )
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[local_block],
+        parent_page_id="aabb0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+    after_delete_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="DELETE",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
+    )
+    after_parent_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
+    )
+    after_child_append_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000020/children",
+    )
+
+    assert after_delete_count == before_delete_count + 1
+    assert after_parent_append_count == before_parent_append_count + 1
+    assert after_child_append_count == before_child_append_count + 1
