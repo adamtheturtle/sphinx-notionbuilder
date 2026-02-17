@@ -6,6 +6,7 @@ import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from uuid import uuid4
 
 import docker
 import pytest
@@ -144,7 +145,7 @@ def fixture_notion_session_fixture(
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
     previous_notion_token = os.environ.get("NOTION_TOKEN")
-    os.environ["NOTION_TOKEN"] = "wiremock-test-token"  # noqa: S105
+    os.environ["NOTION_TOKEN"] = uuid4().hex
     session = Session(base_url=mock_api_base_url)
     try:
         yield session
