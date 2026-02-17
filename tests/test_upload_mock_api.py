@@ -289,16 +289,30 @@ def test_upload_discussions_exist_error(
 
 def test_upload_with_database_parent(
     notion_session: Session,
-    parent_page_id: str,
+    mock_api_base_url: str,
 ) -> None:
     """It is possible to upload a page to a database."""
+    parent_database_id = "db000000-0000-0000-0000-000000000001"
+    query_url_path = f"/v1/databases/{parent_database_id}/query"
+    count_request_body = {
+        "method": "POST",
+        "urlPath": query_url_path,
+    }
+    before_count_response = requests.post(
+        url=f"{mock_api_base_url}/__admin/requests/count",
+        json=count_request_body,
+        timeout=30,
+    )
+    before_count_response.raise_for_status()
+    before_count = before_count_response.json()["count"]
+
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
         parent_page_id=None,
-        parent_database_id="db000000-0000-0000-0000-000000000001",
+        parent_database_id=parent_database_id,
         title="Upload Title",
         icon=None,
         cover_path=None,
@@ -306,8 +320,16 @@ def test_upload_with_database_parent(
         cancel_on_discussion=False,
     )
 
+    after_count_response = requests.post(
+        url=f"{mock_api_base_url}/__admin/requests/count",
+        json=count_request_body,
+        timeout=30,
+    )
+    after_count_response.raise_for_status()
+    after_count = after_count_response.json()["count"]
+
     assert page.title == "Upload Title"
-    assert str(object=page.id) == parent_page_id
+    assert after_count == before_count + 1
 
 
 def test_upload_with_cover_path(
