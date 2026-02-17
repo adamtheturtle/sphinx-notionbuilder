@@ -24,6 +24,7 @@ from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
 from sphinx_notion._upload import (
+    DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
 )
@@ -258,4 +259,29 @@ def test_upload_page_has_databases_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+        )
+
+
+def test_upload_discussions_exist_error(
+    notion_session: Session,
+) -> None:
+    """DiscussionsExistError raised when blocks to delete have discussions."""
+    with pytest.raises(
+        expected_exception=DiscussionsExistError,
+        match=r"1 block.*1 discussion",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Different content triggers sync"),
+                ),
+            ],
+            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=True,
         )
