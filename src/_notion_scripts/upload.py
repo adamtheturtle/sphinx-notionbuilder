@@ -85,6 +85,14 @@ from sphinx_notion._upload import (
     is_flag=True,
     default=False,
 )
+@cloup.option(
+    "--notion-api-base-url",
+    help=(
+        "Override the Notion API base URL. "
+        "Useful for tests against a mock Notion API."
+    ),
+    required=False,
+)
 @beartype
 def main(
     *,
@@ -96,13 +104,18 @@ def main(
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    notion_api_base_url: str | None,
 ) -> None:
     """Upload documentation to Notion."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
-    session = Session()
+    session = (
+        Session(base_url=notion_api_base_url)
+        if notion_api_base_url is not None
+        else Session()
+    )
     block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
     # See https://github.com/ultimate-notion/ultimate-notion/issues/177
     blocks = [
@@ -136,5 +149,7 @@ def main(
         raise click.ClickException(message=error_message) from None
     except DiscussionsExistError as exc:
         raise click.ClickException(message=str(object=exc)) from None
+    finally:
+        session.close()
 
     click.echo(message=f"Uploaded page: '{title}' ({page.url})")

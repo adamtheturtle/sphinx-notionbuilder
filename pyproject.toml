@@ -326,9 +326,6 @@ ini_options.log_cli = true
 
 [tool.coverage]
 run.branch = true
-run.omit = [
-    "src/_notion_scripts/upload.py",
-]
 report.exclude_also = [
     "if TYPE_CHECKING:",
 ]
