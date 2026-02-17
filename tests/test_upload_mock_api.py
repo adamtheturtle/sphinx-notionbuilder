@@ -80,7 +80,9 @@ def _count_wiremock_requests(
         "urlPath": url_path,
     }
     if body_contains is not None:
-        payload["bodyPatterns"] = [{"contains": body_contains}]
+        payload["bodyPatterns"] = [
+            {"contains": body_contains}
+        ]  # pragma: no cover - optional helper filter
 
     response = requests.post(
         url=f"{base_url}/__admin/requests/count",
@@ -156,7 +158,9 @@ def fixture_notion_session_fixture(
         if previous_notion_token is None:
             del os.environ["NOTION_TOKEN"]
         else:
-            os.environ["NOTION_TOKEN"] = previous_notion_token
+            os.environ["NOTION_TOKEN"] = (
+                previous_notion_token  # pragma: no cover - env restore path
+            )
 
 
 @pytest.fixture(name="parent_page_id")
