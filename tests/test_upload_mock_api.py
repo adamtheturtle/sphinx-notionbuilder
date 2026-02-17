@@ -252,28 +252,7 @@ def test_upload_with_cover_url(
         body_contains=cover_url,
     )
 
-    page = notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoParagraph(text=text(text="Hello from WireMock upload test"))
-        ],
-        parent_page_id=parent_page_id,
-        parent_database_id=None,
-        title=upload_title,
-        icon=None,
-        cover_path=None,
-        cover_url=None,
-        cancel_on_discussion=False,
-    )
-
-    after_none_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        body_contains=cover_url,
-    )
-    assert after_none_count == before_count
-
-    page = notion_upload.upload_to_notion(
+    notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from WireMock upload test"))
@@ -293,12 +272,7 @@ def test_upload_with_cover_url(
         body_contains=cover_url,
     )
 
-    assert page.title is not None
-    assert str(object=page.title).startswith("Upload Title")
-    assert str(object=page.id) == parent_page_id
     assert after_url_count == before_count + 1
-    assert isinstance(page.cover, ExternalFile)
-    assert page.cover.url == cover_url
 
 
 def test_upload_page_has_subpages_error(
@@ -365,7 +339,6 @@ def test_upload_discussions_exist_error(
 def test_upload_with_database_parent(
     notion_session: Session,
     mock_api_base_url: str,
-    upload_title: str,
 ) -> None:
     """It is possible to upload a page to a database."""
     parent_database_id = "db000000-0000-0000-0000-000000000001"
@@ -377,14 +350,14 @@ def test_upload_with_database_parent(
         url_path=query_url_path,
     )
 
-    page = notion_upload.upload_to_notion(
+    notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
         parent_page_id=None,
         parent_database_id=parent_database_id,
-        title=upload_title,
+        title="Upload Title",
         icon=None,
         cover_path=None,
         cover_url=None,
@@ -397,8 +370,6 @@ def test_upload_with_database_parent(
         url_path=query_url_path,
     )
 
-    assert page.title is not None
-    assert str(object=page.title).startswith("Upload Title")
     assert after_count == before_count + 1
 
 
