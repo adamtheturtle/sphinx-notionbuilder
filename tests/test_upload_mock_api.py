@@ -154,7 +154,7 @@ def fixture_notion_session_fixture(
             del os.environ["NOTION_TOKEN"]
         else:
             os.environ["NOTION_TOKEN"] = (
-                previous_notion_token  # pragma: no cover - env restore path
+                previous_notion_token  # pragma: no cover - token restore path
             )
 
 

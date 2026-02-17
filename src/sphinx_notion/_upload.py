@@ -85,7 +85,7 @@ def _block_without_children(
 def _calculate_file_sha(
     *,
     file_path: Path,
-) -> str:  # pragma: no cover - live file dedupe helper
+) -> str:  # pragma: no cover - live file duplicate check
     """Calculate SHA-256 hash of a file."""
     sha256_hash = hashlib.sha256()
     with file_path.open(mode="rb") as f:
@@ -179,7 +179,7 @@ def _is_existing_equivalent(
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
-        if parsed.scheme == "file":  # pragma: no cover - live file dedupe
+        if parsed.scheme == "file":  # pragma: no cover - local duplicate check
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
 
             if (
