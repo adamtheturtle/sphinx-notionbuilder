@@ -7,6 +7,7 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 import docker
@@ -418,8 +419,11 @@ def test_upload_with_file_block(
     assert str(object=uploaded_image_block.id) == (
         "30f89f8f-57ff-4f6c-a13d-4720d0d4f123"
     )
-    assert uploaded_image_block.obj_ref.image.type == "file_upload"
-    assert str(object=uploaded_image_block.obj_ref.image.file_upload.id) == (
+    uploaded_image = uploaded_image_block.obj_ref.image
+    assert uploaded_image is not None
+    assert uploaded_image.type == "file_upload"
+    uploaded_image_file = cast("Any", uploaded_image)
+    assert str(object=uploaded_image_file.file_upload.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
 
@@ -458,8 +462,14 @@ def test_upload_with_nested_file_block(
     assert len(uploaded_parent_block.children) == 1
     uploaded_child_block = uploaded_parent_block.children[0]
     assert isinstance(uploaded_child_block, UnoImage)
-    assert uploaded_child_block.obj_ref.image.type == "file_upload"
-    assert str(object=uploaded_child_block.obj_ref.image.file_upload.id) == (
+    uploaded_child_image = uploaded_child_block.obj_ref.image
+    assert uploaded_child_image is not None
+    assert uploaded_child_image.type == "file_upload"
+    uploaded_child_file = cast(
+        "Any",
+        uploaded_child_image,
+    )
+    assert str(object=uploaded_child_file.file_upload.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
 
