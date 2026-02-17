@@ -17,7 +17,7 @@ from tenacity import (
     stop_after_delay,
     wait_fixed,
 )
-from ultimate_notion import ExternalFile, Session
+from ultimate_notion import Session
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
@@ -69,6 +69,7 @@ def _count_wiremock_requests(
     method: str,
     url_path: str | None = None,
     body_contains: str | None = None,
+    body_patterns: list[dict[str, str]] | None = None,
 ) -> int:
     """Count matching requests captured by WireMock."""
     request_body: dict[str, object] = {"method": method}
@@ -76,6 +77,8 @@ def _count_wiremock_requests(
         request_body["urlPath"] = url_path
     if body_contains is not None:
         request_body["bodyPatterns"] = [{"contains": body_contains}]
+    if body_patterns is not None:
+        request_body["bodyPatterns"] = body_patterns
 
     response = requests.post(
         url=f"{base_url}/__admin/requests/count",
@@ -246,10 +249,17 @@ def test_upload_with_cover_url(
 ) -> None:
     """It is possible to upload a page with a cover URL."""
     cover_url = "https://example.com/cover.png"
+    page_url_path = f"/v1/pages/{parent_page_id.replace('-', '')}"
+    cover_body_patterns = [
+        {"contains": '"cover":'},
+        {"contains": '"type":"external"'},
+        {"contains": f'"url":"{cover_url}"'},
+    ]
     before_count = _count_wiremock_requests(
         base_url=mock_api_base_url,
         method="PATCH",
-        body_contains=cover_url,
+        url_path=page_url_path,
+        body_patterns=cover_body_patterns,
     )
 
     notion_upload.upload_to_notion(
@@ -269,7 +279,8 @@ def test_upload_with_cover_url(
     after_url_count = _count_wiremock_requests(
         base_url=mock_api_base_url,
         method="PATCH",
-        body_contains=cover_url,
+        url_path=page_url_path,
+        body_patterns=cover_body_patterns,
     )
 
     assert after_url_count == before_count + 1
@@ -375,6 +386,7 @@ def test_upload_with_database_parent(
 
 def test_upload_with_cover_path(
     notion_session: Session,
+    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
     upload_title: str,
@@ -382,8 +394,31 @@ def test_upload_with_cover_path(
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
+    page_url_path = f"/v1/pages/{parent_page_id.replace('-', '')}"
+    uploaded_file_id = "ff000000-0000-0000-0000-000000000001"
+    cover_body_patterns = [
+        {"contains": '"cover":'},
+        {"contains": '"type":"file_upload"'},
+        {"contains": f'"id":"{uploaded_file_id}"'},
+    ]
+    before_create_upload_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path="/v1/file_uploads",
+    )
+    before_send_upload_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=f"/v1/file_uploads/{uploaded_file_id}/send",
+    )
+    before_cover_patch_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=page_url_path,
+        body_patterns=cover_body_patterns,
+    )
 
-    page = notion_upload.upload_to_notion(
+    notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
@@ -396,9 +431,22 @@ def test_upload_with_cover_path(
         cover_url=None,
         cancel_on_discussion=False,
     )
-
-    assert page.title is not None
-    assert str(object=page.title).startswith("Upload Title")
-    assert str(object=page.id) == parent_page_id
-    assert isinstance(page.cover, ExternalFile)
-    assert page.cover.url == "https://example.com/cover.png"
+    after_create_upload_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path="/v1/file_uploads",
+    )
+    after_send_upload_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=f"/v1/file_uploads/{uploaded_file_id}/send",
+    )
+    after_cover_patch_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=page_url_path,
+        body_patterns=cover_body_patterns,
+    )
+    assert after_create_upload_count == before_create_upload_count + 1
+    assert after_send_upload_count == before_send_upload_count + 1
+    assert after_cover_patch_count == before_cover_patch_count + 1
