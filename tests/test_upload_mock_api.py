@@ -91,6 +91,11 @@ def _count_wiremock_requests(
     return count
 
 
+def _page_update_url_path(*, page_id: str) -> str:
+    """Return the page-update endpoint path for a page ID."""
+    return f"/v1/pages/{page_id.replace('-', '')}"
+
+
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -249,7 +254,7 @@ def test_upload_with_cover_url(
 ) -> None:
     """It is possible to upload a page with a cover URL."""
     cover_url = "https://example.com/cover.png"
-    page_url_path = f"/v1/pages/{parent_page_id.replace('-', '')}"
+    page_url_path = _page_update_url_path(page_id=parent_page_id)
     cover_body_patterns = [
         {"contains": '"cover":'},
         {"contains": '"type":"external"'},
@@ -394,7 +399,7 @@ def test_upload_with_cover_path(
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
-    page_url_path = f"/v1/pages/{parent_page_id.replace('-', '')}"
+    page_url_path = _page_update_url_path(page_id=parent_page_id)
     uploaded_file_id = "ff000000-0000-0000-0000-000000000001"
     cover_body_patterns = [
         {"contains": '"cover":'},
