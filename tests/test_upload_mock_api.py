@@ -472,16 +472,20 @@ def test_upload_with_cover_unchanged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Cover unchanged skips re-upload when file hashes match."""
-    notion_upload._calculate_file_sha.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
-    notion_upload._calculate_file_sha_from_url.cache_clear()  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
+    notion_upload._calculate_file_sha.cache_clear()  # noqa: SLF001  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
+    notion_upload._calculate_file_sha_from_url.cache_clear()  # noqa: SLF001  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
 
     cover_content = b"matching-cover-data"
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=cover_content)
 
     mock_response = MagicMock()
-    mock_response.__enter__ = MagicMock(return_value=mock_response)
-    mock_response.__exit__ = MagicMock(return_value=False)
+    mock_response.configure_mock(
+        **{
+            "__enter__.return_value": mock_response,
+            "__exit__.return_value": False,
+        }
+    )
     mock_response.raise_for_status = MagicMock()
     mock_response.iter_content = MagicMock(
         return_value=[cover_content, b""],

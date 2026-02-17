@@ -158,12 +158,8 @@ lint.per-file-ignores."docs/source/*.py" = [
     "S101",
 ]
 lint.per-file-ignores."tests/*.py" = [
-    # Test function names describe what they test, no need for docstrings.
-    "D103",
     # Allow asserts in tests.
     "S101",
-    # Tests access private members for cache clearing and monkeypatching.
-    "SLF001",
 ]
 # Do not automatically remove commented out code.
 # We comment out code during development, and with VSCode auto-save, this code
@@ -441,9 +437,6 @@ ignore_names = [
     "final_argument_whitespace",
     "option_spec",
     "run",
-    # Mock context manager attributes (used in tests)
-    "__enter__",
-    "__exit__",
 ]
 # Duplicate some of .gitignore
 exclude = [ ".venv" ]
