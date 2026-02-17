@@ -155,7 +155,8 @@ def fixture_notion_session_fixture(
         if session is not None:
             session.close()
         if previous_notion_token is None:
-            os.environ.pop("NOTION_TOKEN", None)
+            if "NOTION_TOKEN" in os.environ:
+                del os.environ["NOTION_TOKEN"]
         else:
             os.environ["NOTION_TOKEN"] = (
                 previous_notion_token  # pragma: no cover - token restore path
