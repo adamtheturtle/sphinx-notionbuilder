@@ -121,7 +121,7 @@ def test_upload_to_notion_with_microcks(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Run upload synchronization against a mock API."""
+    """It is possible to upload a page with the mock API."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -179,7 +179,7 @@ def test_upload_with_icon(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Upload with an emoji icon exercises the icon PATCH path."""
+    """It is possible to upload a page with an emoji icon."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -203,7 +203,7 @@ def test_upload_with_cover_url(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Upload with a cover URL exercises the ExternalFile cover path."""
+    """It is possible to upload a page with a cover URL."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
