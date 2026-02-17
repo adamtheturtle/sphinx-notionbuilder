@@ -39,7 +39,7 @@ def _invoke_upload(
     runner = CliRunner()
     arguments = [
         "--file",
-        str(blocks_file),
+        str(object=blocks_file),
         "--parent-page-id",
         parent_page_id,
         "--title",

@@ -98,7 +98,8 @@ def fixture_notion_token() -> Iterator[str]:
         yield token
     finally:
         if previous_token is None:
-            os.environ.pop("NOTION_TOKEN", None)
+            if "NOTION_TOKEN" in os.environ:
+                del os.environ["NOTION_TOKEN"]
         else:
             os.environ["NOTION_TOKEN"] = previous_token
 
