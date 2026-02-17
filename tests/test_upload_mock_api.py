@@ -7,6 +7,7 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from uuid import uuid4
 
 import docker
 import pytest
@@ -119,26 +120,33 @@ def fixture_parent_page_id() -> str:
     return "59833787-2cf9-4fdf-8782-e53db20768a5"
 
 
+@pytest.fixture(name="upload_title")
+def fixture_upload_title() -> str:
+    """A unique title for each upload test invocation."""
+    return f"Upload Title {uuid4().hex}"
+
+
 def test_upload_to_notion_with_wiremock(
     notion_session: Session,
     parent_page_id: str,
+    upload_title: str,
 ) -> None:
     """It is possible to upload a page with the mock API."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+            UnoParagraph(text=text(text="Hello from WireMock upload test2"))
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
-        title="Upload Title",
+        title=upload_title,
         icon=None,
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
     )
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert page.url == "https://www.notion.so/Upload-Title-59833787"
     assert str(object=page.id) == parent_page_id
     assert len(page.blocks) == 1
@@ -167,7 +175,7 @@ def test_upload_deletes_and_replaces_changed_blocks(
             cancel_on_discussion=True,
         )
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     expected_match_log = (
         "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
@@ -180,6 +188,7 @@ def test_upload_deletes_and_replaces_changed_blocks(
 def test_upload_with_icon(
     notion_session: Session,
     parent_page_id: str,
+    upload_title: str,
 ) -> None:
     """It is possible to upload a page with an emoji icon."""
     page = notion_upload.upload_to_notion(
@@ -189,14 +198,14 @@ def test_upload_with_icon(
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
-        title="Upload Title",
+        title=upload_title,
         icon="\N{MEMO}",
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
     )
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert page.icon == "\N{MEMO}"
 
@@ -204,6 +213,7 @@ def test_upload_with_icon(
 def test_upload_with_cover_url(
     notion_session: Session,
     parent_page_id: str,
+    upload_title: str,
 ) -> None:
     """It is possible to upload a page with a cover URL."""
     page = notion_upload.upload_to_notion(
@@ -213,14 +223,14 @@ def test_upload_with_cover_url(
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
-        title="Upload Title",
+        title=upload_title,
         icon=None,
         cover_path=None,
         cover_url="https://example.com/cover.png",
         cancel_on_discussion=False,
     )
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
@@ -290,6 +300,7 @@ def test_upload_discussions_exist_error(
 def test_upload_with_database_parent(
     notion_session: Session,
     mock_api_base_url: str,
+    upload_title: str,
 ) -> None:
     """It is possible to upload a page to a database."""
     parent_database_id = "db000000-0000-0000-0000-000000000001"
@@ -313,7 +324,7 @@ def test_upload_with_database_parent(
         ],
         parent_page_id=None,
         parent_database_id=parent_database_id,
-        title="Upload Title",
+        title=upload_title,
         icon=None,
         cover_path=None,
         cover_url=None,
@@ -328,7 +339,7 @@ def test_upload_with_database_parent(
     after_count_response.raise_for_status()
     after_count = after_count_response.json()["count"]
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert after_count == before_count + 1
 
 
@@ -336,6 +347,7 @@ def test_upload_with_cover_path(
     notion_session: Session,
     parent_page_id: str,
     tmp_path: Path,
+    upload_title: str,
 ) -> None:
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
@@ -348,14 +360,14 @@ def test_upload_with_cover_path(
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
-        title="Upload Title",
+        title=upload_title,
         icon=None,
         cover_path=cover_file,
         cover_url=None,
         cancel_on_discussion=False,
     )
 
-    assert page.title == "Upload Title"
+    assert page.title.startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
