@@ -6,7 +6,6 @@ import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, cast
 
 import docker
 import pytest
@@ -25,6 +24,7 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.obj_api.objects import UploadedFile as UnoUploadedFile
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
@@ -72,17 +72,12 @@ def _count_wiremock_requests(
     base_url: str,
     method: str,
     url_path: str,
-    body_contains: str | None = None,
 ) -> int:
     """Count matching requests captured by WireMock."""
-    payload: dict[str, str | list[dict[str, str]]] = {
+    payload = {
         "method": method,
         "urlPath": url_path,
     }
-    if body_contains is not None:
-        payload["bodyPatterns"] = [
-            {"contains": body_contains}
-        ]  # pragma: no cover - optional helper filter
 
     response = requests.post(
         url=f"{base_url}/__admin/requests/count",
@@ -391,6 +386,7 @@ def test_upload_with_database_parent(
 
 
 def test_upload_with_cover_path(
+    mock_api_base_url: str,
     notion_session: Session,
     parent_page_id: str,
     tmp_path: Path,
@@ -398,6 +394,9 @@ def test_upload_with_cover_path(
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -412,11 +411,15 @@ def test_upload_with_cover_path(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
+    assert after_upload_count == before_upload_count + 1
 
 
 def test_upload_with_file_block(
@@ -452,9 +455,9 @@ def test_upload_with_file_block(
     )
     uploaded_image = uploaded_image_block.obj_ref.image
     assert uploaded_image is not None
-    assert uploaded_image.type == "file_upload"
-    uploaded_image_file = cast("Any", uploaded_image)
-    assert str(object=uploaded_image_file.file_upload.id) == (
+    assert isinstance(uploaded_image, UnoUploadedFile)
+    uploaded_image_file = uploaded_image.file_upload
+    assert str(object=uploaded_image_file.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
 
@@ -495,12 +498,9 @@ def test_upload_with_nested_file_block(
     assert isinstance(uploaded_child_block, UnoImage)
     uploaded_child_image = uploaded_child_block.obj_ref.image
     assert uploaded_child_image is not None
-    assert uploaded_child_image.type == "file_upload"
-    uploaded_child_file = cast(
-        "Any",
-        uploaded_child_image,
-    )
-    assert str(object=uploaded_child_file.file_upload.id) == (
+    assert isinstance(uploaded_child_image, UnoUploadedFile)
+    uploaded_child_file = uploaded_child_image.file_upload
+    assert str(object=uploaded_child_file.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
 
