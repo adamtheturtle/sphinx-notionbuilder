@@ -40,6 +40,11 @@ pytestmark = pytest.mark.skipif(
     reason="SKIP_DOCKER_TESTS is set",
 )
 
+_WIREMOCK_IMAGE = (
+    "wiremock/wiremock@"
+    "sha256:27c4b74404f58ceedc6899f73abdfe228d8f80d5efa4d8bd42d6c155558b677c"
+)
+
 
 @retry(
     stop=stop_after_delay(max_delay=30),
@@ -113,7 +118,7 @@ def fixture_mock_api_base_url_fixture(
 
     docker_client = docker.from_env()
     container = docker_client.containers.run(
-        image="wiremock/wiremock:latest",
+        image=_WIREMOCK_IMAGE,
         detach=True,
         remove=True,
         ports={"8080/tcp": ("127.0.0.1", 0)},
