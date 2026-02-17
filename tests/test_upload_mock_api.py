@@ -2,10 +2,10 @@
 API.
 """
 
+import json
 import logging
 import os
 from collections.abc import Iterator
-from http import HTTPStatus
 from pathlib import Path
 
 import docker
@@ -13,7 +13,6 @@ import pytest
 import requests
 from tenacity import (
     retry,
-    retry_if_exception_type,
     stop_after_delay,
     wait_fixed,
 )
@@ -36,61 +35,30 @@ pytestmark = pytest.mark.skipif(
 
 
 @retry(
-    stop=stop_after_delay(max_delay=120),
+    stop=stop_after_delay(max_delay=30),
     wait=wait_fixed(wait=0.1),
     reraise=True,
 )
-def _wait_for_microcks(*, base_url: str) -> None:
-    """Wait until the mock service API responds."""
+def _wait_for_wiremock(*, base_url: str) -> None:
+    """Wait until the WireMock admin API responds."""
     response = requests.get(
-        url=f"{base_url}/api/services",
+        url=f"{base_url}/__admin/mappings",
         timeout=2,
     )
     response.raise_for_status()
 
 
-def _upload_openapi(*, base_url: str, openapi_path: Path) -> None:
-    """Upload an OpenAPI artifact to the mock service."""
-    with openapi_path.open(mode="rb") as file_obj:
-        response = requests.post(
-            url=f"{base_url}/api/artifact/upload?mainArtifact=true",
-            files={"file": (openapi_path.name, file_obj, "application/yaml")},
-            timeout=30,
-        )
+def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
+    """Upload mappings JSON to a WireMock instance."""
+    with mappings_path.open(encoding="utf-8") as mappings_file:
+        payload = json.load(fp=mappings_file)
 
-    if response.status_code not in (
-        HTTPStatus.OK,
-        HTTPStatus.CREATED,
-    ):
-        # Defensive: only reached if the Microcks upload endpoint fails.
-        message = (  # pragma: no cover
-            "OpenAPI upload failed with "
-            f"{response.status_code}: {response.text}"
-        )
-        raise RuntimeError(message)  # pragma: no cover
-
-
-@retry(
-    stop=stop_after_delay(max_delay=30),
-    wait=wait_fixed(wait=0.1),
-    retry=retry_if_exception_type(exception_types=AssertionError),
-    reraise=True,
-)
-def _wait_for_uploaded_service(
-    *,
-    base_url: str,
-    service_name: str,
-    service_version: str,
-) -> None:
-    """Wait until a specific service appears in the mock service."""
-    response = requests.get(
-        url=f"{base_url}/api/services",
-        timeout=3,
+    response = requests.post(
+        url=f"{base_url}/__admin/mappings/import",
+        json=payload,
+        timeout=30,
     )
     response.raise_for_status()
-    payload = response.text
-    assert service_name in payload
-    assert service_version in payload
 
 
 @pytest.fixture(name="microcks_base_url", scope="module")
@@ -98,36 +66,36 @@ def fixture_microcks_base_url_fixture(
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
-    openapi_path = (
+    mappings_path = (
         request.config.rootpath
         / "tests"
         / "notion_sandbox"
-        / "notion-openapi.yml"
+        / "notion-wiremock-stubs.json"
     )
-    assert openapi_path.is_file()
+    assert mappings_path.is_file()
 
     docker_client = docker.from_env()
     container = docker_client.containers.run(
-        image="quay.io/microcks/microcks-uber:latest-native",
+        image="wiremock/wiremock:latest",
         detach=True,
         remove=True,
         ports={"8080/tcp": ("127.0.0.1", 0)},
     )
-    container.reload()
-    host_port = container.ports["8080/tcp"][0]["HostPort"]
-    assert isinstance(host_port, str)
-    base_url = f"http://127.0.0.1:{host_port}"
+    try:
+        container.reload()
+        host_port = container.ports["8080/tcp"][0]["HostPort"]
+        assert isinstance(host_port, str)
+        base_url = f"http://127.0.0.1:{host_port}"
 
-    _wait_for_microcks(base_url=base_url)
-    _upload_openapi(base_url=base_url, openapi_path=openapi_path)
-    _wait_for_uploaded_service(
-        base_url=base_url,
-        service_name="notion-api",
-        service_version="1.1.0",
-    )
-    yield base_url
-    container.remove(force=True)
-    docker_client.close()
+        _wait_for_wiremock(base_url=base_url)
+        _upload_wiremock_mappings(
+            base_url=base_url,
+            mappings_path=mappings_path,
+        )
+        yield base_url
+    finally:
+        container.remove(force=True)
+        docker_client.close()
 
 
 @pytest.fixture(name="notion_session")
@@ -137,8 +105,8 @@ def fixture_notion_session_fixture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
-    monkeypatch.setenv(name="NOTION_TOKEN", value="microcks-test-token")
-    session = Session(base_url=f"{microcks_base_url}/rest/notion-api/1.1.0")
+    monkeypatch.setenv(name="NOTION_TOKEN", value="wiremock-test-token")
+    session = Session(base_url=microcks_base_url)
     yield session
     session.close()
 
