@@ -24,6 +24,7 @@ from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
 from sphinx_notion._upload import (
+    DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
 )
@@ -259,3 +260,80 @@ def test_upload_page_has_databases_error(
             cover_url=None,
             cancel_on_discussion=False,
         )
+
+
+def test_upload_discussions_exist_error(
+    notion_session: Session,
+) -> None:
+    """DiscussionsExistError raised when blocks to delete have discussions."""
+    with pytest.raises(
+        expected_exception=DiscussionsExistError,
+        match=r"1 block.*1 discussion",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Different content triggers sync"),
+                ),
+            ],
+            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=True,
+        )
+
+
+def test_upload_with_database_parent(
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """It is possible to upload a page to a database."""
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=None,
+        parent_database_id="db000000-0000-0000-0000-000000000001",
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+
+
+def test_upload_with_cover_path(
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """It is possible to upload a page with a local cover file."""
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=b"fake-png-data")
+
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=cover_file,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+    assert isinstance(page.cover, ExternalFile)
+    assert page.cover.url == "https://example.com/cover.png"
