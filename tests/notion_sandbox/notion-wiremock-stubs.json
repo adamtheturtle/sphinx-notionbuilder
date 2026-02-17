@@ -335,9 +335,9 @@
                   {
                     "type": "text",
                     "text": {
-                      "content": "Hello from Microcks upload test"
+                      "content": "Hello from WireMock upload test"
                     },
-                    "plain_text": "Hello from Microcks upload test",
+                    "plain_text": "Hello from WireMock upload test",
                     "annotations": {
                       "bold": false,
                       "italic": false,
@@ -391,9 +391,9 @@
                   {
                     "type": "text",
                     "text": {
-                      "content": "Hello from Microcks upload test"
+                      "content": "Hello from WireMock upload test"
                     },
-                    "plain_text": "Hello from Microcks upload test",
+                    "plain_text": "Hello from WireMock upload test",
                     "annotations": {
                       "bold": false,
                       "italic": false,
@@ -441,9 +441,9 @@
               {
                 "type": "text",
                 "text": {
-                  "content": "Hello from Microcks upload test"
+                  "content": "Hello from WireMock upload test"
                 },
-                "plain_text": "Hello from Microcks upload test",
+                "plain_text": "Hello from WireMock upload test",
                 "annotations": {
                   "bold": false,
                   "italic": false,
@@ -3273,9 +3273,9 @@
                   {
                     "type": "text",
                     "text": {
-                      "content": "Hello from Microcks upload test"
+                      "content": "Hello from WireMock upload test"
                     },
-                    "plain_text": "Hello from Microcks upload test",
+                    "plain_text": "Hello from WireMock upload test",
                     "annotations": {
                       "bold": false,
                       "italic": false,
