@@ -4,70 +4,80 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
+
+JSONValue = (
+    str
+    | int
+    | float
+    | bool
+    | None
+    | dict[str, "JSONValue"]
+    | list["JSONValue"]
+)
 
 _HTTP_METHODS = ("get", "post", "patch", "put", "delete")
 
 
 def _pick_response(
-    responses: dict[str, Any],
-) -> tuple[int, dict[str, Any] | list[Any] | str | int | float | bool | None]:
+    responses: dict[str, JSONValue],
+) -> tuple[int, JSONValue]:
     """Pick a JSON response body from an OpenAPI responses object."""
     # Prefer success responses.
     response_codes = sorted(
         responses,
         key=lambda code: (
-            0 if isinstance(code, str) and code.startswith("2") else 1,
+            0 if code.startswith("2") else 1,
             code,
         ),
     )
     for code in response_codes:
-        response = responses.get(code, {})
-        if not isinstance(response, dict):
+        response_value = responses.get(code, {})
+        if not isinstance(response_value, dict):
             continue
-        content = response.get("content", {})
-        if not isinstance(content, dict):
+        content_value = response_value.get("content", {})
+        if not isinstance(content_value, dict):
             continue
-        json_content = content.get("application/json", {})
-        if not isinstance(json_content, dict):
+        json_content_value = content_value.get("application/json", {})
+        if not isinstance(json_content_value, dict):
             continue
-        examples = json_content.get("examples")
-        if isinstance(examples, dict) and examples:
-            first_example = next(iter(examples.values()))
+        examples_value = json_content_value.get("examples")
+        if isinstance(examples_value, dict) and examples_value:
+            first_example = next(iter(examples_value.values()))
             if isinstance(first_example, dict):
                 return int(code), first_example.get("value")
-        if "example" in json_content:
-            return int(code), json_content["example"]
+        if "example" in json_content_value:
+            return int(code), json_content_value["example"]
         return int(code), None
     message = "No usable JSON response found in operation responses."
     raise RuntimeError(message)
 
 
-def _build_mappings(openapi: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_mappings(openapi: dict[str, JSONValue]) -> list[dict[str, Any]]:
     """Convert OpenAPI paths into WireMock mappings."""
-    paths = openapi.get("paths", {})
-    if not isinstance(paths, dict):
+    paths_value = openapi.get("paths", {})
+    if not isinstance(paths_value, dict):
         message = "OpenAPI document has no valid 'paths' object."
         raise TypeError(message)
 
     mappings: list[dict[str, Any]] = []
-    for path, path_item in paths.items():
-        if not isinstance(path_item, dict):
+    for path, path_item_value in paths_value.items():
+        if not isinstance(path_item_value, dict):
             continue
         for method in _HTTP_METHODS:
-            operation = path_item.get(method)
-            if not isinstance(operation, dict):
+            operation_value = path_item_value.get(method)
+            if not isinstance(operation_value, dict):
                 continue
-            responses = operation.get("responses", {})
-            if not isinstance(responses, dict):
+            responses_value = operation_value.get("responses", {})
+            if not isinstance(responses_value, dict):
                 continue
-            status_code, body = _pick_response(responses=responses)
-            operation_id = operation.get("operationId")
+            status_code, body = _pick_response(responses=responses_value)
+            operation_id_value = operation_value.get("operationId")
             name = (
-                str(object=operation_id)
-                if isinstance(operation_id, str)
+                str(object=operation_id_value)
+                if isinstance(operation_id_value, str)
                 else f"{method.upper()} {path}"
             )
             response: dict[str, Any] = {
@@ -154,12 +164,13 @@ def main() -> None:
     output_path = sandbox_dir / "notion-wiremock-stubs.json"
 
     with openapi_path.open(encoding="utf-8") as openapi_file:
-        openapi = yaml.safe_load(  # type: ignore[no-untyped-call]
+        openapi_obj: object = yaml.safe_load(  # type: ignore[no-untyped-call]
             stream=openapi_file
         )
-    if not isinstance(openapi, dict):
+    if not isinstance(openapi_obj, dict):
         message = "OpenAPI document is not a mapping."
         raise TypeError(message)
+    openapi = cast("dict[str, JSONValue]", openapi_obj)
 
     mappings = _build_additional_mappings() + _build_mappings(openapi=openapi)
     with output_path.open(mode="w", encoding="utf-8") as output_file:
