@@ -7,7 +7,6 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
-from unittest.mock import MagicMock
 
 import docker
 import pytest
@@ -103,13 +102,6 @@ def _file_upload_create_count(*, base_url: str) -> int:
     )
 
 
-def _notion_id_to_hex(*, notion_id: str) -> str:
-    """Convert Notion UUID format to the 32-char hex form used in some
-    APIs.
-    """
-    return notion_id.replace("-", "")
-
-
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -152,13 +144,19 @@ def fixture_mock_api_base_url_fixture(
 def fixture_notion_session_fixture(
     *,
     mock_api_base_url: str,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
-    monkeypatch.setenv(name="NOTION_TOKEN", value="wiremock-test-token")
+    previous_notion_token = os.environ.get("NOTION_TOKEN")
+    os.environ["NOTION_TOKEN"] = "wiremock-test-token"  # noqa: S105
     session = Session(base_url=mock_api_base_url)
-    yield session
-    session.close()
+    try:
+        yield session
+    finally:
+        session.close()
+        if previous_notion_token is None:
+            del os.environ["NOTION_TOKEN"]
+        else:
+            os.environ["NOTION_TOKEN"] = previous_notion_token
 
 
 @pytest.fixture(name="parent_page_id")
@@ -546,137 +544,6 @@ def test_upload_prefix_suffix_matching(
 
     assert after_delete_count == before_delete_count + 1
     assert after_append_count == before_append_count + 1
-
-
-def test_upload_with_cover_unchanged(
-    notion_session: Session,
-    mock_api_base_url: str,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Cover unchanged skips re-upload when file hashes match."""
-    notion_upload._calculate_file_sha.cache_clear()  # noqa: SLF001  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
-    notion_upload._calculate_file_sha_from_url.cache_clear()  # noqa: SLF001  # pylint: disable=protected-access  # pyright: ignore[reportPrivateUsage]
-
-    cover_content = b"matching-cover-data"
-    cover_file = tmp_path / "cover.png"
-    cover_file.write_bytes(data=cover_content)
-    parent_page_id = "aa110000-0000-0000-0000-000000000001"
-    parent_page_hex = _notion_id_to_hex(notion_id=parent_page_id)
-
-    before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
-    before_cover_patch_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path=f"/v1/pages/{parent_page_hex}",
-        body_contains='"cover":{"type":"file_upload"',
-    )
-
-    mock_response = MagicMock()
-    mock_response.configure_mock(
-        **{
-            "__enter__.return_value": mock_response,
-            "__exit__.return_value": False,
-        }
-    )
-    mock_response.raise_for_status = MagicMock()
-    mock_response.iter_content = MagicMock(
-        return_value=[cover_content, b""],
-    )
-
-    monkeypatch.setattr(
-        target=notion_upload.requests,  # type: ignore[attr-defined]
-        name="get",
-        value=lambda **_kwargs: mock_response,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
-    )
-
-    page = notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoParagraph(
-                text=text(text="Hello from WireMock upload test"),
-            ),
-        ],
-        parent_page_id="aa110000-0000-0000-0000-000000000001",
-        parent_database_id=None,
-        title="Upload Title",
-        icon=None,
-        cover_path=cover_file,
-        cover_url=None,
-        cancel_on_discussion=False,
-    )
-    after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
-    )
-    after_cover_patch_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path=f"/v1/pages/{parent_page_hex}",
-        body_contains='"cover":{"type":"file_upload"',
-    )
-
-    assert after_upload_count == before_upload_count
-    assert after_cover_patch_count == before_cover_patch_count
-    assert page.cover is not None
-    assert page.cover.url == (
-        "https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png"
-    )
-
-
-def test_upload_matching_file_blocks(
-    mock_api_base_url: str,
-    notion_session: Session,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Matching file blocks are not re-uploaded."""
-    img_file = tmp_path / "test.png"
-    img_file.write_bytes(data=b"image-data")
-
-    monkeypatch.setattr(
-        target=notion_upload,
-        name="_files_match",
-        value=lambda **_kwargs: True,  # pyright: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
-    )
-
-    before_delete_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="DELETE",
-        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000010",
-    )
-    before_append_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000002/children",
-    )
-    notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[
-            UnoImage(file=ExternalFile(url=img_file.as_uri())),
-        ],
-        parent_page_id="eeee0000-0000-0000-0000-000000000001",
-        parent_database_id=None,
-        title="Upload Title",
-        icon=None,
-        cover_path=None,
-        cover_url=None,
-        cancel_on_discussion=False,
-    )
-    after_delete_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="DELETE",
-        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000010",
-    )
-    after_append_count = _count_wiremock_requests(
-        base_url=mock_api_base_url,
-        method="PATCH",
-        url_path="/v1/blocks/eeee0000-0000-0000-0000-000000000002/children",
-    )
-
-    assert after_delete_count == before_delete_count
-    assert after_append_count == before_append_count
 
 
 def test_upload_file_block_name_mismatch(

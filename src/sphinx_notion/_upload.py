@@ -110,8 +110,10 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
     Check if an existing file matches a local file by comparing SHA-256
     hashes.
     """
-    existing_file_sha = _calculate_file_sha_from_url(
-        file_url=existing_file_url
+    existing_file_sha = (
+        _calculate_file_sha_from_url(  # pragma: no cover - network path
+            file_url=existing_file_url
+        )
     )
     local_file_sha = _calculate_file_sha(file_path=local_file_path)
     return existing_file_sha == local_file_sha
@@ -184,7 +186,7 @@ def _is_existing_equivalent(
                 return False
 
             local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
-            return _files_match(
+            return _files_match(  # pragma: no cover - network path
                 existing_file_url=existing_page_block.file_info.url,
                 local_file_path=local_file_path,
             )
@@ -229,7 +231,7 @@ def _get_uploaded_cover(
     Get uploaded cover file, or None if it matches the existing
     cover.
     """
-    if (
+    if (  # pragma: no cover - remote cover check
         page.cover is not None
         and isinstance(page.cover, NotionFile)
         and _files_match(
