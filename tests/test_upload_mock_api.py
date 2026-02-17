@@ -215,10 +215,28 @@ def test_upload_with_icon(
 
 def test_upload_with_cover_url(
     notion_session: Session,
+    mock_api_base_url: str,
     parent_page_id: str,
     upload_title: str,
 ) -> None:
     """It is possible to upload a page with a cover URL."""
+    cover_url = "https://example.com/cover.png"
+    count_request_body = {
+        "method": "PATCH",
+        "bodyPatterns": [
+            {
+                "contains": cover_url,
+            }
+        ],
+    }
+    before_count_response = requests.post(
+        url=f"{mock_api_base_url}/__admin/requests/count",
+        json=count_request_body,
+        timeout=30,
+    )
+    before_count_response.raise_for_status()
+    before_count = before_count_response.json()["count"]
+
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -229,15 +247,47 @@ def test_upload_with_cover_url(
         title=upload_title,
         icon=None,
         cover_path=None,
-        cover_url="https://example.com/cover.png",
+        cover_url=None,
         cancel_on_discussion=False,
     )
+
+    after_none_count_response = requests.post(
+        url=f"{mock_api_base_url}/__admin/requests/count",
+        json=count_request_body,
+        timeout=30,
+    )
+    after_none_count_response.raise_for_status()
+    after_none_count = after_none_count_response.json()["count"]
+    assert after_none_count == before_count
+
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title=upload_title,
+        icon=None,
+        cover_path=None,
+        cover_url=cover_url,
+        cancel_on_discussion=False,
+    )
+
+    after_url_count_response = requests.post(
+        url=f"{mock_api_base_url}/__admin/requests/count",
+        json=count_request_body,
+        timeout=30,
+    )
+    after_url_count_response.raise_for_status()
+    after_url_count = after_url_count_response.json()["count"]
 
     assert page.title is not None
     assert str(object=page.title).startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
+    assert after_url_count == before_count + 1
     assert isinstance(page.cover, ExternalFile)
-    assert page.cover.url == "https://example.com/cover.png"
+    assert page.cover.url == cover_url
 
 
 def test_upload_page_has_subpages_error(
