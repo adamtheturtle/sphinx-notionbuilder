@@ -67,16 +67,14 @@ def _count_wiremock_requests(
     *,
     base_url: str,
     method: str,
-    url_path: str | None = None,
-    body_contains: str | None = None,
+    url_path: str,
     body_patterns: list[dict[str, str]] | None = None,
 ) -> int:
     """Count matching requests captured by WireMock."""
-    request_body: dict[str, object] = {"method": method}
-    if url_path is not None:
-        request_body["urlPath"] = url_path
-    if body_contains is not None:
-        request_body["bodyPatterns"] = [{"contains": body_contains}]
+    request_body: dict[str, object] = {
+        "method": method,
+        "urlPath": url_path,
+    }
     if body_patterns is not None:
         request_body["bodyPatterns"] = body_patterns
 
