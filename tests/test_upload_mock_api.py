@@ -69,14 +69,14 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     response.raise_for_status()
 
 
-def _wiremock_request_count(
+def _count_wiremock_requests(
     *,
     base_url: str,
     method: str,
     url_path: str,
     body_contains: str | None = None,
 ) -> int:
-    """Return the number of matching requests from WireMock's journal."""
+    """Count matching requests captured by WireMock."""
     payload: dict[str, str | list[dict[str, str]]] = {
         "method": method,
         "urlPath": url_path,
@@ -87,17 +87,17 @@ def _wiremock_request_count(
     response = requests.post(
         url=f"{base_url}/__admin/requests/count",
         json=payload,
-        timeout=2,
+        timeout=30,
     )
     response.raise_for_status()
-    count = response.json().get("count")
+    count = response.json()["count"]
     assert isinstance(count, int)
     return count
 
 
 def _file_upload_create_count(*, base_url: str) -> int:
     """Count calls to file-upload creation endpoint."""
-    return _wiremock_request_count(
+    return _count_wiremock_requests(
         base_url=base_url,
         method="POST",
         url_path="/v1/file_uploads",
@@ -338,16 +338,25 @@ def test_upload_discussions_exist_error(
 
 def test_upload_with_database_parent(
     notion_session: Session,
-    parent_page_id: str,
+    mock_api_base_url: str,
 ) -> None:
     """It is possible to upload a page to a database."""
+    parent_database_id = "db000000-0000-0000-0000-000000000001"
+    query_url_path = f"/v1/databases/{parent_database_id}/query"
+
+    before_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
+    )
+
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
         parent_page_id=None,
-        parent_database_id="db000000-0000-0000-0000-000000000001",
+        parent_database_id=parent_database_id,
         title="Upload Title",
         icon=None,
         cover_path=None,
@@ -355,8 +364,14 @@ def test_upload_with_database_parent(
         cancel_on_discussion=False,
     )
 
+    after_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
+    )
+
     assert page.title == "Upload Title"
-    assert str(object=page.id) == parent_page_id
+    assert after_count == before_count + 1
 
 
 def test_upload_with_cover_path(
@@ -522,7 +537,7 @@ def test_upload_with_cover_unchanged(
     before_upload_count = _file_upload_create_count(
         base_url=mock_api_base_url,
     )
-    before_cover_patch_count = _wiremock_request_count(
+    before_cover_patch_count = _count_wiremock_requests(
         base_url=mock_api_base_url,
         method="PATCH",
         url_path=f"/v1/pages/{parent_page_hex}",
@@ -566,7 +581,7 @@ def test_upload_with_cover_unchanged(
     after_upload_count = _file_upload_create_count(
         base_url=mock_api_base_url,
     )
-    after_cover_patch_count = _wiremock_request_count(
+    after_cover_patch_count = _count_wiremock_requests(
         base_url=mock_api_base_url,
         method="PATCH",
         url_path=f"/v1/pages/{parent_page_hex}",
