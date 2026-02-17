@@ -76,7 +76,8 @@ def fixture_mock_api_base_url_fixture(
 
     docker_client = docker.from_env()
     container = docker_client.containers.run(
-        image="wiremock/wiremock:latest",
+        # This tag is arbitrary, but pinning is better than `latest`.
+        image="wiremock/wiremock:3.9.1",
         detach=True,
         remove=True,
         ports={"8080/tcp": ("127.0.0.1", 0)},
