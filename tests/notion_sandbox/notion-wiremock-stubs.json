@@ -2315,7 +2315,12 @@
           "archived": false,
           "created_by": {
             "object": "user",
-            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
+            "type": "person",
+            "person": {
+              "email": "mock@example.com"
+            },
+            "name": "Mock User"
           }
         }
       },
@@ -2349,7 +2354,12 @@
           "archived": false,
           "created_by": {
             "object": "user",
-            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
+            "type": "person",
+            "person": {
+              "email": "mock@example.com"
+            },
+            "name": "Mock User"
           }
         }
       },
@@ -2383,7 +2393,12 @@
           "archived": false,
           "created_by": {
             "object": "user",
-            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
+            "type": "person",
+            "person": {
+              "email": "mock@example.com"
+            },
+            "name": "Mock User"
           }
         }
       },
