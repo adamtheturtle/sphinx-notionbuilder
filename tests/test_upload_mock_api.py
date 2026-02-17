@@ -68,6 +68,36 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     response.raise_for_status()
 
 
+def _wiremock_request_count(
+    *,
+    base_url: str,
+    method: str,
+    url_path: str,
+) -> int:
+    """Return the number of matching requests from WireMock's journal."""
+    response = requests.post(
+        url=f"{base_url}/__admin/requests/count",
+        json={
+            "method": method,
+            "urlPath": url_path,
+        },
+        timeout=2,
+    )
+    response.raise_for_status()
+    count = response.json().get("count")
+    assert isinstance(count, int)
+    return count
+
+
+def _file_upload_create_count(*, base_url: str) -> int:
+    """Count calls to file-upload creation endpoint."""
+    return _wiremock_request_count(
+        base_url=base_url,
+        method="POST",
+        url_path="/v1/file_uploads",
+    )
+
+
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -373,6 +403,7 @@ def test_upload_with_file_block(
 
 def test_upload_with_nested_file_block(
     notion_session: Session,
+    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
@@ -385,7 +416,10 @@ def test_upload_with_nested_file_block(
         blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
     )
 
-    notion_upload.upload_to_notion(
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[parent_block],
         parent_page_id=parent_page_id,
@@ -396,6 +430,13 @@ def test_upload_with_nested_file_block(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+    assert after_upload_count == before_upload_count + 1
 
 
 def test_upload_prefix_suffix_matching(
@@ -513,12 +554,16 @@ def test_upload_matching_file_blocks(
 
 def test_upload_file_block_name_mismatch(
     notion_session: Session,
+    mock_api_base_url: str,
     tmp_path: Path,
 ) -> None:
     """File block with name mismatch triggers re-upload."""
     img_file = tmp_path / "different.png"
     img_file.write_bytes(data=b"image-data")
 
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -537,16 +582,25 @@ def test_upload_file_block_name_mismatch(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+
+    assert after_upload_count == before_upload_count + 1
 
 
 def test_upload_file_block_caption_mismatch(
     notion_session: Session,
+    mock_api_base_url: str,
     tmp_path: Path,
 ) -> None:
     """File block with caption mismatch triggers re-upload."""
     img_file = tmp_path / "test.png"
     img_file.write_bytes(data=b"image-data")
 
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -563,12 +617,21 @@ def test_upload_file_block_caption_mismatch(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+
+    assert after_upload_count == before_upload_count + 1
 
 
 def test_upload_file_block_external_url(
     notion_session: Session,
+    mock_api_base_url: str,
 ) -> None:
     """File block with external URL skips upload and compares directly."""
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -586,16 +649,25 @@ def test_upload_file_block_external_url(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+
+    assert after_upload_count == before_upload_count
 
 
 def test_upload_file_block_existing_is_external(
     notion_session: Session,
+    mock_api_base_url: str,
     tmp_path: Path,
 ) -> None:
     """File block with existing ExternalFile triggers re-upload."""
     img_file = tmp_path / "test.png"
     img_file.write_bytes(data=b"image-data")
 
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -609,6 +681,11 @@ def test_upload_file_block_existing_is_external(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+
+    assert after_upload_count == before_upload_count + 1
 
 
 def test_upload_matching_parent_blocks(
