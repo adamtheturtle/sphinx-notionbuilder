@@ -40,11 +40,6 @@ pytestmark = pytest.mark.skipif(
     reason="SKIP_DOCKER_TESTS is set",
 )
 
-_WIREMOCK_IMAGE = (
-    "wiremock/wiremock@"
-    "sha256:27c4b74404f58ceedc6899f73abdfe228d8f80d5efa4d8bd42d6c155558b677c"
-)
-
 
 @retry(
     stop=stop_after_delay(max_delay=30),
@@ -78,14 +73,19 @@ def _wiremock_request_count(
     base_url: str,
     method: str,
     url_path: str,
+    body_contains: str | None = None,
 ) -> int:
     """Return the number of matching requests from WireMock's journal."""
+    payload: dict[str, str | list[dict[str, str]]] = {
+        "method": method,
+        "urlPath": url_path,
+    }
+    if body_contains is not None:
+        payload["bodyPatterns"] = [{"contains": body_contains}]
+
     response = requests.post(
         url=f"{base_url}/__admin/requests/count",
-        json={
-            "method": method,
-            "urlPath": url_path,
-        },
+        json=payload,
         timeout=2,
     )
     response.raise_for_status()
@@ -103,6 +103,13 @@ def _file_upload_create_count(*, base_url: str) -> int:
     )
 
 
+def _notion_id_to_hex(*, notion_id: str) -> str:
+    """Convert Notion UUID format to the 32-char hex form used in some
+    APIs.
+    """
+    return notion_id.replace("-", "")
+
+
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -118,7 +125,8 @@ def fixture_mock_api_base_url_fixture(
 
     docker_client = docker.from_env()
     container = docker_client.containers.run(
-        image=_WIREMOCK_IMAGE,
+        # This tag is arbitrary, but pinning is better than `latest`.
+        image="wiremock/wiremock:3.9.1",
         detach=True,
         remove=True,
         ports={"8080/tcp": ("127.0.0.1", 0)},
@@ -352,12 +360,24 @@ def test_upload_with_database_parent(
 
 def test_upload_with_cover_path(
     notion_session: Session,
+    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
+
+    parent_page_hex = _notion_id_to_hex(notion_id=parent_page_id)
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    before_cover_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/pages/{parent_page_hex}",
+        body_contains='"cover":{"type":"file_upload"',
+    )
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -372,19 +392,41 @@ def test_upload_with_cover_path(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    after_cover_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/pages/{parent_page_hex}",
+        body_contains='"cover":{"type":"file_upload"',
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
+    assert after_upload_count == before_upload_count + 1
+    assert after_cover_patch_count == before_cover_patch_count + 1
 
 
 def test_upload_with_file_block(
     notion_session: Session,
+    mock_api_base_url: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
     """It is possible to upload a page with a file:// image block."""
     img_file = tmp_path / "test.png"
     img_file.write_bytes(data=b"fake-image-data")
+
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    before_file_block_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/blocks/{parent_page_id}/children",
+        body_contains='"file_upload"',
+    )
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -399,9 +441,20 @@ def test_upload_with_file_block(
         cover_url=None,
         cancel_on_discussion=False,
     )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    after_file_block_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/blocks/{parent_page_id}/children",
+        body_contains='"file_upload"',
+    )
 
     assert page.title == "Upload Title"
     assert str(object=page.id) == parent_page_id
+    assert after_upload_count == before_upload_count + 1
+    assert after_file_block_patch_count == before_file_block_patch_count + 1
 
 
 def test_upload_with_nested_file_block(
@@ -473,6 +526,7 @@ def test_upload_prefix_suffix_matching(
 def test_upload_with_cover_unchanged(
     caplog: pytest.LogCaptureFixture,
     notion_session: Session,
+    mock_api_base_url: str,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -483,6 +537,18 @@ def test_upload_with_cover_unchanged(
     cover_content = b"matching-cover-data"
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=cover_content)
+    parent_page_id = "aa110000-0000-0000-0000-000000000001"
+    parent_page_hex = _notion_id_to_hex(notion_id=parent_page_id)
+
+    before_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    before_cover_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/pages/{parent_page_hex}",
+        body_contains='"cover":{"type":"file_upload"',
+    )
 
     mock_response = MagicMock()
     mock_response.configure_mock(
@@ -518,8 +584,19 @@ def test_upload_with_cover_unchanged(
             cover_url=None,
             cancel_on_discussion=False,
         )
+    after_upload_count = _file_upload_create_count(
+        base_url=mock_api_base_url,
+    )
+    after_cover_patch_count = _wiremock_request_count(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=f"/v1/pages/{parent_page_hex}",
+        body_contains='"cover":{"type":"file_upload"',
+    )
 
     assert "Cover image unchanged, skipping upload" in caplog.text
+    assert after_upload_count == before_upload_count
+    assert after_cover_patch_count == before_cover_patch_count
 
 
 def test_upload_matching_file_blocks(
