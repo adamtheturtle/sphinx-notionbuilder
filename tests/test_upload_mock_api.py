@@ -146,7 +146,8 @@ def test_upload_to_notion_with_wiremock(
         cancel_on_discussion=False,
     )
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert page.url == "https://www.notion.so/Upload-Title-59833787"
     assert str(object=page.id) == parent_page_id
     assert len(page.blocks) == 1
@@ -175,7 +176,8 @@ def test_upload_deletes_and_replaces_changed_blocks(
             cancel_on_discussion=True,
         )
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     expected_match_log = (
         "0 prefix and 0 suffix blocks match, 1 to delete, 1 to upload"
@@ -205,7 +207,8 @@ def test_upload_with_icon(
         cancel_on_discussion=False,
     )
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert page.icon == "\N{MEMO}"
 
@@ -230,7 +233,8 @@ def test_upload_with_cover_url(
         cancel_on_discussion=False,
     )
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
@@ -339,7 +343,8 @@ def test_upload_with_database_parent(
     after_count_response.raise_for_status()
     after_count = after_count_response.json()["count"]
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert after_count == before_count + 1
 
 
@@ -367,7 +372,8 @@ def test_upload_with_cover_path(
         cancel_on_discussion=False,
     )
 
-    assert page.title.startswith("Upload Title")
+    assert page.title is not None
+    assert str(object=page.title).startswith("Upload Title")
     assert str(object=page.id) == parent_page_id
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
