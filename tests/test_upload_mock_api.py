@@ -158,7 +158,7 @@ def test_upload_to_notion_with_mock_api(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Run upload synchronization against a mock API."""
+    """It is possible to upload a page with the mock API."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -216,7 +216,7 @@ def test_upload_with_icon(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Upload with an emoji icon exercises the icon PATCH path."""
+    """It is possible to upload a page with an emoji icon."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -240,7 +240,7 @@ def test_upload_with_cover_url(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Upload with a cover URL exercises the ExternalFile cover path."""
+    """It is possible to upload a page with a cover URL."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -326,7 +326,7 @@ def test_upload_with_database_parent(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """Upload with a database parent exercises the database query path."""
+    """It is possible to upload a page to a database."""
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -350,7 +350,7 @@ def test_upload_with_cover_path(
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """Upload with a cover_path exercises the file upload flow."""
+    """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
 
@@ -377,9 +377,7 @@ def test_upload_with_file_block(
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """Upload with a file:// image block exercises
-    _block_with_uploaded_file.
-    """
+    """It is possible to upload a page with a file:// image block."""
     img_file = tmp_path / "test.png"
     img_file.write_bytes(data=b"fake-image-data")
 
