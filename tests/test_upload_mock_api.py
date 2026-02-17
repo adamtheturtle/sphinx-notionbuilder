@@ -61,8 +61,8 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     response.raise_for_status()
 
 
-@pytest.fixture(name="microcks_base_url", scope="module")
-def fixture_microcks_base_url_fixture(
+@pytest.fixture(name="mock_api_base_url", scope="module")
+def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
@@ -101,12 +101,12 @@ def fixture_microcks_base_url_fixture(
 @pytest.fixture(name="notion_session")
 def fixture_notion_session_fixture(
     *,
-    microcks_base_url: str,
+    mock_api_base_url: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Session]:
     """Provide an `ultimate_notion` session wired to the mock API."""
     monkeypatch.setenv(name="NOTION_TOKEN", value="wiremock-test-token")
-    session = Session(base_url=microcks_base_url)
+    session = Session(base_url=mock_api_base_url)
     yield session
     session.close()
 
