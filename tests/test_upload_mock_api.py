@@ -159,7 +159,7 @@ def fixture_parent_page_id() -> str:
     return "59833787-2cf9-4fdf-8782-e53db20768a5"
 
 
-def test_upload_to_notion_with_mock_api(
+def test_upload_to_notion_with_wiremock(
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
@@ -167,7 +167,7 @@ def test_upload_to_notion_with_mock_api(
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
@@ -183,7 +183,7 @@ def test_upload_to_notion_with_mock_api(
     assert str(object=page.id) == parent_page_id
     assert len(page.blocks) == 1
     assert isinstance(page.blocks[0], UnoParagraph)
-    assert page.blocks[0].rich_text == "Hello from Microcks upload test"
+    assert page.blocks[0].rich_text == "Hello from WireMock upload test"
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
@@ -225,7 +225,7 @@ def test_upload_with_icon(
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
@@ -249,7 +249,7 @@ def test_upload_with_cover_url(
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
@@ -507,7 +507,7 @@ def test_upload_with_cover_unchanged(
             session=notion_session,
             blocks=[
                 UnoParagraph(
-                    text=text(text="Hello from Microcks upload test"),
+                    text=text(text="Hello from WireMock upload test"),
                 ),
             ],
             parent_page_id="aa110000-0000-0000-0000-000000000001",
