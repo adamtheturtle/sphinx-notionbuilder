@@ -63,6 +63,31 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     response.raise_for_status()
 
 
+def _count_wiremock_requests(
+    *,
+    base_url: str,
+    method: str,
+    url_path: str | None = None,
+    body_contains: str | None = None,
+) -> int:
+    """Count matching requests captured by WireMock."""
+    request_body: dict[str, object] = {"method": method}
+    if url_path is not None:
+        request_body["urlPath"] = url_path
+    if body_contains is not None:
+        request_body["bodyPatterns"] = [{"contains": body_contains}]
+
+    response = requests.post(
+        url=f"{base_url}/__admin/requests/count",
+        json=request_body,
+        timeout=30,
+    )
+    response.raise_for_status()
+    count = response.json()["count"]
+    assert isinstance(count, int)
+    return count
+
+
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -135,7 +160,7 @@ def test_upload_to_notion_with_wiremock(
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoParagraph(text=text(text="Hello from WireMock upload test2"))
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
         parent_page_id=parent_page_id,
         parent_database_id=None,
@@ -221,21 +246,11 @@ def test_upload_with_cover_url(
 ) -> None:
     """It is possible to upload a page with a cover URL."""
     cover_url = "https://example.com/cover.png"
-    count_request_body = {
-        "method": "PATCH",
-        "bodyPatterns": [
-            {
-                "contains": cover_url,
-            }
-        ],
-    }
-    before_count_response = requests.post(
-        url=f"{mock_api_base_url}/__admin/requests/count",
-        json=count_request_body,
-        timeout=30,
+    before_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        body_contains=cover_url,
     )
-    before_count_response.raise_for_status()
-    before_count = before_count_response.json()["count"]
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -251,13 +266,11 @@ def test_upload_with_cover_url(
         cancel_on_discussion=False,
     )
 
-    after_none_count_response = requests.post(
-        url=f"{mock_api_base_url}/__admin/requests/count",
-        json=count_request_body,
-        timeout=30,
+    after_none_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        body_contains=cover_url,
     )
-    after_none_count_response.raise_for_status()
-    after_none_count = after_none_count_response.json()["count"]
     assert after_none_count == before_count
 
     page = notion_upload.upload_to_notion(
@@ -274,13 +287,11 @@ def test_upload_with_cover_url(
         cancel_on_discussion=False,
     )
 
-    after_url_count_response = requests.post(
-        url=f"{mock_api_base_url}/__admin/requests/count",
-        json=count_request_body,
-        timeout=30,
+    after_url_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        body_contains=cover_url,
     )
-    after_url_count_response.raise_for_status()
-    after_url_count = after_url_count_response.json()["count"]
 
     assert page.title is not None
     assert str(object=page.title).startswith("Upload Title")
@@ -359,17 +370,12 @@ def test_upload_with_database_parent(
     """It is possible to upload a page to a database."""
     parent_database_id = "db000000-0000-0000-0000-000000000001"
     query_url_path = f"/v1/databases/{parent_database_id}/query"
-    count_request_body = {
-        "method": "POST",
-        "urlPath": query_url_path,
-    }
-    before_count_response = requests.post(
-        url=f"{mock_api_base_url}/__admin/requests/count",
-        json=count_request_body,
-        timeout=30,
+
+    before_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
     )
-    before_count_response.raise_for_status()
-    before_count = before_count_response.json()["count"]
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -385,13 +391,11 @@ def test_upload_with_database_parent(
         cancel_on_discussion=False,
     )
 
-    after_count_response = requests.post(
-        url=f"{mock_api_base_url}/__admin/requests/count",
-        json=count_request_body,
-        timeout=30,
+    after_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
     )
-    after_count_response.raise_for_status()
-    after_count = after_count_response.json()["count"]
 
     assert page.title is not None
     assert str(object=page.title).startswith("Upload Title")
