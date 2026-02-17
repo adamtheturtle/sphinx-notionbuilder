@@ -1,9 +1,11 @@
 """Tests for the upload script."""
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
+import pytest
 from click.testing import CliRunner, Result
 from pytest_regressions.file_regression import FileRegressionFixture
 from ultimate_notion.blocks import (
@@ -12,6 +14,11 @@ from ultimate_notion.blocks import (
 from ultimate_notion.rich_text import text
 
 from _notion_scripts.upload import main  # pylint: disable=import-private-name
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("SKIP_DOCKER_TESTS") == "1",
+    reason="SKIP_DOCKER_TESTS is set",
+)
 
 
 def _write_blocks_file(

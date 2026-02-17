@@ -4,6 +4,7 @@ import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from unittest.mock import patch
 from uuid import uuid4
 
 import docker
@@ -52,9 +53,6 @@ def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
-    if os.environ.get("SKIP_DOCKER_TESTS") == "1":
-        pytest.skip(reason="SKIP_DOCKER_TESTS is set")
-
     mappings_path = (
         request.config.rootpath
         / "tests"
@@ -90,18 +88,10 @@ def fixture_mock_api_base_url_fixture(
 
 @pytest.fixture(name="notion_token")
 def fixture_notion_token() -> Iterator[str]:
-    """Provide a token in env vars for Ultimate Notion."""
+    """Provide a token in environment variables for Ultimate Notion."""
     token = uuid4().hex
-    previous_token = os.environ.get("NOTION_TOKEN")
-    os.environ["NOTION_TOKEN"] = token
-    try:
+    with patch.dict(in_dict=os.environ, values={"NOTION_TOKEN": token}):
         yield token
-    finally:
-        if previous_token is None:
-            if "NOTION_TOKEN" in os.environ:
-                del os.environ["NOTION_TOKEN"]
-        else:
-            os.environ["NOTION_TOKEN"] = previous_token
 
 
 @pytest.fixture(name="notion_session")

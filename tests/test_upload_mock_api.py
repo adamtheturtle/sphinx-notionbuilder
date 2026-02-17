@@ -2,6 +2,7 @@
 API.
 """
 
+import os
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,11 @@ from sphinx_notion._upload import (
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
+)
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("SKIP_DOCKER_TESTS") == "1",
+    reason="SKIP_DOCKER_TESTS is set",
 )
 
 
