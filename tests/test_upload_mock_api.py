@@ -62,6 +62,24 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     response.raise_for_status()
 
 
+def _count_wiremock_requests(
+    *,
+    base_url: str,
+    method: str,
+    url_path: str,
+) -> int:
+    """Count matching requests captured by WireMock."""
+    response = requests.post(
+        url=f"{base_url}/__admin/requests/count",
+        json={"method": method, "urlPath": url_path},
+        timeout=30,
+    )
+    response.raise_for_status()
+    count = response.json()["count"]
+    assert isinstance(count, int)
+    return count
+
+
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
     request: pytest.FixtureRequest,
@@ -285,3 +303,41 @@ def test_upload_discussions_exist_error(
             cover_url=None,
             cancel_on_discussion=True,
         )
+
+
+def test_upload_with_database_parent(
+    notion_session: Session,
+    mock_api_base_url: str,
+) -> None:
+    """It is possible to upload a page to a database."""
+    parent_database_id = "db000000-0000-0000-0000-000000000001"
+    query_url_path = f"/v1/databases/{parent_database_id}/query"
+
+    before_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
+    )
+
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from Microcks upload test"))
+        ],
+        parent_page_id=None,
+        parent_database_id=parent_database_id,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    after_count = _count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="POST",
+        url_path=query_url_path,
+    )
+
+    assert page.title == "Upload Title"
+    assert after_count == before_count + 1
