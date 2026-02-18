@@ -118,7 +118,7 @@ def test_publish_success(
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
     (srcdir / "index.rst").write_text(
-        data="Test\n====\n\nHello from publish test.\n",
+        data="Hello from publish test.\n",
         encoding="utf-8",
     )
     app = make_app(

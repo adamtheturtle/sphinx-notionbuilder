@@ -11,6 +11,7 @@ desc
 hardcode
 hardcodes
 href
+json
 pragma
 preprocess
 pyright
