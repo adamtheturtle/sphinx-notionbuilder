@@ -1,18 +1,13 @@
 """Tests for the _publish_to_notion event callback."""
 
-import json
 import os
 from collections.abc import Callable
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
+from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
-from ultimate_notion import Session
-from ultimate_notion.blocks import Paragraph as UnoParagraph
-from ultimate_notion.rich_text import text
 
-from sphinx_notion import _publish_to_notion
 from sphinx_notion._upload import PageHasSubpagesError
 
 _SKIP_DOCKER = pytest.mark.skipif(
@@ -36,10 +31,7 @@ def test_publish_skips_on_exception(
         srcdir=srcdir,
         confoverrides={"extensions": ["sphinx_notion"]},
     )
-    _publish_to_notion(
-        app=app,
-        exception=RuntimeError("build failed"),
-    )
+    app.emit("build-finished", RuntimeError("build failed"))
 
 
 def test_publish_skips_when_disabled(
@@ -51,14 +43,16 @@ def test_publish_skips_when_disabled(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data="Test\n====\n", encoding="utf-8")
     app = make_app(
+        buildername="notion",
         srcdir=srcdir,
         confoverrides={
             "extensions": ["sphinx_notion"],
             "notion_publish": False,
         },
     )
-    _publish_to_notion(app=app, exception=None)
+    app.build()
 
 
 def test_publish_skips_when_not_notion_builder(
@@ -72,6 +66,7 @@ def test_publish_skips_when_not_notion_builder(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data="Test\n====\n", encoding="utf-8")
     app = make_app(
         srcdir=srcdir,
         confoverrides={
@@ -81,7 +76,7 @@ def test_publish_skips_when_not_notion_builder(
             "notion_page_title": "Test",
         },
     )
-    _publish_to_notion(app=app, exception=None)
+    app.build()
 
 
 def test_publish_skips_when_no_output_file(
@@ -103,7 +98,7 @@ def test_publish_skips_when_no_output_file(
             "notion_page_title": "Test",
         },
     )
-    _publish_to_notion(app=app, exception=None)
+    app.emit("build-finished", None)
 
 
 @_SKIP_DOCKER
@@ -115,13 +110,17 @@ def test_publish_success(
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """_publish_to_notion uploads the built JSON to the mock Notion
+    """A Notion build with notion_publish=True uploads to the mock Notion
     API.
     """
     del notion_token
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data="Test\n====\n\nHello from publish test.\n",
+        encoding="utf-8",
+    )
     app = make_app(
         buildername="notion",
         srcdir=srcdir,
@@ -130,22 +129,11 @@ def test_publish_success(
             "notion_publish": True,
             "notion_parent_page_id": parent_page_id,
             "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
         },
     )
-    block_dicts = [
-        UnoParagraph(
-            text=text(text="Hello from publish test"),
-        ).obj_ref.serialize_for_api()
-    ]
-    output_file = Path(app.outdir) / "index.json"
-    output_file.write_text(
-        data=json.dumps(obj=block_dicts),
-        encoding="utf-8",
-    )
-
-    mock_session = Session(base_url=mock_api_base_url)
-    with patch(target="sphinx_notion.Session", return_value=mock_session):
-        _publish_to_notion(app=app, exception=None)
+    app.build()
+    assert app.statuscode == 0
 
 
 @_SKIP_DOCKER
@@ -156,11 +144,12 @@ def test_publish_propagates_error(
     notion_token: str,
     tmp_path: Path,
 ) -> None:
-    """_publish_to_notion lets upload errors propagate to the caller."""
+    """A Notion build with a failing upload propagates the error."""
     del notion_token
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data="", encoding="utf-8")
     app = make_app(
         buildername="notion",
         srcdir=srcdir,
@@ -169,18 +158,9 @@ def test_publish_propagates_error(
             "notion_publish": True,
             "notion_parent_page_id": "aaaa0000-0000-0000-0000-000000000001",
             "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
         },
     )
-    block_dicts: list[dict[str, object]] = []
-    output_file = Path(app.outdir) / "index.json"
-    output_file.write_text(
-        data=json.dumps(obj=block_dicts),
-        encoding="utf-8",
-    )
-
-    mock_session = Session(base_url=mock_api_base_url)
-    with (
-        patch(target="sphinx_notion.Session", return_value=mock_session),
-        pytest.raises(expected_exception=PageHasSubpagesError),
-    ):
-        _publish_to_notion(app=app, exception=None)
+    with pytest.raises(expected_exception=ExtensionError) as exc_info:
+        app.build()
+    assert isinstance(exc_info.value.__cause__, PageHasSubpagesError)

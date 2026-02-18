@@ -2393,7 +2393,7 @@ def _publish_to_notion(
         for details in block_dicts
     ]
 
-    session = Session()
+    session = Session(base_url=app.config.notion_api_base_url)
     try:
         page = upload_to_notion(
             session=session,
@@ -2463,6 +2463,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         default=False,
         rebuild="",
         types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_api_base_url",
+        default="https://api.notion.com",
+        rebuild="",
+        types=(str,),
     )
 
     app.connect(event="config-inited", callback=_validate_notion_config)
