@@ -31,7 +31,9 @@ def test_publish_skips_on_exception(
         srcdir=srcdir,
         confoverrides={"extensions": ["sphinx_notion"]},
     )
+    warnings_before = app.warning.getvalue()
     app.emit("build-finished", RuntimeError("build failed"))
+    assert app.warning.getvalue() == warnings_before
 
 
 def test_publish_skips_when_disabled(
@@ -53,6 +55,7 @@ def test_publish_skips_when_disabled(
         },
     )
     app.build()
+    assert app.statuscode == 0
 
 
 def test_publish_skips_when_not_notion_builder(
@@ -77,6 +80,7 @@ def test_publish_skips_when_not_notion_builder(
         },
     )
     app.build()
+    assert app.statuscode == 0
 
 
 def test_publish_skips_when_no_output_file(
@@ -99,6 +103,7 @@ def test_publish_skips_when_no_output_file(
         },
     )
     app.emit("build-finished", None)
+    assert "No index.json found" in app.warning.getvalue()
 
 
 @_SKIP_DOCKER
