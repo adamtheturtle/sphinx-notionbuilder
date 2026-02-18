@@ -9,6 +9,7 @@ from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
 from sphinx_notion._upload import PageHasSubpagesError
+from tests._wiremock import count_wiremock_requests
 
 _SKIP_DOCKER = pytest.mark.skipif(
     os.environ.get("SKIP_DOCKER_TESTS") == "1",
@@ -137,8 +138,22 @@ def test_publish_success(
             "notion_api_base_url": mock_api_base_url,
         },
     )
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    before_count = count_wiremock_requests(
+        base_url=mock_api_base_url,
+        method="PATCH",
+        url_path=append_url_path,
+    )
     app.build()
     assert app.statuscode == 0
+    assert (
+        count_wiremock_requests(
+            base_url=mock_api_base_url,
+            method="PATCH",
+            url_path=append_url_path,
+        )
+        == before_count + 1
+    )
 
 
 @_SKIP_DOCKER
