@@ -14,6 +14,7 @@ href
 json
 pragma
 preprocess
+pyrefly
 pyright
 reStructuredText
 recurse
