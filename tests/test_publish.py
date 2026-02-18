@@ -91,7 +91,7 @@ def test_publish_skips_when_no_output_file(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """_publish_to_notion warns and returns when the output file does not
+    """_publish_to_notion warns and returns when ``index.json`` does not
     exist.
     """
     srcdir = tmp_path / "src"
