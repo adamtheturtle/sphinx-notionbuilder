@@ -4,6 +4,24 @@ Changelog
 Next
 ----
 
+2026.02.15
+----------
+
+
+2026.02.09.1
+------------
+
+
+- Add support for `sphinxcontrib-mermaid`_ diagrams.
+- Add support for the ``notion-file`` directive for Notion File blocks.
+
+2026.02.09
+----------
+
+
+- Render cross-references as plain text instead of silently dropping them, and emit a build warning.
+- Add support for the ``glossary`` directive and ``:term:`` cross-references.
+
 2026.01.11
 ----------
 
@@ -232,3 +250,5 @@ Next
 
 2025.08.19
 ----------
+
+.. _sphinxcontrib-mermaid: https://github.com/mgaitan/sphinxcontrib-mermaid

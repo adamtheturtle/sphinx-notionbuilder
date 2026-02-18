@@ -24,6 +24,7 @@ from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -87,7 +88,7 @@ def _assert_rst_converts_to_notion_objects(
     tmp_path: Path,
     extensions: tuple[str, ...] = ("sphinx_notion",),
     conf_py_content: str = "",
-    expected_warnings: Collection[str] = (),
+    expected_warnings: Collection[str],
     confoverrides: dict[str, Any] | None = None,
 ) -> SphinxTestApp:
     """
@@ -154,6 +155,7 @@ def test_single_paragraph(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -191,6 +193,7 @@ def test_rubric(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -223,6 +226,7 @@ def test_rubric_with_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -252,6 +256,7 @@ def test_notion_link_to_page(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -287,6 +292,7 @@ def test_notion_link_to_page_with_content_around(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -349,6 +355,7 @@ def test_multiple_paragraphs(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -392,6 +399,7 @@ def test_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -415,6 +423,7 @@ def test_single_heading(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -458,6 +467,7 @@ def test_multiple_heading_levels(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -493,6 +503,7 @@ def test_heading_with_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -521,6 +532,7 @@ def test_simple_link(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -560,6 +572,7 @@ def test_multiple_links(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -590,6 +603,7 @@ def test_link_in_heading(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -630,6 +644,7 @@ def test_mixed_formatting_with_links(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -662,6 +677,7 @@ def test_unnamed_link_with_backticks(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -685,6 +701,7 @@ def test_simple_quote(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -717,6 +734,7 @@ def test_multiline_quote(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -768,6 +786,7 @@ def test_multi_paragraph_quote(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -800,6 +819,7 @@ def test_table_of_contents(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -828,6 +848,7 @@ def test_toctree_directive(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -854,6 +875,7 @@ def test_simple_code_block(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1026,6 +1048,7 @@ def test_code_block_language_mapping(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1050,6 +1073,7 @@ def test_flat_bullet_list(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1079,6 +1103,7 @@ def test_bullet_list_with_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1127,6 +1152,7 @@ def test_admonition_single_line(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1179,6 +1205,7 @@ def test_admonition_multiline(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1225,6 +1252,7 @@ def test_admonition_with_code_block(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1273,6 +1301,7 @@ def test_admonition_with_code_block_first(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1319,6 +1348,7 @@ def test_admonition_with_bullet_points(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1363,6 +1393,7 @@ def test_definition_list(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1400,6 +1431,7 @@ def test_definition_list_multiline(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1447,6 +1479,7 @@ def test_definition_list_with_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1481,6 +1514,7 @@ def test_definition_list_with_classifier(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1528,6 +1562,7 @@ def test_generic_admonition(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1579,6 +1614,7 @@ def test_nested_bullet_list(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+        expected_warnings=(),
     )
 
 
@@ -1605,6 +1641,7 @@ def test_flat_numbered_list(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1639,6 +1676,7 @@ def test_numbered_list_with_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1692,6 +1730,7 @@ def test_nested_numbered_list(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1739,6 +1778,7 @@ def test_collapse_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+        expected_warnings=(),
     )
 
 
@@ -1778,6 +1818,7 @@ def test_simple_table(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1810,6 +1851,7 @@ def test_table_without_header_row(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1842,6 +1884,7 @@ def test_table_inline_formatting(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1877,6 +1920,7 @@ def test_table_cell_non_paragraph_error(
             expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
+            expected_warnings=(),
         )
 
 
@@ -1901,6 +1945,7 @@ def test_simple_image(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1930,6 +1975,7 @@ def test_image_with_alt_text_only(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -1966,6 +2012,497 @@ def test_literalinclude_without_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
+        expected_warnings=(),
+    )
+
+
+def test_cross_reference_doc(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :doc:`other` for more details.
+    """
+
+    # Create the ``other.rst`` file so the ``:doc:`` reference resolves
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_ref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:ref: cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :ref:`my-label` for more details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(
+        data=".. _my-label:\n\nOther document\n==============\n"
+    )
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_any(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:any: cross-references render as plain text with a warning."""
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :any:`other` for more details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See Other document for more details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_download(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references render as plain text with a warning."""
+    rst_content = """
+        Download :download:`conf.py` here.
+    """
+
+    srcdir = tmp_path / "src"
+    index_rst = srcdir / "index.rst"
+
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Local file download references are not supported by the "
+        "Notion builder. Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(
+                text="conf.py",
+                bold=False,
+                italic=False,
+                code=True,
+            )
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_download_external_url(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:download: references with external URLs render as linked text."""
+    rst_content = """
+        Download :download:`https://example.com/file.zip` here.
+    """
+
+    expected_warnings: list[str] = []
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Download ")
+            + text(
+                text="https://example.com/file.zip",
+                href="https://example.com/file.zip",
+                bold=False,
+                italic=False,
+                code=False,
+            )
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_numref(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:numref:`` references render as plain text via style class
+    handling.
+    """
+    rst_content = """
+        .. _my-table:
+
+        .. table:: My Table
+
+           ====== ======
+           Col1   Col2
+           ====== ======
+           A      B
+           ====== ======
+
+        See :numref:`my-table` for data.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        "Table has a title 'My Table' on line 3 in "
+        f"{index_rst}, but Notion tables do not have titles.\n"
+        f"{index_rst}:11:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="Col1")
+    table[0, 1] = text(text="Col2")
+    table[1, 0] = text(text="A")
+    table[1, 1] = text(text="B")
+
+    expected_blocks = [
+        table,
+        UnoParagraph(text=text(text="See Table 1 for data.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+        confoverrides={"numfig": True},
+    )
+
+
+def test_cross_reference_keyword(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:keyword: references render as plain text."""
+    rst_content = """
+        .. _with:
+
+        Keywords
+        ========
+
+        Test :keyword:`with` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoHeading1(text=text(text="Keywords")),
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="with", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_option(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:option: references render as plain text."""
+    rst_content = """
+        .. program:: myprogram
+
+        .. option:: --verbose
+
+           Enable verbose output.
+
+        Test :option:`myprogram --verbose` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:7:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    callout = UnoCallout(
+        text=text(text="--verbose", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    callout.append(
+        blocks=UnoParagraph(text=text(text="Enable verbose output."))
+    )
+
+    expected_blocks = [
+        callout,
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="myprogram --verbose", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_envvar_unresolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` without a directive renders as code text."""
+    rst_content = """
+        Test :envvar:`PATH` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_cross_reference_envvar_resolved(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:envvar:`` with a directive renders as code text."""
+    rst_content = """
+        .. envvar:: PATH
+
+           The system path.
+
+        Test :envvar:`PATH` here.
+    """
+
+    envvar_callout = UnoCallout(
+        text=text(text="PATH", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    envvar_callout.append(
+        blocks=[UnoParagraph(text=text(text="The system path."))],
+    )
+
+    expected_blocks = [
+        envvar_callout,
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="PATH", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_confval(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:confval:`` references render as plain text."""
+    rst_content = """
+        .. confval:: my_setting
+
+           Description of the setting.
+
+        See :confval:`my_setting` here.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    confval_callout = UnoCallout(
+        text=text(text="my_setting", code=True),
+        icon=Emoji(emoji="📋"),
+        color=BGColor.GRAY,
+    )
+    confval_callout.append(
+        blocks=[UnoParagraph(text=text(text="Description of the setting."))],
+    )
+
+    expected_blocks = [
+        confval_callout,
+        UnoParagraph(
+            text=text(text="See ")
+            + text(text="my_setting", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_cross_reference_token(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``:token:`` references render as code text."""
+    rst_content = """
+        Test :token:`expr` here.
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=text(text="Test ")
+            + text(text="expr", code=True)
+            + text(text=" here.")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2009,6 +2546,7 @@ def test_literalinclude_with_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
+        expected_warnings=(),
     )
 
 
@@ -2048,6 +2586,7 @@ def test_heading_level_4_error(
             expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
+            expected_warnings=(),
         )
 
 
@@ -2081,6 +2620,7 @@ def test_local_image_file(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2106,6 +2646,7 @@ def test_simple_video(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
+        expected_warnings=(),
     )
 
 
@@ -2137,6 +2678,7 @@ def test_video_with_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
+        expected_warnings=(),
     )
 
 
@@ -2169,6 +2711,7 @@ def test_local_video_file(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib.video"),
+        expected_warnings=(),
     )
 
 
@@ -2194,6 +2737,7 @@ def test_simple_audio(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
+        expected_warnings=(),
     )
 
 
@@ -2226,6 +2770,7 @@ def test_local_audio_file(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
+        expected_warnings=(),
     )
 
 
@@ -2267,6 +2812,7 @@ def test_strikethrough_text(
             "sphinxnotes.strike",
             "sphinx_notion",
         ),
+        expected_warnings=(),
     )
 
 
@@ -2300,6 +2846,7 @@ def test_comment_ignored(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2335,6 +2882,7 @@ def test_list_table_header_one_allowed(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2363,6 +2911,7 @@ def test_list_table_header_rows_zero_allowed(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2458,6 +3007,7 @@ def test_list_table_stub_columns_one(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -2587,6 +3137,7 @@ def test_simple_pdf(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=extensions,
+        expected_warnings=(),
     )
 
 
@@ -2616,6 +3167,7 @@ def test_pdf_with_options(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
+        expected_warnings=(),
     )
 
 
@@ -2648,6 +3200,7 @@ def test_local_pdf_file(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
+        expected_warnings=(),
     )
 
 
@@ -2736,6 +3289,7 @@ and :text-green:`green text`.
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=(),
     )
 
 
@@ -2793,6 +3347,7 @@ def test_individual_colors(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=(),
     )
 
 
@@ -2870,6 +3425,7 @@ def setup(app):
         make_app=make_app,
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
+        expected_warnings=(),
     )
 
 
@@ -2915,6 +3471,7 @@ def test_text_styles_and_strike(
             "sphinxcontrib_text_styles",
             "sphinxnotes.strike",
         ),
+        expected_warnings=(),
     )
 
 
@@ -2959,6 +3516,7 @@ def test_additional_text_styles(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
+        expected_warnings=(),
     )
 
 
@@ -2992,6 +3550,7 @@ def test_flat_task_list(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+        expected_warnings=(),
     )
 
 
@@ -3046,6 +3605,7 @@ def test_bullet_list_with_nested_content(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3094,6 +3654,7 @@ def test_task_list_with_nested_content(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+        expected_warnings=(),
     )
 
 
@@ -3162,6 +3723,7 @@ def test_nested_task_list(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+        expected_warnings=(),
     )
 
 
@@ -3194,6 +3756,7 @@ def test_task_list_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
+        expected_warnings=(),
     )
 
 
@@ -3214,6 +3777,7 @@ def test_inline_single_backticks(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3262,6 +3826,7 @@ def test_kbd_role(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3293,6 +3858,7 @@ def test_file_role(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3329,6 +3895,7 @@ def setup(app):
             make_app=make_app,
             tmp_path=tmp_path,
             conf_py_content=conf_py_content,
+            expected_warnings=(),
         )
 
 
@@ -3374,6 +3941,7 @@ def test_unsupported_node_types_in_process_node_to_blocks(
             expected_blocks=[],
             make_app=make_app,
             tmp_path=tmp_path,
+            expected_warnings=(),
         )
 
 
@@ -3403,6 +3971,7 @@ def test_inline_equation(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
+        expected_warnings=(),
     )
 
 
@@ -3428,6 +3997,7 @@ def test_block_equation(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
+        expected_warnings=(),
     )
 
 
@@ -3506,6 +4076,7 @@ def test_rest_example_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+        expected_warnings=(),
     )
 
 
@@ -3536,6 +4107,7 @@ def test_embed_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
+        expected_warnings=(),
     )
 
 
@@ -3569,6 +4141,7 @@ def test_embed_and_video(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
+        expected_warnings=(),
     )
 
 
@@ -3604,6 +4177,7 @@ def test_line_block(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3632,6 +4206,7 @@ def test_transition_divider(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3666,6 +4241,7 @@ def test_notion_mention_user(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3699,6 +4275,7 @@ def test_notion_mention_page(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3735,6 +4312,7 @@ def test_notion_mention_database(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3769,6 +4347,7 @@ def test_notion_mention_date(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3915,6 +4494,7 @@ def test_describe_directive(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -3959,6 +4539,7 @@ def test_describe_directive_multiline(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
+        expected_warnings=(),
     )
 
 
@@ -4037,6 +4618,7 @@ def test_autosummary_directive(
             "sphinx_notion",
         ),
         conf_py_content=conf_py_content,
+        expected_warnings=(),
     )
 
 
@@ -4050,7 +4632,7 @@ def test_autosummary_with_internal_references(
     When ``autodoc`` creates targets for documented items and
     ``autosummary`` references them, it generates internal references
     (with ``refid`` instead of ``refuri``). These should be rendered as
-    code text without links.
+    code text without links, with a warning.
     """
     # Create a simple module to document
     srcdir = tmp_path / "src"
@@ -4112,6 +4694,14 @@ def test_autosummary_with_internal_references(
         """,
     )
 
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:<autosummary>:1:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
@@ -4123,4 +4713,490 @@ def test_autosummary_with_internal_references(
             "sphinx_notion",
         ),
         conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_glossary(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Glossary directives render as bulleted lists like definition
+    lists.
+    """
+    rst_content = """
+        .. glossary::
+
+           environment
+              A structure where information about all documents.
+
+           source directory
+              The directory which contains all source files.
+    """
+
+    first_item = UnoBulletedItem(
+        text=text(text="environment"),
+    )
+    first_item.append(
+        blocks=[
+            UnoParagraph(
+                text=text(
+                    text="A structure where information about all documents."
+                )
+            )
+        ]
+    )
+
+    second_item = UnoBulletedItem(
+        text=text(text="source directory"),
+    )
+    second_item.append(
+        blocks=[
+            UnoParagraph(
+                text=text(
+                    text="The directory which contains all source files."
+                )
+            )
+        ]
+    )
+
+    expected_blocks = [
+        first_item,
+        second_item,
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_glossary_term_same_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:term: references on the same page render as plain text with a
+    warning.
+    """
+    rst_content = """
+        .. glossary::
+
+           myterm
+              A glossary term definition.
+
+        See :term:`myterm` for details.
+    """
+
+    glossary_item = UnoBulletedItem(
+        text=text(text="myterm"),
+    )
+    glossary_item.append(
+        blocks=[UnoParagraph(text=text(text="A glossary term definition."))]
+    )
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:6:",
+        "Internal reference links (e.g., from autosummary) are not "
+        "supported by the Notion builder. Rendering as plain text. "
+        "[ref.notion]",
+    ]
+
+    expected_blocks = [
+        glossary_item,
+        UnoParagraph(text=text(text="See myterm for details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_glossary_term_cross_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """:term: references to another page render as plain text with a
+    warning.
+    """
+    rst_content = """
+        .. toctree::
+
+           other
+
+        See :term:`myterm` for details.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "other.rst").write_text(
+        data=(
+            "Other\n=====\n\n"
+            ".. glossary::\n\n"
+            "   myterm\n"
+            "      A glossary term definition.\n"
+        )
+    )
+
+    index_rst = srcdir / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:5:",
+        "Cross-references are not supported by the Notion builder. "
+        "Rendering as plain text. [ref.notion]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="See myterm for details.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_mermaid_diagram(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives become Notion Code blocks with Mermaid
+    language.
+    """
+    rst_content = """
+        .. mermaid::
+
+           graph LR
+               A --> B
+               B --> C
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B\n    B --> C"),
+            language=CodeLang.MERMAID,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
+        expected_warnings=(),
+    )
+
+
+def test_simple_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives become Notion File blocks with URL."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_name(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with ``:name:`` option set the file name."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :name: My Document
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            name="My Document",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with ``:caption:`` option set the
+    caption.
+    """
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :caption: Download this file
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            caption="Download this file",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_with_name_and_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directives with both name and caption."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+           :name: My Document
+           :caption: Download this file
+    """
+
+    expected_blocks = [
+        UnoFile(
+            file=ExternalFile(
+                url="https://www.example.com/path/to/document.zip"
+            ),
+            name="My Document",
+            caption="Download this file",
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_local_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Local files are converted to file:// URLs in the JSON output."""
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    test_file_path = srcdir / "test_document.zip"
+    test_file_path.write_bytes(data=b"fake zip content")
+
+    rst_content = """
+        .. notion-file:: test_document.zip
+    """
+
+    expected_blocks = [
+        UnoFile(file=ExternalFile(url=test_file_path.as_uri())),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[],
+    )
+
+
+def test_file_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``notion-file`` directive with HTML builder creates a link."""
+    rst_content = """
+        .. notion-file:: https://www.example.com/path/to/document.zip
+    """
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(data=rst_content)
+    app = make_app(
+        srcdir=srcdir,
+        builddir=tmp_path / "build",
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    assert app.statuscode == 0
+    index_html = (tmp_path / "build" / "html" / "index.html").read_text()
+    expected_url = "https://www.example.com/path/to/document.zip"
+    assert expected_url in index_html
+    expected_link = (
+        f'<a class="reference external"'
+        f' href="{expected_url}">{expected_url}</a>'
+    )
+    assert expected_link in index_html
+
+
+def test_figure_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives preserve captions on images."""
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+
+           This is a caption.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=text(text="This is a caption."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_figure_directive_local_image(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives with local images preserve captions."""
+    rst_content = """
+        .. figure:: test-image.png
+
+           A local image caption.
+    """
+
+    srcdir = tmp_path / "src"
+    srcdir.mkdir(exist_ok=True)
+    (srcdir / "test-image.png").write_bytes(data=b"fake png data")
+
+    expected_url = (srcdir / "test-image.png").as_uri()
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url=expected_url),
+            caption=text(text="A local image caption."),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_figure_directive_without_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives without captions process children
+    normally.
+    """
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=None,
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_mermaid_diagram_with_caption(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``mermaid`` directives with captions become captioned Notion Code
+    blocks.
+    """
+    rst_content = """
+        .. mermaid::
+           :caption: My Flowchart
+
+           graph LR
+               A --> B
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(text="graph LR\n    A --> B"),
+            language=CodeLang.MERMAID,
+            caption=text(text="My Flowchart"),
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
+        expected_warnings=(),
     )

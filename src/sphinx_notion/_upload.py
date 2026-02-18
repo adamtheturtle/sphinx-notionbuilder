@@ -1,6 +1,10 @@
-"""Upload documentation to Notion."""
+"""Upload documentation to Notion.
+
+Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
+"""
 
 import hashlib
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
@@ -9,13 +13,13 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
-import click
 import requests
 from beartype import beartype
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import UploadedFile
@@ -25,7 +29,32 @@ from ultimate_notion.page import Page
 if TYPE_CHECKING:
     from ultimate_notion.database import Database
 
-_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF)
+_LOGGER = logging.getLogger(name=__name__)
+
+_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+
+
+@dataclass(frozen=True, slots=True)
+class _MatchLengths:
+    """Matching prefix/suffix lengths for block diffing."""
+
+    prefix: int
+    suffix: int
+
+
+class PageHasSubpagesError(Exception):
+    """Raised when a page has subpages, which is not supported."""
+
+
+class PageHasDatabasesError(Exception):
+    """Raised when a page has databases, which is not supported."""
+
+
+class DiscussionsExistError(Exception):
+    """Raised when blocks to delete have discussions and
+    cancel_on_discussion
+    is True.
+    """
 
 
 @beartype
@@ -53,7 +82,10 @@ def _block_without_children(
 
 @beartype
 @cache
-def _calculate_file_sha(*, file_path: Path) -> str:
+def _calculate_file_sha(
+    *,
+    file_path: Path,
+) -> str:  # pragma: no cover - live file duplicate check
     """Calculate SHA-256 hash of a file."""
     sha256_hash = hashlib.sha256()
     with file_path.open(mode="rb") as f:
@@ -64,7 +96,10 @@ def _calculate_file_sha(*, file_path: Path) -> str:
 
 @beartype
 @cache
-def _calculate_file_sha_from_url(*, file_url: str) -> str:
+def _calculate_file_sha_from_url(
+    *,
+    file_url: str,
+) -> str:  # pragma: no cover - requires network file download
     """Calculate SHA-256 hash of a file from a URL."""
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
@@ -76,7 +111,11 @@ def _calculate_file_sha_from_url(*, file_url: str) -> str:
 
 
 @beartype
-def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
+def _files_match(
+    *,
+    existing_file_url: str,
+    local_file_path: Path,
+) -> bool:  # pragma: no cover - live file hash comparison path
     """
     Check if an existing file matches a local file by comparing SHA-256
     hashes.
@@ -89,34 +128,41 @@ def _files_match(*, existing_file_url: str, local_file_path: Path) -> bool:
 
 
 @beartype
-def _find_last_matching_block_index(
+def _find_matching_prefix_and_suffix_lengths(
     *,
     existing_blocks: Sequence[Block],
     local_blocks: Sequence[Block],
-) -> int | None:
-    """Find the last index where existing blocks match local blocks.
+) -> _MatchLengths:
+    """Find the lengths of matching prefix and suffix between block lists.
 
-    Returns the last index where blocks are equivalent, or None if no
-    blocks match.
+    Returns matching lengths where:
+    - `prefix`: number of matching blocks from the start
+    - `suffix`: number of matching blocks from the end (not overlapping
+      with prefix)
     """
-    last_matching_index: int | None = None
-    for index, existing_page_block in enumerate(iterable=existing_blocks):
-        click.echo(
-            message=(
-                f"Checking block {index + 1} of {len(existing_blocks)} for "
-                "equivalence"
-            ),
-        )
-        if index < len(local_blocks) and (
-            _is_existing_equivalent(
-                existing_page_block=existing_page_block,
-                local_block=local_blocks[index],
-            )
+    min_len = min(len(existing_blocks), len(local_blocks))
+
+    prefix_len = 0
+    for i in range(min_len):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[i],
+            local_block=local_blocks[i],
         ):
-            last_matching_index = index
+            prefix_len += 1
         else:
             break
-    return last_matching_index
+
+    suffix_len = 0
+    for i in range(1, min_len - prefix_len + 1):
+        if _is_existing_equivalent(
+            existing_page_block=existing_blocks[-i],
+            local_block=local_blocks[-i],
+        ):
+            suffix_len += 1
+        else:
+            break
+
+    return _MatchLengths(prefix=prefix_len, suffix=suffix_len)
 
 
 @beartype
@@ -131,7 +177,7 @@ def _is_existing_equivalent(
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
-        if parsed.scheme == "file":
+        if parsed.scheme == "file":  # pragma: no cover - local duplicate check
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
 
             if (
@@ -193,15 +239,17 @@ def _get_uploaded_cover(
     Get uploaded cover file, or None if it matches the existing
     cover.
     """
-    if (
+    if (  # pragma: no cover - remote cover check
         page.cover is not None
         and isinstance(page.cover, NotionFile)
         and _files_match(
             existing_file_url=page.cover.url, local_file_path=cover
         )
     ):
+        _LOGGER.info("Cover image unchanged, skipping upload")
         return None
 
+    _LOGGER.info("Uploading cover image '%s'", cover.name)
     with cover.open(mode="rb") as file_stream:
         uploaded_cover = session.upload(
             file=file_stream,
@@ -209,6 +257,7 @@ def _get_uploaded_cover(
         )
 
     uploaded_cover.wait_until_uploaded()
+    _LOGGER.info("Cover image uploaded")
     return uploaded_cover
 
 
@@ -221,6 +270,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             # Ignore ``mypy`` error as the keyword arguments are different
             # across Python versions and platforms.
             file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
                 uploaded_file = session.upload(
@@ -229,6 +279,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
                 )
 
             uploaded_file.wait_until_uploaded()
+            _LOGGER.info("File '%s' uploaded", file_path.name)
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
 
@@ -243,44 +294,38 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     return block
 
 
-class NotionUploadError(Exception):
-    """Error raised when uploading to Notion fails."""
-
-
-@dataclass(frozen=True)
-class UploadResult:
-    """Result of uploading documentation to Notion."""
-
-    page_url: str
-    created_new_page: bool
-
-
 @beartype
-def upload_to_notion(
+# pylint: disable-next=too-complex,too-many-branches,too-many-statements
+def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     *,
-    blocks: Sequence[dict[str, object]],
+    session: Session,
+    blocks: Sequence[Block],
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
     icon: str | None,
+    cover_path: Path | None,
     cover_url: str | None,
-    cover_path: Path | None = None,
     cancel_on_discussion: bool,
-) -> UploadResult:
+) -> Page:
     """Upload documentation to Notion.
 
-    Raises:
-        NotionUploadError: If the upload fails due to invalid page state or
-            discussion conflicts.
-    """
-    session = Session()
+    Returns the page that was created or updated.
 
+    Raises:
+        PageHasSubpagesError: If the page has subpages.
+        PageHasDatabasesError: If the page has databases.
+        DiscussionsExistError: If blocks to delete have discussions and
+            cancel_on_discussion is True.
+    """
     parent: Page | Database
     if parent_page_id:
+        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
         parent = session.get_page(page_ref=parent_page_id)
         subpages = parent.subpages
     else:
         assert parent_database_id is not None
+        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
         parent = session.get_db(db_ref=parent_database_id)
         subpages = parent.get_all_pages().to_pages()
 
@@ -288,7 +333,6 @@ def upload_to_notion(
         child_page for child_page in subpages if child_page.title == title
     ]
 
-    created_new_page = False
     if pages_matching_title:
         msg = (
             f"Expected 1 page matching title {title}, but got "
@@ -296,49 +340,61 @@ def upload_to_notion(
         )
         assert len(pages_matching_title) == 1, msg
         (page,) = pages_matching_title
+        _LOGGER.info("Found existing page '%s'", title)
     else:
+        _LOGGER.info("Creating new page '%s'", title)
         page = session.create_page(parent=parent, title=title)
-        created_new_page = True
 
+    if icon:
+        _LOGGER.info("Setting page icon to '%s'", icon)
     page.icon = Emoji(emoji=icon) if icon else None
     if cover_path:
         page.cover = _get_uploaded_cover(
-            page=page,
-            cover=cover_path,
-            session=session,
+            page=page, cover=cover_path, session=session
         )
     elif cover_url:
+        _LOGGER.info("Setting page cover to '%s'", cover_url)
         page.cover = ExternalFile(url=cover_url)
     else:
         page.cover = None
 
     if page.subpages:
-        page_has_page_child_error = (
-            "We only support pages which only contain Blocks. "
-            "This page has subpages."
-        )
-        raise NotionUploadError(page_has_page_child_error)
+        raise PageHasSubpagesError
 
     if page.subdbs:
-        page_has_database_child_error = (
-            "We only support pages which only contain Blocks. "
-            "This page has databases."
-        )
-        raise NotionUploadError(page_has_database_child_error)
+        raise PageHasDatabasesError
 
-    block_objs = [
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks
-    ]
-
-    last_matching_index = _find_last_matching_block_index(
-        existing_blocks=page.blocks,
-        local_blocks=block_objs,
+    _LOGGER.info("Syncing page blocks")
+    existing_blocks = page.blocks
+    _LOGGER.info(
+        "Comparing %d existing blocks with %d local blocks",
+        len(existing_blocks),
+        len(blocks),
     )
+    match_lengths = _find_matching_prefix_and_suffix_lengths(
+        existing_blocks=existing_blocks,
+        local_blocks=blocks,
+    )
+    prefix_len = match_lengths.prefix
+    suffix_len = match_lengths.suffix
 
-    delete_start_index = (last_matching_index or -1) + 1
-    blocks_to_delete = page.blocks[delete_start_index:]
+    # Can't use suffix matching without a prefix because the Notion API
+    # has no way to insert before the first block.
+    if prefix_len == 0:
+        suffix_len = 0
+
+    existing_end = len(existing_blocks) - suffix_len
+    local_end = len(blocks) - suffix_len
+
+    blocks_to_delete = existing_blocks[prefix_len:existing_end]
+    blocks_to_upload = blocks[prefix_len:local_end]
+    _LOGGER.info(
+        "%d prefix and %d suffix blocks match, %d to delete, %d to upload",
+        prefix_len,
+        suffix_len,
+        len(blocks_to_delete),
+        len(blocks_to_upload),
+    )
     blocks_to_delete_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
@@ -354,20 +410,34 @@ def upload_to_notion(
             "thread(s). "
             f"Upload cancelled."
         )
-        raise NotionUploadError(error_message)
+        raise DiscussionsExistError(error_message)
 
-    for existing_page_block in blocks_to_delete:
+    for block_index, existing_page_block in enumerate(
+        iterable=blocks_to_delete
+    ):
+        _LOGGER.info(
+            "Deleting block %d/%d",
+            block_index + 1,
+            len(blocks_to_delete),
+        )
         existing_page_block.delete()
 
-    block_objs_to_upload = [
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
-        for details in blocks[delete_start_index:]
-    ]
+    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
-        for block in block_objs_to_upload
+        for block in blocks_to_upload
     ]
-    page.append(blocks=block_objs_with_uploaded_files)
 
-    return UploadResult(page_url=page.url, created_new_page=created_new_page)
+    if block_objs_with_uploaded_files:
+        _LOGGER.info(
+            "Appending %d blocks to page",
+            len(block_objs_with_uploaded_files),
+        )
+        after_block = (
+            existing_blocks[prefix_len - 1] if prefix_len > 0 else None
+        )
+        page.append(
+            blocks=block_objs_with_uploaded_files,
+            after=after_block,
+        )
+    return page

@@ -13,17 +13,6 @@ Autodoc
    .. autoclass:: example_module.Calculator
       :members:
 
-Autosummary
-~~~~~~~~~~~
-
-.. rest-example::
-
-   .. autosummary::
-      :nosignatures:
-
-      example_module.greet
-      example_module.Calculator
-
 Rubric
 ~~~~~~
 
@@ -53,6 +42,20 @@ Definition Lists
 
    term : classifier
       Classifiers are appended to the term with colons.
+
+Glossary
+~~~~~~~~
+
+.. Not wrapped in rest-example because glossary is incompatible with it.
+.. https://github.com/sphinx-toolbox/sphinx-toolbox/issues/207
+
+.. glossary::
+
+   environment
+      A structure where information about all documents under the root is saved, and used for cross-referencing.
+
+   source directory
+      The directory which, including its subdirectories, contains all source files for one Sphinx project.
 
 Describe
 ~~~~~~~~
@@ -405,6 +408,26 @@ PDF
 
    .. pdf-include:: _static/test.pdf
 
+Files
+~~~~~
+
+.. rest-example::
+
+   .. notion-file:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+
+   .. notion-file:: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+      :name: Dummy PDF
+      :caption: An external file with a name and caption
+
+   .. notion-file:: _static/test-file.txt
+
+Downloads
+~~~~~~~~~
+
+.. rest-example::
+
+   Download an external file :download:`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` here.
+
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -419,6 +442,18 @@ The builder supports mathematical equations using the ``sphinx.ext.mathjax`` ext
    .. math::
 
       i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat{H}\Psi(\mathbf{r},t)
+
+Mermaid Diagrams
+~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. mermaid::
+
+      graph LR
+          A[Start] --> B{Decision}
+          B -->|Yes| C[OK]
+          B -->|No| D[Cancel]
 
 Rest Examples
 ~~~~~~~~~~~~~

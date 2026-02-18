@@ -15,10 +15,15 @@ extensions = [
     "sphinx_toolbox.rest_example",
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
+    "sphinxcontrib.mermaid",
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
     "sphinx_notion",
 ]
 
-autosummary_generate = True
+# `example.com` links are placeholder/demo links in docs and can intermittently
+# fail certificate validation in CI environments.
+linkcheck_ignore = [
+    r"https://example\.com/?",
+    r"https://www\.example\.com/.*",
+]

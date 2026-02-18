@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 import bs4
@@ -15,6 +15,7 @@ from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
+from docutils.parsers.rst import directives as rst_directives
 from docutils.parsers.rst.states import Inliner
 from sphinx import addnodes
 from sphinx.application import Sphinx
@@ -31,9 +32,12 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
     PdfIncludeDirective,
 )
 from sphinx_toolbox.collapse import CollapseNode
+from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
+    mermaid as mermaid_node,
+)
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji
+from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -43,6 +47,7 @@ from ultimate_notion.blocks import Code as UnoCode
 from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
@@ -72,6 +77,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
@@ -86,7 +92,7 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
-from sphinx_notion.upload import upload_to_notion
+from sphinx_notion._upload import upload_to_notion
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -204,6 +210,11 @@ class _NotionPdfIncludeDirective(PdfIncludeDirective):
 
 
 @beartype
+class _FileNode(nodes.Element):
+    """Custom node for Notion File blocks."""
+
+
+@beartype
 class _LinkToPageNode(nodes.Element):
     """Custom node for Notion link-to-page blocks."""
 
@@ -246,7 +257,33 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
         notion_url = f"https://www.notion.so/{page_id}"
         reference = nodes.reference(refuri=notion_url, text=notion_url)
-        reference += nodes.Text(data=notion_url)
+        paragraph = nodes.paragraph()
+        paragraph += reference
+        return [paragraph]
+
+
+@beartype
+class _NotionFileDirective(sphinx_docutils.SphinxDirective):
+    """File directive that creates Notion File blocks."""
+
+    required_arguments = 1
+    option_spec: ClassVar = {
+        "name": rst_directives.unchanged,
+        "caption": rst_directives.unchanged,
+    }
+
+    def run(self) -> list[nodes.Element]:
+        """Create a Notion File block."""
+        (file_url,) = self.arguments
+
+        if isinstance(self.env.app.builder, NotionBuilder):
+            node = _FileNode()
+            node.attributes["uri"] = file_url
+            node.attributes["name"] = self.options.get("name")
+            node.attributes["caption"] = self.options.get("caption")
+            return [node]
+
+        reference = nodes.reference(refuri=file_url, text=file_url)
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]
@@ -371,16 +408,29 @@ def _(node: nodes.reference) -> Text:
     links. Internal references (e.g., from ``autosummary`` to ``autodoc``
     targets) have a ``refid`` attribute instead and are rendered without
     links but preserving any child formatting (e.g., code from literal
-    nodes).
+    nodes), with a warning. Cross-references (e.g., from ``:doc:``) have
+    ``internal=True`` and are rendered as plain text with a warning.
     """
     link_url = node.attributes.get("refuri")
     if link_url is None:
-        # Internal reference - process children to preserve formatting
-        # (e.g., literal nodes for code formatting)
-        result = Text.from_plain_text(text="")
-        for child in node.children:
-            result += _process_rich_text_node(child)
-        return result
+        _LOGGER.warning(
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return _create_rich_text_from_children(node=node)
+
+    if node.attributes.get("internal"):
+        _LOGGER.warning(
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return text(text=node.astext())
 
     link_text = node.attributes.get("name", link_url)
     assert isinstance(link_text, str)
@@ -396,12 +446,53 @@ def _(node: nodes.reference) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: addnodes.download_reference) -> Text:
+    """Process download reference nodes.
+
+    External URLs are rendered as linked text.
+    Local file references are rendered as plain text with a warning,
+    since Notion does not support file:// URIs.
+    """
+    link_url = node.attributes.get("refuri")
+    if link_url is None:
+        _LOGGER.warning(
+            "Local file download references are not supported by the "
+            "Notion builder. Rendering as plain text.",
+            type="ref",
+            subtype="notion",
+            location=node,
+        )
+        return _create_rich_text_from_children(node=node)
+
+    return text(
+        text=node.astext(),
+        href=link_url,
+        bold=False,
+        italic=False,
+        code=False,
+    )
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.target) -> Text:
     """
     Process target nodes by returning empty text (targets are
     skipped).
     """
     del node  # Target nodes are skipped
+    return Text.from_plain_text(text="")
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: addnodes.index) -> Text:
+    """Process index nodes within rich text by returning empty text.
+
+    Index nodes appear as children of glossary term nodes but don't
+    produce visible output.
+    """
+    del node
     return Text.from_plain_text(text="")
 
 
@@ -572,6 +663,15 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "xref",
         "py",
         "py-obj",
+        "download",
+        "std",
+        "std-confval",
+        "std-envvar",
+        "std-keyword",
+        "std-numref",
+        "std-option",
+        "std-term",
+        "std-token",
     }
     unsupported_styles = [
         css_class
@@ -690,8 +790,8 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     # that preserves all content and rich text formatting.
     combined = nodes.paragraph()
 
-    for i, child in enumerate(iterable=entry.children):
-        if i > 0:
+    for child_index, child in enumerate(iterable=entry.children):
+        if child_index > 0:
             # Add double newline between paragraphs to maintain separation
             combined += nodes.Text(data="\n\n")
 
@@ -1485,6 +1585,81 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: mermaid_node,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process mermaid diagram nodes by creating Notion Code blocks."""
+    del section_level
+    code: str = node["code"]
+    return [UnoCode(text=text(text=code), language=CodeLang.MERMAID)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.figure,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process figure nodes.
+
+    Handles mermaid diagrams wrapped in figures (when :caption: is used).
+    """
+    num_children_for_captioned_mermaid = 2
+    if (
+        len(node.children) == num_children_for_captioned_mermaid
+        and isinstance(node.children[0], mermaid_node)
+        and isinstance(node.children[1], nodes.caption)
+    ):
+        mermaid_child = node.children[0]
+        caption_node = node.children[1]
+        code: str = mermaid_child["code"]
+        return [
+            UnoCode(
+                text=text(text=code),
+                language=CodeLang.MERMAID,
+                caption=_create_rich_text_from_children(node=caption_node),
+            )
+        ]
+
+    caption_children = [
+        child for child in node.children if isinstance(child, nodes.caption)
+    ]
+    caption_rich_text: Text | None = (
+        _create_rich_text_from_children(node=caption_children[0])
+        if caption_children
+        else None
+    )
+
+    blocks: list[Block] = []
+    for child in node.children:
+        if isinstance(child, nodes.caption):
+            continue
+        if isinstance(child, nodes.image) and caption_rich_text is not None:
+            image_url = child.attributes["uri"]
+            assert isinstance(image_url, str)
+            assert child.document is not None
+            if "://" not in image_url:
+                abs_path = Path(child.document.settings.env.srcdir) / image_url
+                image_url = abs_path.as_uri()
+            blocks.append(
+                UnoImage(
+                    file=ExternalFile(url=image_url),
+                    caption=caption_rich_text,
+                )
+            )
+            continue
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.image,
     *,
     section_level: int,
@@ -1578,6 +1753,35 @@ def _(
         pdf_url = abs_path.as_uri()
 
     return [UnoPDF(file=ExternalFile(url=pdf_url))]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: _FileNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process File nodes by creating Notion File blocks.
+
+    This handles nodes created by our custom NotionFileDirective.
+    """
+    del section_level
+
+    file_url = node.attributes["uri"]
+
+    if "://" not in file_url:
+        assert node.document is not None
+        abs_path = Path(node.document.settings.env.srcdir) / file_url
+        file_url = abs_path.as_uri()
+
+    return [
+        UnoFile(
+            file=ExternalFile(url=file_url),
+            name=node.attributes.get("name"),
+            caption=node.attributes.get("caption"),
+        )
+    ]
 
 
 @beartype
@@ -1868,6 +2072,27 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.glossary,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process glossary nodes by processing their children.
+
+    glossary nodes wrap a definition_list, so we process the children to
+    extract the definitions.
+    """
+    blocks: list[Block] = []
+    for child in node.children:
+        child_blocks = _process_node_to_blocks(
+            child, section_level=section_level
+        )
+        blocks.extend(child_blocks)
+    return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: addnodes.desc,
     *,
     section_level: int,
@@ -1985,6 +2210,18 @@ def _notion_register_link_to_page_directive(
     sphinx_docutils.register_directive(
         name="notion-link-to-page",
         directive=_NotionLinkToPageDirective,
+    )
+
+
+@beartype
+def _notion_register_file_directive(
+    app: Sphinx,
+) -> None:
+    """Register the file directive."""
+    del app
+    sphinx_docutils.register_directive(
+        name="notion-file",
+        directive=_NotionFileDirective,
     )
 
 
@@ -2150,30 +2387,33 @@ def _publish_to_notion(
         _LOGGER.warning("No index.json found, skipping publish")
         return
 
-    blocks = json.loads(s=output_file.read_text(encoding="utf-8"))
+    block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
+        for details in block_dicts
+    ]
 
-    result = upload_to_notion(
-        blocks=blocks,
-        parent_page_id=app.config.notion_parent_page_id,
-        parent_database_id=app.config.notion_parent_database_id,
-        title=app.config.notion_page_title,
-        icon=app.config.notion_page_icon,
-        cover_url=app.config.notion_page_cover_url,
-        cancel_on_discussion=app.config.notion_cancel_on_discussion,
+    session = Session()
+    try:
+        page = upload_to_notion(
+            session=session,
+            blocks=blocks,
+            parent_page_id=app.config.notion_parent_page_id,
+            parent_database_id=app.config.notion_parent_database_id,
+            title=app.config.notion_page_title,
+            icon=app.config.notion_page_icon,
+            cover_path=None,
+            cover_url=app.config.notion_page_cover_url,
+            cancel_on_discussion=app.config.notion_cancel_on_discussion,
+        )
+    finally:
+        session.close()
+
+    _LOGGER.info(
+        "Published page: '%s' (%s)",
+        app.config.notion_page_title,
+        page.url,
     )
-
-    if result.created_new_page:
-        _LOGGER.info(
-            "Created new page: '%s' (%s)",
-            app.config.notion_page_title,
-            result.page_url,
-        )
-    else:
-        _LOGGER.info(
-            "Updated existing page: '%s' (%s)",
-            app.config.notion_page_title,
-            result.page_url,
-        )
 
 
 @beartype
@@ -2236,6 +2476,11 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.connect(
         event="builder-inited",
         callback=_notion_register_link_to_page_directive,
+    )
+
+    app.connect(
+        event="builder-inited",
+        callback=_notion_register_file_directive,
     )
 
     app.connect(

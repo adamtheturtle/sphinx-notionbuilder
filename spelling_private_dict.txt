@@ -1,6 +1,7 @@
 Args
 CLI
 SVG
+WireMock
 autodoc
 autosummary
 backtick
@@ -18,9 +19,12 @@ recurse
 refid
 refuri
 reportMissingTypeStubs
+reportPrivateUsage
 reportUnknownArgumentType
+reportUnknownLambdaType
 reportUnknownMemberType
 reportUnknownVariableType
 reportUnnecessaryIsInstance
 strikethrough
+subpages
 ty

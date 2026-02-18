@@ -1,14 +1,23 @@
-"""CLI for uploading documentation to Notion."""
+"""CLI for uploading documentation to Notion.
+
+Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
+"""
 
 import json
+import logging
 from pathlib import Path
 
 import click
 import cloup
 from beartype import beartype
+from ultimate_notion import Session
+from ultimate_notion.blocks import Block
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
-from sphinx_notion.upload import (
-    NotionUploadError,
+from sphinx_notion._upload import (
+    DiscussionsExistError,
+    PageHasDatabasesError,
+    PageHasSubpagesError,
     upload_to_notion,
 )
 
@@ -76,6 +85,14 @@ from sphinx_notion.upload import (
     is_flag=True,
     default=False,
 )
+@cloup.option(
+    "--notion-api-base-url",
+    help=(
+        "Override the Notion API base URL. "
+        "Useful for tests against a mock Notion API."
+    ),
+    required=False,
+)
 @beartype
 def main(
     *,
@@ -87,27 +104,52 @@ def main(
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    notion_api_base_url: str | None,
 ) -> None:
     """Upload documentation to Notion."""
-    blocks = json.loads(s=file.read_text(encoding="utf-8"))
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
+    session = (
+        Session(base_url=notion_api_base_url)
+        if notion_api_base_url is not None
+        else Session()
+    )
+    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    # See https://github.com/ultimate-notion/ultimate-notion/issues/177
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
+        for details in block_dicts
+    ]
 
     try:
-        result = upload_to_notion(
+        page = upload_to_notion(
+            session=session,
             blocks=blocks,
             parent_page_id=parent_page_id,
             parent_database_id=parent_database_id,
             title=title,
             icon=icon,
-            cover_url=cover_url,
             cover_path=cover_path,
+            cover_url=cover_url,
             cancel_on_discussion=cancel_on_discussion,
         )
-    except NotionUploadError as e:
-        raise click.ClickException(message=str(object=e)) from e
-
-    if result.created_new_page:
-        click.echo(message=f"Created new page: '{title}' ({result.page_url})")
-    else:
-        click.echo(
-            message=f"Updated existing page: '{title}' ({result.page_url})"
+    except PageHasSubpagesError:
+        error_message = (
+            "We only support pages which only contain Blocks. "
+            "This page has subpages."
         )
+        raise click.ClickException(message=error_message) from None
+    except PageHasDatabasesError:
+        error_message = (
+            "We only support pages which only contain Blocks. "
+            "This page has databases."
+        )
+        raise click.ClickException(message=error_message) from None
+    except DiscussionsExistError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    finally:
+        session.close()
+
+    click.echo(message=f"Uploaded page: '{title}' ({page.url})")

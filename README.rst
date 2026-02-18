@@ -38,6 +38,7 @@ Add the following to ``conf.py`` to enable the extension:
 * `sphinx-simplepdf`_
 * `sphinx-iframes`_
 * `sphinxcontrib-text-styles`_
+* `sphinxcontrib-mermaid`_
 
 See a `sample document source`_ and the `published Notion page`_ for an example of each of these.
 
@@ -55,6 +56,7 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx_simplepdf",
        "sphinx_toolbox.collapse",
        "sphinx_toolbox.rest_example",
+       "sphinxcontrib.mermaid",
        "sphinxcontrib.video",
        "sphinxcontrib_text_styles",
        "sphinxnotes.strike",
@@ -79,16 +81,19 @@ The following syntax is supported:
 - Videos (with URLs or local paths)
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
+- Files (with URLs or local paths)
 - Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
 - Dividers (horizontal rules / transitions)
 - Strikethrough text (using the ``strike`` role from `sphinxnotes-strike`_ )
 - Colored text and text styles (bold, italic, monospace) (using various roles from `sphinxcontrib-text-styles`_ )
+- Mermaid diagrams (using the ``mermaid`` directive from `sphinxcontrib-mermaid`_ )
 - Mathematical equations (inline and block-level, using the ``math`` role and directive from `sphinx.ext.mathjax`_ )
 - Link to page blocks (using the ``notion-link-to-page`` directive)
 - Mentions (users, pages, databases, dates) (using the ``notion-mention-user``, ``notion-mention-page``, ``notion-mention-database``, and ``notion-mention-date`` roles)
 - Describe blocks (using the ``describe`` directive)
 - Definition lists
+- Glossary definitions (using the ``glossary`` directive)
 - Rubrics (informal headings that do not appear in the table of contents)
 
 See a `sample document source`_ and the `published Notion page`_.
@@ -122,6 +127,38 @@ Creates a Notion "link to page" block that references another page in your Notio
    .. notion-link-to-page:: 12345678-1234-1234-1234-123456789abc
 
 This creates a clickable link block in Notion that navigates to the specified page when clicked.
+
+``notion-file``
+~~~~~~~~~~~~~~~
+
+Creates a Notion File block that links to an external file by URL, or uploads a local file.
+
+**Usage:**
+
+.. code-block:: rst
+
+   .. notion-file:: FILE_URL_OR_PATH
+
+**Parameters:**
+
+- ``FILE_URL_OR_PATH``: A URL to an external file, or a local file path relative to the source directory
+
+**Options:**
+
+- ``:name:``: (Optional) Display name for the file in Notion
+- ``:caption:``: (Optional) Caption text displayed below the file block
+
+**Examples:**
+
+.. code-block:: rst
+
+   .. notion-file:: https://example.com/document.zip
+
+   .. notion-file:: _static/data.csv
+      :name: Project Data
+      :caption: CSV export of the project data
+
+When not using the Notion builder (e.g. HTML), the directive renders as a link to the file.
 
 Roles
 -----
@@ -213,6 +250,22 @@ Creates a Notion date mention inline.
 
    The meeting is on :notion-mention-date:`2025-11-09`.
 
+Cross-references
+----------------
+
+Sphinx cross-reference roles are not fully supported by the Notion builder because there is no way to determine the URL of the target page in Notion.
+Cross-references that resolve to internal links are rendered as plain text and a build warning is emitted.
+
+The affected roles include ``:doc:``, ``:ref:``, ``:term:``, ``:any:``, ``:numref:``, ``:keyword:``, ``:option:``, ``:envvar:``, ``:confval:``, and ``:token:``.
+
+To suppress these warnings, add the following to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   suppress_warnings = ["ref.notion"]
+
 Unsupported Notion Block Types
 ------------------------------
 
@@ -221,7 +274,6 @@ Unsupported Notion Block Types
 - Child database
 - Child page
 - Column and column list
-- File
 - Link preview
 - Synced block
 - Template
@@ -292,9 +344,9 @@ When enabled, documentation will be uploaded to Notion automatically after a suc
 
 Add the following configuration options to your ``conf.py``:
 
-.. skip doccmd[interrogate]: next
-
 .. code-block:: python
+
+   """Configuration for Sphinx."""
 
    # Enable automatic publishing to Notion
    notion_publish = True
@@ -355,6 +407,26 @@ Add the following configuration options to your ``conf.py``:
    This helps prevent accidentally losing discussion content.
    Default: ``False``
 
+Publishing the Sample Document Locally
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A convenience script is provided to build and publish the sample documentation to a test Notion page.
+
+#. Create a ``.env`` file in the repository root with the following variables:
+
+   .. code-block:: shell
+
+      export NOTION_TOKEN=your_integration_token_here
+      export NOTION_SAMPLE_DATABASE_ID=your_database_id_here
+
+   This file is gitignored and will not be committed.
+
+#. Run the script:
+
+   .. code-block:: console
+
+      $ ./publish-sample.sh
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions
 .. |PyPI| image:: https://badge.fury.io/py/Sphinx-Notion-Builder.svg
@@ -372,6 +444,7 @@ Add the following configuration options to your ``conf.py``:
 .. _sphinx-toolbox rest_example: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html
 .. _sphinx-toolbox: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/
 .. _sphinx.ext.mathjax: https://www.sphinx-doc.org/en/master/usage/extensions/math.html#module-sphinx.ext.mathjax
+.. _sphinxcontrib-mermaid: https://github.com/mgaitan/sphinxcontrib-mermaid
 .. _sphinxcontrib-text-styles: https://sphinxcontrib-text-styles.readthedocs.io/
 .. _sphinxcontrib-video: https://sphinxcontrib-video.readthedocs.io
 .. _sphinxnotes-strike: https://github.com/sphinx-toolbox/sphinxnotes-strike
