@@ -24,7 +24,7 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
 )
-from tests._wiremock import (  # pyrefly: ignore[missing-import]
+from tests._wiremock import (
     count_wiremock_requests,
 )
 
