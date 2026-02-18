@@ -37,7 +37,7 @@ from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji
+from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ParentBlock
@@ -77,6 +77,7 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
@@ -90,6 +91,8 @@ from ultimate_notion.obj_api.objects import (
     PageRef,
 )
 from ultimate_notion.rich_text import Text, math, text
+
+from sphinx_notion._upload import upload_to_notion
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -2334,11 +2337,144 @@ def _visit_mention_date_node_html(
 
 
 @beartype
+def _validate_notion_config(
+    _app: Sphinx,
+    config: Config,
+) -> None:
+    """Validate Notion configuration values."""
+    if not config.notion_publish:
+        return
+
+    if (
+        not config.notion_parent_page_id
+        and not config.notion_parent_database_id
+    ):
+        msg = (
+            "notion_publish is enabled but neither notion_parent_page_id "
+            "nor notion_parent_database_id is set"
+        )
+        raise ValueError(msg)
+
+    if config.notion_parent_page_id and config.notion_parent_database_id:
+        msg = (
+            "notion_parent_page_id and notion_parent_database_id are "
+            "mutually exclusive"
+        )
+        raise ValueError(msg)
+
+    if not config.notion_page_title:
+        msg = "notion_publish is enabled but notion_page_title is not set"
+        raise ValueError(msg)
+
+
+@beartype
+def _publish_to_notion(
+    app: Sphinx,
+    exception: Exception | None,
+) -> None:
+    """Publish documentation to Notion after build completes."""
+    if exception is not None:
+        return
+
+    if not app.config.notion_publish:
+        return
+
+    if app.builder.name != "notion":
+        return
+
+    output_file = Path(app.outdir) / f"{app.config.root_doc}.json"
+    if not output_file.exists():
+        _LOGGER.warning(
+            "No %s.json found, skipping publish",
+            app.config.root_doc,
+        )
+        return
+
+    block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))  # ty: ignore[invalid-argument-type]
+        for details in block_dicts
+    ]
+
+    session = Session(base_url=app.config.notion_api_base_url)
+    try:
+        page = upload_to_notion(
+            session=session,
+            blocks=blocks,
+            parent_page_id=app.config.notion_parent_page_id,
+            parent_database_id=app.config.notion_parent_database_id,
+            title=app.config.notion_page_title,
+            icon=app.config.notion_page_icon,
+            cover_path=None,
+            cover_url=app.config.notion_page_cover_url,
+            cancel_on_discussion=app.config.notion_cancel_on_discussion,
+        )
+    finally:
+        session.close()
+
+    _LOGGER.info(
+        "Published page: '%s' (%s)",
+        app.config.notion_page_title,
+        page.url,
+    )
+
+
+@beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """Add the builder to Sphinx."""
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
+    app.add_config_value(
+        name="notion_publish",
+        default=False,
+        rebuild="",
+        types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_parent_page_id",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_parent_database_id",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_title",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_icon",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_page_cover_url",
+        default=None,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_cancel_on_discussion",
+        default=False,
+        rebuild="",
+        types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_api_base_url",
+        default="https://api.notion.com",
+        rebuild="",
+        types=(str,),
+    )
+
+    app.connect(event="config-inited", callback=_validate_notion_config)
     app.connect(event="config-inited", callback=_register_strike_node_handlers)
 
     app.connect(
@@ -2362,6 +2498,8 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
 
     app.connect(event="builder-inited", callback=_make_static_dir)
+
+    app.connect(event="build-finished", callback=_publish_to_notion)
 
     app.add_node(
         node=_MentionUserNode,

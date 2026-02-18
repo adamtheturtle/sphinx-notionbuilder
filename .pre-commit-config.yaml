@@ -294,7 +294,7 @@ repos:
       - id: interrogate-docs
         name: interrogate docs
         entry: uv run --extra=dev doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="interrogate"
+          --skip-marker=interrogate --command="interrogate"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]

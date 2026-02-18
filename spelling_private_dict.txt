@@ -13,6 +13,7 @@ hardcodes
 href
 pragma
 preprocess
+pyrefly
 pyright
 reStructuredText
 recurse

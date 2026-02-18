@@ -1,4 +1,4 @@
-"""Upload documentation to Notion.
+"""CLI for uploading documentation to Notion.
 
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """

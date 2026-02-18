@@ -336,6 +336,77 @@ Arguments:
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
+Automatic Publishing Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of using the command-line tool, you can configure automatic publishing to Notion in your ``conf.py``.
+When enabled, documentation will be uploaded to Notion automatically after a successful build with the ``notion`` builder.
+
+Add the following configuration options to your ``conf.py``:
+
+.. code-block:: python
+
+   """Configuration for Sphinx."""
+
+   # Enable automatic publishing to Notion
+   notion_publish = True
+
+   # Required: Parent page or database ID
+   notion_parent_page_id = "your-page-id-here"
+   # OR
+   notion_parent_database_id = "your-database-id-here"
+
+   # Required: Title for the Notion page
+   notion_page_title = "My Documentation"
+
+   # Optional: Icon emoji for the page
+   notion_page_icon = "📚"
+
+   # Optional: Cover image URL
+   notion_page_cover_url = "https://example.com/cover.jpg"
+
+   # Optional: Cancel upload if blocks to be deleted have discussion threads
+   notion_cancel_on_discussion = True
+
+**Configuration Options:**
+
+``notion_publish``
+   Enable automatic publishing to Notion after the build completes.
+   When set to ``True``, the documentation will be uploaded to Notion automatically after a successful build with the ``notion`` builder.
+   Default: ``False``
+
+``notion_parent_page_id``
+   The ID of the parent Notion page under which the documentation will be published.
+   The page must be shared with your Notion integration.
+   This option is mutually exclusive with ``notion_parent_database_id``.
+   Default: ``None``
+
+``notion_parent_database_id``
+   The ID of the parent Notion database under which the documentation will be published.
+   The database must be shared with your Notion integration.
+   This option is mutually exclusive with ``notion_parent_page_id``.
+   Default: ``None``
+
+``notion_page_title``
+   The title for the Notion page.
+   This is required when ``notion_publish`` is ``True``.
+   If a page with this title already exists under the parent, it will be updated.
+   Otherwise, a new page will be created.
+   Default: ``None``
+
+``notion_page_icon``
+   An optional emoji icon for the Notion page (e.g., ``"📚"``).
+   Default: ``None``
+
+``notion_page_cover_url``
+   An optional URL for a cover image for the Notion page.
+   Default: ``None``
+
+``notion_cancel_on_discussion``
+   When set to ``True``, the upload will be cancelled with an error if any blocks that would be deleted have discussion threads attached to them.
+   This helps prevent accidentally losing discussion content.
+   Default: ``False``
+
 Publishing the Sample Document Locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
