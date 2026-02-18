@@ -2382,9 +2382,12 @@ def _publish_to_notion(
     if app.builder.name != "notion":
         return
 
-    output_file = Path(app.outdir) / "index.json"
+    output_file = Path(app.outdir) / f"{app.config.root_doc}.json"
     if not output_file.exists():
-        _LOGGER.warning("No index.json found, skipping publish")
+        _LOGGER.warning(
+            "No %s.json found, skipping publish",
+            app.config.root_doc,
+        )
         return
 
     block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))

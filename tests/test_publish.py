@@ -9,7 +9,9 @@ from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
 from sphinx_notion._upload import PageHasSubpagesError
-from tests._wiremock import count_wiremock_requests
+from tests._wiremock import (  # pyrefly: ignore[missing-import]
+    count_wiremock_requests,
+)
 
 _SKIP_DOCKER = pytest.mark.skipif(
     os.environ.get("SKIP_DOCKER_TESTS") == "1",
@@ -89,7 +91,9 @@ def test_publish_skips_when_no_output_file(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """_publish_to_notion warns and returns when index.json does not exist."""
+    """_publish_to_notion warns and returns when the output file does not
+    exist.
+    """
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
@@ -104,7 +108,7 @@ def test_publish_skips_when_no_output_file(
         },
     )
     app.emit("build-finished", None)
-    assert "No index.json found" in app.warning.getvalue()
+    assert "index.json found" in app.warning.getvalue()
 
 
 @_SKIP_DOCKER
