@@ -5,16 +5,18 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import logging
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import requests
 from beartype import beartype
+from notion_client.errors import APIResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -32,6 +34,36 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+
+_T = TypeVar("_T")
+_MAX_RETRIES = 8
+
+
+def _retry_on_rate_limit(  # noqa: UP047
+    *,
+    fn: Callable[[], _T],
+) -> _T:
+    """Execute fn, retrying with backoff on Notion rate limits."""
+    for attempt in range(_MAX_RETRIES):
+        try:
+            return fn()
+        except APIResponseError as exc:
+            last_attempt = attempt == _MAX_RETRIES - 1
+            if exc.code != "rate_limited" or last_attempt:
+                raise
+            wait_time = min(2**attempt, 60)
+            _LOGGER.warning(
+                "Rate limited by Notion API, retrying in %ds "
+                "(attempt %d/%d)...",
+                wait_time,
+                attempt + 1,
+                _MAX_RETRIES,
+            )
+            time.sleep(wait_time)
+
+    # Unreachable — the last attempt either returns or raises.
+    msg = "Unreachable"
+    raise AssertionError(msg)
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,10 +240,13 @@ def _is_existing_equivalent(
             block=local_block,
         )
 
+        existing_children = _retry_on_rate_limit(
+            fn=lambda: existing_page_block.blocks,
+        )
         if (
             existing_page_block_without_children
             != local_block_without_children
-        ) or (len(existing_page_block.blocks) != len(local_block.blocks)):
+        ) or (len(existing_children) != len(local_block.blocks)):
             return False
 
         return all(
@@ -220,7 +255,7 @@ def _is_existing_equivalent(
                 local_block=local_child_block,
             )
             for (existing_child_block, local_child_block) in zip(
-                existing_page_block.blocks,
+                existing_children,
                 local_block.blocks,
                 strict=False,
             )
@@ -251,12 +286,14 @@ def _get_uploaded_cover(
 
     _LOGGER.info("Uploading cover image '%s'", cover.name)
     with cover.open(mode="rb") as file_stream:
-        uploaded_cover = session.upload(
-            file=file_stream,
-            file_name=cover.name,
+        uploaded_cover = _retry_on_rate_limit(
+            fn=lambda: session.upload(
+                file=file_stream,
+                file_name=cover.name,
+            ),
         )
 
-    uploaded_cover.wait_until_uploaded()
+    _retry_on_rate_limit(fn=uploaded_cover.wait_until_uploaded)
     _LOGGER.info("Cover image uploaded")
     return uploaded_cover
 
@@ -273,12 +310,14 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
-                uploaded_file = session.upload(
-                    file=file_stream,
-                    file_name=file_path.name,
+                uploaded_file = _retry_on_rate_limit(
+                    fn=lambda: session.upload(
+                        file=file_stream,
+                        file_name=file_path.name,
+                    ),
                 )
 
-            uploaded_file.wait_until_uploaded()
+            _retry_on_rate_limit(fn=uploaded_file.wait_until_uploaded)
             _LOGGER.info("File '%s' uploaded", file_path.name)
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
@@ -292,6 +331,16 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
         block.append(blocks=new_child_blocks)
 
     return block
+
+
+def _get_block_discussions(
+    *,
+    block: Block,
+) -> int:
+    """Get the number of discussions on a block, with retry."""
+    return len(
+        _retry_on_rate_limit(fn=lambda: block.discussions)
+    )
 
 
 @beartype
@@ -321,13 +370,21 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     parent: Page | Database
     if parent_page_id:
         _LOGGER.info("Fetching parent page '%s'", parent_page_id)
-        parent = session.get_page(page_ref=parent_page_id)
-        subpages = parent.subpages
+        parent = _retry_on_rate_limit(
+            fn=lambda: session.get_page(page_ref=parent_page_id),
+        )
+        subpages = _retry_on_rate_limit(
+            fn=lambda: parent.subpages,  # type: ignore[union-attr]
+        )
     else:
         assert parent_database_id is not None
         _LOGGER.info("Fetching parent database '%s'", parent_database_id)
-        parent = session.get_db(db_ref=parent_database_id)
-        subpages = parent.get_all_pages().to_pages()
+        parent = _retry_on_rate_limit(
+            fn=lambda: session.get_db(db_ref=parent_database_id),
+        )
+        subpages = _retry_on_rate_limit(
+            fn=lambda: parent.get_all_pages().to_pages(),
+        )
 
     pages_matching_title = [
         child_page for child_page in subpages if child_page.title == title
@@ -343,29 +400,44 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         _LOGGER.info("Found existing page '%s'", title)
     else:
         _LOGGER.info("Creating new page '%s'", title)
-        page = session.create_page(parent=parent, title=title)
+        page = _retry_on_rate_limit(
+            fn=lambda: session.create_page(
+                parent=parent, title=title
+            ),
+        )
 
     if icon:
         _LOGGER.info("Setting page icon to '%s'", icon)
-    page.icon = Emoji(emoji=icon) if icon else None
+    icon_value = Emoji(emoji=icon) if icon else None
+    _retry_on_rate_limit(
+        fn=lambda: setattr(page, "icon", icon_value),
+    )
     if cover_path:
-        page.cover = _get_uploaded_cover(
+        uploaded_cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
+        )
+        _retry_on_rate_limit(
+            fn=lambda: setattr(page, "cover", uploaded_cover),
         )
     elif cover_url:
         _LOGGER.info("Setting page cover to '%s'", cover_url)
-        page.cover = ExternalFile(url=cover_url)
+        cover_file = ExternalFile(url=cover_url)
+        _retry_on_rate_limit(
+            fn=lambda: setattr(page, "cover", cover_file),
+        )
     else:
-        page.cover = None
+        _retry_on_rate_limit(
+            fn=lambda: setattr(page, "cover", None),
+        )
 
-    if page.subpages:
+    if _retry_on_rate_limit(fn=lambda: page.subpages):
         raise PageHasSubpagesError
 
-    if page.subdbs:
+    if _retry_on_rate_limit(fn=lambda: page.subdbs):
         raise PageHasDatabasesError
 
     _LOGGER.info("Syncing page blocks")
-    existing_blocks = page.blocks
+    existing_blocks = _retry_on_rate_limit(fn=lambda: page.blocks)
     _LOGGER.info(
         "Comparing %d existing blocks with %d local blocks",
         len(existing_blocks),
@@ -396,12 +468,14 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         len(blocks_to_upload),
     )
     blocks_to_delete_with_discussions = [
-        block for block in blocks_to_delete if len(block.discussions) > 0
+        block
+        for block in blocks_to_delete
+        if _get_block_discussions(block=block) > 0
     ]
 
     if cancel_on_discussion and blocks_to_delete_with_discussions:
         total_discussions = sum(
-            len(block.discussions)
+            _get_block_discussions(block=block)
             for block in blocks_to_delete_with_discussions
         )
         error_message = (
@@ -420,7 +494,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
             block_index + 1,
             len(blocks_to_delete),
         )
-        existing_page_block.delete()
+        _retry_on_rate_limit(fn=existing_page_block.delete)
 
     _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
@@ -436,8 +510,10 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         after_block = (
             existing_blocks[prefix_len - 1] if prefix_len > 0 else None
         )
-        page.append(
-            blocks=block_objs_with_uploaded_files,
-            after=after_block,
+        _retry_on_rate_limit(
+            fn=lambda: page.append(
+                blocks=block_objs_with_uploaded_files,
+                after=after_block,
+            ),
         )
     return page
