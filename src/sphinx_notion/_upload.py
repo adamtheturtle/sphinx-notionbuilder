@@ -34,6 +34,7 @@ _LOGGER = logging.getLogger(name=__name__)
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 
 
+@beartype
 @dataclass(frozen=True, slots=True)
 class _MatchLengths:
     """Matching prefix/suffix lengths for block diffing."""
@@ -229,6 +230,7 @@ def _is_existing_equivalent(
     return existing_page_block == local_block
 
 
+@beartype
 def _get_uploaded_cover(
     *,
     page: Page,

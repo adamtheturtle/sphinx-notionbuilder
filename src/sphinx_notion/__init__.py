@@ -365,6 +365,7 @@ def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
     return [node], []
 
 
+@beartype
 @dataclass
 class _TableStructure:
     """Structure information extracted from a table node."""
