@@ -1980,6 +1980,7 @@ def test_image_with_alt_text_only(
 
 
 def test_literalinclude_without_caption(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
@@ -2507,6 +2508,7 @@ def test_cross_reference_token(
 
 
 def test_literalinclude_with_caption(
+    *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:

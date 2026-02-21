@@ -44,6 +44,7 @@ def _file_upload_create_count(*, base_url: str) -> int:
 
 
 def test_upload_to_notion_with_wiremock(
+    *,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
@@ -71,6 +72,7 @@ def test_upload_to_notion_with_wiremock(
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
+    *,
     mock_api_base_url: str,
     notion_session: Session,
     parent_page_id: str,
@@ -117,6 +119,7 @@ def test_upload_deletes_and_replaces_changed_blocks(
 
 
 def test_upload_with_icon(
+    *,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
@@ -141,6 +144,7 @@ def test_upload_with_icon(
 
 
 def test_upload_with_cover_url(
+    *,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
@@ -227,6 +231,7 @@ def test_upload_discussions_exist_error(
 
 
 def test_upload_with_database_parent(
+    *,
     notion_session: Session,
     mock_api_base_url: str,
 ) -> None:
@@ -265,6 +270,7 @@ def test_upload_with_database_parent(
 
 
 def test_upload_with_cover_path(
+    *,
     mock_api_base_url: str,
     notion_session: Session,
     parent_page_id: str,
@@ -302,6 +308,7 @@ def test_upload_with_cover_path(
 
 
 def test_upload_with_file_block(
+    *,
     notion_session: Session,
     parent_page_id: str,
     tmp_path: Path,
@@ -342,6 +349,7 @@ def test_upload_with_file_block(
 
 
 def test_upload_with_nested_file_block(
+    *,
     notion_session: Session,
     parent_page_id: str,
     tmp_path: Path,
@@ -385,6 +393,7 @@ def test_upload_with_nested_file_block(
 
 
 def test_upload_prefix_suffix_matching(
+    *,
     mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
@@ -430,6 +439,7 @@ def test_upload_prefix_suffix_matching(
 
 
 def test_upload_file_block_name_mismatch(
+    *,
     notion_session: Session,
     mock_api_base_url: str,
     tmp_path: Path,
@@ -467,6 +477,7 @@ def test_upload_file_block_name_mismatch(
 
 
 def test_upload_file_block_caption_mismatch(
+    *,
     notion_session: Session,
     mock_api_base_url: str,
     tmp_path: Path,
@@ -502,6 +513,7 @@ def test_upload_file_block_caption_mismatch(
 
 
 def test_upload_file_block_external_url(
+    *,
     notion_session: Session,
     mock_api_base_url: str,
 ) -> None:
@@ -534,6 +546,7 @@ def test_upload_file_block_external_url(
 
 
 def test_upload_file_block_existing_is_external(
+    *,
     notion_session: Session,
     mock_api_base_url: str,
     tmp_path: Path,
@@ -566,6 +579,7 @@ def test_upload_file_block_existing_is_external(
 
 
 def test_upload_matching_parent_blocks(
+    *,
     mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
@@ -610,6 +624,7 @@ def test_upload_matching_parent_blocks(
 
 
 def test_upload_parent_block_different_children_count(
+    *,
     mock_api_base_url: str,
     notion_session: Session,
 ) -> None:
