@@ -21,6 +21,7 @@ from ultimate_notion import Session
 pytest_plugins = "sphinx.testing.fixtures"  # pylint: disable=invalid-name
 
 
+@beartype
 @retry(
     stop=stop_after_delay(max_delay=30),
     wait=wait_fixed(wait=0.1),
@@ -35,6 +36,7 @@ def _wait_for_wiremock(*, base_url: str) -> None:
     response.raise_for_status()
 
 
+@beartype
 def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
     """Upload mappings JSON to a WireMock instance."""
     with mappings_path.open(encoding="utf-8") as mappings_file:
@@ -115,6 +117,7 @@ def fixture_parent_page_id() -> str:
     return "59833787-2cf9-4fdf-8782-e53db20768a5"
 
 
+@beartype
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """
     Apply the ``beartype`` decorator to all collected test
