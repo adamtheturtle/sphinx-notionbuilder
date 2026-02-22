@@ -94,6 +94,7 @@ def test_help(file_regression: FileRegressionFixture) -> None:
 
 
 def test_upload_success(
+    *,
     mock_api_base_url: str,
     notion_token: str,
     parent_page_id: str,
@@ -122,6 +123,7 @@ def test_upload_success(
 
 
 def test_upload_page_has_subpages_error(
+    *,
     mock_api_base_url: str,
     notion_token: str,
     tmp_path: Path,
@@ -144,6 +146,7 @@ def test_upload_page_has_subpages_error(
 
 
 def test_upload_page_has_databases_error(
+    *,
     mock_api_base_url: str,
     notion_token: str,
     tmp_path: Path,
@@ -166,6 +169,7 @@ def test_upload_page_has_databases_error(
 
 
 def test_upload_discussions_exist_error(
+    *,
     mock_api_base_url: str,
     notion_token: str,
     tmp_path: Path,
