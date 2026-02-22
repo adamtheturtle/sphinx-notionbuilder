@@ -1,8 +1,10 @@
 """WireMock test helpers."""
 
 import requests
+from beartype import beartype
 
 
+@beartype
 def count_wiremock_requests(
     *,
     base_url: str,
