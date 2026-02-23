@@ -52,6 +52,7 @@ def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
 
 @pytest.fixture(name="mock_api_base_url", scope="module")
 def fixture_mock_api_base_url_fixture(
+    *,
     request: pytest.FixtureRequest,
 ) -> Iterator[str]:
     """Provide a prepared mock service base URL."""
