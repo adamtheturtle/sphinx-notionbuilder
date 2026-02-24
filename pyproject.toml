@@ -92,7 +92,7 @@ optional-dependencies.dev = [
     "tenacity==9.1.4",
     "ty==0.0.18",
     "types-docker==7.1.0.20260109",
-    "types-docutils==0.22.3.20251115",
+    "types-docutils==0.22.3.20260223",
     "types-requests==2.32.4.20260107",
     "vulture==2.14",
     "yamlfix==1.19.1",
