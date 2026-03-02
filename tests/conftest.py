@@ -21,7 +21,6 @@ def fixture_respx_mock(
     request: pytest.FixtureRequest,
 ) -> Iterator[respx.MockRouter]:
     """Provide a respx mock router loaded with WireMock stubs."""
-    base_url = "https://mock.notion.test"
     mappings_path = (
         request.config.rootpath
         / "tests"
@@ -37,7 +36,7 @@ def fixture_respx_mock(
     add_wiremock_to_respx(
         mock_obj=mock,
         stubs=stubs,
-        base_url=base_url,
+        base_url="https://mock.notion.test",
     )
     mock.start()
     try:
