@@ -14,8 +14,6 @@ from wiremock_mock import add_wiremock_to_respx
 
 pytest_plugins = "sphinx.testing.fixtures"  # pylint: disable=invalid-name
 
-_BASE_URL = "https://mock.notion.test"
-
 
 @pytest.fixture(name="respx_mock", scope="module")
 def fixture_respx_mock(
@@ -23,6 +21,7 @@ def fixture_respx_mock(
     request: pytest.FixtureRequest,
 ) -> Iterator[respx.MockRouter]:
     """Provide a respx mock router loaded with WireMock stubs."""
+    base_url = "https://mock.notion.test"
     mappings_path = (
         request.config.rootpath
         / "tests"
@@ -38,7 +37,7 @@ def fixture_respx_mock(
     add_wiremock_to_respx(
         mock_obj=mock,
         stubs=stubs,
-        base_url=_BASE_URL,
+        base_url=base_url,
     )
     mock.start()
     try:
@@ -54,7 +53,7 @@ def fixture_mock_api_base_url_fixture(
 ) -> str:
     """Provide a prepared mock service base URL."""
     del respx_mock
-    return _BASE_URL
+    return "https://mock.notion.test"
 
 
 @pytest.fixture(name="notion_token")
