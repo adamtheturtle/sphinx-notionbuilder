@@ -1,27 +1,20 @@
 """WireMock test helpers."""
 
-import requests
+import respx
 from beartype import beartype
 
 
 @beartype
-def count_wiremock_requests(
+def count_mock_requests(
     *,
-    base_url: str,
+    mock: respx.MockRouter,
     method: str,
     url_path: str,
 ) -> int:
-    """Count matching requests captured by WireMock."""
-    payload = {
-        "method": method,
-        "urlPath": url_path,
-    }
-    response = requests.post(
-        url=f"{base_url}/__admin/requests/count",
-        json=payload,
-        timeout=30,
+    """Count matching requests captured by the respx mock."""
+    return sum(
+        1
+        for call in mock.calls  # pyright: ignore[reportUnknownVariableType]
+        if call.request.method == method  # pyright: ignore[reportUnknownMemberType]
+        and call.request.url.path == url_path  # pyright: ignore[reportUnknownMemberType]
     )
-    response.raise_for_status()
-    count = response.json()["count"]
-    assert isinstance(count, int)
-    return count

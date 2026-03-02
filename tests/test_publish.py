@@ -1,21 +1,16 @@
 """Tests for the _publish_to_notion event callback."""
 
-import os
 from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+import respx
 from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
 from sphinx_notion._upload import PageHasSubpagesError
 from tests._wiremock import (  # pyrefly: ignore[missing-import]
-    count_wiremock_requests,
-)
-
-_SKIP_DOCKER = pytest.mark.skipif(
-    os.environ.get("SKIP_DOCKER_TESTS") == "1",
-    reason="SKIP_DOCKER_TESTS is set",
+    count_mock_requests,
 )
 
 
@@ -111,11 +106,11 @@ def test_publish_skips_when_no_output_file(
     assert "index.json found" in app.warning.getvalue()
 
 
-@_SKIP_DOCKER
 def test_publish_success(
     *,
     make_app: Callable[..., SphinxTestApp],
     mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_token: str,
     parent_page_id: str,
     tmp_path: Path,
@@ -143,16 +138,16 @@ def test_publish_success(
         },
     )
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
-    before_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path=append_url_path,
     )
     app.build()
     assert app.statuscode == 0
     assert (
-        count_wiremock_requests(
-            base_url=mock_api_base_url,
+        count_mock_requests(
+            mock=respx_mock,
             method="PATCH",
             url_path=append_url_path,
         )
@@ -160,7 +155,6 @@ def test_publish_success(
     )
 
 
-@_SKIP_DOCKER
 def test_publish_propagates_error(
     *,
     make_app: Callable[..., SphinxTestApp],

@@ -3,59 +3,26 @@
 import json
 import os
 from collections.abc import Iterator
-from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-import docker
 import pytest
-import requests
+import respx
 from beartype import beartype
-from tenacity import (
-    retry,
-    stop_after_delay,
-    wait_fixed,
-)
 from ultimate_notion import Session
+from wiremock_mock import add_wiremock_to_respx
 
 pytest_plugins = "sphinx.testing.fixtures"  # pylint: disable=invalid-name
 
-
-@beartype
-@retry(
-    stop=stop_after_delay(max_delay=30),
-    wait=wait_fixed(wait=0.1),
-    reraise=True,
-)
-def _wait_for_wiremock(*, base_url: str) -> None:
-    """Wait until the WireMock admin API responds."""
-    response = requests.get(
-        url=f"{base_url}/__admin/mappings",
-        timeout=2,
-    )
-    response.raise_for_status()
+_BASE_URL = "https://mock.notion.test"
 
 
-@beartype
-def _upload_wiremock_mappings(*, base_url: str, mappings_path: Path) -> None:
-    """Upload mappings JSON to a WireMock instance."""
-    with mappings_path.open(encoding="utf-8") as mappings_file:
-        payload = json.load(fp=mappings_file)
-
-    response = requests.post(
-        url=f"{base_url}/__admin/mappings/import",
-        json=payload,
-        timeout=30,
-    )
-    response.raise_for_status()
-
-
-@pytest.fixture(name="mock_api_base_url", scope="module")
-def fixture_mock_api_base_url_fixture(
+@pytest.fixture(name="respx_mock", scope="module")
+def fixture_respx_mock(
     *,
     request: pytest.FixtureRequest,
-) -> Iterator[str]:
-    """Provide a prepared mock service base URL."""
+) -> Iterator[respx.MockRouter]:
+    """Provide a respx mock router loaded with WireMock stubs."""
     mappings_path = (
         request.config.rootpath
         / "tests"
@@ -64,29 +31,30 @@ def fixture_mock_api_base_url_fixture(
     )
     assert mappings_path.is_file()
 
-    docker_client = docker.from_env()
-    container = docker_client.containers.run(
-        # This tag is arbitrary, but pinning is better than `latest`.
-        image="wiremock/wiremock:3.9.1",
-        detach=True,
-        remove=True,
-        ports={"8080/tcp": ("127.0.0.1", 0)},
-    )
-    try:
-        container.reload()
-        host_port = container.ports["8080/tcp"][0]["HostPort"]
-        assert isinstance(host_port, str)
-        base_url = f"http://127.0.0.1:{host_port}"
+    with mappings_path.open(encoding="utf-8") as mappings_file:
+        stubs = json.load(fp=mappings_file)
 
-        _wait_for_wiremock(base_url=base_url)
-        _upload_wiremock_mappings(
-            base_url=base_url,
-            mappings_path=mappings_path,
-        )
-        yield base_url
+    mock = respx.MockRouter(assert_all_called=False)
+    add_wiremock_to_respx(
+        mock_obj=mock,
+        stubs=stubs,
+        base_url=_BASE_URL,
+    )
+    mock.start()
+    try:
+        yield mock
     finally:
-        container.remove(force=True)
-        docker_client.close()
+        mock.stop()
+
+
+@pytest.fixture(name="mock_api_base_url", scope="module")
+def fixture_mock_api_base_url_fixture(
+    *,
+    respx_mock: respx.MockRouter,
+) -> str:
+    """Provide a prepared mock service base URL."""
+    del respx_mock
+    return _BASE_URL
 
 
 @pytest.fixture(name="notion_token")
