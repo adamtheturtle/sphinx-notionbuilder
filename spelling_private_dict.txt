@@ -26,6 +26,7 @@ reportUnknownLambdaType
 reportUnknownMemberType
 reportUnknownVariableType
 reportUnnecessaryIsInstance
+respx
 strikethrough
 subpages
 ty

@@ -1,11 +1,9 @@
-"""Opt-in integration test for upload synchronization against a mock
-API.
-"""
+"""Integration test for upload synchronization against a mock API."""
 
-import os
 from pathlib import Path
 
 import pytest
+import respx
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     BulletedItem,
@@ -25,19 +23,14 @@ from sphinx_notion._upload import (
     PageHasSubpagesError,
 )
 from tests._wiremock import (
-    count_wiremock_requests,
-)
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("SKIP_DOCKER_TESTS") == "1",
-    reason="SKIP_DOCKER_TESTS is set",
+    count_mock_requests,
 )
 
 
-def _file_upload_create_count(*, base_url: str) -> int:
+def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
     """Count calls to file-upload creation endpoint."""
-    return count_wiremock_requests(
-        base_url=base_url,
+    return count_mock_requests(
+        mock=mock,
         method="POST",
         url_path="/v1/file_uploads",
     )
@@ -73,18 +66,18 @@ def test_upload_to_notion_with_wiremock(
 
 def test_upload_deletes_and_replaces_changed_blocks(
     *,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
     """Changed content triggers block deletion and re-upload."""
-    before_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
     )
-    before_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path=f"/v1/blocks/{parent_page_id}/children",
     )
@@ -101,13 +94,13 @@ def test_upload_deletes_and_replaces_changed_blocks(
         cover_url=None,
         cancel_on_discussion=True,
     )
-    after_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
     )
-    after_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path=f"/v1/blocks/{parent_page_id}/children",
     )
@@ -233,14 +226,14 @@ def test_upload_discussions_exist_error(
 def test_upload_with_database_parent(
     *,
     notion_session: Session,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
 ) -> None:
     """It is possible to upload a page to a database."""
     parent_database_id = "db000000-0000-0000-0000-000000000001"
     query_url_path = f"/v1/databases/{parent_database_id}/query"
 
-    before_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_count = count_mock_requests(
+        mock=respx_mock,
         method="POST",
         url_path=query_url_path,
     )
@@ -259,8 +252,8 @@ def test_upload_with_database_parent(
         cancel_on_discussion=False,
     )
 
-    after_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_count = count_mock_requests(
+        mock=respx_mock,
         method="POST",
         url_path=query_url_path,
     )
@@ -271,7 +264,7 @@ def test_upload_with_database_parent(
 
 def test_upload_with_cover_path(
     *,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
     parent_page_id: str,
     tmp_path: Path,
@@ -280,7 +273,7 @@ def test_upload_with_cover_path(
     cover_file = tmp_path / "cover.png"
     cover_file.write_bytes(data=b"fake-png-data")
     before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     page = notion_upload.upload_to_notion(
@@ -297,7 +290,7 @@ def test_upload_with_cover_path(
         cancel_on_discussion=False,
     )
     after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     assert page.title == "Upload Title"
@@ -394,17 +387,17 @@ def test_upload_with_nested_file_block(
 
 def test_upload_prefix_suffix_matching(
     *,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """Prefix and suffix matching skips unchanged blocks."""
-    before_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000011",
     )
-    before_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000002/children",
     )
@@ -423,13 +416,13 @@ def test_upload_prefix_suffix_matching(
         cover_url=None,
         cancel_on_discussion=False,
     )
-    after_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000011",
     )
-    after_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000002/children",
     )
@@ -441,7 +434,7 @@ def test_upload_prefix_suffix_matching(
 def test_upload_file_block_name_mismatch(
     *,
     notion_session: Session,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
     """File block with name mismatch triggers re-upload."""
@@ -449,7 +442,7 @@ def test_upload_file_block_name_mismatch(
     img_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
     notion_upload.upload_to_notion(
         session=notion_session,
@@ -470,7 +463,7 @@ def test_upload_file_block_name_mismatch(
         cancel_on_discussion=False,
     )
     after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     assert after_upload_count == before_upload_count + 1
@@ -479,7 +472,7 @@ def test_upload_file_block_name_mismatch(
 def test_upload_file_block_caption_mismatch(
     *,
     notion_session: Session,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
     """File block with caption mismatch triggers re-upload."""
@@ -487,7 +480,7 @@ def test_upload_file_block_caption_mismatch(
     img_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
     notion_upload.upload_to_notion(
         session=notion_session,
@@ -506,7 +499,7 @@ def test_upload_file_block_caption_mismatch(
         cancel_on_discussion=False,
     )
     after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     assert after_upload_count == before_upload_count + 1
@@ -515,11 +508,11 @@ def test_upload_file_block_caption_mismatch(
 def test_upload_file_block_external_url(
     *,
     notion_session: Session,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
 ) -> None:
     """File block with external URL skips upload and compares directly."""
     before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
     notion_upload.upload_to_notion(
         session=notion_session,
@@ -539,7 +532,7 @@ def test_upload_file_block_external_url(
         cancel_on_discussion=False,
     )
     after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     assert after_upload_count == before_upload_count
@@ -548,7 +541,7 @@ def test_upload_file_block_external_url(
 def test_upload_file_block_existing_is_external(
     *,
     notion_session: Session,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
     """File block with existing ExternalFile triggers re-upload."""
@@ -556,7 +549,7 @@ def test_upload_file_block_existing_is_external(
     img_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
     notion_upload.upload_to_notion(
         session=notion_session,
@@ -572,7 +565,7 @@ def test_upload_file_block_existing_is_external(
         cancel_on_discussion=False,
     )
     after_upload_count = _file_upload_create_count(
-        base_url=mock_api_base_url,
+        mock=respx_mock,
     )
 
     assert after_upload_count == before_upload_count + 1
@@ -580,20 +573,20 @@ def test_upload_file_block_existing_is_external(
 
 def test_upload_matching_parent_blocks(
     *,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """Matching parent blocks with children are not re-uploaded."""
     local_block = BulletedItem(text=text(text="item"))
     local_block.append(blocks=[Divider()])
 
-    before_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
-    before_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
     )
@@ -608,13 +601,13 @@ def test_upload_matching_parent_blocks(
         cover_url=None,
         cancel_on_discussion=False,
     )
-    after_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
-    after_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
     )
@@ -625,25 +618,25 @@ def test_upload_matching_parent_blocks(
 
 def test_upload_parent_block_different_children_count(
     *,
-    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """Parent block with different children count triggers re-upload."""
     local_block = BulletedItem(text=text(text="item"))
     local_block.append(blocks=[Divider(), Divider()])
 
-    before_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
-    before_parent_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_parent_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
     )
-    before_child_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    before_child_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000020/children",
     )
@@ -658,18 +651,18 @@ def test_upload_parent_block_different_children_count(
         cover_url=None,
         cancel_on_discussion=False,
     )
-    after_delete_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
         method="DELETE",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000010",
     )
-    after_parent_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_parent_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
     )
-    after_child_append_count = count_wiremock_requests(
-        base_url=mock_api_base_url,
+    after_child_append_count = count_mock_requests(
+        mock=respx_mock,
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000020/children",
     )

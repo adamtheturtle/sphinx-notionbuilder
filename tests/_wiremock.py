@@ -1,27 +1,27 @@
 """WireMock test helpers."""
 
-import requests
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from beartype import beartype
+
+if TYPE_CHECKING:
+    import respx
+    from respx.models import Call
 
 
 @beartype
-def count_wiremock_requests(
+def count_mock_requests(
     *,
-    base_url: str,
+    mock: respx.MockRouter,
     method: str,
     url_path: str,
 ) -> int:
-    """Count matching requests captured by WireMock."""
-    payload = {
-        "method": method,
-        "urlPath": url_path,
-    }
-    response = requests.post(
-        url=f"{base_url}/__admin/requests/count",
-        json=payload,
-        timeout=30,
-    )
-    response.raise_for_status()
-    count = response.json()["count"]
-    assert isinstance(count, int)
+    """Count matching requests captured by the respx mock."""
+    calls: list[Call] = list(mock.calls)
+    count = 0
+    for call in calls:
+        if call.request.method == method and call.request.url.path == url_path:
+            count += 1
     return count
