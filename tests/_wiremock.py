@@ -1,7 +1,14 @@
 """WireMock test helpers."""
 
-import respx
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from beartype import beartype
+
+if TYPE_CHECKING:
+    import respx
+    from respx.models import Call
 
 
 @beartype
@@ -12,9 +19,9 @@ def count_mock_requests(
     url_path: str,
 ) -> int:
     """Count matching requests captured by the respx mock."""
-    return sum(
-        1
-        for call in mock.calls  # pyright: ignore[reportUnknownVariableType]
-        if call.request.method == method  # pyright: ignore[reportUnknownMemberType]
-        and call.request.url.path == url_path  # pyright: ignore[reportUnknownMemberType]
-    )
+    calls: list[Call] = list(mock.calls)
+    count = 0
+    for call in calls:
+        if call.request.method == method and call.request.url.path == url_path:
+            count += 1
+    return count
