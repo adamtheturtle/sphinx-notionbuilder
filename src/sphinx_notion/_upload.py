@@ -18,7 +18,7 @@ from beartype import beartype
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
 from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
@@ -309,6 +309,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    allow_subpages: bool = False,
 ) -> Page:
     """Upload documentation to Notion.
 
@@ -360,14 +361,22 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     else:
         page.cover = None
 
-    if page.subpages:
-        raise PageHasSubpagesError
+    if not allow_subpages:
+        if page.subpages:
+            raise PageHasSubpagesError
 
-    if page.subdbs:
-        raise PageHasDatabasesError
+        if page.subdbs:
+            raise PageHasDatabasesError
 
     _LOGGER.info("Syncing page blocks")
-    existing_blocks = page.blocks
+    if allow_subpages:
+        existing_blocks = [
+            block
+            for block in page.blocks
+            if not isinstance(block, (ChildPage, ChildDatabase))
+        ]
+    else:
+        existing_blocks = list(page.blocks)
     _LOGGER.info(
         "Comparing %d existing blocks with %d local blocks",
         len(existing_blocks),

@@ -155,6 +155,135 @@ def test_publish_success(
     )
 
 
+def test_publish_multi_page(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """A multi-page Notion build publishes all toctree documents."""
+    del notion_token
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data="Root content.\n\n.. toctree::\n\n   other\n",
+        encoding="utf-8",
+    )
+    (srcdir / "other.rst").write_text(
+        data="Sub-page content.\n",
+        encoding="utf-8",
+    )
+    app = make_app(
+        buildername="notion",
+        srcdir=srcdir,
+        confoverrides={
+            "extensions": ["sphinx_notion"],
+            "notion_publish": True,
+            "notion_parent_page_id": parent_page_id,
+            "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
+        },
+    )
+    create_url_path = "/v1/pages"
+    before_count = count_mock_requests(
+        mock=respx_mock,
+        method="POST",
+        url_path=create_url_path,
+    )
+    app.build()
+    assert app.statuscode == 0
+    after_count = count_mock_requests(
+        mock=respx_mock,
+        method="POST",
+        url_path=create_url_path,
+    )
+    assert after_count >= before_count + 1
+
+
+def test_publish_multi_page_duplicate_toctree_entry(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """Duplicate toctree entries are skipped on second encounter."""
+    del notion_token
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data=(
+            "Root content.\n\n"
+            ".. toctree::\n\n   other\n\n"
+            ".. toctree::\n\n   other\n"
+        ),
+        encoding="utf-8",
+    )
+    (srcdir / "other.rst").write_text(
+        data="Sub-page content.\n",
+        encoding="utf-8",
+    )
+    app = make_app(
+        buildername="notion",
+        srcdir=srcdir,
+        confoverrides={
+            "extensions": ["sphinx_notion"],
+            "notion_publish": True,
+            "notion_parent_page_id": parent_page_id,
+            "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
+        },
+    )
+    app.build()
+    assert app.statuscode == 0
+
+
+def test_publish_multi_page_missing_sub_doc(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """A missing sub-doc JSON file logs a warning and continues."""
+    del notion_token
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data="Root content.\n\n.. toctree::\n\n   other\n",
+        encoding="utf-8",
+    )
+    (srcdir / "other.rst").write_text(
+        data="Sub-page content.\n",
+        encoding="utf-8",
+    )
+    app = make_app(
+        buildername="notion",
+        srcdir=srcdir,
+        confoverrides={
+            "extensions": ["sphinx_notion"],
+            "notion_publish": True,
+            "notion_parent_page_id": parent_page_id,
+            "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
+        },
+    )
+    app.build()
+    assert app.statuscode == 0
+    other_json = Path(app.outdir) / "other.json"
+    other_json.unlink()
+    app.emit("build-finished", None)
+    assert "other" in app.warning.getvalue()
+
+
 def test_publish_propagates_error(
     *,
     make_app: Callable[..., SphinxTestApp],
