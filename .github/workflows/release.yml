@@ -91,12 +91,15 @@ jobs:
           commit_sha: ${{ steps.commit.outputs.commit_hash }}
 
       - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          makeLatest: true
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+        env:
+          RELEASE_TAG: ${{ steps.tag_version.outputs.new_tag }}
+          RELEASE_BODY: ${{ steps.tag_version.outputs.changelog }}
+        run: |
+          printf '%s' "$RELEASE_BODY" > /tmp/release_notes.md
+          gh release create "$RELEASE_TAG" \
+            --title "Release $RELEASE_TAG" \
+            --notes-file /tmp/release_notes.md \
+            --latest
 
       - name: Build a binary wheel and a source tarball
         run: |
