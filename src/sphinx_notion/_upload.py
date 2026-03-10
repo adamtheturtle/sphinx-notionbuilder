@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -37,13 +37,28 @@ _LOGGER = logging.getLogger(name=__name__)
 _original_serialize_for_api_method = UnoObjAPIBlock.serialize_for_api
 
 
+def _strip_archived_fields(*, data: dict[str, object]) -> None:
+    """Recursively remove archived/in_trash from a serialized block
+    dict.
+    """
+    data.pop("archived", None)
+    data.pop("in_trash", None)
+    for value in data.values():
+        if not isinstance(value, dict):
+            continue
+        children = cast("dict[str, object]", value).get("children")
+        if not isinstance(children, list):
+            continue
+        for child in cast("list[dict[str, object]]", children):
+            _strip_archived_fields(data=child)
+
+
 def _block_serialize_for_api_patched(
     self: UnoObjAPIBlock,
 ) -> dict[str, object]:  # pragma: no cover - patched at module load
     """Serialize, removing archived/in_trash fields rejected by API."""
     data = _original_serialize_for_api_method(self)  # type: ignore[misc]
-    data.pop("archived", None)
-    data.pop("in_trash", None)
+    _strip_archived_fields(data=data)
     return data
 
 
