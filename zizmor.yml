@@ -12,3 +12,5 @@ rules:
     disable: true
   artipacked:
     disable: true
+  superfluous-actions:
+    disable: true
