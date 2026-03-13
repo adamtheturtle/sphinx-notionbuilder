@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 from uuid import UUID
 
 import bs4
@@ -92,9 +92,6 @@ from ultimate_notion.obj_api.objects import (
     PageRef,
 )
 from ultimate_notion.rich_text import Text, math, text
-
-if TYPE_CHECKING:
-    from ultimate_notion.page import Page
 
 from sphinx_notion._upload import upload_to_notion
 
@@ -2407,39 +2404,25 @@ def _publish_to_notion(
         return
 
     toctree_includes: dict[str, list[str]] = app.env.toctree_includes
-    has_children = bool(toctree_includes.get(root_doc))
+
+    docs_to_publish: list[tuple[str, str]] = [
+        (root_doc, app.config.notion_page_title),
+    ]
+    visited: set[str] = {root_doc}
+    queue: deque[str] = deque(iterable=toctree_includes.get(root_doc, []))
+    while queue:
+        docname = queue.popleft()
+        if docname in visited:
+            continue
+        visited.add(docname)
+        docs_to_publish.append(
+            (docname, app.env.titles[docname].astext()),
+        )
+        queue.extend(toctree_includes.get(docname, []))
 
     session = Session(base_url=app.config.notion_api_base_url)
     try:
-        root_blocks = _load_blocks_from_file(output_file=output_file)
-        root_page = upload_to_notion(
-            session=session,
-            blocks=root_blocks,
-            parent_page_id=app.config.notion_parent_page_id,
-            parent_database_id=app.config.notion_parent_database_id,
-            title=app.config.notion_page_title,
-            icon=app.config.notion_page_icon,
-            cover_path=None,
-            cover_url=app.config.notion_page_cover_url,
-            cancel_on_discussion=app.config.notion_cancel_on_discussion,
-            allow_subpages=has_children,
-        )
-        _LOGGER.info(
-            "Published page: '%s' (%s)",
-            app.config.notion_page_title,
-            root_page.url,
-        )
-
-        published_pages: dict[str, Page] = {root_doc: root_page}
-        visited: set[str] = {root_doc}
-        queue: deque[str] = deque(iterable=toctree_includes.get(root_doc, []))
-
-        while queue:
-            docname = queue.popleft()
-            if docname in visited:
-                continue
-            visited.add(docname)
-
+        for docname, title in docs_to_publish:
             doc_output_file = Path(app.outdir) / f"{docname}.json"
             if not doc_output_file.exists():
                 _LOGGER.warning(
@@ -2449,34 +2432,23 @@ def _publish_to_notion(
                 )
                 continue
 
-            parent_docname = next(
-                parent
-                for parent, children in toctree_includes.items()
-                if docname in children and parent in published_pages
-            )
-            parent_page = published_pages[parent_docname]
-            title = app.env.titles[docname].astext()
-
-            children_in_toctree = toctree_includes.get(docname, [])
-            doc_has_children = bool(children_in_toctree)
-            queue.extend(children_in_toctree)
-
+            is_root = docname == root_doc
             doc_blocks = _load_blocks_from_file(
                 output_file=doc_output_file,
             )
             page = upload_to_notion(
                 session=session,
                 blocks=doc_blocks,
-                parent_page_id=str(object=parent_page.id),
-                parent_database_id=None,
+                parent_page_id=app.config.notion_parent_page_id,
+                parent_database_id=app.config.notion_parent_database_id,
                 title=title,
-                icon=None,
+                icon=app.config.notion_page_icon if is_root else None,
                 cover_path=None,
-                cover_url=None,
+                cover_url=(
+                    app.config.notion_page_cover_url if is_root else None
+                ),
                 cancel_on_discussion=app.config.notion_cancel_on_discussion,
-                allow_subpages=doc_has_children,
             )
-            published_pages[docname] = page
             _LOGGER.info(
                 "Published page: '%s' (%s)",
                 title,
