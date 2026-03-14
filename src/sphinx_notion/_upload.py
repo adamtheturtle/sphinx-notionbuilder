@@ -5,7 +5,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -34,7 +34,9 @@ _LOGGER = logging.getLogger(name=__name__)
 # Monkey-patch: ultimate_notion includes `archived` when serializing blocks,
 # but the Notion API rejects this field on block creation/append.
 # See https://github.com/ultimate-notion/ultimate-notion/issues/186
-_original_serialize_for_api_method = UnoObjAPIBlock.serialize_for_api
+_original_serialize_for_api_method: Callable[
+    [UnoObjAPIBlock], dict[str, object]
+] = UnoObjAPIBlock.serialize_for_api
 
 
 def _strip_archived_fields(*, data: dict[str, object]) -> None:
@@ -57,7 +59,7 @@ def _block_serialize_for_api_patched(
     self: UnoObjAPIBlock,
 ) -> dict[str, object]:  # pragma: no cover - patched at module load
     """Serialize, removing archived/in_trash fields rejected by API."""
-    data = _original_serialize_for_api_method(self)  # type: ignore[misc]
+    data = _original_serialize_for_api_method(self)
     _strip_archived_fields(data=data)
     return data
 
