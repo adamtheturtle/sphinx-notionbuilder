@@ -353,6 +353,12 @@ analysis.respect-type-ignore-comments = false
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
 
+[tool.mypy_strict_kwargs]
+# ``url2pathname`` had its parameter renamed from ``pathname`` to ``url`` in
+# Python 3.14 (https://github.com/python/cpython/issues/127065), so we cannot
+# use a keyword argument that works across all supported Python versions.
+ignore_names = [ "urllib.request.url2pathname" ]
+
 [tool.pydocstringformatter]
 write = true
 split-summary-body = false

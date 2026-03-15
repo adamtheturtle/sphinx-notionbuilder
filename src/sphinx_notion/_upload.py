@@ -229,10 +229,7 @@ def _is_existing_equivalent(
             ):
                 return False
 
-            # ``mypy-strict-kwargs`` requires keyword arguments, but the
-            # parameter name changed from ``pathname`` to ``url`` in
-            # Python 3.14.
-            local_file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            local_file_path = Path(url2pathname(parsed.path))
             return _files_match(
                 existing_file_url=existing_page_block.file_info.url,
                 local_file_path=local_file_path,
@@ -307,10 +304,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
-            # ``mypy-strict-kwargs`` requires keyword arguments, but the
-            # parameter name changed from ``pathname`` to ``url`` in
-            # Python 3.14.
-            file_path = Path(url2pathname(parsed.path))  # type: ignore[misc]
+            file_path = Path(url2pathname(parsed.path))
             _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
