@@ -52,7 +52,7 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_SAMPLE_PAGE_ID: ${{ vars.NOTION_SAMPLE_PAGE_ID }}
-        run: |
+        run: |-
           uv run --all-extras notion-upload \
             --parent-page-id "$NOTION_SAMPLE_PAGE_ID" \
             --file "./build-sample_warnings/index.json" \
