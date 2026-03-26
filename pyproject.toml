@@ -90,7 +90,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "ty==0.0.25",
     "types-docutils==0.22.3.20260322",
-    "types-requests==2.32.4.20260107",
+    "types-requests==2.32.4.20260324",
     "vulture==2.16",
     "wiremock-mock==2026.3.2.1",
     "yamlfix==1.19.1",
