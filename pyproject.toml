@@ -91,7 +91,7 @@ optional-dependencies.dev = [
     "ty==0.0.24",
     "types-docutils==0.22.3.20260322",
     "types-requests==2.32.4.20260107",
-    "vulture==2.15",
+    "vulture==2.16",
     "wiremock-mock==2026.3.2.1",
     "yamlfix==1.19.1",
     "zizmor==1.23.1",
