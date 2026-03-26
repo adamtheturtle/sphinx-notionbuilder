@@ -318,17 +318,6 @@ indent = 4
 keep_full_version = true
 max_supported_python = "3.14"
 
-[tool.pytest]
-xfail_strict = true
-log_cli = true
-
-[tool.coverage]
-run.branch = true
-report.exclude_also = [
-    "if TYPE_CHECKING:",
-]
-report.show_missing = true
-
 [tool.mypy]
 strict = true
 files = [ "." ]
@@ -352,6 +341,17 @@ typeCheckingMode = "strict"
 analysis.respect-type-ignore-comments = false
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
+
+[tool.pytest]
+xfail_strict = true
+log_cli = true
+
+[tool.coverage]
+run.branch = true
+report.exclude_also = [
+    "if TYPE_CHECKING:",
+]
+report.show_missing = true
 
 [tool.mypy_strict_kwargs]
 # ``url2pathname`` had its parameter renamed from ``pathname`` to ``url`` in
