@@ -70,7 +70,7 @@ _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 
 
 @beartype
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, kw_only=True, slots=True)
 class _MatchLengths:
     """Matching prefix/suffix lengths for block diffing."""
 

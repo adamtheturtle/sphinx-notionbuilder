@@ -366,7 +366,7 @@ def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _TableStructure:
     """Structure information extracted from a table node."""
 
