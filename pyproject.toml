@@ -89,7 +89,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
     "ty==0.0.29",
-    "types-docutils==0.22.3.20260322",
+    "types-docutils==0.22.3.20260408",
     "types-requests==2.33.0.20260408",
     "vulture==2.16",
     "wiremock-mock==2026.3.2.1",
