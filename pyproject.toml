@@ -38,6 +38,10 @@ dependencies = [
     "click>=8.0.0",
     "cloup>=3.0.0",
     "docutils>=0.21",
+    # Pin pydantic to <2.13 to work around
+    # https://github.com/ultimate-notion/ultimate-notion/issues/189 -
+    # pydantic 2.13 breaks ultimate-notion's parsing of Notion user objects.
+    "pydantic<2.13",
     "requests>=2.32.5",
     # Pin Sphinx to <9 to avoid
     # https://github.com/sphinx-toolbox/sphinx-toolbox/issues/201
@@ -312,6 +316,9 @@ pep621_dev_dependency_groups = [
     "release",
     "sample",
 ]
+# pydantic is pinned to work around an ultimate-notion incompatibility,
+# not imported directly.
+per_rule_ignores = { DEP002 = [ "pydantic" ] }
 
 [tool.pyproject-fmt]
 indent = 4
