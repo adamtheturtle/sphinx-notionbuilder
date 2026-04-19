@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import pytest
 import respx
-from beartype import beartype
 from ultimate_notion import Session
 from wiremock_mock import add_wiremock_to_respx
 
@@ -82,15 +81,3 @@ def fixture_notion_session_fixture(
 def fixture_parent_page_id() -> str:
     """The page ID used by the mock API fixtures."""
     return "59833787-2cf9-4fdf-8782-e53db20768a5"
-
-
-@beartype
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """
-    Apply the ``beartype`` decorator to all collected test
-    functions.
-    """
-    for item in items:
-        # All our tests are functions, for now
-        assert isinstance(item, pytest.Function)
-        item.obj = beartype(obj=item.obj)
