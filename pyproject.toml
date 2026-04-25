@@ -41,7 +41,7 @@ dependencies = [
     # Pin pydantic to <2.13 to work around
     # https://github.com/ultimate-notion/ultimate-notion/issues/189 -
     # pydantic 2.13 breaks ultimate-notion's parsing of Notion user objects.
-    "pydantic<2.13",
+    "pydantic<2.14",
     "requests>=2.32.5",
     # Pin Sphinx to <9 to avoid
     # https://github.com/sphinx-toolbox/sphinx-toolbox/issues/201
