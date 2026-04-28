@@ -44,11 +44,11 @@ dependencies = [
     # pydantic 2.13 breaks ultimate-notion's parsing of Notion user objects.
     "pydantic<2.13",
     "requests>=2.32.5",
-    "sphinx>=9",
+    "sphinx>=9,<10",
     "sphinx-iframes>=1.1.0",
     "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
-    "sphinx-toolbox>=4.2.0rc1",
+    "sphinx-toolbox==4.2.0rc1",
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
