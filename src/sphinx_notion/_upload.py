@@ -97,6 +97,8 @@ class DiscussionsExistError(Exception):
 class CloudflareWAFBlockError(Exception):
     """Raised when a request is blocked by the Cloudflare WAF before
     reaching Notion.
+
+    To reproduce: include ``/etc/hosts`` in a document and upload it.
     """
 
     def __init__(self) -> None:
