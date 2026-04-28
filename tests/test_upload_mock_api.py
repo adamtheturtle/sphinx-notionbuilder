@@ -694,7 +694,7 @@ def test_cloudflare_waf_block(
     parent_page_id: str,
 ) -> None:
     """CloudflareWAFBlockError raised when response content-type is
-    text/html.
+    text/HTML.
     """
     expected = (
         "Request blocked by Cloudflare WAF before reaching Notion API. "

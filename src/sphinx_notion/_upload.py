@@ -369,6 +369,10 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
             cancel_on_discussion is True.
+        CloudflareWAFBlockError: If the append request is blocked by the
+            Cloudflare WAF before reaching Notion.
+        HTTPResponseError: If the append request fails with a non-HTML
+            error response.
     """
     parent: Page | Database
     if parent_page_id:
