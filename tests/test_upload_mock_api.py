@@ -1,12 +1,17 @@
 """Integration test for upload synchronization against a mock API."""
 
+import re
 from pathlib import Path
+from unittest.mock import patch
 
+import httpx
 import pytest
 import respx
+from notion_client.errors import HTTPResponseError
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     BulletedItem,
+    ChildrenMixin,
     Divider,
 )
 from ultimate_notion.blocks import Image as UnoImage
@@ -18,6 +23,7 @@ from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
 from sphinx_notion._upload import (
+    CloudflareWAFBlockError,
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
@@ -670,3 +676,112 @@ def test_upload_parent_block_different_children_count(
     assert after_delete_count == before_delete_count + 1
     assert after_parent_append_count == before_parent_append_count + 1
     assert after_child_append_count == before_child_append_count + 1
+
+
+def _make_html_http_error(*, status_code: int) -> HTTPResponseError:
+    """Create an HTTPResponseError with an HTML response body."""
+    response = httpx.Response(
+        status_code=status_code,
+        headers={"content-type": "text/html; charset=utf-8"},
+        content=b"<html><body>Error</body></html>",
+    )
+    return HTTPResponseError(response=response)
+
+
+def test_cloudflare_waf_block(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """CloudflareWAFBlockError raised when response content-type is
+    text/HTML.
+    """
+    expected = (
+        "Request blocked by Cloudflare WAF before reaching Notion API. "
+        "Common triggers: path traversal, SQL keywords, XSS patterns, "
+        "JNDI strings. The Notion API did not receive this request."
+    )
+    with (
+        patch.object(
+            target=ChildrenMixin,
+            attribute="append",
+            side_effect=_make_html_http_error(status_code=403),
+        ),
+        pytest.raises(
+            expected_exception=CloudflareWAFBlockError,
+            match=f"^{re.escape(pattern=expected)}$",
+        ),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoParagraph(text=text(text="WAF trigger content"))],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_non_html_403_not_wrapped(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """HTTPResponseError with non-HTML body is re-raised unchanged."""
+    response = httpx.Response(
+        status_code=403,
+        headers={"content-type": "application/json"},
+        content=b'{"code": "restricted_resource"}',
+    )
+    json_error = HTTPResponseError(response=response)
+    with (
+        patch.object(
+            target=ChildrenMixin,
+            attribute="append",
+            side_effect=json_error,
+        ),
+        pytest.raises(expected_exception=HTTPResponseError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoParagraph(text=text(text="Content"))],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_non_403_html_not_wrapped(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """HTTPResponseError with HTML body but non-403 status is re-
+    raised.
+    """
+    with (
+        patch.object(
+            target=ChildrenMixin,
+            attribute="append",
+            side_effect=_make_html_http_error(status_code=502),
+        ),
+        pytest.raises(expected_exception=HTTPResponseError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoParagraph(text=text(text="Content"))],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )

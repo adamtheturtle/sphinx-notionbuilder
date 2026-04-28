@@ -1,6 +1,8 @@
 Args
 CLI
+Cloudflare
 SVG
+WAF
 WireMock
 autodoc
 autosummary

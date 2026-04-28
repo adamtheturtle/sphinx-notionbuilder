@@ -15,6 +15,7 @@ from urllib.request import url2pathname
 
 import requests
 from beartype import beartype
+from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -67,6 +68,7 @@ def _block_serialize_for_api_patched(
 UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+_HTTP_FORBIDDEN = 403
 
 
 @beartype
@@ -91,6 +93,22 @@ class DiscussionsExistError(Exception):
     cancel_on_discussion
     is True.
     """
+
+
+class CloudflareWAFBlockError(Exception):
+    """Raised when a request is blocked by the Cloudflare WAF before
+    reaching Notion.
+
+    To reproduce: include ``/etc/hosts`` in a document and upload it.
+    """
+
+    def __init__(self) -> None:
+        """Initialize with a diagnostic message."""
+        super().__init__(
+            "Request blocked by Cloudflare WAF before reaching Notion API. "
+            "Common triggers: path traversal, SQL keywords, XSS patterns, "
+            "JNDI strings. The Notion API did not receive this request."
+        )
 
 
 @beartype
@@ -352,6 +370,10 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
             cancel_on_discussion is True.
+        CloudflareWAFBlockError: If the append request is blocked by the
+            Cloudflare WAF before reaching Notion.
+        HTTPResponseError: If the append request fails with a non-HTML
+            error response.
     """
     parent: Page | Database
     if parent_page_id:
@@ -471,8 +493,15 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         after_block = (
             existing_blocks[prefix_len - 1] if prefix_len > 0 else None
         )
-        page.append(
-            blocks=block_objs_with_uploaded_files,
-            after=after_block,
-        )
+        try:
+            page.append(
+                blocks=block_objs_with_uploaded_files,
+                after=after_block,
+            )
+        except HTTPResponseError as exc:
+            if exc.status != _HTTP_FORBIDDEN or not exc.headers.get(
+                key="content-type", default=""
+            ).startswith("text/html"):
+                raise
+            raise CloudflareWAFBlockError from exc
     return page
