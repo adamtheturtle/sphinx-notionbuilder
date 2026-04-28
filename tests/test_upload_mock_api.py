@@ -678,12 +678,12 @@ def test_upload_parent_block_different_children_count(
     assert after_child_append_count == before_child_append_count + 1
 
 
-def _make_cloudflare_error() -> HTTPResponseError:
-    """Create an HTTPResponseError simulating a Cloudflare WAF block."""
+def _make_html_http_error(*, status_code: int) -> HTTPResponseError:
+    """Create an HTTPResponseError with an HTML response body."""
     response = httpx.Response(
-        status_code=403,
+        status_code=status_code,
         headers={"content-type": "text/html; charset=utf-8"},
-        content=b"<html><body>Access denied</body></html>",
+        content=b"<html><body>Error</body></html>",
     )
     return HTTPResponseError(response=response)
 
@@ -705,7 +705,7 @@ def test_cloudflare_waf_block(
         patch.object(
             target=ChildrenMixin,
             attribute="append",
-            side_effect=_make_cloudflare_error(),
+            side_effect=_make_html_http_error(status_code=403),
         ),
         pytest.raises(
             expected_exception=CloudflareWAFBlockError,
@@ -742,6 +742,35 @@ def test_non_html_403_not_wrapped(
             target=ChildrenMixin,
             attribute="append",
             side_effect=json_error,
+        ),
+        pytest.raises(expected_exception=HTTPResponseError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoParagraph(text=text(text="Content"))],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+
+def test_non_403_html_not_wrapped(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """HTTPResponseError with HTML body but non-403 status is re-
+    raised.
+    """
+    with (
+        patch.object(
+            target=ChildrenMixin,
+            attribute="append",
+            side_effect=_make_html_http_error(status_code=502),
         ),
         pytest.raises(expected_exception=HTTPResponseError),
     ):

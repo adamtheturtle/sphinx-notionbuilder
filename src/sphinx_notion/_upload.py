@@ -68,6 +68,7 @@ def _block_serialize_for_api_patched(
 UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+_HTTP_FORBIDDEN = 403
 
 
 @beartype
@@ -498,9 +499,9 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
                 after=after_block,
             )
         except HTTPResponseError as exc:
-            if not exc.headers.get(key="content-type", default="").startswith(
-                "text/html"
-            ):
+            if exc.status != _HTTP_FORBIDDEN or not exc.headers.get(
+                key="content-type", default=""
+            ).startswith("text/html"):
                 raise
             raise CloudflareWAFBlockError from exc
     return page
