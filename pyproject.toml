@@ -38,6 +38,7 @@ dependencies = [
     "click>=8.0.0",
     "cloup>=3.0.0",
     "docutils>=0.21",
+    "notion-client>=2.3.0",
     # Pin pydantic to <2.13 to work around
     # https://github.com/ultimate-notion/ultimate-notion/issues/189 -
     # pydantic 2.13 breaks ultimate-notion's parsing of Notion user objects.
