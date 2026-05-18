@@ -60,7 +60,7 @@ optional-dependencies.dev = [
     "check-manifest==0.51",
     "deptry==0.25.1",
     "doc8==2.0.0",
-    "doccmd==2026.5.6",
+    "doccmd==2026.5.16",
     "freezegun==1.5.5",
     "furo==2025.12.19",
     "interrogate==1.7.0",
@@ -151,7 +151,7 @@ lint.ignore = [
     # We use asserts for type narrowing.
     "S101",
 ]
-lint.per-file-ignores."doccmd_*.py" = [
+lint.per-file-ignores."doccmd_*/doccmd_*.py" = [
     # Allow our chosen docstring line-style - pydocstringformatter handles
     # formatting but docstrings in docs may not match this style.
     "D200",
@@ -265,8 +265,7 @@ MESSAGES-CONTROL.disable = [
 # - conf.py is a Sphinx configuration file which requires lowercase global variable names.
 MESSAGES-CONTROL.per-file-ignores = [
     "docs/source/conf.py:invalid-name",
-    "docs/source/doccmd_*.py:invalid-name",
-    "doccmd_README_rst_*.py:invalid-name",
+    "doccmd_*/doccmd_*.py:invalid-name",
     "sample/conf.py:invalid-name",
     "sample_warnings/conf.py:invalid-name",
 ]
