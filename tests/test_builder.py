@@ -1,7 +1,5 @@
 """Tests for the Sphinx builder."""
 
-# pyright: reportPrivateUsage=false
-
 from collections.abc import Callable
 from importlib.metadata import version
 from pathlib import Path
@@ -55,8 +53,11 @@ def test_extract_table_structure_rejects_unexpected_tgroup_child() -> None:
     tgroup += nodes.paragraph()
     table += tgroup
 
+    extract_table_structure = sphinx_notion.__dict__[
+        "_extract_table_structure"
+    ]
     with pytest.raises(expected_exception=AssertionError):
-        sphinx_notion._extract_table_structure(node=table)  # noqa: SLF001
+        extract_table_structure(node=table)
 
 
 def test_notion_publish_config_defaults(
