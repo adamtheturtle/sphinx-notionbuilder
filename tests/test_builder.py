@@ -6,6 +6,7 @@ from pathlib import Path
 
 import docutils.utils
 import pytest
+from docutils import nodes
 from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
@@ -43,6 +44,20 @@ def test_meta(
     )
     translator.depart_document(node=document)
     assert translator.body == "[]"
+
+
+def test_extract_table_structure_rejects_unexpected_tgroup_child() -> None:
+    """Unexpected ``tgroup`` children fail during table extraction."""
+    table = nodes.table()
+    tgroup = nodes.tgroup()
+    tgroup += nodes.paragraph()
+    table += tgroup
+
+    extract_table_structure = sphinx_notion.__dict__[
+        "_extract_table_structure"
+    ]
+    with pytest.raises(expected_exception=AssertionError):
+        extract_table_structure(node=table)
 
 
 def test_notion_publish_config_defaults(
