@@ -1,11 +1,14 @@
 """Tests for the Sphinx builder."""
 
+# pyright: reportPrivateUsage=false
+
 from collections.abc import Callable
 from importlib.metadata import version
 from pathlib import Path
 
 import docutils.utils
 import pytest
+from docutils import nodes
 from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
@@ -43,6 +46,17 @@ def test_meta(
     )
     translator.depart_document(node=document)
     assert translator.body == "[]"
+
+
+def test_extract_table_structure_rejects_unexpected_tgroup_child() -> None:
+    """Unexpected ``tgroup`` children fail during table extraction."""
+    table = nodes.table()
+    tgroup = nodes.tgroup()
+    tgroup += nodes.paragraph()
+    table += tgroup
+
+    with pytest.raises(expected_exception=AssertionError):
+        sphinx_notion._extract_table_structure(node=table)  # noqa: SLF001
 
 
 def test_notion_publish_config_defaults(
