@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -49,10 +49,13 @@ def _strip_archived_fields(*, data: dict[str, object]) -> None:
     for value in data.values():
         if not isinstance(value, dict):
             continue
-        children = cast("dict[str, object]", value).get("children")
+        nested: dict[str, object] = value
+        children = nested.get("children")
         if not isinstance(children, list):
             continue
-        for child in cast("list[dict[str, object]]", children):
+        for child in children:
+            if not isinstance(child, dict):
+                continue
             _strip_archived_fields(data=child)
 
 
