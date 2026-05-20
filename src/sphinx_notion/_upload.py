@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast  # noqa: TID251
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -49,13 +49,11 @@ def _strip_archived_fields(*, data: dict[str, object]) -> None:
     for value in data.values():
         if not isinstance(value, dict):
             continue
-        children_object = value.get("children")
-        if not isinstance(children_object, list):
+        children = cast("dict[str, object]", value).get("children")  # noqa: TID251
+        if not isinstance(children, list):
             continue
-        for child_object in children_object:
-            if not isinstance(child_object, dict):
-                continue
-            _strip_archived_fields(data=child_object)
+        for child in cast("list[dict[str, object]]", children):  # noqa: TID251
+            _strip_archived_fields(data=child)
 
 
 def _block_serialize_for_api_patched(
