@@ -49,10 +49,10 @@ def _strip_archived_fields(*, data: dict[str, object]) -> None:
     for value in data.values():
         if not isinstance(value, dict):
             continue
-        children = cast("dict[str, object]", value).get("children")  # noqa: TID251
+        children = cast("dict[str, object]", value).get("children")
         if not isinstance(children, list):
             continue
-        for child in cast("list[dict[str, object]]", children):  # noqa: TID251
+        for child in cast("list[dict[str, object]]", children):
             _strip_archived_fields(data=child)
 
 
