@@ -49,14 +49,13 @@ def _strip_archived_fields(*, data: dict[str, object]) -> None:
     for value in data.values():
         if not isinstance(value, dict):
             continue
-        nested: dict[str, object] = value
-        children = nested.get("children")
-        if not isinstance(children, list):
+        children_object = value.get("children")
+        if not isinstance(children_object, list):
             continue
-        for child in children:
-            if not isinstance(child, dict):
+        for child_object in children_object:
+            if not isinstance(child_object, dict):
                 continue
-            _strip_archived_fields(data=child)
+            _strip_archived_fields(data=child_object)
 
 
 def _block_serialize_for_api_patched(
