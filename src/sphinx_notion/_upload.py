@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast  # noqa: TID251
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
