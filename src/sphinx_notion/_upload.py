@@ -76,9 +76,11 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
     if sys.version_info >= (3, 13):
         return Path.from_uri(uri=uri)
     # pylint: disable-next=import-outside-toplevel
-    from urllib.request import url2pathname  # noqa: PLC0415
+    from urllib.request import (  # noqa: PLC0415
+        url2pathname,  # ty: ignore[deprecated]
+    )
 
-    return Path(url2pathname(urlparse(uri).path))
+    return Path(url2pathname(urlparse(uri).path))  # ty: ignore[deprecated]
 
 
 @beartype

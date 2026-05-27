@@ -371,6 +371,10 @@ typeCheckingMode = "strict"
 analysis.respect-type-ignore-comments = false
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
+# The Windows-only `url2pathname` deprecation needs `# ty: ignore[deprecated]`
+# on Windows but the comment is unused on POSIX, which would otherwise fail
+# the build via ``error-on-warning``.
+rules.unused-ignore-comment = "ignore"
 
 [tool.pytest]
 xfail_strict = true
