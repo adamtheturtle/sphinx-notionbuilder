@@ -2,6 +2,7 @@ Args
 CLI
 Cloudflare
 SVG
+URI
 WAF
 WireMock
 autodoc

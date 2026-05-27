@@ -94,7 +94,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "strict-kwargs==2026.5.20",
     "towncrier==25.8.0",
-    "ty==0.0.38",
+    "ty==0.0.39",
     "types-docutils==0.22.3.20260518",
     "types-requests==2.33.0.20260518",
     "vulture==2.16",
@@ -371,6 +371,10 @@ typeCheckingMode = "strict"
 analysis.respect-type-ignore-comments = false
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
+# The Windows-only `url2pathname` deprecation needs `# ty: ignore[deprecated]`
+# on Windows but the comment is unused on POSIX, which would otherwise fail
+# the build via ``error-on-warning``.
+rules.unused-ignore-comment = "ignore"
 
 [tool.pytest]
 xfail_strict = true

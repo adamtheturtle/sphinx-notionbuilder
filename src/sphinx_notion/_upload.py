@@ -5,13 +5,13 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import logging
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, cast  # noqa: TID251
 from urllib.parse import urlparse
-from urllib.request import url2pathname
 
 import requests
 from beartype import beartype
@@ -69,6 +69,18 @@ UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ign
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 _HTTP_FORBIDDEN = 403
+
+
+def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
+    """Convert a ``file://`` URI to a :class:`Path`."""
+    if sys.version_info >= (3, 13):
+        return Path.from_uri(uri=uri)
+    # pylint: disable-next=import-outside-toplevel
+    from urllib.request import (  # noqa: PLC0415
+        url2pathname,  # ty: ignore[deprecated]
+    )
+
+    return Path(url2pathname(urlparse(uri).path))  # ty: ignore[deprecated]
 
 
 @beartype
@@ -247,7 +259,7 @@ def _is_existing_equivalent(
             ):
                 return False
 
-            local_file_path = Path(url2pathname(parsed.path))
+            local_file_path = _file_uri_to_path(uri=local_block.url)
             return _files_match(
                 existing_file_url=existing_page_block.file_info.url,
                 local_file_path=local_file_path,
@@ -322,7 +334,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
-            file_path = Path(url2pathname(parsed.path))
+            file_path = _file_uri_to_path(uri=block.url)
             _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
