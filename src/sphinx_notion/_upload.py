@@ -75,6 +75,7 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
     """Convert a ``file://`` URI to a :class:`Path`."""
     if sys.version_info >= (3, 13):
         return Path.from_uri(uri=uri)
+    # pylint: disable-next=import-outside-toplevel
     from urllib.request import url2pathname  # noqa: PLC0415
 
     return Path(url2pathname(urlparse(uri).path))
