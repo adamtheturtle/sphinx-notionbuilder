@@ -395,7 +395,7 @@ Audio
 
 .. rest-example::
 
-   .. audio:: https://thetestdata.com/assets/audio/wav/thetestdata-sample-wav-2.wav
+   .. audio:: https://github.com/adamtheturtle/sphinx-notionbuilder/raw/main/sample/_static/test-audio.wav
 
    .. audio:: _static/test-audio.wav
 
