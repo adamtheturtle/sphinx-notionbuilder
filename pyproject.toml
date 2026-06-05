@@ -92,7 +92,7 @@ optional-dependencies.dev = [
     "sphinx-substitution-extensions==2026.1.12",
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
-    "strict-kwargs==2026.5.20",
+    "strict-kwargs==2026.6.4",
     "towncrier==25.8.0",
     "ty==0.0.43",
     "types-docutils==0.22.3.20260518",
