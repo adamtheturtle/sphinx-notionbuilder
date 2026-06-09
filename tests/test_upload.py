@@ -34,6 +34,7 @@ def _invoke_upload(
     parent_page_id: str,
     mock_api_base_url: str,
     cancel_on_discussion: bool = False,
+    require_existing_page: bool = False,
 ) -> Result:
     """Invoke the upload CLI against the mock Notion API."""
     runner = CliRunner()
@@ -49,6 +50,8 @@ def _invoke_upload(
     ]
     if cancel_on_discussion:
         arguments.append("--cancel-on-discussion")
+    if require_existing_page:
+        arguments.append("--require-existing-page")
     return runner.invoke(
         cli=main,
         args=arguments,
@@ -185,3 +188,32 @@ def test_upload_discussions_exist_error(
 
     assert result.exit_code == 1
     assert "discussion" in result.output.lower()
+
+
+def test_upload_page_not_found_error(
+    *,
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """A useful error is shown when the page does not exist and
+    --require-existing-page is given.
+    """
+    assert notion_token
+    blocks_file = _write_blocks_file(
+        tmp_path=tmp_path,
+        block_dicts=_paragraph_blocks(
+            text_content="Hello from WireMock upload test",
+        ),
+    )
+
+    result = _invoke_upload(
+        blocks_file=blocks_file,
+        parent_page_id=parent_page_id,
+        mock_api_base_url=mock_api_base_url,
+        require_existing_page=True,
+    )
+
+    assert result.exit_code == 1
+    assert "No page found with title 'Upload Title'." in result.output

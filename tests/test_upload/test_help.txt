@@ -17,6 +17,8 @@ Other options:
   --icon TEXT                 Icon of the page
   --cancel-on-discussion      Cancel upload with error if blocks to be deleted
                               have discussion threads
+  --require-existing-page     Fail if no page with the given title exists,
+                              instead of creating a new page
   --notion-api-base-url TEXT  Override the Notion API base URL. Useful for tests
                               against a mock Notion API.
   --help                      Show this message and exit.

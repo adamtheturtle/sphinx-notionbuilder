@@ -368,6 +368,9 @@ Add the following configuration options to your ``conf.py``:
    # Optional: Cancel upload if blocks to be deleted have discussion threads
    notion_cancel_on_discussion = True
 
+   # Optional: Fail if no page with the given title exists
+   notion_require_existing_page = True
+
 **Configuration Options:**
 
 ``notion_publish``
@@ -405,6 +408,11 @@ Add the following configuration options to your ``conf.py``:
 ``notion_cancel_on_discussion``
    When set to ``True``, the upload will be cancelled with an error if any blocks that would be deleted have discussion threads attached to them.
    This helps prevent accidentally losing discussion content.
+   Default: ``False``
+
+``notion_require_existing_page``
+   When set to ``True``, the upload will fail with an error if no page with the given title exists, instead of creating a new page.
+   This helps catch silent forks when a page is renamed in Notion (or in configuration) and the uploader would otherwise create a new page alongside the old one.
    Default: ``False``
 
 Publishing the Sample Document Locally

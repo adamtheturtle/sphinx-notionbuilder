@@ -107,6 +107,13 @@ class DiscussionsExistError(Exception):
     """
 
 
+class PageNotFoundError(Exception):
+    """Raised when no page with the given title exists and
+    require_existing_page
+    is True.
+    """
+
+
 class CloudflareWAFBlockError(Exception):
     """Raised when a request is blocked by the Cloudflare WAF before
     reaching Notion.
@@ -372,6 +379,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    require_existing_page: bool,
 ) -> Page:
     """Upload documentation to Notion.
 
@@ -382,6 +390,8 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
             cancel_on_discussion is True.
+        PageNotFoundError: If no page with the given title exists and
+            require_existing_page is True.
         CloudflareWAFBlockError: If the append request is blocked by the
             Cloudflare WAF before reaching Notion.
         HTTPResponseError: If the append request fails with a non-HTML
@@ -410,6 +420,9 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         assert len(pages_matching_title) == 1, msg
         (page,) = pages_matching_title
         _LOGGER.info("Found existing page '%s'", title)
+    elif require_existing_page:
+        msg = f"No page found with title '{title}'."
+        raise PageNotFoundError(msg)
     else:
         _LOGGER.info("Creating new page '%s'", title)
         page = session.create_page(parent=parent, title=title)

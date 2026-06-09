@@ -27,6 +27,7 @@ from sphinx_notion._upload import (
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
+    PageNotFoundError,
 )
 from tests._wiremock import (
     count_mock_requests,
@@ -60,6 +61,7 @@ def test_upload_to_notion_with_wiremock(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     assert page.title == "Upload Title"
@@ -99,6 +101,7 @@ def test_upload_deletes_and_replaces_changed_blocks(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=True,
+        require_existing_page=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -135,6 +138,7 @@ def test_upload_with_icon(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     assert page.title == "Upload Title"
@@ -160,6 +164,7 @@ def test_upload_with_cover_url(
         cover_path=None,
         cover_url="https://example.com/cover.png",
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     assert page.title == "Upload Title"
@@ -183,6 +188,7 @@ def test_upload_page_has_subpages_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            require_existing_page=False,
         )
 
 
@@ -201,6 +207,7 @@ def test_upload_page_has_databases_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            require_existing_page=False,
         )
 
 
@@ -226,6 +233,37 @@ def test_upload_discussions_exist_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=True,
+            require_existing_page=False,
+        )
+
+
+def test_upload_page_not_found_error(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """PageNotFoundError raised when no page matches the title and
+    require_existing_page is True.
+    """
+    with pytest.raises(
+        expected_exception=PageNotFoundError,
+        match=r"No page found with title 'Upload Title'\.",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Hello from WireMock upload test"),
+                ),
+            ],
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+            require_existing_page=True,
         )
 
 
@@ -256,6 +294,7 @@ def test_upload_with_database_parent(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     after_count = count_mock_requests(
@@ -294,6 +333,7 @@ def test_upload_with_cover_path(
         cover_path=cover_file,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -328,6 +368,7 @@ def test_upload_with_file_block(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     assert page.title == "Upload Title"
@@ -372,6 +413,7 @@ def test_upload_with_nested_file_block(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
 
     assert page.title == "Upload Title"
@@ -421,6 +463,7 @@ def test_upload_prefix_suffix_matching(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -467,6 +510,7 @@ def test_upload_file_block_name_mismatch(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -503,6 +547,7 @@ def test_upload_file_block_caption_mismatch(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -536,6 +581,7 @@ def test_upload_file_block_external_url(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -569,6 +615,7 @@ def test_upload_file_block_existing_is_external(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -606,6 +653,7 @@ def test_upload_matching_parent_blocks(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -656,6 +704,7 @@ def test_upload_parent_block_different_children_count(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        require_existing_page=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -722,6 +771,7 @@ def test_cloudflare_waf_block(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            require_existing_page=False,
         )
 
 
@@ -755,6 +805,7 @@ def test_non_html_403_not_wrapped(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            require_existing_page=False,
         )
 
 
@@ -784,4 +835,5 @@ def test_non_403_html_not_wrapped(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            require_existing_page=False,
         )

@@ -2411,6 +2411,7 @@ def _publish_to_notion(
             cover_path=None,
             cover_url=app.config.notion_page_cover_url,
             cancel_on_discussion=app.config.notion_cancel_on_discussion,
+            require_existing_page=app.config.notion_require_existing_page,
         )
     finally:
         session.close()
@@ -2466,6 +2467,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
     app.add_config_value(
         name="notion_cancel_on_discussion",
+        default=False,
+        rebuild="",
+        types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_require_existing_page",
         default=False,
         rebuild="",
         types=(bool,),

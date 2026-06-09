@@ -18,6 +18,7 @@ from sphinx_notion._upload import (
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
+    PageNotFoundError,
     upload_to_notion,
 )
 
@@ -86,6 +87,15 @@ from sphinx_notion._upload import (
     default=False,
 )
 @cloup.option(
+    "--require-existing-page",
+    help=(
+        "Fail if no page with the given title exists, instead of creating "
+        "a new page"
+    ),
+    is_flag=True,
+    default=False,
+)
+@cloup.option(
     "--notion-api-base-url",
     help=(
         "Override the Notion API base URL. "
@@ -104,6 +114,7 @@ def main(
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    require_existing_page: bool,
     notion_api_base_url: str | None,
 ) -> None:
     """Upload documentation to Notion."""
@@ -134,6 +145,7 @@ def main(
             cover_path=cover_path,
             cover_url=cover_url,
             cancel_on_discussion=cancel_on_discussion,
+            require_existing_page=require_existing_page,
         )
     except PageHasSubpagesError:
         error_message = (
@@ -148,6 +160,8 @@ def main(
         )
         raise click.ClickException(message=error_message) from None
     except DiscussionsExistError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    except PageNotFoundError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     finally:
         session.close()
