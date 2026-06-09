@@ -23,6 +23,7 @@ from ultimate_notion.blocks import Block, ParentBlock
 from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
+from ultimate_notion.errors import UnknownPageError
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
@@ -105,6 +106,10 @@ class DiscussionsExistError(Exception):
     cancel_on_discussion
     is True.
     """
+
+
+class PageNotFoundError(Exception):
+    """Raised when no page with the given ID exists."""
 
 
 class CloudflareWAFBlockError(Exception):
@@ -365,6 +370,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     *,
     session: Session,
     blocks: Sequence[Block],
+    page_id: str | None,
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
@@ -378,6 +384,8 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     Returns the page that was created or updated.
 
     Raises:
+        PageNotFoundError: If page_id is given and no page with that ID
+            exists or the page is not accessible.
         PageHasSubpagesError: If the page has subpages.
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
@@ -387,32 +395,46 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         HTTPResponseError: If the append request fails with a non-HTML
             error response.
     """
-    parent: Page | Database
-    if parent_page_id:
-        _LOGGER.info("Fetching parent page '%s'", parent_page_id)
-        parent = session.get_page(page_ref=parent_page_id)
-        subpages = parent.subpages
+    if page_id is not None:
+        _LOGGER.info("Fetching page '%s'", page_id)
+        try:
+            page = session.get_page(page_ref=page_id)
+        except UnknownPageError as exc:
+            msg = (
+                f"No page found with ID '{page_id}'. "
+                "It may not exist, or it may not be shared with the "
+                "integration."
+            )
+            raise PageNotFoundError(msg) from exc
+        _LOGGER.info("Setting page title to '%s'", title)
+        page.title = title
     else:
-        assert parent_database_id is not None
-        _LOGGER.info("Fetching parent database '%s'", parent_database_id)
-        parent = session.get_db(db_ref=parent_database_id)
-        subpages = parent.get_all_pages().to_pages()
+        parent: Page | Database
+        if parent_page_id:
+            _LOGGER.info("Fetching parent page '%s'", parent_page_id)
+            parent = session.get_page(page_ref=parent_page_id)
+            subpages = parent.subpages
+        else:
+            assert parent_database_id is not None
+            _LOGGER.info("Fetching parent database '%s'", parent_database_id)
+            parent = session.get_db(db_ref=parent_database_id)
+            subpages = parent.get_all_pages().to_pages()
 
-    pages_matching_title = [
-        child_page for child_page in subpages if child_page.title == title
-    ]
+        pages_matching_title = [
+            child_page for child_page in subpages if child_page.title == title
+        ]
 
-    if pages_matching_title:
-        msg = (
-            f"Expected 1 page matching title {title}, but got "
-            f"{len(pages_matching_title)}"
-        )
-        assert len(pages_matching_title) == 1, msg
-        (page,) = pages_matching_title
-        _LOGGER.info("Found existing page '%s'", title)
-    else:
-        _LOGGER.info("Creating new page '%s'", title)
-        page = session.create_page(parent=parent, title=title)
+        if pages_matching_title:
+            msg = (
+                f"Expected 1 page matching title {title}, but got "
+                f"{len(pages_matching_title)}"
+            )
+            assert len(pages_matching_title) == 1, msg
+            (page,) = pages_matching_title
+            _LOGGER.info("Found existing page '%s'", title)
+        else:
+            _LOGGER.info("Creating new page '%s'", title)
+            page = session.create_page(parent=parent, title=title)
 
     if icon:
         _LOGGER.info("Setting page icon to '%s'", icon)

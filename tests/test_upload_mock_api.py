@@ -27,6 +27,7 @@ from sphinx_notion._upload import (
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
+    PageNotFoundError,
 )
 from tests._wiremock import (
     count_mock_requests,
@@ -53,6 +54,7 @@ def test_upload_to_notion_with_wiremock(
         blocks=[
             UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -92,6 +94,7 @@ def test_upload_deletes_and_replaces_changed_blocks(
         blocks=[
             UnoParagraph(text=text(text="Different content triggers sync"))
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -128,6 +131,7 @@ def test_upload_with_icon(
         blocks=[
             UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -153,6 +157,7 @@ def test_upload_with_cover_url(
         blocks=[
             UnoParagraph(text=text(text="Hello from WireMock upload test"))
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -176,6 +181,7 @@ def test_upload_page_has_subpages_error(
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
+            page_id=None,
             parent_page_id="aaaa0000-0000-0000-0000-000000000001",
             parent_database_id=None,
             title="Upload Title",
@@ -194,6 +200,7 @@ def test_upload_page_has_databases_error(
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
+            page_id=None,
             parent_page_id="bbbb0000-0000-0000-0000-000000000001",
             parent_database_id=None,
             title="Upload Title",
@@ -219,6 +226,7 @@ def test_upload_discussions_exist_error(
                     text=text(text="Different content triggers sync"),
                 ),
             ],
+            page_id=None,
             parent_page_id="cccc0000-0000-0000-0000-000000000001",
             parent_database_id=None,
             title="Upload Title",
@@ -226,6 +234,62 @@ def test_upload_discussions_exist_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=True,
+        )
+
+
+def test_upload_with_page_id(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """A page given by ID is updated and renamed to the given title."""
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        page_id=parent_page_id,
+        parent_page_id=None,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.title == "Upload Title"
+    assert str(object=page.id) == parent_page_id
+    assert len(page.blocks) == 1
+    assert isinstance(page.blocks[0], UnoParagraph)
+    assert page.blocks[0].rich_text == "Hello from WireMock upload test"
+
+
+def test_upload_page_not_found_error(
+    *,
+    notion_session: Session,
+) -> None:
+    """PageNotFoundError raised when no page with the given ID exists."""
+    missing_page_id = "40400000-0000-0000-0000-000000000404"
+    with pytest.raises(
+        expected_exception=PageNotFoundError,
+        match=f"No page found with ID '{missing_page_id}'.",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(
+                    text=text(text="Hello from WireMock upload test"),
+                ),
+            ],
+            page_id=missing_page_id,
+            parent_page_id=None,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
         )
 
 
@@ -249,6 +313,7 @@ def test_upload_with_database_parent(
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
+        page_id=None,
         parent_page_id=None,
         parent_database_id=parent_database_id,
         title="Upload Title",
@@ -287,6 +352,7 @@ def test_upload_with_cover_path(
         blocks=[
             UnoParagraph(text=text(text="Hello from Microcks upload test"))
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -321,6 +387,7 @@ def test_upload_with_file_block(
         blocks=[
             UnoImage(file=ExternalFile(url=img_file.as_uri())),
         ],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -365,6 +432,7 @@ def test_upload_with_nested_file_block(
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[parent_block],
+        page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
         title="Upload Title",
@@ -414,6 +482,7 @@ def test_upload_prefix_suffix_matching(
             UnoParagraph(text=text(text="new")),
             Divider(),
         ],
+        page_id=None,
         parent_page_id="dddd0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -460,6 +529,7 @@ def test_upload_file_block_name_mismatch(
                 ),
             ),
         ],
+        page_id=None,
         parent_page_id="eeee0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -496,6 +566,7 @@ def test_upload_file_block_caption_mismatch(
                 caption="new caption",
             ),
         ],
+        page_id=None,
         parent_page_id="eeee0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -529,6 +600,7 @@ def test_upload_file_block_external_url(
                 ),
             ),
         ],
+        page_id=None,
         parent_page_id="eeee0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -562,6 +634,7 @@ def test_upload_file_block_existing_is_external(
         blocks=[
             UnoImage(file=ExternalFile(url=img_file.as_uri())),
         ],
+        page_id=None,
         parent_page_id="ffff0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -599,6 +672,7 @@ def test_upload_matching_parent_blocks(
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[local_block],
+        page_id=None,
         parent_page_id="aabb0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -649,6 +723,7 @@ def test_upload_parent_block_different_children_count(
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[local_block],
+        page_id=None,
         parent_page_id="aabb0000-0000-0000-0000-000000000001",
         parent_database_id=None,
         title="Upload Title",
@@ -715,6 +790,7 @@ def test_cloudflare_waf_block(
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="WAF trigger content"))],
+            page_id=None,
             parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
@@ -748,6 +824,7 @@ def test_non_html_403_not_wrapped(
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="Content"))],
+            page_id=None,
             parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
@@ -777,6 +854,7 @@ def test_non_403_html_not_wrapped(
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="Content"))],
+            page_id=None,
             parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",

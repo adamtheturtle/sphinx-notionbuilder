@@ -331,10 +331,14 @@ Arguments:
 - ``--parent-page-id``: The ID of the parent page in Notion (must be shared with your integration) - mutually exclusive with ``--parent-database-id``
 - ``--parent-database-id``: The ID of the parent database in Notion (must be shared with your integration) - mutually exclusive with ``--parent-page-id``
 - ``--title``: Title for the new page in Notion
+- ``--page-id``: (Optional) ID of an existing page to update; the page is renamed to the given title
 - ``--icon``: (Optional) Icon for the page (emoji)
 - ``--cover-path``: (Optional) Path to a cover image file for the page
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
+
+With ``--page-id``, the page is looked up by ID instead of by title, and the command fails if no page with that ID exists.
+This avoids a silent fork where renaming a page (in Notion or in your configuration) causes a new page to be created alongside the old one.
 
 Automatic Publishing Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -358,6 +362,9 @@ Add the following configuration options to your ``conf.py``:
 
    # Required: Title for the Notion page
    notion_page_title = "My Documentation"
+
+   # Optional: ID of an existing page to update (renamed to the title)
+   notion_page_id = "your-page-id-here"
 
    # Optional: Icon emoji for the page
    notion_page_icon = "📚"
@@ -392,6 +399,12 @@ Add the following configuration options to your ``conf.py``:
    This is required when ``notion_publish`` is ``True``.
    If a page with this title already exists under the parent, it will be updated.
    Otherwise, a new page will be created.
+   Default: ``None``
+
+``notion_page_id``
+   The ID of an existing Notion page to update.
+   When set, the page is looked up by ID instead of by title, and is renamed to ``notion_page_title``.
+   Publishing fails with an error if no page with this ID exists.
    Default: ``None``
 
 ``notion_page_icon``

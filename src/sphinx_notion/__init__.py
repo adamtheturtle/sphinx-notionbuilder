@@ -2404,6 +2404,7 @@ def _publish_to_notion(
         page = upload_to_notion(
             session=session,
             blocks=blocks,
+            page_id=app.config.notion_page_id,
             parent_page_id=app.config.notion_parent_page_id,
             parent_database_id=app.config.notion_parent_database_id,
             title=app.config.notion_page_title,
@@ -2469,6 +2470,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         default=False,
         rebuild="",
         types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_page_id",
+        default=None,
+        rebuild="",
+        types=(str,),
     )
     app.add_config_value(
         name="notion_api_base_url",
