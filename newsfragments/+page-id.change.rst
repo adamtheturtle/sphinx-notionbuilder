@@ -1,1 +1,0 @@
-Add a ``--page-id`` option to ``notion-upload`` (and a matching ``notion_page_id`` Sphinx configuration value) to update an existing page by ID instead of matching by title. The page is renamed to the given title, and the upload fails if no page with that ID exists, preventing a silent fork when a page is renamed.
