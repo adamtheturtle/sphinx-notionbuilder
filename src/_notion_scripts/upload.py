@@ -18,6 +18,7 @@ from sphinx_notion._upload import (
     DiscussionsExistError,
     PageHasDatabasesError,
     PageHasSubpagesError,
+    PageNotFoundError,
     upload_to_notion,
 )
 
@@ -50,6 +51,15 @@ from sphinx_notion._upload import (
     "--title",
     help="Title of the page to update (or create if it does not exist)",
     required=True,
+)
+@cloup.option(
+    "--page-id",
+    help=(
+        "ID of an existing page to update. The page is renamed to the "
+        "given title. Without this, the page is matched by title, and "
+        "created if no page with the title exists."
+    ),
+    required=False,
 )
 @cloup.option(
     "--icon",
@@ -100,6 +110,7 @@ def main(
     parent_page_id: str | None,
     parent_database_id: str | None,
     title: str,
+    page_id: str | None,
     icon: str | None,
     cover_path: Path | None,
     cover_url: str | None,
@@ -127,6 +138,7 @@ def main(
         page = upload_to_notion(
             session=session,
             blocks=blocks,
+            page_id=page_id,
             parent_page_id=parent_page_id,
             parent_database_id=parent_database_id,
             title=title,
@@ -148,6 +160,8 @@ def main(
         )
         raise click.ClickException(message=error_message) from None
     except DiscussionsExistError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    except PageNotFoundError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     finally:
         session.close()

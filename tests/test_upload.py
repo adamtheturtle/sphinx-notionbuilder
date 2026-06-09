@@ -1,9 +1,11 @@
 """Tests for the upload script."""
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
+import pytest
 from click.testing import CliRunner, Result
 from pytest_regressions.file_regression import FileRegressionFixture
 from ultimate_notion.blocks import (
@@ -34,6 +36,7 @@ def _invoke_upload(
     parent_page_id: str,
     mock_api_base_url: str,
     cancel_on_discussion: bool = False,
+    page_id: str | None = None,
 ) -> Result:
     """Invoke the upload CLI against the mock Notion API."""
     runner = CliRunner()
@@ -49,6 +52,8 @@ def _invoke_upload(
     ]
     if cancel_on_discussion:
         arguments.append("--cancel-on-discussion")
+    if page_id is not None:
+        arguments.extend(["--page-id", page_id])
     return runner.invoke(
         cli=main,
         args=arguments,
@@ -185,3 +190,71 @@ def test_upload_discussions_exist_error(
 
     assert result.exit_code == 1
     assert "discussion" in result.output.lower()
+
+
+def test_upload_with_page_id(
+    *,
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """Uploading to a page given by ID reports success."""
+    assert notion_token
+    blocks_file = _write_blocks_file(
+        tmp_path=tmp_path,
+        block_dicts=_paragraph_blocks(
+            text_content="Hello from WireMock upload test",
+        ),
+    )
+
+    result = _invoke_upload(
+        blocks_file=blocks_file,
+        parent_page_id=parent_page_id,
+        mock_api_base_url=mock_api_base_url,
+        page_id=parent_page_id,
+    )
+
+    assert result.exit_code == 0, (result.stdout, result.stderr)
+    assert result.output == (
+        "Uploaded page: 'Upload Title' "
+        "(https://www.notion.so/Upload-Title-59833787)\n"
+    )
+
+
+def test_upload_page_not_found_error(
+    *,
+    caplog: pytest.LogCaptureFixture,
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """A useful error is shown when no page with the given ID exists."""
+    # The missing page triggers a WARNING log from ``ultimate_notion``.
+    # With ``log_cli`` enabled, the live-log handler in ``pytest``
+    # suspends and resumes global capture for WARNING records, which
+    # replaces ``sys.stderr`` mid-invocation and breaks the stream
+    # capture of ``CliRunner``.  Silence the logger so
+    # ``result.output`` stays intact.
+    caplog.set_level(level=logging.ERROR, logger="ultimate_notion.session")
+    assert notion_token
+    blocks_file = _write_blocks_file(
+        tmp_path=tmp_path,
+        block_dicts=_paragraph_blocks(
+            text_content="Hello from WireMock upload test",
+        ),
+    )
+
+    result = _invoke_upload(
+        blocks_file=blocks_file,
+        parent_page_id=parent_page_id,
+        mock_api_base_url=mock_api_base_url,
+        page_id="40400000-0000-0000-0000-000000000404",
+    )
+
+    assert result.exit_code == 1
+    assert (
+        "No page found with ID '40400000-0000-0000-0000-000000000404'."
+        in result.output
+    )

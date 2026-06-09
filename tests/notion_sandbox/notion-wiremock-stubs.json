@@ -165,6 +165,25 @@
       "persistent": true
     },
     {
+      "name": "retrieveMissingPage",
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/pages/40400000-0000-0000-0000-000000000404"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "error",
+          "status": 404,
+          "code": "object_not_found",
+          "message": "Could not find page with ID: 40400000-0000-0000-0000-000000000404."
+        }
+      }
+    },
+    {
       "name": "updatePage",
       "request": {
         "method": "PATCH",
