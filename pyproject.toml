@@ -39,10 +39,6 @@ dependencies = [
     "cloup>=3.0.0",
     "docutils>=0.21",
     "notion-client>=2.3.0",
-    # Pin pydantic to <2.13 to work around
-    # https://github.com/ultimate-notion/ultimate-notion/issues/189 -
-    # pydantic 2.13 breaks ultimate-notion's parsing of Notion user objects.
-    "pydantic<2.13",
     "requests>=2.32.5",
     "sphinx>=9,<10",
     "sphinx-iframes>=1.1.0",
@@ -339,9 +335,6 @@ ignore = [
 ]
 
 [tool.deptry]
-# pydantic is pinned to work around an ultimate-notion incompatibility,
-# not imported directly.
-per_rule_ignores = { DEP002 = [ "pydantic" ] }
 optional_dependencies_dev_groups = [
     "dev",
     "release",
