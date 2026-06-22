@@ -66,7 +66,7 @@ def _block_serialize_for_api_patched(
     return data
 
 
-UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 _HTTP_FORBIDDEN = 403
