@@ -2332,6 +2332,7 @@
           "complete_url": null,
           "file_import_result": null,
           "archived": false,
+          "in_trash": false,
           "created_by": {
             "object": "user",
             "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
@@ -2371,6 +2372,7 @@
           "complete_url": null,
           "file_import_result": null,
           "archived": false,
+          "in_trash": false,
           "created_by": {
             "object": "user",
             "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
@@ -2410,6 +2412,7 @@
           "complete_url": null,
           "file_import_result": null,
           "archived": false,
+          "in_trash": false,
           "created_by": {
             "object": "user",
             "id": "71e95936-2737-4e11-b03d-f174f6f13e90",
