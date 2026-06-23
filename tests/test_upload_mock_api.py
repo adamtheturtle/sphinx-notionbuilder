@@ -896,3 +896,56 @@ def test_deeply_nested_blocks_strip_rejected_fields() -> None:
     serialized_text = json.dumps(obj=serialized)
     for field in ("archived", "in_trash", "is_archived", "has_children"):
         assert f'"{field}"' not in serialized_text
+
+
+def test_failed_append_does_not_delete_existing_blocks(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+) -> None:
+    """A failing append leaves the existing blocks in place.
+
+    Regression test: blocks were deleted before the replacement blocks
+    were appended, so an append failure (rate limiting, a Cloudflare WAF
+    block, a timeout) left the page erased. The append now happens first,
+    so when it fails no existing block is deleted and no content is lost.
+    """
+    deleted_block_url_path = "/v1/blocks/dddd0000-0000-0000-0000-000000000011"
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path=deleted_block_url_path,
+    )
+
+    with (
+        patch.object(
+            target=ChildrenMixin,
+            attribute="append",
+            side_effect=_make_html_http_error(status_code=502),
+        ),
+        pytest.raises(expected_exception=HTTPResponseError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="same")),
+                UnoParagraph(text=text(text="new")),
+                Divider(),
+            ],
+            page_id=None,
+            parent_page_id="dddd0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path=deleted_block_url_path,
+    )
+
+    assert after_delete_count == before_delete_count

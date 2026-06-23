@@ -505,22 +505,26 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         )
         raise DiscussionsExistError(error_message)
 
-    for block_index, existing_page_block in enumerate(
-        iterable=blocks_to_delete
-    ):
-        _LOGGER.info(
-            "Deleting block %d/%d",
-            block_index + 1,
-            len(blocks_to_delete),
-        )
-        existing_page_block.delete()
-
     _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
     block_objs_with_uploaded_files = [
         _block_with_uploaded_file(block=block, session=session)
         for block in blocks_to_upload
     ]
 
+    # Append the new blocks *before* deleting the old ones.
+    #
+    # The append and the deletions are separate, non-atomic Notion API
+    # calls. If we deleted first and a later append failed (rate limiting,
+    # a Cloudflare WAF block, a timeout) or the process was interrupted in
+    # between, the page would be left with the old content gone and the new
+    # content never written: an erased page and irrecoverable data loss.
+    #
+    # By appending first, a failure or interruption leaves the page with
+    # both the new and the old blocks (duplicated content), which is
+    # harmless and self-heals on the next successful sync. The new blocks
+    # are inserted directly after the matching prefix and before the blocks
+    # being replaced, so a fully successful sync still produces the same
+    # final ordering.
     if block_objs_with_uploaded_files:
         _LOGGER.info(
             "Appending %d blocks to page",
@@ -540,4 +544,15 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
             ).startswith("text/html"):
                 raise
             raise CloudflareWAFBlockError from exc
+
+    for block_index, existing_page_block in enumerate(
+        iterable=blocks_to_delete
+    ):
+        _LOGGER.info(
+            "Deleting block %d/%d",
+            block_index + 1,
+            len(blocks_to_delete),
+        )
+        existing_page_block.delete()
+
     return page
