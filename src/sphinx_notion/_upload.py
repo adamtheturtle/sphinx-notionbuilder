@@ -42,11 +42,13 @@ _original_serialize_for_api_method: Callable[
 
 
 def _strip_archived_fields(*, data: dict[str, object]) -> None:
-    """Recursively remove archived/in_trash from a serialized block
-    dict.
+    """Recursively remove archived/in_trash/is_archived/has_children from
+    a serialized block dict.
     """
     data.pop("archived", None)
     data.pop("in_trash", None)
+    data.pop("is_archived", None)
+    data.pop("has_children", None)
     for value in data.values():
         if not isinstance(value, dict):
             continue
@@ -81,7 +83,7 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
         url2pathname,  # ty: ignore[deprecated]
     )
 
-    return Path(url2pathname(urlparse(uri).path))  # ty: ignore[deprecated]
+    return Path(url2pathname(urlparse(uri).path))  # ty: ignore[deprecated]  # noqa: KW001
 
 
 @beartype

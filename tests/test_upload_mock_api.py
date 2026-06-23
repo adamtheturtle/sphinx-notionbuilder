@@ -1,5 +1,6 @@
 """Integration test for upload synchronization against a mock API."""
 
+import json
 import re
 from pathlib import Path
 from unittest.mock import patch
@@ -10,7 +11,9 @@ import respx
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
+    Block,
     BulletedItem,
+    Callout,
     ChildrenMixin,
     Divider,
 )
@@ -18,6 +21,7 @@ from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
+from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.obj_api.objects import UploadedFile as UnoUploadedFile
 from ultimate_notion.rich_text import text
 
@@ -863,3 +867,32 @@ def test_non_403_html_not_wrapped(
             cover_url=None,
             cancel_on_discussion=False,
         )
+
+
+def _nested_callout_dict(*, depth: int) -> dict[str, object]:
+    """A callout dict nested ``depth`` levels deep, as produced by the
+    builder.
+    """
+    callout = Callout(text=text(text=f"Level {depth}"))
+    serialized = callout.obj_ref.serialize_for_api()
+    if depth > 1:
+        child = _nested_callout_dict(depth=depth - 1)
+        callout_body = serialized["callout"]
+        assert isinstance(callout_body, dict)
+        callout_body["children"] = [child]
+    return serialized
+
+
+def test_deeply_nested_blocks_strip_rejected_fields() -> None:
+    """Serializing deeply nested blocks strips fields the Notion API
+    rejects at every level of nesting.
+
+    Regression test: each nested callout block retained ``is_archived``
+    and ``has_children``, which the API rejects on append.
+    """
+    block_dict = _nested_callout_dict(depth=3)
+    block = Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=block_dict))
+    serialized = block.obj_ref.serialize_for_api()
+    serialized_text = json.dumps(obj=serialized)
+    for field in ("archived", "in_trash", "is_archived", "has_children"):
+        assert f'"{field}"' not in serialized_text

@@ -170,6 +170,11 @@ lint.per-file-ignores."tests/*.py" = [
 lint.unfixable = [
     "ERA001",
 ]
+# ``KW001`` is emitted by ``strict-kwargs``, not Ruff. Registering it as an
+# external code lets us use ``# noqa: KW001`` without Ruff reporting RUF102.
+lint.external = [
+    "KW001",
+]
 lint.flake8-tidy-imports.banned-api."typing.cast".msg = "typing.cast is banned: use explicit type narrowing or a typed variable instead."
 lint.pydocstyle.convention = "google"
 
