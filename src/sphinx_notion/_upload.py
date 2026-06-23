@@ -6,11 +6,11 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, cast  # noqa: TID251
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import requests
@@ -32,43 +32,6 @@ if TYPE_CHECKING:
     from ultimate_notion.database import Database
 
 _LOGGER = logging.getLogger(name=__name__)
-
-# Monkey-patch: ultimate_notion includes `archived` when serializing blocks,
-# but the Notion API rejects this field on block creation/append.
-# See https://github.com/ultimate-notion/ultimate-notion/issues/186
-_original_serialize_for_api_method: Callable[
-    [UnoObjAPIBlock], dict[str, object]
-] = UnoObjAPIBlock.serialize_for_api
-
-
-def _strip_archived_fields(*, data: dict[str, object]) -> None:
-    """Recursively remove archived/in_trash/is_archived/has_children from
-    a serialized block dict.
-    """
-    data.pop("archived", None)
-    data.pop("in_trash", None)
-    data.pop("is_archived", None)
-    data.pop("has_children", None)
-    for value in data.values():
-        if not isinstance(value, dict):
-            continue
-        children = cast("dict[str, object]", value).get("children")
-        if not isinstance(children, list):
-            continue
-        for child in cast("list[dict[str, object]]", children):
-            _strip_archived_fields(data=child)
-
-
-def _block_serialize_for_api_patched(
-    self: UnoObjAPIBlock,
-) -> dict[str, object]:  # pragma: no cover - patched at module load
-    """Serialize, removing archived/in_trash fields rejected by API."""
-    data = _original_serialize_for_api_method(self)
-    _strip_archived_fields(data=data)
-    return data
-
-
-UnoObjAPIBlock.serialize_for_api = _block_serialize_for_api_patched  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 _HTTP_FORBIDDEN = 403

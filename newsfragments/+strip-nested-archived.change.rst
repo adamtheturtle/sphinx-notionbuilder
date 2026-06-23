@@ -1,1 +1,0 @@
-Strip ``is_archived`` and ``has_children`` from nested blocks when uploading to Notion. Previously these fields were only removed from top-level blocks, so deeply nested blocks (such as admonitions nested inside admonitions) caused the Notion API to reject the upload with a validation error.
