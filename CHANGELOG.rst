@@ -3,6 +3,11 @@ Changelog
 
 .. towncrier release notes start
 
+2026.06.23
+----------
+
+- Require ``ultimate-notion`` 0.9.9 or newer. It strips the read-only ``archived``/``in_trash``/``is_archived``/``has_children`` fields from nested blocks and accepts the ``in_trash`` field on file uploads, so the internal workaround for these is no longer needed and has been removed.
+
 2026.06.09
 ----------
 
