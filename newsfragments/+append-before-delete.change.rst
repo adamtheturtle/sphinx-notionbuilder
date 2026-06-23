@@ -1,0 +1,1 @@
+Append new blocks before deleting the replaced ones when syncing a Notion page. The delete and append are separate, non-atomic API calls, so a failed or interrupted upload no longer erases the page: it is left with duplicated content that self-heals on the next successful sync, rather than with the old content gone and the new content never written.
