@@ -1,6 +1,7 @@
 Args
 CLI
 Cloudflare
+DTD
 SVG
 URI
 WAF
@@ -15,6 +16,7 @@ hardcode
 hardcodes
 href
 noqa
+oversized
 pragma
 preprocess
 pyrefly
