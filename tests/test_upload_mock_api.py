@@ -926,7 +926,7 @@ def test_file_upload_waf_block_logs_body(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """A WAF-blocked file upload raises CloudflareWAFBlockError and logs
-    the response body so the cause is diagnosable.
+    the response body so the cause can be diagnosed.
     """
     img_file = tmp_path / "diagram.svg"
     img_file.write_bytes(data=b"<svg>CREATE TABLE x (y VARCHAR(255))</svg>")
