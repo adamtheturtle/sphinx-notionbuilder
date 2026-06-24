@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 from urllib.parse import urlparse
 
 import requests
@@ -35,6 +35,10 @@ _LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
 _HTTP_FORBIDDEN = 403
+# How much of the response body to surface in logs. WAF block pages are
+# large HTML documents, so we cap the output to keep logs readable while
+# still including the diagnostic content (e.g. the Cloudflare Ray ID).
+_MAX_LOGGED_BODY_CHARS = 2000
 
 
 def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
@@ -91,6 +95,74 @@ class CloudflareWAFBlockError(Exception):
             "Common triggers: path traversal, SQL keywords, XSS patterns, "
             "JNDI strings. The Notion API did not receive this request."
         )
+
+
+@beartype
+def _is_waf_block(*, exc: HTTPResponseError) -> bool:
+    """Whether an HTTP error is a Cloudflare WAF block rather than a
+    genuine Notion API error.
+
+    Notion's API (including the file-upload endpoint) sits behind
+    Cloudflare. When the WAF rejects a request it returns a 403 whose body
+    is an HTML block page, not the JSON error Notion would return. We sniff
+    the content type to tell the two apart: a non-JSON 403 means the
+    request never reached Notion. Without this check a future maintainer
+    cannot tell why a 403 is special-cased, and may remove it.
+    """
+    content_type = exc.headers.get(key="content-type", default="")
+    return exc.status == _HTTP_FORBIDDEN and content_type.startswith(
+        "text/html"
+    )
+
+
+@beartype
+def _upload_file(
+    *,
+    session: Session,
+    file_stream: BinaryIO,
+    file_name: str,
+) -> UploadedFile:
+    """Upload a file to Notion, surfacing the response body on failure.
+
+    A failed upload raises an ``HTTPResponseError`` whose ``body`` is
+    normally dropped from the traceback, leaving only an opaque
+    ``status: 403``. The real cause lives in that body, so we log it (along
+    with the filename) before re-raising.
+
+    The WAF case is called out explicitly: a non-JSON 403 is a Cloudflare
+    block page, not a Notion API error, and is typically triggered by
+    literal SQL or script text in the uploaded bytes -- for example an SVG
+    whose ``<text>`` contains ``CREATE TABLE ...``. Rasterizing such a
+    diagram to PNG avoids the signature.
+    """
+    try:
+        uploaded_file = session.upload(file=file_stream, file_name=file_name)
+        uploaded_file.wait_until_uploaded()
+    except HTTPResponseError as exc:
+        body = exc.body[:_MAX_LOGGED_BODY_CHARS]
+        if _is_waf_block(exc=exc):
+            cf_ray = exc.headers.get(key="cf-ray", default="unknown")
+            _LOGGER.exception(
+                "Notion upload of '%s' was blocked by the Cloudflare WAF "
+                "(HTTP %s, Cloudflare Ray ID: %s). The file never reached "
+                "Notion. This is typically triggered by literal SQL or "
+                "script text in the uploaded bytes -- for example an SVG "
+                "whose <text> contains 'CREATE TABLE ...'. Rasterize such "
+                "diagrams to PNG to avoid the signature. Response body:\n%s",
+                file_name,
+                exc.status,
+                cf_ray,
+                body,
+            )
+            raise CloudflareWAFBlockError from exc
+        _LOGGER.exception(
+            "Notion upload of '%s' failed: HTTP %s. Response body:\n%s",
+            file_name,
+            exc.status,
+            body,
+        )
+        raise
+    return uploaded_file
 
 
 @beartype
@@ -287,12 +359,12 @@ def _get_uploaded_cover(
 
     _LOGGER.info("Uploading cover image '%s'", cover.name)
     with cover.open(mode="rb") as file_stream:
-        uploaded_cover = session.upload(
-            file=file_stream,
+        uploaded_cover = _upload_file(
+            session=session,
+            file_stream=file_stream,
             file_name=cover.name,
         )
 
-    uploaded_cover.wait_until_uploaded()
     _LOGGER.info("Cover image uploaded")
     return uploaded_cover
 
@@ -307,12 +379,12 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             _LOGGER.info("Uploading file '%s'", file_path.name)
 
             with file_path.open(mode="rb") as file_stream:
-                uploaded_file = session.upload(
-                    file=file_stream,
+                uploaded_file = _upload_file(
+                    session=session,
+                    file_stream=file_stream,
                     file_name=file_path.name,
                 )
 
-            uploaded_file.wait_until_uploaded()
             _LOGGER.info("File '%s' uploaded", file_path.name)
 
             block = block.__class__(file=uploaded_file, caption=block.caption)
@@ -354,10 +426,10 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
             cancel_on_discussion is True.
-        CloudflareWAFBlockError: If the append request is blocked by the
-            Cloudflare WAF before reaching Notion.
-        HTTPResponseError: If the append request fails with a non-HTML
-            error response.
+        CloudflareWAFBlockError: If a file upload or the append request is
+            blocked by the Cloudflare WAF before reaching Notion.
+        HTTPResponseError: If a file upload or the append request fails
+            with a non-WAF error response.
     """
     if page_id is not None:
         _LOGGER.info("Fetching page '%s'", page_id)
@@ -506,9 +578,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
                 after=after_block,
             )
         except HTTPResponseError as exc:
-            if exc.status != _HTTP_FORBIDDEN or not exc.headers.get(
-                key="content-type", default=""
-            ).startswith("text/html"):
+            if not _is_waf_block(exc=exc):
                 raise
             raise CloudflareWAFBlockError from exc
     return page

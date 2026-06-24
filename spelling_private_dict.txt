@@ -2,6 +2,9 @@ Args
 CLI
 Cloudflare
 DTD
+JSON
+PNG
+Rasterizing
 SVG
 URI
 WAF
@@ -35,4 +38,5 @@ reportUnnecessaryIsInstance
 respx
 strikethrough
 subpages
+traceback
 ty
