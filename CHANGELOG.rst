@@ -3,6 +3,11 @@ Changelog
 
 .. towncrier release notes start
 
+2026.06.24.1
+------------
+
+- Upload all of a page's files before deleting any of its existing blocks, so that a file the Notion API rejects (for example an oversized image or an SVG with an external DTD) fails the publish with the live page left intact instead of emptied.
+
 2026.06.24
 ----------
 
