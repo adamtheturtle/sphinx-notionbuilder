@@ -43,10 +43,10 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
         return Path.from_uri(uri=uri)
     # pylint: disable-next=import-outside-toplevel
     from urllib.request import (  # noqa: PLC0415
-        url2pathname,  # ty: ignore[deprecated]
+        url2pathname,
     )
 
-    return Path(url2pathname(urlparse(uri).path))  # ty: ignore[deprecated]  # noqa: KW001
+    return Path(url2pathname(urlparse(uri).path))  # noqa: KW001
 
 
 @beartype
@@ -108,8 +108,7 @@ def _block_without_children(
         del serialized_block["id"]
 
     block_without_children = Block.wrap_obj_ref(
-        # See https://github.com/ultimate-notion/ultimate-notion/issues/177
-        UnoObjAPIBlock.model_validate(obj=serialized_block)  # ty: ignore[invalid-argument-type]
+        UnoObjAPIBlock.model_validate(obj=serialized_block)
     )
     assert isinstance(block_without_children, ParentBlock)
     assert not block_without_children.blocks

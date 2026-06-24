@@ -439,12 +439,17 @@ enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 
 [tool.ty]
-# The Windows-only `url2pathname` deprecation needs `# ty: ignore[deprecated]`
-# on Windows but the comment is unused on POSIX, which would otherwise fail
-# the build via ``error-on-warning``.
-rules.unused-ignore-comment = "ignore"
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
+overrides = [
+    # On Windows, ``urllib.request.url2pathname`` is re-exported from the
+    # deprecated ``nturl2path`` module, so ty reports a ``deprecated`` diagnostic
+    # for our Python 3.12 ``file://`` URI fallback there. The diagnostic does not
+    # fire on POSIX, so a ``# ty: ignore[deprecated]`` comment would be flagged as
+    # unused there. Disabling the rule for this one file keeps both platforms green
+    # without a project-wide ``unused-ignore-comment`` suppression.
+    { include = [ "src/sphinx_notion/_upload.py" ], rules.deprecated = "ignore" },
+]
 # Disable support for `type: ignore` comments
 analysis.respect-type-ignore-comments = false
 
