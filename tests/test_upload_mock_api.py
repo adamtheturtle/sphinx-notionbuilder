@@ -124,6 +124,55 @@ def test_upload_deletes_and_replaces_changed_blocks(
     assert after_append_count == before_append_count + 1
 
 
+def test_failed_file_upload_leaves_existing_blocks(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """A failing file upload does not delete existing page blocks.
+
+    Regression test: file uploads must happen before any existing blocks
+    are deleted, so that a rejected file leaves the live page untouched
+    rather than emptied.
+    """
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
+    )
+    upload_error = RuntimeError("File rejected by Notion")
+    with (
+        patch.object(
+            target=notion_upload,
+            attribute="_block_with_uploaded_file",
+            side_effect=upload_error,
+        ),
+        pytest.raises(expected_exception=RuntimeError, match="File rejected"),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Different content triggers sync"))
+            ],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    after_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path="/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7",
+    )
+    assert after_delete_count == before_delete_count
+
+
 def test_upload_with_icon(
     *,
     notion_session: Session,

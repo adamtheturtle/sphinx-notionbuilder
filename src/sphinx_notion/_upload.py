@@ -467,6 +467,21 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         )
         raise DiscussionsExistError(error_message)
 
+    # Upload all files before deleting any existing blocks. Publishing is
+    # not atomic: deletions are committed to Notion immediately and cannot
+    # be rolled back. If we deleted first and a file upload then failed
+    # (e.g. Notion rejects an oversized image or an SVG with an external
+    # DTD), the live page would be left with its old content already
+    # deleted and the new content never appended -- i.e. emptied. By
+    # uploading every file first, any upload failure raises here while the
+    # live page is still untouched. Do not move this after the deletion
+    # loop below.
+    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
+    block_objs_with_uploaded_files = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in blocks_to_upload
+    ]
+
     for block_index, existing_page_block in enumerate(
         iterable=blocks_to_delete
     ):
@@ -476,12 +491,6 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
             len(blocks_to_delete),
         )
         existing_page_block.delete()
-
-    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
-    block_objs_with_uploaded_files = [
-        _block_with_uploaded_file(block=block, session=session)
-        for block in blocks_to_upload
-    ]
 
     if block_objs_with_uploaded_files:
         _LOGGER.info(
