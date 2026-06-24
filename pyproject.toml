@@ -48,7 +48,7 @@ dependencies = [
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
-    "ultimate-notion>=0.9.9",
+    "ultimate-notion>=0.9.10",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.12.24",
