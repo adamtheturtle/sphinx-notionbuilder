@@ -3,6 +3,11 @@ Changelog
 
 .. towncrier release notes start
 
+2026.06.24
+----------
+
+- Require ``ultimate-notion`` 0.9.10 or newer, which splits deeply-nested block trees reconstructed from serialized JSON into Notion-compliant requests on ``append()`` instead of sending an over-nested request that Notion rejects with a 400.
+
 2026.06.23
 ----------
 
