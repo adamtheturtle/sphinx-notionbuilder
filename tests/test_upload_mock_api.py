@@ -918,6 +918,106 @@ def test_non_403_html_not_wrapped(
         )
 
 
+def test_file_upload_waf_block_logs_body(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A WAF-blocked file upload raises CloudflareWAFBlockError and logs
+    the response body so the cause is diagnosable.
+    """
+    img_file = tmp_path / "diagram.svg"
+    img_file.write_bytes(data=b"<svg>CREATE TABLE x (y VARCHAR(255))</svg>")
+
+    waf_body = "<!DOCTYPE html><html>Sorry, you have been blocked</html>"
+    response = httpx.Response(
+        status_code=403,
+        headers={"content-type": "text/html", "cf-ray": "abc123-LHR"},
+        content=waf_body.encode(),
+    )
+    waf_error = HTTPResponseError(response=response)
+    with (
+        patch.object(
+            target=notion_session,
+            attribute="upload",
+            side_effect=waf_error,
+        ),
+        pytest.raises(expected_exception=CloudflareWAFBlockError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    (record,) = caplog.records
+    assert record.getMessage() == (
+        "Notion upload of 'diagram.svg' was blocked by the Cloudflare WAF "
+        "(HTTP 403, Cloudflare Ray ID: abc123-LHR). The file never reached "
+        "Notion. This is typically triggered by literal SQL or script text "
+        "in the uploaded bytes -- for example an SVG whose <text> contains "
+        "'CREATE TABLE ...'. Rasterize such diagrams to PNG to avoid the "
+        f"signature. Response body:\n{waf_body}"
+    )
+
+
+def test_file_upload_other_http_error_logs_body(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A non-WAF file-upload failure is re-raised unchanged but its
+    response body is still logged.
+    """
+    img_file = tmp_path / "photo.png"
+    img_file.write_bytes(data=b"fake-image-data")
+
+    body = '{"code": "validation_error", "message": "too large"}'
+    response = httpx.Response(
+        status_code=400,
+        headers={"content-type": "application/json"},
+        content=body.encode(),
+    )
+    http_error = HTTPResponseError(response=response)
+    with (
+        patch.object(
+            target=notion_session,
+            attribute="upload",
+            side_effect=http_error,
+        ),
+        pytest.raises(expected_exception=HTTPResponseError),
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    (record,) = caplog.records
+    assert record.getMessage() == (
+        "Notion upload of 'photo.png' failed: HTTP 400. "
+        f"Response body:\n{body}"
+    )
+
+
 def _nested_callout_dict(*, depth: int) -> dict[str, object]:
     """A callout dict nested ``depth`` levels deep, as produced by the
     builder.
