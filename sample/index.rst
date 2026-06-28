@@ -3,6 +3,18 @@ Heading 1 with *bold*
 
 .. contents::
 
+Headings
+~~~~~~~~
+
+Notion supports heading levels 1 to 4. The page title above is heading level 1
+and this ``Headings`` section is heading level 2.
+
+Heading Level 3
+^^^^^^^^^^^^^^^
+
+Heading Level 4
+"""""""""""""""
+
 Autodoc
 ~~~~~~~
 

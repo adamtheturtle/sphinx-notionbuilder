@@ -58,6 +58,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
+from ultimate_notion.blocks import (
+    Heading4 as UnoHeading4,
+)
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import LinkToPage as UnoLinkToPage
 from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
@@ -1303,7 +1306,7 @@ def _(
     """
     rich_text = _create_rich_text_from_children(node=node)
 
-    max_heading_level = 3
+    max_heading_level = 4
     if section_level > max_heading_level:
         error_msg = (
             f"Notion only supports heading levels 1-{max_heading_level}, "
@@ -1316,6 +1319,7 @@ def _(
         1: UnoHeading1,
         2: UnoHeading2,
         3: UnoHeading3,
+        4: UnoHeading4,
     }
     heading_cls = heading_levels[section_level]
     return [heading_cls(text=rich_text)]
