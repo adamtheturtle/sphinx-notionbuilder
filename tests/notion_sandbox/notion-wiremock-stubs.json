@@ -1607,6 +1607,67 @@
             "type": "page_id",
             "page_id": "bbbb0000-0000-0000-0000-000000000002"
           },
+          "data_sources": [
+            {
+              "id": "bbbb0000-0000-0000-0000-000000000098",
+              "name": "Inline Database"
+            }
+          ]
+        }
+      },
+      "persistent": true
+    },
+    {
+      "name": "retrieveInlineDataSource",
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/data_sources/bbbb0000-0000-0000-0000-000000000098"
+      },
+      "persistent": true,
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "data_source",
+          "id": "bbbb0000-0000-0000-0000-000000000098",
+          "created_time": "2023-01-10T08:00:00.000Z",
+          "last_edited_time": "2023-01-12T10:00:00.000Z",
+          "created_by": {
+            "object": "user",
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+          },
+          "last_edited_by": {
+            "object": "user",
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+          },
+          "title": [
+            {
+              "type": "text",
+              "text": {
+                "content": "Inline Database"
+              },
+              "plain_text": "Inline Database",
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              }
+            }
+          ],
+          "description": [],
+          "url": "https://www.notion.so/bbbb0098",
+          "archived": false,
+          "in_trash": false,
+          "is_inline": true,
+          "parent": {
+            "type": "database_id",
+            "database_id": "bbbb0000-0000-0000-0000-000000000099"
+          },
           "properties": {
             "Name": {
               "id": "title",
@@ -1616,8 +1677,7 @@
             }
           }
         }
-      },
-      "persistent": true
+      }
     },
     {
       "name": "retrieveDiscussionParent",
@@ -2228,6 +2288,67 @@
             "type": "workspace",
             "workspace": true
           },
+          "data_sources": [
+            {
+              "id": "d5000000-0000-0000-0000-000000000001",
+              "name": "Test Database"
+            }
+          ]
+        }
+      },
+      "persistent": true
+    },
+    {
+      "name": "retrieveDataSource",
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/data_sources/d5000000-0000-0000-0000-000000000001"
+      },
+      "persistent": true,
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "data_source",
+          "id": "d5000000-0000-0000-0000-000000000001",
+          "created_time": "2023-01-10T08:00:00.000Z",
+          "last_edited_time": "2023-01-12T10:00:00.000Z",
+          "created_by": {
+            "object": "user",
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+          },
+          "last_edited_by": {
+            "object": "user",
+            "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+          },
+          "title": [
+            {
+              "type": "text",
+              "text": {
+                "content": "Test Database"
+              },
+              "plain_text": "Test Database",
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              }
+            }
+          ],
+          "description": [],
+          "url": "https://www.notion.so/d5000001",
+          "archived": false,
+          "in_trash": false,
+          "is_inline": false,
+          "parent": {
+            "type": "database_id",
+            "database_id": "db000000-0000-0000-0000-000000000001"
+          },
           "properties": {
             "Name": {
               "id": "title",
@@ -2237,14 +2358,79 @@
             }
           }
         }
-      },
-      "persistent": true
+      }
     },
     {
       "name": "queryDatabase",
       "request": {
         "method": "POST",
         "urlPath": "/v1/databases/db000000-0000-0000-0000-000000000001/query"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "list",
+          "type": "page_or_database",
+          "page_or_database": {},
+          "has_more": false,
+          "results": [
+            {
+              "object": "page",
+              "id": "59833787-2cf9-4fdf-8782-e53db20768a5",
+              "created_time": "2023-01-15T10:30:00.000Z",
+              "last_edited_time": "2023-01-16T14:22:00.000Z",
+              "created_by": {
+                "object": "user",
+                "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+              },
+              "last_edited_by": {
+                "object": "user",
+                "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+              },
+              "archived": false,
+              "in_trash": false,
+              "parent": {
+                "type": "database_id",
+                "database_id": "db000000-0000-0000-0000-000000000001"
+              },
+              "properties": {
+                "Name": {
+                  "id": "title",
+                  "type": "title",
+                  "title": [
+                    {
+                      "type": "text",
+                      "text": {
+                        "content": "Upload Title"
+                      },
+                      "plain_text": "Upload Title",
+                      "annotations": {
+                        "bold": false,
+                        "italic": false,
+                        "strikethrough": false,
+                        "underline": false,
+                        "code": false,
+                        "color": "default"
+                      }
+                    }
+                  ]
+                }
+              },
+              "url": "https://www.notion.so/Upload-Title-59833787"
+            }
+          ]
+        }
+      },
+      "persistent": true
+    },
+    {
+      "name": "queryDataSource",
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/data_sources/d5000000-0000-0000-0000-000000000001/query"
       },
       "response": {
         "status": 200,

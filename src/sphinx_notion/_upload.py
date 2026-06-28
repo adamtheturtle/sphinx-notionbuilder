@@ -29,7 +29,7 @@ from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
 
 if TYPE_CHECKING:
-    from ultimate_notion.database import Database
+    from ultimate_notion.database import DataSource
 
 _LOGGER = logging.getLogger(name=__name__)
 
@@ -445,7 +445,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         _LOGGER.info("Setting page title to '%s'", title)
         page.title = title
     else:
-        parent: Page | Database
+        parent: Page | DataSource
         if parent_page_id:
             _LOGGER.info("Fetching parent page '%s'", parent_page_id)
             parent = session.get_page(page_ref=parent_page_id)
@@ -453,7 +453,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         else:
             assert parent_database_id is not None
             _LOGGER.info("Fetching parent database '%s'", parent_database_id)
-            parent = session.get_db(db_ref=parent_database_id)
+            parent = session.get_ds(ds_ref=parent_database_id)
             subpages = parent.get_all_pages().to_pages()
 
         pages_matching_title = [
@@ -488,7 +488,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     if page.subpages:
         raise PageHasSubpagesError
 
-    if page.subdbs:
+    if page.sub_dss:
         raise PageHasDatabasesError
 
     _LOGGER.info("Syncing page blocks")

@@ -67,7 +67,7 @@ def main(
             parent=parent,
             title="Sphinx-Notionbuilder sample linked page",
         )
-        database = session.create_db(
+        database = session.create_ds(
             parent=parent,
             title="Sphinx-Notionbuilder sample database",
             inline=True,

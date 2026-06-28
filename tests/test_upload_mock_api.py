@@ -352,8 +352,8 @@ def test_upload_with_database_parent(
     respx_mock: respx.MockRouter,
 ) -> None:
     """It is possible to upload a page to a database."""
-    parent_database_id = "db000000-0000-0000-0000-000000000001"
-    query_url_path = f"/v1/databases/{parent_database_id}/query"
+    parent_database_id = "d5000000-0000-0000-0000-000000000001"
+    query_url_path = f"/v1/data_sources/{parent_database_id}/query"
 
     before_count = count_mock_requests(
         mock=respx_mock,
@@ -808,12 +808,15 @@ def test_upload_parent_block_different_children_count(
 
 def _make_html_http_error(*, status_code: int) -> HTTPResponseError:
     """Create an HTTPResponseError with an HTML response body."""
-    response = httpx.Response(
-        status_code=status_code,
-        headers={"content-type": "text/html; charset=utf-8"},
-        content=b"<html><body>Error</body></html>",
+    return HTTPResponseError(
+        code="cloudflare_waf_block",
+        status=status_code,
+        message="Error",
+        headers=httpx.Headers(
+            headers={"content-type": "text/html; charset=utf-8"}
+        ),
+        raw_body_text="<html><body>Error</body></html>",
     )
-    return HTTPResponseError(response=response)
 
 
 def test_cloudflare_waf_block(
@@ -860,12 +863,13 @@ def test_non_html_403_not_wrapped(
     parent_page_id: str,
 ) -> None:
     """HTTPResponseError with non-HTML body is re-raised unchanged."""
-    response = httpx.Response(
-        status_code=403,
-        headers={"content-type": "application/json"},
-        content=b'{"code": "restricted_resource"}',
+    json_error = HTTPResponseError(
+        code="restricted_resource",
+        status=403,
+        message="Restricted resource",
+        headers=httpx.Headers(headers={"content-type": "application/json"}),
+        raw_body_text='{"code": "restricted_resource"}',
     )
-    json_error = HTTPResponseError(response=response)
     with (
         patch.object(
             target=ChildrenMixin,
@@ -932,12 +936,15 @@ def test_file_upload_waf_block_logs_body(
     img_file.write_bytes(data=b"<svg>CREATE TABLE x (y VARCHAR(255))</svg>")
 
     waf_body = "<!DOCTYPE html><html>Sorry, you have been blocked</html>"
-    response = httpx.Response(
-        status_code=403,
-        headers={"content-type": "text/html", "cf-ray": "abc123-LHR"},
-        content=waf_body.encode(),
+    waf_error = HTTPResponseError(
+        code="cloudflare_waf_block",
+        status=403,
+        message="Blocked",
+        headers=httpx.Headers(
+            headers={"content-type": "text/html", "cf-ray": "abc123-LHR"}
+        ),
+        raw_body_text=waf_body,
     )
-    waf_error = HTTPResponseError(response=response)
     with (
         patch.object(
             target=notion_session,
@@ -984,12 +991,13 @@ def test_file_upload_other_http_error_logs_body(
     img_file.write_bytes(data=b"fake-image-data")
 
     body = '{"code": "validation_error", "message": "too large"}'
-    response = httpx.Response(
-        status_code=400,
-        headers={"content-type": "application/json"},
-        content=body.encode(),
+    http_error = HTTPResponseError(
+        code="validation_error",
+        status=400,
+        message="too large",
+        headers=httpx.Headers(headers={"content-type": "application/json"}),
+        raw_body_text=body,
     )
-    http_error = HTTPResponseError(response=response)
     with (
         patch.object(
             target=notion_session,
