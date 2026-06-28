@@ -37,6 +37,7 @@ Add the following to ``conf.py`` to enable the extension:
 * `sphinx.ext.mathjax`_
 * `sphinx-simplepdf`_
 * `sphinx-iframes`_
+* `sphinx-tabs`_
 * `sphinxcontrib-text-styles`_
 * `sphinxcontrib-mermaid`_
 
@@ -54,6 +55,7 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx_iframes",
        "sphinx_immaterial.task_lists",
        "sphinx_simplepdf",
+       "sphinx_tabs.tabs",
        "sphinx_toolbox.collapse",
        "sphinx_toolbox.rest_example",
        "sphinxcontrib.mermaid",
@@ -68,7 +70,7 @@ Supported Notion Block Types
 
 The following syntax is supported:
 
-- Headers
+- Headers (levels 1-4)
 - Bulleted lists
 - TODO lists (with checkboxes)
 - Code blocks
@@ -76,6 +78,7 @@ The following syntax is supported:
 - Block quotes
 - Callouts
 - Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox`_ )
+- Tabs (using the ``tabs`` and ``tab`` directives from `sphinx-tabs`_ )
 - Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox`_ )
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
@@ -464,6 +467,7 @@ The committed ``sample.env`` points at the project's own demo workspace. To rege
 .. _sphinx-iframes: https://pypi.org/project/sphinx-iframes/
 .. _sphinx-immaterial task_lists: https://github.com/jbms/sphinx-immaterial
 .. _sphinx-simplepdf: https://sphinx-simplepdf.readthedocs.io/
+.. _sphinx-tabs: https://sphinx-tabs.readthedocs.io/
 .. _sphinx-toolbox collapse: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/collapse.html
 .. _sphinx-toolbox rest_example: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/rest_example.html
 .. _sphinx-toolbox: https://sphinx-toolbox.readthedocs.io/en/stable/extensions/
