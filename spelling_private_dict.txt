@@ -3,6 +3,7 @@ CLI
 Cloudflare
 DTD
 JSON
+Jinja
 PNG
 Rasterizing
 SVG
@@ -38,5 +39,6 @@ reportUnnecessaryIsInstance
 respx
 strikethrough
 subpages
+templating
 traceback
 ty

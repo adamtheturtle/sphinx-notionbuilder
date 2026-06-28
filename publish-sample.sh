@@ -5,6 +5,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 set -a
+# The committed sample.env provides the Notion object IDs referenced by the
+# sample documentation; the gitignored .env provides the integration token.
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/sample.env"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/.env"
 set +a
