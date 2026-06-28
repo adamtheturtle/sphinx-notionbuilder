@@ -13,6 +13,7 @@ extensions = [
     "sphinx_simplepdf",
     "sphinx_toolbox.collapse",
     "sphinx_toolbox.rest_example",
+    "sphinx_tabs.tabs",
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
     "sphinxcontrib.mermaid",

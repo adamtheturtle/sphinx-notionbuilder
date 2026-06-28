@@ -224,20 +224,26 @@ def test_upload_with_page_id(
 
 def test_upload_page_not_found_error(
     *,
-    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
     mock_api_base_url: str,
     notion_token: str,
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
     """A useful error is shown when no page with the given ID exists."""
-    # The missing page triggers a WARNING log from ``ultimate_notion``.
-    # With ``log_cli`` enabled, the live-log handler in ``pytest``
-    # suspends and resumes global capture for WARNING records, which
-    # replaces ``sys.stderr`` mid-invocation and breaks the stream
-    # capture of ``CliRunner``.  Silence the logger so
-    # ``result.output`` stays intact.
-    caplog.set_level(level=logging.ERROR, logger="ultimate_notion.session")
+    # The missing page triggers a WARNING log from ``notion_client`` (and
+    # ``ultimate_notion``).  With ``log_cli`` enabled, the live-log handler
+    # in ``pytest`` suspends and resumes global capture for WARNING records,
+    # which replaces ``sys.stderr`` mid-invocation and breaks the stream
+    # capture of ``CliRunner``.  The ``notion_client`` client resets its own
+    # logger level on construction, so stop the records reaching the
+    # live-log handler by disabling propagation instead.
+    for logger_name in ("ultimate_notion.session", "notion_client"):
+        monkeypatch.setattr(
+            target=logging.getLogger(name=logger_name),
+            name="propagate",
+            value=False,
+        )
     assert notion_token
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,

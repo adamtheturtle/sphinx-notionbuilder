@@ -8,7 +8,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 import respx
-from notion_client.errors import HTTPResponseError
+from notion_client.errors import ClientErrorCode, HTTPResponseError
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
     Block,
@@ -353,7 +353,8 @@ def test_upload_with_database_parent(
 ) -> None:
     """It is possible to upload a page to a database."""
     parent_database_id = "db000000-0000-0000-0000-000000000001"
-    query_url_path = f"/v1/databases/{parent_database_id}/query"
+    data_source_id = "da000000-0000-0000-0000-000000000001"
+    query_url_path = f"/v1/data_sources/{data_source_id}/query"
 
     before_count = count_mock_requests(
         mock=respx_mock,
@@ -806,6 +807,17 @@ def test_upload_parent_block_different_children_count(
     assert after_child_append_count == before_child_append_count + 1
 
 
+def _http_response_error(*, response: httpx.Response) -> HTTPResponseError:
+    """Build an HTTPResponseError from an httpx response (notion-client 3)."""
+    return HTTPResponseError(
+        code=ClientErrorCode.ResponseError,
+        status=response.status_code,
+        message="Notion API error",
+        headers=response.headers,
+        raw_body_text=response.text,
+    )
+
+
 def _make_html_http_error(*, status_code: int) -> HTTPResponseError:
     """Create an HTTPResponseError with an HTML response body."""
     response = httpx.Response(
@@ -813,7 +825,7 @@ def _make_html_http_error(*, status_code: int) -> HTTPResponseError:
         headers={"content-type": "text/html; charset=utf-8"},
         content=b"<html><body>Error</body></html>",
     )
-    return HTTPResponseError(response=response)
+    return _http_response_error(response=response)
 
 
 def test_cloudflare_waf_block(
@@ -865,7 +877,7 @@ def test_non_html_403_not_wrapped(
         headers={"content-type": "application/json"},
         content=b'{"code": "restricted_resource"}',
     )
-    json_error = HTTPResponseError(response=response)
+    json_error = _http_response_error(response=response)
     with (
         patch.object(
             target=ChildrenMixin,
@@ -937,7 +949,7 @@ def test_file_upload_waf_block_logs_body(
         headers={"content-type": "text/html", "cf-ray": "abc123-LHR"},
         content=waf_body.encode(),
     )
-    waf_error = HTTPResponseError(response=response)
+    waf_error = _http_response_error(response=response)
     with (
         patch.object(
             target=notion_session,
@@ -989,7 +1001,7 @@ def test_file_upload_other_http_error_logs_body(
         headers={"content-type": "application/json"},
         content=body.encode(),
     )
-    http_error = HTTPResponseError(response=response)
+    http_error = _http_response_error(response=response)
     with (
         patch.object(
             target=notion_session,

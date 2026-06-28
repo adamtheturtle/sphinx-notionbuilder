@@ -34,6 +34,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
+from ultimate_notion.blocks import (
+    Heading4 as UnoHeading4,
+)
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import LinkToPage as UnoLinkToPage
 from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
@@ -47,6 +50,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import Tabs as UnoTabs
 from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
@@ -453,6 +457,11 @@ def test_multiple_heading_levels(
         ~~~~~~~~~~~~~~~~
 
         Content under subsection.
+
+        Sub-subsection Title
+        ^^^^^^^^^^^^^^^^^^^^
+
+        Content under sub-subsection.
     """
 
     expected_blocks = [
@@ -462,6 +471,8 @@ def test_multiple_heading_levels(
         UnoParagraph(text=text(text="Content under section.")),
         UnoHeading3(text=text(text="Subsection Title")),
         UnoParagraph(text=text(text="Content under subsection.")),
+        UnoHeading4(text=text(text="Sub-subsection Title")),
+        UnoParagraph(text=text(text="Content under sub-subsection.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1784,6 +1795,55 @@ def test_collapse_block(
     )
 
 
+def test_tabs(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``tabs``/``tab`` directives become a Notion Tabs block."""
+    rst_content = """
+        .. tabs::
+
+           .. tab:: Apple
+
+              Apple is a fruit.
+
+           .. tab:: Pear
+
+              Pear content with **formatting**.
+
+              A second pear paragraph.
+    """
+
+    tabs_block = UnoTabs(tabs=["Apple", "Pear"])
+    tabs_block[0].append(
+        blocks=[UnoParagraph(text=text(text="Apple is a fruit."))]
+    )
+    tabs_block[1].append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Pear content with ")
+                    + text(text="formatting", bold=True)
+                    + text(text=".")
+                )
+            ),
+            UnoParagraph(text=text(text="A second pear paragraph.")),
+        ]
+    )
+
+    expected_blocks = [tabs_block]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_tabs.tabs"),
+        expected_warnings=(),
+    )
+
+
 def test_simple_table(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -2554,12 +2614,12 @@ def test_literalinclude_with_caption(
     )
 
 
-def test_heading_level_4_error(
+def test_heading_level_5_error(
     *,
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Heading level 4+ raises a clear error message."""
+    """Heading level 5+ raises a clear error message."""
     rst_content = """
         Main Title
         ==========
@@ -2573,13 +2633,16 @@ def test_heading_level_4_error(
         Sub-subsection Title
         ^^^^^^^^^^^^^^^^^^^^
 
-        Content under sub-subsection.
+        Sub-sub-subsection Title
+        ''''''''''''''''''''''''
+
+        Content under sub-sub-subsection.
     """
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_message = (
-        r"^Notion only supports heading levels 1-3, but found heading level 4 "
-        rf"on line 11 in {re.escape(pattern=str(object=index_rst))}.$"
+        r"^Notion only supports heading levels 1-4, but found heading level 5 "
+        rf"on line 14 in {re.escape(pattern=str(object=index_rst))}.$"
     )
     with pytest.raises(
         expected_exception=ValueError,

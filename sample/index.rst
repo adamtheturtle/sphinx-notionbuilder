@@ -3,6 +3,22 @@ Heading 1 with *bold*
 
 .. contents::
 
+Headings
+~~~~~~~~
+
+Section titles become Notion headings. The title at the top of this page is a
+Notion heading 1, and each top-level section like this one is a heading 2.
+
+Heading 3
+^^^^^^^^^
+
+A more deeply nested section becomes a Notion heading 3.
+
+Heading 4
+'''''''''
+
+Notion now supports heading 4, so the deepest sections are no longer flattened.
+
 Autodoc
 ~~~~~~~
 
@@ -186,6 +202,33 @@ Collapsible Content
       This content is hidden by default and can be expanded by clicking the toggle.
 
       It supports **all the same formatting** as regular content.
+
+Tabs
+~~~~
+
+Tabbed content is created using the `sphinx-tabs <https://sphinx-tabs.readthedocs.io/>`_ extension and becomes a Notion tabs block.
+
+.. rest-example::
+
+   .. tabs::
+
+      .. tab:: Python
+
+         A Python code example:
+
+         .. code-block:: python
+
+            """Python code."""
+
+            import sys
+
+            sys.stdout.write("Hello from the Python tab\n")
+
+      .. tab:: Notes
+
+         Tabs can hold **formatted** text and multiple paragraphs.
+
+         Like this second paragraph.
 
 Dividers
 ~~~~~~~~

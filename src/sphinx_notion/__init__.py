@@ -58,6 +58,9 @@ from ultimate_notion.blocks import (
 from ultimate_notion.blocks import (
     Heading3 as UnoHeading3,
 )
+from ultimate_notion.blocks import (
+    Heading4 as UnoHeading4,
+)
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import LinkToPage as UnoLinkToPage
 from ultimate_notion.blocks import NumberedItem as UnoNumberedItem
@@ -71,6 +74,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import Tabs as UnoTabs
 from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
@@ -1303,7 +1307,7 @@ def _(
     """
     rich_text = _create_rich_text_from_children(node=node)
 
-    max_heading_level = 3
+    max_heading_level = 4
     if section_level > max_heading_level:
         error_msg = (
             f"Notion only supports heading levels 1-{max_heading_level}, "
@@ -1316,6 +1320,7 @@ def _(
         1: UnoHeading1,
         2: UnoHeading2,
         3: UnoHeading3,
+        4: UnoHeading4,
     }
     heading_cls = heading_levels[section_level]
     return [heading_cls(text=rich_text)]
@@ -1845,6 +1850,12 @@ def _(
             section_level=section_level,
         )
 
+    if "sphinx-tabs" in classes:
+        return _process_tabs_container(
+            node=node,
+            section_level=section_level,
+        )
+
     blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
@@ -1910,6 +1921,38 @@ def _process_rest_example_container(
     main_callout.append(blocks=[code_callout, output_callout])
 
     return [main_callout]
+
+
+@beartype
+def _process_tabs_container(
+    *,
+    node: nodes.container,
+    section_level: int,
+) -> list[Block]:
+    """Process a ``sphinx-tabs`` container by creating a Notion Tabs block.
+
+    For non-HTML builders ``sphinx-tabs`` emits each tab as a container
+    holding a label container and a content (panel) container. Notion tab
+    labels are plain text, so the label is taken as the tab's text.
+    """
+    labels: list[str] = []
+    panels: list[nodes.Element] = []
+    for tab_node in node.children:
+        label_node, panel_node = tab_node.children
+        assert isinstance(panel_node, nodes.Element)
+        labels.append(label_node.astext())
+        panels.append(panel_node)
+
+    tabs_block = UnoTabs(tabs=labels)
+    for index, panel_node in enumerate(iterable=panels):
+        panel_blocks: list[Block] = []
+        for child in panel_node.children:
+            panel_blocks.extend(
+                _process_node_to_blocks(child, section_level=section_level)
+            )
+        tabs_block[index].append(blocks=panel_blocks)
+
+    return [tabs_block]
 
 
 @beartype
