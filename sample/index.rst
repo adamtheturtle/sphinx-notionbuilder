@@ -203,6 +203,33 @@ Collapsible Content
 
       It supports **all the same formatting** as regular content.
 
+Tabs
+~~~~
+
+Tabbed content is created using the `sphinx-tabs <https://sphinx-tabs.readthedocs.io/>`_ extension and becomes a Notion tabs block.
+
+.. rest-example::
+
+   .. tabs::
+
+      .. tab:: Python
+
+         A Python code example:
+
+         .. code-block:: python
+
+            """Python code."""
+
+            import sys
+
+            sys.stdout.write("Hello from the Python tab\n")
+
+      .. tab:: Notes
+
+         Tabs can hold **formatted** text and multiple paragraphs.
+
+         Like this second paragraph.
+
 Dividers
 ~~~~~~~~
 

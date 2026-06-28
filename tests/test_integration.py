@@ -50,6 +50,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import Tabs as UnoTabs
 from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
@@ -1790,6 +1791,55 @@ def test_collapse_block(
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
+        expected_warnings=(),
+    )
+
+
+def test_tabs(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``tabs``/``tab`` directives become a Notion Tabs block."""
+    rst_content = """
+        .. tabs::
+
+           .. tab:: Apple
+
+              Apple is a fruit.
+
+           .. tab:: Pear
+
+              Pear content with **formatting**.
+
+              A second pear paragraph.
+    """
+
+    tabs_block = UnoTabs(tabs=["Apple", "Pear"])
+    tabs_block[0].append(
+        blocks=[UnoParagraph(text=text(text="Apple is a fruit."))]
+    )
+    tabs_block[1].append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Pear content with ")
+                    + text(text="formatting", bold=True)
+                    + text(text=".")
+                )
+            ),
+            UnoParagraph(text=text(text="A second pear paragraph.")),
+        ]
+    )
+
+    expected_blocks = [tabs_block]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_tabs.tabs"),
         expected_warnings=(),
     )
 

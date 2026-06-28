@@ -40,7 +40,7 @@ from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -74,6 +74,7 @@ from ultimate_notion.blocks import Table as UnoTable
 from ultimate_notion.blocks import (
     TableOfContents as UnoTableOfContents,
 )
+from ultimate_notion.blocks import Tabs as UnoTabs
 from ultimate_notion.blocks import ToDoItem as UnoToDoItem
 from ultimate_notion.blocks import (
     ToggleItem as UnoToggleItem,
@@ -95,7 +96,10 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
-from sphinx_notion._upload import upload_to_notion
+from sphinx_notion._upload import (
+    serialize_block_with_children,
+    upload_to_notion,
+)
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -175,26 +179,6 @@ def _background_color_from_css_classes(
             return bg_color_mapping[css_class]
 
     return None
-
-
-@beartype
-def _serialize_block_with_children(
-    *,
-    block: Block,
-) -> dict[str, Any]:
-    """
-    Convert a block to a JSON-serializable format which includes its
-    children.
-    """
-    serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.has_children:
-        block_type = block.obj_ref.type
-        assert block_type is not None
-        serialized_obj[block_type]["children"] = [
-            _serialize_block_with_children(block=child)
-            for child in block.blocks
-        ]
-    return serialized_obj
 
 
 @beartype
@@ -1849,6 +1833,12 @@ def _(
             section_level=section_level,
         )
 
+    if "sphinx-tabs" in classes:
+        return _process_tabs_container(
+            node=node,
+            section_level=section_level,
+        )
+
     blocks: list[Block] = []
     for child in node.children:
         child_blocks = _process_node_to_blocks(
@@ -1914,6 +1904,38 @@ def _process_rest_example_container(
     main_callout.append(blocks=[code_callout, output_callout])
 
     return [main_callout]
+
+
+@beartype
+def _process_tabs_container(
+    *,
+    node: nodes.container,
+    section_level: int,
+) -> list[Block]:
+    """Process a ``sphinx-tabs`` container by creating a Notion Tabs block.
+
+    For non-HTML builders ``sphinx-tabs`` emits each tab as a container
+    holding a label container and a content (panel) container. Notion tab
+    labels are plain text, so the label is taken as the tab's text.
+    """
+    labels: list[str] = []
+    panels: list[nodes.Element] = []
+    for tab_node in node.children:
+        label_node, panel_node = tab_node.children
+        assert isinstance(panel_node, nodes.Element)
+        labels.append(label_node.astext())
+        panels.append(panel_node)
+
+    tabs_block = UnoTabs(tabs=labels)
+    for index, panel_node in enumerate(iterable=panels):
+        panel_blocks: list[Block] = []
+        for child in panel_node.children:
+            panel_blocks.extend(
+                _process_node_to_blocks(child, section_level=section_level)
+            )
+        tabs_block[index].append(blocks=panel_blocks)
+
+    return [tabs_block]
 
 
 @beartype
@@ -2181,7 +2203,7 @@ class NotionTranslator(NodeVisitor):
 
         json_output = json.dumps(
             obj=[
-                _serialize_block_with_children(block=block)
+                serialize_block_with_children(block=block)
                 for block in self._blocks
             ],
             indent=2,
