@@ -6,18 +6,14 @@ Heading 1 with *bold*
 Headings
 ~~~~~~~~
 
-Section titles become Notion headings. The title at the top of this page is a
-Notion heading 1, and each top-level section like this one is a heading 2.
+Notion supports heading levels 1 to 4. The page title above is heading level 1
+and this ``Headings`` section is heading level 2.
 
-Heading 3
-^^^^^^^^^
+Heading Level 3
+^^^^^^^^^^^^^^^
 
-A more deeply nested section becomes a Notion heading 3.
-
-Heading 4
-'''''''''
-
-Notion now supports heading 4, so the deepest sections are no longer flattened.
+Heading Level 4
+"""""""""""""""
 
 Autodoc
 ~~~~~~~
