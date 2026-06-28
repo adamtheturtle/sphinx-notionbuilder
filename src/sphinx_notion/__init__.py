@@ -40,7 +40,7 @@ from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -96,7 +96,10 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
-from sphinx_notion._upload import upload_to_notion
+from sphinx_notion._upload import (
+    serialize_block_with_children,
+    upload_to_notion,
+)
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
@@ -176,26 +179,6 @@ def _background_color_from_css_classes(
             return bg_color_mapping[css_class]
 
     return None
-
-
-@beartype
-def _serialize_block_with_children(
-    *,
-    block: Block,
-) -> dict[str, Any]:
-    """
-    Convert a block to a JSON-serializable format which includes its
-    children.
-    """
-    serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.has_children:
-        block_type = block.obj_ref.type
-        assert block_type is not None
-        serialized_obj[block_type]["children"] = [
-            _serialize_block_with_children(block=child)
-            for child in block.blocks
-        ]
-    return serialized_obj
 
 
 @beartype
@@ -2220,7 +2203,7 @@ class NotionTranslator(NodeVisitor):
 
         json_output = json.dumps(
             obj=[
-                _serialize_block_with_children(block=block)
+                serialize_block_with_children(block=block)
                 for block in self._blocks
             ],
             indent=2,

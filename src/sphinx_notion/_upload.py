@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING, Any, BinaryIO
 from urllib.parse import urlparse
 
 import requests
@@ -185,6 +185,48 @@ def _block_without_children(
     assert isinstance(block_without_children, ParentBlock)
     assert not block_without_children.blocks
     return block_without_children
+
+
+@beartype
+def serialize_block_with_children(*, block: Block) -> dict[str, Any]:
+    """
+    Convert a block to a JSON-serializable format which includes its
+    children.
+    """
+    serialized_obj = block.obj_ref.serialize_for_api()
+    if isinstance(block, ParentBlock) and block.has_children:
+        block_type = block.obj_ref.type
+        assert block_type is not None
+        serialized_obj[block_type]["children"] = [
+            serialize_block_with_children(block=child)
+            for child in block.blocks
+        ]
+    return serialized_obj
+
+
+@beartype
+def _block_with_replaced_children(
+    *,
+    block: ParentBlock,
+    children: Sequence[Block],
+) -> ParentBlock:
+    """Return a copy of a block with its children replaced.
+
+    Rebuilding via serialization (rather than ``append``) supports blocks
+    whose ``append`` is restricted, such as Tabs, Columns and Table.
+    """
+    serialized_block = block.obj_ref.serialize_for_api()
+    block_type = block.obj_ref.type
+    assert block_type is not None
+    serialized_block[block_type]["children"] = [
+        serialize_block_with_children(block=child) for child in children
+    ]
+
+    rebuilt_block = Block.wrap_obj_ref(
+        UnoObjAPIBlock.model_validate(obj=serialized_block)
+    )
+    assert isinstance(rebuilt_block, ParentBlock)
+    return rebuilt_block
 
 
 @beartype
@@ -394,8 +436,9 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             _block_with_uploaded_file(block=child_block, session=session)
             for child_block in block.blocks
         ]
-        block = _block_without_children(block=block)
-        block.append(blocks=new_child_blocks)
+        block = _block_with_replaced_children(
+            block=block, children=new_child_blocks
+        )
 
     return block
 
