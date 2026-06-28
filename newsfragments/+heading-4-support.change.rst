@@ -1,1 +1,0 @@
-Level-4 section headings now convert to Notion ``heading_4`` blocks (newly supported by the Notion API) instead of raising an error. Headings at level 5 or deeper are still rejected with a clear message.

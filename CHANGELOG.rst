@@ -3,6 +3,15 @@ Changelog
 
 .. towncrier release notes start
 
+2026.06.28
+----------
+
+- When a file upload to Notion fails, log the HTTP status and response body (with the filename of the failing asset) instead of discarding them. A non-JSON 403 is identified as a Cloudflare WAF block -- which Notion's upload endpoint sits behind -- with a hint that it is typically triggered by literal SQL or script text in the uploaded bytes, such as an SVG whose ``<text>`` contains ``CREATE TABLE ...``, and that rasterizing such diagrams to PNG avoids it.
+
+- Level-4 section headings now convert to Notion ``heading_4`` blocks (newly supported by the Notion API) instead of raising an error. Headings at level 5 or deeper are still rejected with a clear message.
+
+- ``tabs`` and ``tab`` directives (from the ``sphinx-tabs`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved. Tab labels are rendered as plain text.
+
 2026.06.24.1
 ------------
 
