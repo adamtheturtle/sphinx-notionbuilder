@@ -425,12 +425,11 @@ Publishing the Sample Document Locally
 
 A convenience script is provided to build and publish the sample documentation to a test Notion page.
 
-#. Create a ``.env`` file in the repository root with the following variables:
+#. Create a ``.env`` file in the repository root with your integration token:
 
    .. code-block:: shell
 
       export NOTION_TOKEN=your_integration_token_here
-      export NOTION_SAMPLE_DATABASE_ID=your_database_id_here
 
    This file is gitignored and will not be committed.
 
@@ -439,6 +438,18 @@ A convenience script is provided to build and publish the sample documentation t
    .. code-block:: console
 
       $ ./publish-sample.sh
+
+The Notion object IDs that the sample links to and mentions (a page, a user and a database) are read from the committed ``sample.env`` file rather than being hardcoded in the documentation, so the sample can be uploaded to any workspace.
+
+Targeting Your Own Workspace
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The committed ``sample.env`` points at the project's own demo workspace. To regenerate it for a workspace of your own, run the bootstrap script. It creates the linked page and database under a parent page shared with your integration, picks a user to mention, and writes the IDs to ``sample.env``:
+
+.. code-block:: console
+
+   $ export NOTION_TOKEN="your_integration_token_here"
+   $ uv run --all-extras python bootstrap-sample-env.py --parent-page-id parent_page_id
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions

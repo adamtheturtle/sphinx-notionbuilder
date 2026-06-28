@@ -27,6 +27,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.2.0
 
+      - name: Load sample Notion IDs
+        # The sample's conf.py reads these when building. The upload steps
+        # below set NOTION_SAMPLE_PAGE_ID to the publish target via their own
+        # env block, which takes precedence over this value. Only the
+        # ``KEY=value`` lines are appended; ${GITHUB_ENV} rejects the comment
+        # and blank lines in sample.env.
+        run: grep -E '^[A-Za-z_][A-Za-z0-9_]*=' sample.env >> "${GITHUB_ENV}"
+
       - name: Build sample documentation
         run: |
           rm -rf ./build-sample

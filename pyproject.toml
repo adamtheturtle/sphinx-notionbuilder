@@ -38,7 +38,7 @@ dependencies = [
     "click>=8.0.0",
     "cloup>=3.0.0",
     "docutils>=0.21",
-    "notion-client>=2.3.0",
+    "notion-client>=2.3.0,<3",
     "requests>=2.32.5",
     "sphinx>=9,<10",
     "sphinx-iframes>=1.1.0",
@@ -48,7 +48,7 @@ dependencies = [
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
-    "ultimate-notion>=0.9.10",
+    "ultimate-notion>=0.9.10,<0.10",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.12.24",
@@ -100,6 +100,7 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3", "towncrier==25.8.0" ]
 optional-dependencies.sample = [
+    "sphinx-jinja==2.0.2",
     "sphinxcontrib-text-styles==0.2.1",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
@@ -314,6 +315,7 @@ ignore = [
     ".vscode",
     ".vscode/**",
     ".yamlfmt",
+    "bootstrap-sample-env.py",
     "CHANGELOG.rst",
     "ci",
     "ci/**",
@@ -327,6 +329,7 @@ ignore = [
     "newsfragments",
     "newsfragments/**",
     "publish-sample.sh",
+    "sample.env",
     "sample/",
     "sample/**",
     "sample_warnings/",
@@ -380,6 +383,7 @@ ignore_names = [
     "htmlhelp_basename",
     "intersphinx_mapping",
     "italic",
+    "jinja_contexts",
     "language",
     "linkcheck_ignore",
     "linkcheck_retries",

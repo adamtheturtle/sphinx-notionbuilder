@@ -33,6 +33,13 @@ jobs:
           enable-cache: true
           cache-dependency-glob: '**/pyproject.toml'
 
+      - name: Load sample Notion IDs
+        # The sample's conf.py reads these from the environment. Only the
+        # ``KEY=value`` lines are appended; ${GITHUB_ENV} rejects the comment
+        # and blank lines in sample.env.
+        shell: bash
+        run: grep -E '^[A-Za-z_][A-Za-z0-9_]*=' sample.env >> "${GITHUB_ENV}"
+
       - name: Build sample
         # Use bash to ensure the step fails if any command fails.
         # PowerShell does not fail on intermediate command failures by default.
