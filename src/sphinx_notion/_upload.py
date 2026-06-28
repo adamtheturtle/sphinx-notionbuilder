@@ -496,8 +496,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         else:
             assert parent_database_id is not None
             _LOGGER.info("Fetching parent database '%s'", parent_database_id)
-            database = session.get_db(db_ref=parent_database_id)
-            parent = database.data_sources.item()
+            parent = session.get_ds(ds_ref=parent_database_id)
             subpages = parent.get_all_pages().to_pages()
 
         pages_matching_title = [

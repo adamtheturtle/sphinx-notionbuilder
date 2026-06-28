@@ -376,114 +376,6 @@
       "persistent": true
     },
     {
-      "name": "appendChildrenBulletedItem",
-      "request": {
-        "method": "PATCH",
-        "urlPath": "/v1/blocks/59833787-2cf9-4fdf-8782-e53db20768a5/children",
-        "bodyPatterns": [
-          {
-            "contains": "bulleted_list_item"
-          }
-        ]
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "jsonBody": {
-          "object": "list",
-          "type": "block",
-          "block": {},
-          "has_more": false,
-          "results": [
-            {
-              "object": "block",
-              "id": "30f89f8f-57ff-4f6c-a13d-4720d0d4f123",
-              "parent": {
-                "type": "page_id",
-                "page_id": "59833787-2cf9-4fdf-8782-e53db20768a5"
-              },
-              "created_time": "2023-02-24T21:06:00.000Z",
-              "last_edited_time": "2023-02-24T21:06:00.000Z",
-              "has_children": true,
-              "archived": false,
-              "in_trash": false,
-              "type": "bulleted_list_item",
-              "bulleted_list_item": {
-                "rich_text": [
-                  {
-                    "type": "text",
-                    "text": {
-                      "content": "Item with image"
-                    },
-                    "plain_text": "Item with image",
-                    "annotations": {
-                      "bold": false,
-                      "italic": false,
-                      "strikethrough": false,
-                      "underline": false,
-                      "code": false,
-                      "color": "default"
-                    }
-                  }
-                ],
-                "color": "default"
-              }
-            }
-          ]
-        }
-      },
-      "persistent": true
-    },
-    {
-      "name": "appendChildrenImage",
-      "request": {
-        "method": "PATCH",
-        "urlPath": "/v1/blocks/59833787-2cf9-4fdf-8782-e53db20768a5/children",
-        "bodyPatterns": [
-          {
-            "contains": "\"type\":\"image\""
-          }
-        ]
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "jsonBody": {
-          "object": "list",
-          "type": "block",
-          "block": {},
-          "has_more": false,
-          "results": [
-            {
-              "object": "block",
-              "id": "30f89f8f-57ff-4f6c-a13d-4720d0d4f123",
-              "parent": {
-                "type": "page_id",
-                "page_id": "59833787-2cf9-4fdf-8782-e53db20768a5"
-              },
-              "created_time": "2023-02-24T21:06:00.000Z",
-              "last_edited_time": "2023-02-24T21:06:00.000Z",
-              "has_children": false,
-              "archived": false,
-              "in_trash": false,
-              "type": "image",
-              "image": {
-                "type": "file_upload",
-                "file_upload": {
-                  "id": "ff000000-0000-0000-0000-000000000001"
-                }
-              }
-            }
-          ]
-        }
-      },
-      "persistent": true
-    },
-    {
       "name": "appendChildren",
       "request": {
         "method": "PATCH",
@@ -1717,7 +1609,7 @@
           },
           "data_sources": [
             {
-              "id": "bbbbdada-0000-0000-0000-000000000099",
+              "id": "bbbb0000-0000-0000-0000-000000000098",
               "name": "Inline Database"
             }
           ]
@@ -1729,8 +1621,9 @@
       "name": "retrieveInlineDataSource",
       "request": {
         "method": "GET",
-        "urlPath": "/v1/data_sources/bbbbdada-0000-0000-0000-000000000099"
+        "urlPath": "/v1/data_sources/bbbb0000-0000-0000-0000-000000000098"
       },
+      "persistent": true,
       "response": {
         "status": 200,
         "headers": {
@@ -1738,7 +1631,7 @@
         },
         "jsonBody": {
           "object": "data_source",
-          "id": "bbbbdada-0000-0000-0000-000000000099",
+          "id": "bbbb0000-0000-0000-0000-000000000098",
           "created_time": "2023-01-10T08:00:00.000Z",
           "last_edited_time": "2023-01-12T10:00:00.000Z",
           "created_by": {
@@ -1767,7 +1660,7 @@
             }
           ],
           "description": [],
-          "url": "https://www.notion.so/bbbb0099",
+          "url": "https://www.notion.so/bbbb0098",
           "archived": false,
           "in_trash": false,
           "is_inline": true,
@@ -1784,8 +1677,7 @@
             }
           }
         }
-      },
-      "persistent": true
+      }
     },
     {
       "name": "retrieveDiscussionParent",
@@ -2398,7 +2290,7 @@
           },
           "data_sources": [
             {
-              "id": "da000000-0000-0000-0000-000000000001",
+              "id": "d5000000-0000-0000-0000-000000000001",
               "name": "Test Database"
             }
           ]
@@ -2410,8 +2302,9 @@
       "name": "retrieveDataSource",
       "request": {
         "method": "GET",
-        "urlPath": "/v1/data_sources/da000000-0000-0000-0000-000000000001"
+        "urlPath": "/v1/data_sources/d5000000-0000-0000-0000-000000000001"
       },
+      "persistent": true,
       "response": {
         "status": 200,
         "headers": {
@@ -2419,7 +2312,7 @@
         },
         "jsonBody": {
           "object": "data_source",
-          "id": "da000000-0000-0000-0000-000000000001",
+          "id": "d5000000-0000-0000-0000-000000000001",
           "created_time": "2023-01-10T08:00:00.000Z",
           "last_edited_time": "2023-01-12T10:00:00.000Z",
           "created_by": {
@@ -2448,7 +2341,7 @@
             }
           ],
           "description": [],
-          "url": "https://www.notion.so/db000001",
+          "url": "https://www.notion.so/d5000001",
           "archived": false,
           "in_trash": false,
           "is_inline": false,
@@ -2465,6 +2358,71 @@
             }
           }
         }
+      }
+    },
+    {
+      "name": "queryDatabase",
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/databases/db000000-0000-0000-0000-000000000001/query"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "list",
+          "type": "page_or_database",
+          "page_or_database": {},
+          "has_more": false,
+          "results": [
+            {
+              "object": "page",
+              "id": "59833787-2cf9-4fdf-8782-e53db20768a5",
+              "created_time": "2023-01-15T10:30:00.000Z",
+              "last_edited_time": "2023-01-16T14:22:00.000Z",
+              "created_by": {
+                "object": "user",
+                "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+              },
+              "last_edited_by": {
+                "object": "user",
+                "id": "71e95936-2737-4e11-b03d-f174f6f13e90"
+              },
+              "archived": false,
+              "in_trash": false,
+              "parent": {
+                "type": "database_id",
+                "database_id": "db000000-0000-0000-0000-000000000001"
+              },
+              "properties": {
+                "Name": {
+                  "id": "title",
+                  "type": "title",
+                  "title": [
+                    {
+                      "type": "text",
+                      "text": {
+                        "content": "Upload Title"
+                      },
+                      "plain_text": "Upload Title",
+                      "annotations": {
+                        "bold": false,
+                        "italic": false,
+                        "strikethrough": false,
+                        "underline": false,
+                        "code": false,
+                        "color": "default"
+                      }
+                    }
+                  ]
+                }
+              },
+              "url": "https://www.notion.so/Upload-Title-59833787"
+            }
+          ]
+        }
       },
       "persistent": true
     },
@@ -2472,7 +2430,7 @@
       "name": "queryDataSource",
       "request": {
         "method": "POST",
-        "urlPath": "/v1/data_sources/da000000-0000-0000-0000-000000000001/query"
+        "urlPath": "/v1/data_sources/d5000000-0000-0000-0000-000000000001/query"
       },
       "response": {
         "status": 200,

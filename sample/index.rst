@@ -133,18 +133,22 @@ Link with no title
 Link to Notion
 ^^^^^^^^^^^^^^
 
-.. rest-example::
+.. jinja:: notion
 
-   Link to `Notion page with title <https://www.notion.so/Other-page-2579ce7b60a48071b51bfc2a206bac17>`_
+   .. rest-example::
 
-   Link to Notion page without title `<https://www.notion.so/Other-page-2579ce7b60a48071b51bfc2a206bac17>`_
+      Link to `Notion page with title <https://www.notion.so/Other-page-{{ sample_page_id }}>`_
+
+      Link to Notion page without title `<https://www.notion.so/Other-page-{{ sample_page_id }}>`_
 
 Link to Notion Page Block
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rest-example::
+.. jinja:: notion
 
-   .. notion-link-to-page:: 2579ce7b60a48071b51bfc2a206bac17
+   .. rest-example::
+
+      .. notion-link-to-page:: {{ sample_page_id }}
 
 Admonitions
 ~~~~~~~~~~~
@@ -563,23 +567,29 @@ Mentions
 User Mention
 ^^^^^^^^^^^^
 
-.. rest-example::
+.. jinja:: notion
 
-   Hello :notion-mention-user:`fc820d21-80ec-4d06-878c-f991bc8070d2` there!
+   .. rest-example::
+
+      Hello :notion-mention-user:`{{ sample_user_id }}` there!
 
 Page Mention
 ^^^^^^^^^^^^
 
-.. rest-example::
+.. jinja:: notion
 
-   See :notion-mention-page:`2579ce7b60a48071b51bfc2a206bac17` for more details.
+   .. rest-example::
+
+      See :notion-mention-page:`{{ sample_page_id }}` for more details.
 
 Database Mention
 ^^^^^^^^^^^^^^^^
 
-.. rest-example::
+.. jinja:: notion
 
-   Check the :notion-mention-database:`27d9ce7b60a4804b9c5cfa002668952b` database.
+   .. rest-example::
+
+      Check the :notion-mention-database:`{{ sample_database_id }}` database.
 
 Date Mention
 ^^^^^^^^^^^^
