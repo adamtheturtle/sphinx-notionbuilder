@@ -15,6 +15,7 @@ extensions = [
     "sphinx_toolbox.collapse",
     "sphinx_toolbox.rest_example",
     "sphinx_tabs.tabs",
+    "sphinx_design",
     "atsphinx.audioplayer",
     "sphinx_immaterial.task_lists",
     "sphinxcontrib.mermaid",

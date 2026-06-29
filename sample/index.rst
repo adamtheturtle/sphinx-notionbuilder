@@ -230,6 +230,30 @@ Tabbed content is created using the `sphinx-tabs <https://sphinx-tabs.readthedoc
 
          Like this second paragraph.
 
+Tabbed content can also be created using the `sphinx-design <https://sphinx-design.readthedocs.io/>`_ ``tab-set`` and ``tab-item`` directives, which likewise become a Notion tabs block.
+
+.. rest-example::
+
+   .. tab-set::
+
+      .. tab-item:: Python
+
+         A Python code example:
+
+         .. code-block:: python
+
+            """Python code."""
+
+            import sys
+
+            sys.stdout.write("Hello from the Python tab\n")
+
+      .. tab-item:: Notes
+
+         Tabs can hold **formatted** text and multiple paragraphs.
+
+         Like this second paragraph.
+
 Dividers
 ~~~~~~~~
 
