@@ -41,11 +41,9 @@ dependencies = [
     "notion-client>=3.1,<4",
     "requests>=2.32.5",
     "sphinx>=9,<10",
-    "sphinx-design>=0.6.0",
     "sphinx-iframes>=1.1.0",
     "sphinx-immaterial>=0.13.7",
     "sphinx-simplepdf>=1.6.0",
-    "sphinx-tabs>=3.5.0",
     "sphinx-toolbox==4.2.0",
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
@@ -85,9 +83,11 @@ optional-dependencies.dev = [
     # use it to lint shell commands in GitHub workflow files.
     "shellcheck-py==0.11.0.1",
     "shfmt-py==4.0.0",
+    "sphinx-design>=0.6.0",
     "sphinx-lint==1.0.2",
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2026.6.17",
+    "sphinx-tabs>=3.5.0",
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
     "strict-kwargs==2026.6.8.post1",
@@ -102,7 +102,9 @@ optional-dependencies.dev = [
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3", "towncrier==25.8.0" ]
 optional-dependencies.sample = [
+    "sphinx-design>=0.6.0",
     "sphinx-jinja==2.0.2",
+    "sphinx-tabs>=3.5.0",
     "sphinxcontrib-text-styles==0.2.1",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
@@ -345,10 +347,6 @@ ignore = [
 ]
 
 [tool.deptry]
-# ``sphinx-tabs`` and ``sphinx-design`` are integrated by detecting their
-# rendered containers' CSS classes, not by importing them, so deptry cannot
-# see the usage.
-per_rule_ignores.DEP002 = [ "sphinx-design", "sphinx-tabs" ]
 optional_dependencies_dev_groups = [
     "dev",
     "release",

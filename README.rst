@@ -67,6 +67,15 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx_notion",
    ]
 
+Most of these extensions are installed automatically with ``sphinx-notionbuilder``.
+``sphinx-tabs`` and ``sphinx-design`` are not, so to use their directives
+(``tabs``/``tab`` and ``tab-set``/``tab-item`` respectively) install them
+separately:
+
+.. code-block:: console
+
+   $ pip install sphinx-tabs sphinx-design
+
 Supported Notion Block Types
 ----------------------------
 

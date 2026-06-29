@@ -1,0 +1,1 @@
+``sphinx-tabs`` and ``sphinx-design`` are no longer installed automatically. They are not imported by ``sphinx_notion`` (their tabs are detected from the rendered output), so install them yourself alongside the other extensions you enable in ``conf.py`` if you use the ``tabs``/``tab`` or ``tab-set``/``tab-item`` directives.
