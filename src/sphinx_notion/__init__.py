@@ -1833,7 +1833,7 @@ def _(
             section_level=section_level,
         )
 
-    if "sphinx-tabs" in classes:
+    if "sphinx-tabs" in classes or "sd-tab-set" in classes:
         return _process_tabs_container(
             node=node,
             section_level=section_level,
@@ -1912,11 +1912,13 @@ def _process_tabs_container(
     node: nodes.container,
     section_level: int,
 ) -> list[Block]:
-    """Process a ``sphinx-tabs`` container by creating a Notion Tabs block.
+    """Process a tabs container by creating a Notion Tabs block.
 
-    For non-HTML builders ``sphinx-tabs`` emits each tab as a container
-    holding a label container and a content (panel) container. Notion tab
-    labels are plain text, so the label is taken as the tab's text.
+    Both ``sphinx-tabs`` (``tabs``/``tab``) and ``sphinx-design``
+    (``tab-set``/``tab-item``) emit each tab for non-HTML builders as a
+    container holding a label node and a content (panel) node. Notion tab
+    labels are plain text, so the label is taken as the tab's text and the
+    panel's children become the tab's content blocks.
     """
     labels: list[str] = []
     panels: list[nodes.Element] = []

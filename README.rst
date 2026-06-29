@@ -38,6 +38,7 @@ Add the following to ``conf.py`` to enable the extension:
 * `sphinx-simplepdf`_
 * `sphinx-iframes`_
 * `sphinx-tabs`_
+* `sphinx-design`_
 * `sphinxcontrib-text-styles`_
 * `sphinxcontrib-mermaid`_
 
@@ -54,6 +55,7 @@ To set these up, install the extensions you want to use and add them to your ``c
        "sphinx.ext.mathjax",
        "sphinx_iframes",
        "sphinx_immaterial.task_lists",
+       "sphinx_design",
        "sphinx_simplepdf",
        "sphinx_tabs.tabs",
        "sphinx_toolbox.collapse",
@@ -78,7 +80,7 @@ The following syntax is supported:
 - Block quotes
 - Callouts
 - Collapsible sections (using the ``collapse`` directive from `sphinx-toolbox`_ )
-- Tabs (using the ``tabs`` and ``tab`` directives from `sphinx-tabs`_ )
+- Tabs (using the ``tabs`` and ``tab`` directives from `sphinx-tabs`_, or the ``tab-set`` and ``tab-item`` directives from `sphinx-design`_ )
 - Rest-example blocks (using the ``rest-example`` directive from `sphinx-toolbox`_ )
 - Images (with URLs or local paths)
 - Videos (with URLs or local paths)
@@ -464,6 +466,7 @@ The committed ``sample.env`` points at the project's own demo workspace. To rege
 .. _notion-integrations: https://www.notion.so/my-integrations
 .. _published Notion page: https://www.notion.so/Sphinx-Notionbuilder-Sample-2579ce7b60a48142a556d816c657eb55
 .. _sample document source: https://raw.githubusercontent.com/adamtheturtle/sphinx-notionbuilder/refs/heads/main/sample/index.rst
+.. _sphinx-design: https://sphinx-design.readthedocs.io/
 .. _sphinx-iframes: https://pypi.org/project/sphinx-iframes/
 .. _sphinx-immaterial task_lists: https://github.com/jbms/sphinx-immaterial
 .. _sphinx-simplepdf: https://sphinx-simplepdf.readthedocs.io/

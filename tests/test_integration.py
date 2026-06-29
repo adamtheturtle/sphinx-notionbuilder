@@ -1844,6 +1844,55 @@ def test_tabs(
     )
 
 
+def test_sphinx_design_tabs(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``tab-set``/``tab-item`` directives become a Notion Tabs block."""
+    rst_content = """
+        .. tab-set::
+
+           .. tab-item:: Apple
+
+              Apple is a fruit.
+
+           .. tab-item:: Pear
+
+              Pear content with **formatting**.
+
+              A second pear paragraph.
+    """
+
+    tabs_block = UnoTabs(tabs=["Apple", "Pear"])
+    tabs_block[0].append(
+        blocks=[UnoParagraph(text=text(text="Apple is a fruit."))]
+    )
+    tabs_block[1].append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Pear content with ")
+                    + text(text="formatting", bold=True)
+                    + text(text=".")
+                )
+            ),
+            UnoParagraph(text=text(text="A second pear paragraph.")),
+        ]
+    )
+
+    expected_blocks = [tabs_block]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_design"),
+        expected_warnings=(),
+    )
+
+
 def test_simple_table(
     *,
     make_app: Callable[..., SphinxTestApp],

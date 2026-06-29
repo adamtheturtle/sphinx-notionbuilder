@@ -1,0 +1,1 @@
+``tab-set`` and ``tab-item`` directives (from the ``sphinx-design`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved, mirroring the existing ``sphinx-tabs`` support.
