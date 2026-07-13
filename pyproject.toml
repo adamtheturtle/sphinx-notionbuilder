@@ -93,7 +93,7 @@ optional-dependencies.dev = [
     "strict-kwargs==2026.6.8.post1",
     "towncrier==25.8.0",
     "ty==0.0.59",
-    "types-docutils==0.22.3.20260518",
+    "types-docutils==0.22.3.20260712",
     "types-requests==2.33.0.20260712",
     "vulture==2.16",
     "wiremock-mock==2026.6.22",
