@@ -429,7 +429,17 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
             _LOGGER.info("File '%s' uploaded", file_path.name)
 
-            block = block.__class__(file=uploaded_file, caption=block.caption)
+            if isinstance(block, UnoFile):
+                block = UnoFile(
+                    file=uploaded_file,
+                    name=block.name,
+                    caption=block.caption,
+                )
+            else:
+                block = block.__class__(
+                    file=uploaded_file,
+                    caption=block.caption,
+                )
 
     elif isinstance(block, ParentBlock) and block.has_children:
         new_child_blocks = [
