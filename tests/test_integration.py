@@ -589,6 +589,81 @@ def test_multiple_links(
     )
 
 
+def test_footnotes(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Auto, explicit, and named footnotes retain references and
+    bodies.
+    """
+    rst_content = """
+        Auto [#]_. Explicit [1]_. Named [#note]_ and again [#note]_.
+
+        .. [#] Auto *body*.
+        .. [1] Explicit body.
+        .. [#note] Named ``body``.
+    """
+
+    reference_paragraph = UnoParagraph(
+        text=(
+            text(text="Auto ")
+            + text(text="[2]")
+            + text(text=". Explicit ")
+            + text(text="[1]")
+            + text(text=". Named ")
+            + text(text="[3]")
+            + text(text=" and again ")
+            + text(text="[3]")
+            + text(text=".")
+        )
+    )
+
+    auto_item = UnoBulletedItem(text=text(text="[2]", bold=True))
+    auto_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Auto ")
+                    + text(text="body", italic=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    explicit_item = UnoBulletedItem(text=text(text="[1]", bold=True))
+    explicit_item.append(
+        blocks=[UnoParagraph(text=text(text="Explicit body."))]
+    )
+
+    named_item = UnoBulletedItem(text=text(text="[3]", bold=True))
+    named_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Named ")
+                    + text(text="body", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[
+            reference_paragraph,
+            auto_item,
+            explicit_item,
+            named_item,
+        ],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_link_in_heading(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -3985,23 +4060,23 @@ def test_unsupported_node_types_in_rich_text(
 ) -> None:
     """Unsupported node types in rich text processing raise ValueError."""
     rst_content = """
-        This is a test with :footnote:`footnote node`.
+        This is a test with :unsupported:`unsupported node`.
     """
 
     conf_py_content = """
 from docutils import nodes
 
 def setup(app):
-    def footnote_role(
+    def unsupported_role(
         name, rawtext, text, lineno, inliner, options={}, content=[]
     ):  # noqa: PLR0913
-        node = nodes.footnote_reference(rawtext, text)
+        node = nodes.abbreviation(rawtext, text)
         return [node], []
 
-    app.add_role('footnote', footnote_role)
+    app.add_role('unsupported', unsupported_role)
     """
     expected_message = (
-        r"^Unsupported node type within text: footnote_reference on line 1 in "
+        r"^Unsupported node type within text: abbreviation on line 1 in "
         rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}\.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
