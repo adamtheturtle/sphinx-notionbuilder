@@ -1650,6 +1650,15 @@ def _(
     for child in node.children:
         if isinstance(child, nodes.caption):
             continue
+        if isinstance(child, nodes.legend):
+            for legend_child in child.children:
+                blocks.extend(
+                    _process_node_to_blocks(
+                        legend_child,
+                        section_level=section_level,
+                    )
+                )
+            continue
         if isinstance(child, nodes.image) and caption_rich_text is not None:
             image_url = child.attributes["uri"]
             assert isinstance(image_url, str)

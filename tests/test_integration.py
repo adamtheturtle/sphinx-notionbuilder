@@ -5256,6 +5256,40 @@ def test_figure_directive(
     )
 
 
+def test_figure_directive_with_legend(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives preserve legend paragraphs after images."""
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+
+           This is a caption.
+
+           This is the first legend paragraph.
+
+           This is the second legend paragraph.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=text(text="This is a caption."),
+        ),
+        UnoParagraph(text=text(text="This is the first legend paragraph.")),
+        UnoParagraph(text=text(text="This is the second legend paragraph.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_figure_directive_local_image(
     *,
     make_app: Callable[..., SphinxTestApp],
