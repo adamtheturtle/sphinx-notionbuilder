@@ -1065,6 +1065,39 @@ def test_code_block_language_mapping(
     )
 
 
+def test_production_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Grammar productions become an aligned plain-text code block."""
+    rst_content = """
+        .. productionlist::
+           expression: `term` ("+" `term`)*
+           term: `NUMBER`
+           NUMBER: /[0-9]+/
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(
+                text='expression ::= term ("+" term)*\n'
+                "term       ::= NUMBER\n"
+                "NUMBER     ::= /[0-9]+/"
+            ),
+            language=CodeLang.PLAIN_TEXT,
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_flat_bullet_list(
     *,
     make_app: Callable[..., SphinxTestApp],
