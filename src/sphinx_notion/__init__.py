@@ -361,6 +361,7 @@ class _TableStructure:
 
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
+    num_columns: int
     num_stub_columns: int
 
 
@@ -745,6 +746,7 @@ def _extract_table_structure(
     return _TableStructure(
         header_rows=header_rows,
         body_rows=body_rows,
+        num_columns=int(tgroup.attributes["cols"]),
         num_stub_columns=stub_columns,
     )
 
@@ -1003,17 +1005,31 @@ def _(
     table = UnoTable(
         n_rows=len(rows),
         # In Notion, all rows must have the same number of columns.
-        n_cols=len(rows[0]),
+        n_cols=table_structure.num_columns,
         header_row=bool(table_structure.header_rows),
         header_col=bool(table_structure.num_stub_columns),
     )
 
+    occupied_cells: set[tuple[int, int]] = set()
     for row_index, row in enumerate(iterable=rows):
-        for column_index, entry in enumerate(iterable=row.children):
+        column_index = 0
+        for entry in row.children:
+            assert isinstance(entry, nodes.entry)
+            while (row_index, column_index) in occupied_cells:
+                column_index += 1
+
             source = _cell_source_node(entry=entry)
-            table[row_index, column_index] = _create_rich_text_from_children(
-                node=source
-            )
+            rich_text = _create_rich_text_from_children(node=source)
+            row_span = int(entry.attributes.get("morerows", 0)) + 1
+            column_span = int(entry.attributes.get("morecols", 0)) + 1
+            for target_row in range(row_index, row_index + row_span):
+                for target_column in range(
+                    column_index,
+                    column_index + column_span,
+                ):
+                    table[target_row, target_column] = rich_text
+                    occupied_cells.add((target_row, target_column))
+            column_index += column_span
 
     return [table]
 

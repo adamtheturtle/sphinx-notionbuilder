@@ -1,0 +1,1 @@
+Table rowspans and colspans now flatten by duplicating content across covered cells while preserving every value's logical source column.

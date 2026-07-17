@@ -1933,6 +1933,66 @@ def test_simple_table(
     )
 
 
+def test_table_colspan_duplicates_content(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Horizontally merged content fills every covered Notion cell."""
+    rst_content = """
+        +---+---+
+        | A | B |
+        +===+===+
+        | merged|
+        +---+---+
+    """
+    table = UnoTable(n_rows=2, n_cols=2, header_row=True)
+    table[0, 0] = text(text="A")
+    table[0, 1] = text(text="B")
+    table[1, 0] = text(text="merged")
+    table[1, 1] = text(text="merged")
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[table],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_table_rowspan_preserves_logical_columns(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Vertically merged content does not shift later cells."""
+    rst_content = """
+        +---+---+
+        | A | B |
+        +===+===+
+        | X | Y |
+        +   +---+
+        |   | Z |
+        +---+---+
+    """
+    table = UnoTable(n_rows=3, n_cols=2, header_row=True)
+    table[0, 0] = text(text="A")
+    table[0, 1] = text(text="B")
+    table[1, 0] = text(text="X")
+    table[1, 1] = text(text="Y")
+    table[2, 0] = text(text="X")
+    table[2, 1] = text(text="Z")
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[table],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_table_without_header_row(
     *,
     make_app: Callable[..., SphinxTestApp],
