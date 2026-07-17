@@ -35,6 +35,7 @@ from sphinx_notion._upload import (
 )
 from tests._wiremock import (
     count_mock_requests,
+    count_page_metadata_clear_requests,
 )
 
 
@@ -44,6 +45,32 @@ def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
         mock=mock,
         method="POST",
         url_path="/v1/file_uploads",
+    )
+
+
+def test_count_page_metadata_clear_requests(
+    *,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Icon and cover null updates are both recognized as clears."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    for payload in ({"icon": None}, {"cover": None}):
+        response = httpx.patch(
+            url=f"https://mock.notion.test/v1/pages/{parent_page_id}",
+            json=payload,
+        )
+        assert response.status_code == httpx.codes.OK
+
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before + 2
     )
 
 
@@ -74,6 +101,44 @@ def test_upload_to_notion_with_wiremock(
     assert len(page.blocks) == 1
     assert isinstance(page.blocks[0], UnoParagraph)
     assert page.blocks[0].rich_text == "Hello from WireMock upload test"
+
+
+def test_omitted_page_metadata_is_preserved(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Omitted icon and cover values do not clear existing metadata."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        page_id=parent_page_id,
+        parent_page_id=None,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.icon == "\N{MEMO}"
+    assert isinstance(page.cover, ExternalFile)
+    assert page.cover.url == "https://example.com/cover.png"
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before
+    )
 
 
 def test_upload_deletes_and_replaces_changed_blocks(

@@ -517,7 +517,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
 
     if icon:
         _LOGGER.info("Setting page icon to '%s'", icon)
-    page.icon = Emoji(emoji=icon) if icon else None
+        page.icon = Emoji(emoji=icon)
     if cover_path:
         page.cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
@@ -525,8 +525,6 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     elif cover_url:
         _LOGGER.info("Setting page cover to '%s'", cover_url)
         page.cover = ExternalFile(url=cover_url)
-    else:
-        page.cover = None
 
     if page.subpages:
         raise PageHasSubpagesError
