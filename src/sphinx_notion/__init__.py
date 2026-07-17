@@ -1249,6 +1249,35 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.option_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process command options as bullets with nested descriptions."""
+    result: list[Block] = []
+    for list_item in node.children:
+        assert isinstance(list_item, nodes.option_list_item)
+        option_group = list_item.children[0]
+        description = list_item.children[1]
+        assert isinstance(option_group, nodes.option_group)
+        assert isinstance(description, nodes.description)
+
+        bulleted_item = UnoBulletedItem(
+            text=text(text=option_group.astext(), code=True)
+        )
+        for child in description.children:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+            bulleted_item.append(blocks=child_blocks)
+        result.append(bulleted_item)
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.topic,
     *,
     section_level: int,
