@@ -1216,6 +1216,27 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.hlist,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process horizontal lists as flat bulleted item blocks."""
+    result: list[Block] = []
+    for column in node.children:
+        assert isinstance(column, addnodes.hlistcol)
+        for child in column.children:
+            result.extend(
+                _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+            )
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.enumerated_list,
     *,
     section_level: int,

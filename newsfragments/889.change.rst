@@ -1,0 +1,1 @@
+Sphinx ``hlist`` directives now flatten into ordinary Notion bulleted items in source order instead of aborting the build.

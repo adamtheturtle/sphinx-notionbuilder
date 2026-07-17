@@ -1427,6 +1427,41 @@ def test_bullet_list_with_inline_formatting(
 
 
 @pytest.mark.parametrize(
+    argnames=("columns", "items"),
+    argvalues=[
+        (1, ("One", "Two", "Three")),
+        (2, ("One", "Two", "Three")),
+        (3, ("One", "Two", "Three", "Four", "Five")),
+    ],
+)
+def test_horizontal_list(
+    *,
+    columns: int,
+    items: tuple[str, ...],
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Horizontal lists flatten into bulleted items in source order."""
+    list_items = "\n".join(f"   * {item}" for item in items)
+    rst_content = f"""
+.. hlist::
+   :columns: {columns}
+
+{list_items}
+    """
+
+    expected_blocks = [UnoBulletedItem(text=text(text=item)) for item in items]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+@pytest.mark.parametrize(
     argnames=("admonition_type", "emoji", "background_color", "message"),
     argvalues=[
         ("note", "📝", BGColor.BLUE, "This is an important note."),
