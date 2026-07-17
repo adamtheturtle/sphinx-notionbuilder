@@ -19,6 +19,7 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
+    PageTitleAmbiguousError,
     upload_to_notion,
 )
 
@@ -161,6 +162,8 @@ def main(
     except DiscussionsExistError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     except PageNotFoundError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    except PageTitleAmbiguousError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     finally:
         session.close()

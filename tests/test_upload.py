@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner, Result
@@ -14,6 +15,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.rich_text import text
 
 from _notion_scripts.upload import main  # pylint: disable=import-private-name
+from sphinx_notion._upload import PageTitleAmbiguousError
 
 
 def _write_blocks_file(
@@ -265,3 +267,32 @@ def test_upload_page_not_found_error(
         "No page found with ID '40400000-0000-0000-0000-000000000404'."
         in result.output
     )
+
+
+def test_upload_ambiguous_title_error(
+    *,
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """The CLI explains how to resolve an ambiguous page title."""
+    assert notion_token
+    blocks_file = _write_blocks_file(tmp_path=tmp_path, block_dicts=[])
+    message = (
+        "Found 2 pages matching title 'Upload Title'. "
+        "Use --page-id to select the page to update."
+    )
+
+    with patch(
+        target="_notion_scripts.upload.upload_to_notion",
+        side_effect=PageTitleAmbiguousError(message),
+    ):
+        result = _invoke_upload(
+            blocks_file=blocks_file,
+            parent_page_id=parent_page_id,
+            mock_api_base_url=mock_api_base_url,
+        )
+
+    assert result.exit_code == 1
+    assert result.output == f"Error: {message}\n"
