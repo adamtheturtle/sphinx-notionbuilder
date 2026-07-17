@@ -8,6 +8,7 @@ import logging
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import Enum
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, BinaryIO
@@ -60,6 +61,30 @@ class _MatchLengths:
 
     prefix: int
     suffix: int
+
+
+class UploadStrategy(Enum):
+    """Strategy used to synchronize local blocks with a Notion page.
+
+    ``DIFF`` preserves matching block IDs and their discussions while
+    minimizing API calls. ``REPLACE`` appends the complete new document before
+    deleting every old block, which is simpler and protects the old document
+    if appending fails, but replaces block IDs and their discussions.
+    """
+
+    DIFF = "diff"
+    REPLACE = "replace"
+
+
+@beartype
+@dataclass(frozen=True, kw_only=True, slots=True)
+class _BlockSyncPlan:
+    """Blocks and ordering required for one synchronization."""
+
+    blocks_to_delete: Sequence[Block]
+    blocks_to_upload: Sequence[Block]
+    after: Block | None
+    append_before_delete: bool
 
 
 class PageHasSubpagesError(Exception):
@@ -444,8 +469,199 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
 
 @beartype
-# pylint: disable-next=too-complex,too-many-branches,too-many-statements
-def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
+def _diff_sync_plan(
+    *,
+    existing_blocks: Sequence[Block],
+    local_blocks: Sequence[Block],
+) -> _BlockSyncPlan:
+    """Plan an incremental synchronization of changed blocks."""
+    _LOGGER.info(
+        "Comparing %d existing blocks with %d local blocks",
+        len(existing_blocks),
+        len(local_blocks),
+    )
+    match_lengths = _find_matching_prefix_and_suffix_lengths(
+        existing_blocks=existing_blocks,
+        local_blocks=local_blocks,
+    )
+    prefix_len = match_lengths.prefix
+    suffix_len = match_lengths.suffix
+
+    # Can't use suffix matching without a prefix because the Notion API
+    # has no way to insert before the first block.
+    if prefix_len == 0:
+        suffix_len = 0
+
+    existing_end = len(existing_blocks) - suffix_len
+    local_end = len(local_blocks) - suffix_len
+    blocks_to_delete = existing_blocks[prefix_len:existing_end]
+    blocks_to_upload = local_blocks[prefix_len:local_end]
+    _LOGGER.info(
+        "%d prefix and %d suffix blocks match, %d to delete, %d to upload",
+        prefix_len,
+        suffix_len,
+        len(blocks_to_delete),
+        len(blocks_to_upload),
+    )
+    return _BlockSyncPlan(
+        blocks_to_delete=blocks_to_delete,
+        blocks_to_upload=blocks_to_upload,
+        after=existing_blocks[prefix_len - 1] if prefix_len > 0 else None,
+        append_before_delete=False,
+    )
+
+
+@beartype
+def _replace_sync_plan(
+    *,
+    existing_blocks: Sequence[Block],
+    local_blocks: Sequence[Block],
+) -> _BlockSyncPlan:
+    """Plan a complete append-then-delete replacement."""
+    _LOGGER.info(
+        "Replacing %d existing blocks with %d local blocks",
+        len(existing_blocks),
+        len(local_blocks),
+    )
+    return _BlockSyncPlan(
+        blocks_to_delete=existing_blocks,
+        blocks_to_upload=local_blocks,
+        after=None,
+        append_before_delete=True,
+    )
+
+
+@beartype
+def _delete_blocks(*, blocks: Sequence[Block]) -> None:
+    """Delete blocks from Notion."""
+    for block_index, existing_page_block in enumerate(iterable=blocks):
+        _LOGGER.info(
+            "Deleting block %d/%d",
+            block_index + 1,
+            len(blocks),
+        )
+        existing_page_block.delete()
+
+
+@beartype
+def _append_blocks(
+    *,
+    page: Page,
+    blocks: Sequence[Block],
+    after: Block | None,
+) -> None:
+    """Append blocks to a page, optionally after an existing block."""
+    if not blocks:
+        return
+
+    _LOGGER.info("Appending %d blocks to page", len(blocks))
+    try:
+        page.append(blocks=blocks, after=after)
+    except HTTPResponseError as exc:
+        if not _is_waf_block(exc=exc):
+            raise
+        raise CloudflareWAFBlockError from exc
+
+
+@beartype
+def _check_discussions(
+    *,
+    blocks_to_delete: Sequence[Block],
+    title: str,
+    cancel_on_discussion: bool,
+) -> None:
+    """Cancel when deletions would discard discussions, if requested."""
+    blocks_with_discussions = [
+        block for block in blocks_to_delete if len(block.discussions) > 0
+    ]
+    if not cancel_on_discussion or not blocks_with_discussions:
+        return
+
+    total_discussions = sum(
+        len(block.discussions) for block in blocks_with_discussions
+    )
+    error_message = (
+        f"Page '{title}' has {len(blocks_with_discussions)} "
+        f"block(s) to delete with {total_discussions} discussion "
+        "thread(s). Upload cancelled."
+    )
+    raise DiscussionsExistError(error_message)
+
+
+@beartype
+def _sync_blocks(
+    *,
+    session: Session,
+    page: Page,
+    local_blocks: Sequence[Block],
+    title: str,
+    cancel_on_discussion: bool,
+    strategy: UploadStrategy,
+) -> None:
+    """Synchronize local blocks to a page using the selected strategy."""
+    existing_blocks = page.blocks
+    plan = (
+        _diff_sync_plan(
+            existing_blocks=existing_blocks,
+            local_blocks=local_blocks,
+        )
+        if strategy is UploadStrategy.DIFF
+        else _replace_sync_plan(
+            existing_blocks=existing_blocks,
+            local_blocks=local_blocks,
+        )
+    )
+    _check_discussions(
+        blocks_to_delete=plan.blocks_to_delete,
+        title=title,
+        cancel_on_discussion=cancel_on_discussion,
+    )
+
+    # Publishing is not atomic. Prepare every file before mutating the live
+    # page so a failed upload leaves its old content untouched.
+    _LOGGER.info("Preparing %d blocks for upload", len(plan.blocks_to_upload))
+    prepared_blocks = [
+        _block_with_uploaded_file(block=block, session=session)
+        for block in plan.blocks_to_upload
+    ]
+
+    if plan.append_before_delete:
+        # This order is the safety property of REPLACE: an append failure
+        # leaves the complete old document in place.
+        _append_blocks(page=page, blocks=prepared_blocks, after=plan.after)
+        _delete_blocks(blocks=plan.blocks_to_delete)
+    else:
+        _delete_blocks(blocks=plan.blocks_to_delete)
+        _append_blocks(page=page, blocks=prepared_blocks, after=plan.after)
+
+
+@beartype
+def _set_page_appearance(
+    *,
+    session: Session,
+    page: Page,
+    icon: str | None,
+    cover_path: Path | None,
+    cover_url: str | None,
+) -> None:
+    """Set a page's icon and cover."""
+    if icon:
+        _LOGGER.info("Setting page icon to '%s'", icon)
+    page.icon = Emoji(emoji=icon) if icon else None
+
+    if cover_path:
+        page.cover = _get_uploaded_cover(
+            page=page, cover=cover_path, session=session
+        )
+    elif cover_url:
+        _LOGGER.info("Setting page cover to '%s'", cover_url)
+        page.cover = ExternalFile(url=cover_url)
+    else:
+        page.cover = None
+
+
+@beartype
+def upload_to_notion(
     *,
     session: Session,
     blocks: Sequence[Block],
@@ -457,6 +673,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
+    strategy: UploadStrategy = UploadStrategy.DIFF,
 ) -> Page:
     """Upload documentation to Notion.
 
@@ -515,18 +732,13 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
             _LOGGER.info("Creating new page '%s'", title)
             page = session.create_page(parent=parent, title=title)
 
-    if icon:
-        _LOGGER.info("Setting page icon to '%s'", icon)
-    page.icon = Emoji(emoji=icon) if icon else None
-    if cover_path:
-        page.cover = _get_uploaded_cover(
-            page=page, cover=cover_path, session=session
-        )
-    elif cover_url:
-        _LOGGER.info("Setting page cover to '%s'", cover_url)
-        page.cover = ExternalFile(url=cover_url)
-    else:
-        page.cover = None
+    _set_page_appearance(
+        session=session,
+        page=page,
+        icon=icon,
+        cover_path=cover_path,
+        cover_url=cover_url,
+    )
 
     if page.subpages:
         raise PageHasSubpagesError
@@ -534,94 +746,13 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     if page.sub_dss:
         raise PageHasDatabasesError
 
-    _LOGGER.info("Syncing page blocks")
-    existing_blocks = page.blocks
-    _LOGGER.info(
-        "Comparing %d existing blocks with %d local blocks",
-        len(existing_blocks),
-        len(blocks),
-    )
-    match_lengths = _find_matching_prefix_and_suffix_lengths(
-        existing_blocks=existing_blocks,
+    _LOGGER.info("Syncing page blocks using the '%s' strategy", strategy.value)
+    _sync_blocks(
+        session=session,
+        page=page,
         local_blocks=blocks,
+        title=title,
+        cancel_on_discussion=cancel_on_discussion,
+        strategy=strategy,
     )
-    prefix_len = match_lengths.prefix
-    suffix_len = match_lengths.suffix
-
-    # Can't use suffix matching without a prefix because the Notion API
-    # has no way to insert before the first block.
-    if prefix_len == 0:
-        suffix_len = 0
-
-    existing_end = len(existing_blocks) - suffix_len
-    local_end = len(blocks) - suffix_len
-
-    blocks_to_delete = existing_blocks[prefix_len:existing_end]
-    blocks_to_upload = blocks[prefix_len:local_end]
-    _LOGGER.info(
-        "%d prefix and %d suffix blocks match, %d to delete, %d to upload",
-        prefix_len,
-        suffix_len,
-        len(blocks_to_delete),
-        len(blocks_to_upload),
-    )
-    blocks_to_delete_with_discussions = [
-        block for block in blocks_to_delete if len(block.discussions) > 0
-    ]
-
-    if cancel_on_discussion and blocks_to_delete_with_discussions:
-        total_discussions = sum(
-            len(block.discussions)
-            for block in blocks_to_delete_with_discussions
-        )
-        error_message = (
-            f"Page '{title}' has {len(blocks_to_delete_with_discussions)} "
-            f"block(s) to delete with {total_discussions} discussion "
-            "thread(s). "
-            f"Upload cancelled."
-        )
-        raise DiscussionsExistError(error_message)
-
-    # Upload all files before deleting any existing blocks. Publishing is
-    # not atomic: deletions are committed to Notion immediately and cannot
-    # be rolled back. If we deleted first and a file upload then failed
-    # (e.g. Notion rejects an oversized image or an SVG with an external
-    # DTD), the live page would be left with its old content already
-    # deleted and the new content never appended -- i.e. emptied. By
-    # uploading every file first, any upload failure raises here while the
-    # live page is still untouched. Do not move this after the deletion
-    # loop below.
-    _LOGGER.info("Preparing %d blocks for upload", len(blocks_to_upload))
-    block_objs_with_uploaded_files = [
-        _block_with_uploaded_file(block=block, session=session)
-        for block in blocks_to_upload
-    ]
-
-    for block_index, existing_page_block in enumerate(
-        iterable=blocks_to_delete
-    ):
-        _LOGGER.info(
-            "Deleting block %d/%d",
-            block_index + 1,
-            len(blocks_to_delete),
-        )
-        existing_page_block.delete()
-
-    if block_objs_with_uploaded_files:
-        _LOGGER.info(
-            "Appending %d blocks to page",
-            len(block_objs_with_uploaded_files),
-        )
-        after_block = (
-            existing_blocks[prefix_len - 1] if prefix_len > 0 else None
-        )
-        try:
-            page.append(
-                blocks=block_objs_with_uploaded_files,
-                after=after_block,
-            )
-        except HTTPResponseError as exc:
-            if not _is_waf_block(exc=exc):
-                raise
-            raise CloudflareWAFBlockError from exc
     return page

@@ -348,11 +348,26 @@ Arguments:
 - ``--page-id``: (Optional) ID of an existing page to update; the page is renamed to the given title
 - ``--icon``: (Optional) Icon for the page (emoji)
 - ``--cover-path``: (Optional) Path to a cover image file for the page
+- ``--strategy``: (Optional) Block upload strategy, ``diff`` (the default) or ``replace``
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
 With ``--page-id``, the page is looked up by ID instead of by title, and the command fails if no page with that ID exists.
 This avoids a silent fork where renaming a page (in Notion or in your configuration) causes a new page to be created alongside the old one.
+
+Upload Strategies
+~~~~~~~~~~~~~~~~~
+
+The default ``diff`` strategy keeps matching blocks at the beginning and end of the page and only replaces the changed middle.
+It minimizes API calls and preserves the IDs and discussion threads of unchanged blocks, but its synchronization algorithm is more involved.
+
+The ``replace`` strategy uploads the complete new document at the bottom of the page and only then deletes every previously existing block.
+Appending first means an append failure leaves the old document intact.
+This strategy is simpler, but it uploads every block, briefly duplicates the document during synchronization, and replaces all old block IDs and their discussions.
+Consequently, ``--cancel-on-discussion`` treats every existing block as deletable when ``replace`` is selected.
+
+Use ``diff`` for routine publishing where preserving discussions and minimizing API calls matter.
+Use ``replace`` when append-before-delete failure safety and straightforward replacement matter more than retaining old block IDs.
 
 Automatic Publishing Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -388,6 +403,9 @@ Add the following configuration options to your ``conf.py``:
 
    # Optional: Cancel upload if blocks to be deleted have discussion threads
    notion_cancel_on_discussion = True
+
+   # Optional: Use "diff" (default) or append-then-delete "replace"
+   notion_upload_strategy = "diff"
 
 **Configuration Options:**
 
@@ -433,6 +451,11 @@ Add the following configuration options to your ``conf.py``:
    When set to ``True``, the upload will be cancelled with an error if any blocks that would be deleted have discussion threads attached to them.
    This helps prevent accidentally losing discussion content.
    Default: ``False``
+
+``notion_upload_strategy``
+   Selects the block synchronization strategy: ``"diff"`` preserves matching block IDs and discussions while uploading only changes, and ``"replace"`` appends the complete new document before deleting all old blocks.
+   With ``"replace"``, all existing blocks are considered deletable by ``notion_cancel_on_discussion``.
+   Default: ``"diff"``
 
 Publishing the Sample Document Locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

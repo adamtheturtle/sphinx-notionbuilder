@@ -3,6 +3,7 @@
 import json
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import httpx
@@ -37,6 +38,9 @@ from tests._wiremock import (
     count_mock_requests,
 )
 
+if TYPE_CHECKING:
+    from respx.models import Call
+
 
 def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
     """Count calls to file-upload creation endpoint."""
@@ -49,10 +53,23 @@ def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
 
 def test_upload_to_notion_with_wiremock(
     *,
+    respx_mock: respx.MockRouter,
     notion_session: Session,
     parent_page_id: str,
 ) -> None:
-    """It is possible to upload a page with the mock API."""
+    """The default diff strategy leaves identical blocks unchanged."""
+    delete_url_path = "/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7"
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path=delete_url_path,
+    )
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
+        method="PATCH",
+        url_path=append_url_path,
+    )
     page = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
@@ -74,6 +91,90 @@ def test_upload_to_notion_with_wiremock(
     assert len(page.blocks) == 1
     assert isinstance(page.blocks[0], UnoParagraph)
     assert page.blocks[0].rich_text == "Hello from WireMock upload test"
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="DELETE",
+            url_path=delete_url_path,
+        )
+        == before_delete_count
+    )
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="PATCH",
+            url_path=append_url_path,
+        )
+        == before_append_count
+    )
+
+
+def test_upload_replace_appends_before_deleting_existing_blocks(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+    parent_page_id: str,
+) -> None:
+    """Replace appends the whole document before deleting old blocks."""
+    delete_url_path = "/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7"
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path=delete_url_path,
+    )
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
+        method="PATCH",
+        url_path=append_url_path,
+    )
+    before_call_count = len(respx_mock.calls)
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        page_id=None,
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+        strategy=notion_upload.UploadStrategy.REPLACE,
+    )
+
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="PATCH",
+            url_path=append_url_path,
+        )
+        == before_append_count + 1
+    )
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="DELETE",
+            url_path=delete_url_path,
+        )
+        == before_delete_count + 1
+    )
+    calls: list[Call] = list(respx_mock.calls)
+    new_requests = [call.request for call in calls[before_call_count:]]
+    append_index = next(
+        index
+        for index, request in enumerate(iterable=new_requests)
+        if request.method == "PATCH" and request.url.path == append_url_path
+    )
+    delete_index = next(
+        index
+        for index, request in enumerate(iterable=new_requests)
+        if request.method == "DELETE" and request.url.path == delete_url_path
+    )
+    assert append_index < delete_index
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
@@ -287,6 +388,31 @@ def test_upload_discussions_exist_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=True,
+        )
+
+
+def test_replace_cancels_for_discussion_on_unchanged_block(
+    notion_session: Session,
+) -> None:
+    """Replace treats every existing block as scheduled for deletion."""
+    with pytest.raises(
+        expected_exception=DiscussionsExistError,
+        match=r"1 block.*1 discussion",
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Block with a discussion")),
+            ],
+            page_id=None,
+            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=True,
+            strategy=notion_upload.UploadStrategy.REPLACE,
         )
 
 
