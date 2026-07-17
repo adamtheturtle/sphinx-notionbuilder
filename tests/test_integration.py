@@ -1158,6 +1158,38 @@ def test_table_of_contents(
     )
 
 
+def test_topic_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``topic`` directives become callout blocks with nested bodies."""
+    rst_content = """
+        .. topic:: Release *notes*
+
+           This is the visible topic body.
+
+           This is the second paragraph.
+    """
+    callout = UnoCallout(
+        text=text(text="Release ") + text(text="notes", italic=True),
+    )
+    callout.append(
+        blocks=[
+            UnoParagraph(text=text(text="This is the visible topic body.")),
+            UnoParagraph(text=text(text="This is the second paragraph.")),
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[callout],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_toctree_directive(
     *,
     make_app: Callable[..., SphinxTestApp],
