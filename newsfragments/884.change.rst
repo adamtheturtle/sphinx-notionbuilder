@@ -1,0 +1,1 @@
+Images and figures with ``:target:`` now render normally and preserve the target URL as a linked ``Target:`` line in the image caption instead of aborting the build.

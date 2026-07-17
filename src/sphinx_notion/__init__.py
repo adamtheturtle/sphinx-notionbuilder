@@ -1589,6 +1589,40 @@ def _(
 
 
 @beartype
+def _create_image_block(
+    *,
+    node: nodes.image,
+    caption: Text | None,
+) -> UnoImage:
+    """Create a Notion image block from a Sphinx image node."""
+    image_url = node.attributes["uri"]
+    assert isinstance(image_url, str)
+
+    assert node.document is not None
+    if "://" not in image_url:
+        abs_path = Path(node.document.settings.env.srcdir) / image_url
+        image_url = abs_path.as_uri()
+
+    return UnoImage(file=ExternalFile(url=image_url), caption=caption)
+
+
+@beartype
+def _caption_with_image_target(
+    *,
+    caption: Text | None,
+    target_url: str,
+) -> Text:
+    """Append a linked image target to an optional caption."""
+    target_caption = text(text="Target: ") + text(
+        text=target_url,
+        href=target_url,
+    )
+    if caption is None:
+        return target_caption
+    return caption + text(text="\n") + target_caption
+
+
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.figure,
@@ -1630,16 +1664,22 @@ def _(
         if isinstance(child, nodes.caption):
             continue
         if isinstance(child, nodes.image) and caption_rich_text is not None:
-            image_url = child.attributes["uri"]
-            assert isinstance(image_url, str)
-            assert child.document is not None
-            if "://" not in image_url:
-                abs_path = Path(child.document.settings.env.srcdir) / image_url
-                image_url = abs_path.as_uri()
             blocks.append(
-                UnoImage(
-                    file=ExternalFile(url=image_url),
-                    caption=caption_rich_text,
+                _create_image_block(node=child, caption=caption_rich_text)
+            )
+            continue
+        if isinstance(child, nodes.reference):
+            image_node = child.children[0]
+            assert isinstance(image_node, nodes.image)
+            target_url = child.attributes["refuri"]
+            assert isinstance(target_url, str)
+            blocks.append(
+                _create_image_block(
+                    node=image_node,
+                    caption=_caption_with_image_target(
+                        caption=caption_rich_text,
+                        target_url=target_url,
+                    ),
                 )
             )
             continue
@@ -1659,16 +1699,27 @@ def _(
 ) -> list[Block]:
     """Process image nodes by creating Notion Image blocks."""
     del section_level
+    return [_create_image_block(node=node, caption=None)]
 
-    image_url = node.attributes["uri"]
-    assert isinstance(image_url, str)
 
-    assert node.document is not None
-    if "://" not in image_url:
-        abs_path = Path(node.document.settings.env.srcdir) / image_url
-        image_url = abs_path.as_uri()
-
-    return [UnoImage(file=ExternalFile(url=image_url), caption=None)]
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.reference,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process a block-level linked image as a captioned image block."""
+    del section_level
+    image_node = node.children[0]
+    assert isinstance(image_node, nodes.image)
+    target_url = node.attributes["refuri"]
+    assert isinstance(target_url, str)
+    caption = _caption_with_image_target(
+        caption=None,
+        target_url=target_url,
+    )
+    return [_create_image_block(node=image_node, caption=caption)]
 
 
 @beartype
