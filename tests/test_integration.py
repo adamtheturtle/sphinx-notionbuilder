@@ -409,6 +409,106 @@ def test_inline_formatting(
     )
 
 
+def test_subscript_and_superscript(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Subscript and superscript roles render as plain text with
+    warnings.
+    """
+    rst_content = r"""
+        Water is H\ :sub:`2`\ O and the area is x\ :sup:`2`.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Subscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+        f"{index_rst}:1:",
+        "Superscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="Water is H2O and the area is x2.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_subscript_and_superscript_preserve_child_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Subscript and superscript preserve nested rich text formatting."""
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    def nested_subscript(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):
+        del name, lineno, inliner, options, content
+        node = nodes.subscript(rawtext)
+        node += nodes.strong(rawtext, text)
+        return [node], []
+
+    def nested_superscript(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):
+        del name, lineno, inliner, options, content
+        node = nodes.superscript(rawtext)
+        node += nodes.emphasis(rawtext, text)
+        return [node], []
+
+    app.add_role('nested-sub', nested_subscript)
+    app.add_role('nested-sup', nested_superscript)
+"""
+    rst_content = """
+        Nested :nested-sub:`bold` and :nested-sup:`italic` text.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Subscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+        f"{index_rst}:1:",
+        "Superscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="Nested ")
+                + text(text="bold", bold=True)
+                + text(text=" and ")
+                + text(text="italic", italic=True)
+                + text(text=" text.")
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_single_heading(
     *,
     make_app: Callable[..., SphinxTestApp],
