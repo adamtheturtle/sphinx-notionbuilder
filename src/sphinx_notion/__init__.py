@@ -386,7 +386,7 @@ def _process_rich_text_node(node: nodes.Node) -> Text:
 @_process_rich_text_node.register
 def _(node: nodes.line) -> Text:
     """Process line nodes by creating rich text."""
-    return _create_styled_text_from_node(node=node) + "\n"
+    return _create_rich_text_from_children(node=node) + "\n"
 
 
 @beartype
@@ -1278,6 +1278,27 @@ def _(
 
 
 @beartype
+def _create_rich_text_from_line_block(
+    *,
+    node: nodes.line_block,
+    indentation_level: int = 0,
+) -> Text:
+    """Flatten a nested line block with deterministic indentation."""
+    rich_text = Text.from_plain_text(text="")
+    for child in node.children:
+        if isinstance(child, nodes.line):
+            rich_text += text(text="  " * indentation_level)
+            rich_text += _process_rich_text_node(child)
+        else:
+            assert isinstance(child, nodes.line_block)
+            rich_text += _create_rich_text_from_line_block(
+                node=child,
+                indentation_level=indentation_level + 1,
+            )
+    return rich_text
+
+
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.title,
@@ -2030,7 +2051,7 @@ def _(
     """
     del section_level
 
-    line_text = _create_rich_text_from_children(node=node)
+    line_text = _create_rich_text_from_line_block(node=node)
     return [UnoParagraph(text=line_text)]
 
 

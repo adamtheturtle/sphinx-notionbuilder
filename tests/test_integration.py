@@ -4266,11 +4266,7 @@ def test_line_block(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Line blocks (created with pipe character) become empty Notion
-    paragraph
-    blocks.
-    """
+    """Line blocks become Notion paragraphs with preserved line breaks."""
     rst_content = """
         | This is a line block
         | with multiple lines
@@ -4285,6 +4281,44 @@ def test_line_block(
             + text(text="\n")
             + text(text="preserved exactly as written")
             + text(text="\n")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_nested_line_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Nested line blocks flatten with indentation and inline
+    formatting.
+    """
+    rst_content = """
+        | First line with *italic*
+        |   Indented **child** line
+        |     Deep line with ``code``
+        | Second line
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="First line with ")
+                + text(text="italic", italic=True)
+                + text(text="\n  Indented ")
+                + text(text="child", bold=True)
+                + text(text=" line\n    Deep line with ")
+                + text(text="code", code=True)
+                + text(text="\nSecond line\n")
+            )
         ),
     ]
 
