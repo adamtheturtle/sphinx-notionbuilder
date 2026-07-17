@@ -647,9 +647,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         *color_mapping.keys(),
         *bg_color_classes,
     }
-    # Cross-reference classes used by autosummary and autodoc.
-    # These don't affect styling as the node type (literal) handles it.
+    # Semantic classes that don't affect Notion styling. Cross-reference
+    # styling comes from literal nodes, while version status is already
+    # represented by generated text and the containing callout.
     ignored_style_classes = {
+        "added",
+        "changed",
+        "deprecated",
         "xref",
         "py",
         "py-obj",
@@ -662,6 +666,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "std-option",
         "std-term",
         "std-token",
+        "versionmodified",
     }
     unsupported_styles = [
         css_class
@@ -1347,6 +1352,22 @@ def _create_admonition_callout(
             )
         )
     return [block]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.versionmodified,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process version change directives as Notion callout blocks."""
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="🏷️",
+        background_color=BGColor.GRAY,
+    )
 
 
 @beartype
