@@ -1268,13 +1268,19 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process Sphinx ``toctree`` nodes."""
-    del node
-    del section_level
-    # There are no specific Notion blocks for ``toctree`` nodes.
-    # We need to support ``toctree`` in ``index.rst``.
-    # Just ignore it.
-    return []
+    """Process compound content, except Sphinx navigation wrappers."""
+    if "toctree-wrapper" in node["classes"]:
+        return []
+
+    blocks: list[Block] = []
+    for child in node.children:
+        blocks.extend(
+            _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+        )
+    return blocks
 
 
 @beartype
