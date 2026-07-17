@@ -33,7 +33,7 @@ def _write_blocks_file(
 def _invoke_upload(
     *,
     blocks_file: Path,
-    parent_page_id: str,
+    parent_page_id: str | None,
     mock_api_base_url: str,
     cancel_on_discussion: bool = False,
     page_id: str | None = None,
@@ -43,13 +43,13 @@ def _invoke_upload(
     arguments = [
         "--file",
         str(object=blocks_file),
-        "--parent-page-id",
-        parent_page_id,
         "--title",
         "Upload Title",
         "--notion-api-base-url",
         mock_api_base_url,
     ]
+    if parent_page_id is not None:
+        arguments.extend(["--parent-page-id", parent_page_id])
     if cancel_on_discussion:
         arguments.append("--cancel-on-discussion")
     if page_id is not None:
@@ -210,7 +210,7 @@ def test_upload_with_page_id(
 
     result = _invoke_upload(
         blocks_file=blocks_file,
-        parent_page_id=parent_page_id,
+        parent_page_id=None,
         mock_api_base_url=mock_api_base_url,
         page_id=parent_page_id,
     )
@@ -220,6 +220,24 @@ def test_upload_with_page_id(
         "Uploaded page: 'Upload Title' "
         "(https://www.notion.so/Upload-Title-59833787)\n"
     )
+
+
+def test_upload_without_page_id_or_parent(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Title matching requires a parent page or database."""
+    blocks_file = _write_blocks_file(tmp_path=tmp_path, block_dicts=[])
+
+    result = _invoke_upload(
+        blocks_file=blocks_file,
+        parent_page_id=None,
+        mock_api_base_url="https://example.invalid",
+    )
+
+    usage_error_exit_code = 2
+    assert result.exit_code == usage_error_exit_code
+    assert "exactly 1 of the following parameters must be set" in result.output
 
 
 def test_upload_page_not_found_error(

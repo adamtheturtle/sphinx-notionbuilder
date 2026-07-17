@@ -2379,12 +2379,13 @@ def _validate_notion_config(
         return
 
     if (
-        not config.notion_parent_page_id
+        not config.notion_page_id
+        and not config.notion_parent_page_id
         and not config.notion_parent_database_id
     ):
         msg = (
-            "notion_publish is enabled but neither notion_parent_page_id "
-            "nor notion_parent_database_id is set"
+            "notion_publish is enabled but notion_page_id and both "
+            "notion_parent_page_id and notion_parent_database_id are unset"
         )
         raise ValueError(msg)
 
