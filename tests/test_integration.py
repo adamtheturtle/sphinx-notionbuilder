@@ -589,6 +589,67 @@ def test_multiple_links(
     )
 
 
+def test_citations(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Citation references and formatted bibliography entries render."""
+    rst_content = """
+        The algorithm is described in [SMITH2024]_ and again [SMITH2024]_.
+        See [DOE2023]_.
+
+        .. [SMITH2024] Smith, A. (2024). *Example Paper*.
+        .. [DOE2023] Doe, J. (2023). ``Other Work``.
+    """
+
+    reference_paragraph = UnoParagraph(
+        text=(
+            text(text="The algorithm is described in ")
+            + text(text="[SMITH2024]")
+            + text(text=" and again ")
+            + text(text="[SMITH2024]")
+            + text(text=".\nSee ")
+            + text(text="[DOE2023]")
+            + text(text=".")
+        )
+    )
+
+    smith_item = UnoBulletedItem(text=text(text="[SMITH2024]", bold=True))
+    smith_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Smith, A. (2024). ")
+                    + text(text="Example Paper", italic=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    doe_item = UnoBulletedItem(text=text(text="[DOE2023]", bold=True))
+    doe_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Doe, J. (2023). ")
+                    + text(text="Other Work", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[reference_paragraph, smith_item, doe_item],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_link_in_heading(
     *,
     make_app: Callable[..., SphinxTestApp],
