@@ -433,6 +433,50 @@ def test_single_heading(
     )
 
 
+def test_document_metadata(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Document metadata renders before the document body."""
+    rst_content = """
+        :orphan:
+        :Authors: Ada Lovelace; Grace Hopper
+        :Version: 2.0
+        :Date: 2026-07-16
+
+        Design Notes
+        ============
+
+        Body text.
+    """
+
+    authors_item = UnoBulletedItem(text=text(text="Authors", bold=True))
+    authors_item.append(
+        blocks=[UnoParagraph(text=text(text="Ada Lovelace, Grace Hopper"))]
+    )
+    version_item = UnoBulletedItem(text=text(text="Version", bold=True))
+    version_item.append(blocks=[UnoParagraph(text=text(text="2.0"))])
+    date_item = UnoBulletedItem(text=text(text="Date", bold=True))
+    date_item.append(blocks=[UnoParagraph(text=text(text="2026-07-16"))])
+
+    expected_blocks = [
+        authors_item,
+        version_item,
+        date_item,
+        UnoHeading1(text=text(text="Design Notes")),
+        UnoParagraph(text=text(text="Body text.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_multiple_heading_levels(
     *,
     make_app: Callable[..., SphinxTestApp],
