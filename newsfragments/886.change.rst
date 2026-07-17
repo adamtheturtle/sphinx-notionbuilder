@@ -1,0 +1,1 @@
+Sphinx ``centered`` directives now render as normal Notion paragraphs with inline formatting preserved instead of aborting the build.

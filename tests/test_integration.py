@@ -365,6 +365,37 @@ def test_multiple_paragraphs(
     )
 
 
+def test_centered_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Centered directives become paragraphs with formatting preserved."""
+    rst_content = """
+        .. centered:: Important **bold** and *italic* announcement
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="Important ")
+                + text(text="bold", bold=True)
+                + text(text=" and ")
+                + text(text="italic", italic=True)
+                + text(text=" announcement")
+            )
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_inline_formatting(
     *,
     make_app: Callable[..., SphinxTestApp],

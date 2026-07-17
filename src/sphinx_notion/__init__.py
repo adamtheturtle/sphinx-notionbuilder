@@ -1078,6 +1078,19 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.centered,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process centered text as a normal Notion paragraph."""
+    del section_level
+    rich_text = _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=rich_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.block_quote,
     *,
     section_level: int,
