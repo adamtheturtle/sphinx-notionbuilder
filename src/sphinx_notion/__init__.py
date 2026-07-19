@@ -103,6 +103,10 @@ from sphinx_notion._upload import (
 
 _LOGGER = sphinx_logging.getLogger(name=__name__)
 
+_SPHINX_CONTROL_METADATA = frozenset(
+    {"nocomments", "no-search", "nosearch", "orphan", "tocdepth"}
+)
+
 
 @beartype
 def _get_text_color_mapping() -> dict[str, Color]:
@@ -734,6 +738,28 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
         rich_text += new_text
 
     return rich_text
+
+
+@beartype
+def _create_docinfo_blocks(
+    *, metadata: dict[str, str | int | list[object]]
+) -> list[Block]:
+    """Create labeled bullets from Sphinx document metadata."""
+    blocks: list[Block] = []
+    for metadata_name, metadata_value in metadata.items():
+        if metadata_name in _SPHINX_CONTROL_METADATA:
+            continue
+
+        if isinstance(metadata_value, list):
+            value_text = ", ".join(str(object=item) for item in metadata_value)
+        else:
+            value_text = str(object=metadata_value)
+
+        label = metadata_name.replace("_", " ").title()
+        bulleted_item = UnoBulletedItem(text=text(text=label, bold=True))
+        bulleted_item.append(blocks=[UnoParagraph(text=text(text=value_text))])
+        blocks.append(bulleted_item)
+    return blocks
 
 
 @beartype
@@ -2382,9 +2408,12 @@ class NotionTranslator(NodeVisitor):
 
     def __init__(self, document: nodes.document, builder: TextBuilder) -> None:
         """Initialize the translator with storage for blocks."""
-        del builder
         super().__init__(document=document)
-        self._blocks: list[Block] = []
+        docname = builder.current_docname
+        metadata = (
+            {} if docname is None else builder.env.metadata.get(docname, {})
+        )
+        self._blocks = _create_docinfo_blocks(metadata=metadata)
         self.body: str
         self._section_level = 0
 
