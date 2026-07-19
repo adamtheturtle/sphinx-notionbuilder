@@ -15,4 +15,7 @@ extensions = [
 autosummary_generate = True
 
 suppress_warnings = [
+    "ref.notion",
+    "notion.unsupported_inline",
+    "notion.unsupported_layout",
 ]
