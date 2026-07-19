@@ -1498,6 +1498,70 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_version_change_directives(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Version change directives preserve labels, formatting, and
+    blocks.
+    """
+    rst_content = """
+        .. versionadded:: 1.2
+           Added *inline* body.
+
+           * Nested added item.
+
+        .. versionchanged:: 1.3
+           Changed **inline** body.
+
+        .. deprecated:: 1.4
+           Deprecated body.
+
+           Nested paragraph.
+    """
+
+    added = UnoCallout(
+        text=(
+            text(text="Added in version 1.2: Added ")
+            + text(text="inline", italic=True)
+            + text(text=" body.")
+        ),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+    added.append(
+        blocks=[UnoBulletedItem(text=text(text="Nested added item."))]
+    )
+
+    changed = UnoCallout(
+        text=(
+            text(text="Changed in version 1.3: Changed ")
+            + text(text="inline", bold=True)
+            + text(text=" body.")
+        ),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+
+    deprecated = UnoCallout(
+        text=text(text="Deprecated since version 1.4: Deprecated body."),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+    deprecated.append(
+        blocks=[UnoParagraph(text=text(text="Nested paragraph."))]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[added, changed, deprecated],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_definition_list(
     *,
     make_app: Callable[..., SphinxTestApp],

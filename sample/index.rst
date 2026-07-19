@@ -146,6 +146,24 @@ Link to Notion Page Block
 
       .. notion-link-to-page:: {{ sample_page_id }}
 
+Version Changes
+~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. versionadded:: 1.2
+      Added *inline* body.
+
+      * Nested added item.
+
+   .. versionchanged:: 1.3
+      Changed **inline** body.
+
+   .. deprecated:: 1.4
+      Deprecated body.
+
+      Nested paragraph.
+
 Admonitions
 ~~~~~~~~~~~
 
