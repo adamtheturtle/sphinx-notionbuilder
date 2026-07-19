@@ -53,6 +53,21 @@ def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
     )
 
 
+def _cover_clear_count(*, mock: respx.MockRouter) -> int:
+    """Count page updates that explicitly clear the cover."""
+    count = 0
+    calls: list[Call] = list(mock.calls)
+    for call in calls:
+        if (
+            call.request.method == "PATCH"
+            and call.request.url.path.startswith("/v1/pages/")
+            and json.loads(s=call.request.content).get("cover", "missing")
+            is None
+        ):
+            count += 1
+    return count
+
+
 def test_count_page_metadata_clear_requests(
     *,
     parent_page_id: str,
@@ -493,6 +508,43 @@ def test_upload_with_cover_path(
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
     assert after_upload_count == before_upload_count + 1
+
+
+def test_upload_with_unchanged_cover_path(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """An unchanged local cover is neither uploaded nor cleared."""
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=b"unchanged-cover")
+    before_clear_count = _cover_clear_count(mock=respx_mock)
+    before_upload_count = _file_upload_create_count(mock=respx_mock)
+
+    with patch.object(
+        target=notion_upload,
+        attribute="_get_uploaded_cover",
+        return_value=None,
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            ],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=cover_file,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert _cover_clear_count(mock=respx_mock) == before_clear_count
+    assert _file_upload_create_count(mock=respx_mock) == before_upload_count
 
 
 def test_upload_with_file_block(
