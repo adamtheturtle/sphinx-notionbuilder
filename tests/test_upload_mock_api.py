@@ -3,6 +3,7 @@
 import json
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import httpx
@@ -17,6 +18,7 @@ from ultimate_notion.blocks import (
     ChildrenMixin,
     Divider,
 )
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -35,7 +37,11 @@ from sphinx_notion._upload import (
 )
 from tests._wiremock import (
     count_mock_requests,
+    count_page_metadata_clear_requests,
 )
+
+if TYPE_CHECKING:
+    from respx.models import Call
 
 
 def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
@@ -53,6 +59,47 @@ def _page_update_count(*, mock: respx.MockRouter, page_id: str) -> int:
         mock=mock,
         method="PATCH",
         url_path=f"/v1/pages/{page_id}",
+    )
+
+
+def _cover_clear_count(*, mock: respx.MockRouter) -> int:
+    """Count page updates that explicitly clear the cover."""
+    count = 0
+    calls: list[Call] = list(mock.calls)
+    for call in calls:
+        if (
+            call.request.method == "PATCH"
+            and call.request.url.path.startswith("/v1/pages/")
+            and json.loads(s=call.request.content).get("cover", "missing")
+            is None
+        ):
+            count += 1
+    return count
+
+
+def test_count_page_metadata_clear_requests(
+    *,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Icon and cover null updates are both recognized as clears."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    for payload in ({"icon": None}, {"cover": None}):
+        response = httpx.patch(
+            url=f"https://mock.notion.test/v1/pages/{parent_page_id}",
+            json=payload,
+        )
+        assert response.status_code == httpx.codes.OK
+
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before + 2
     )
 
 
@@ -83,6 +130,44 @@ def test_upload_to_notion_with_wiremock(
     assert len(page.blocks) == 1
     assert isinstance(page.blocks[0], UnoParagraph)
     assert page.blocks[0].rich_text == "Hello from WireMock upload test"
+
+
+def test_omitted_page_metadata_is_preserved(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Omitted icon and cover values do not clear existing metadata."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        page_id=parent_page_id,
+        parent_page_id=None,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.icon == "\N{MEMO}"
+    assert isinstance(page.cover, ExternalFile)
+    assert page.cover.url == "https://example.com/cover.png"
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before
+    )
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
@@ -464,6 +549,43 @@ def test_upload_with_cover_path(
     assert after_upload_count == before_upload_count + 1
 
 
+def test_upload_with_unchanged_cover_path(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """An unchanged local cover is neither uploaded nor cleared."""
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=b"unchanged-cover")
+    before_clear_count = _cover_clear_count(mock=respx_mock)
+    before_upload_count = _file_upload_create_count(mock=respx_mock)
+
+    with patch.object(
+        target=notion_upload,
+        attribute="_get_uploaded_cover",
+        return_value=None,
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            ],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=cover_file,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert _cover_clear_count(mock=respx_mock) == before_clear_count
+    assert _file_upload_create_count(mock=respx_mock) == before_upload_count
+
+
 def test_upload_with_file_block(
     *,
     notion_session: Session,
@@ -504,6 +626,56 @@ def test_upload_with_file_block(
     assert str(object=uploaded_image_file.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
+
+
+def test_upload_local_file_preserves_name_and_caption(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+    tmp_path: Path,
+) -> None:
+    """A local file's custom presentation survives file upload."""
+    local_file = tmp_path / "archive.zip"
+    local_file.write_bytes(data=b"release-bundle")
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    appends_before = count_mock_requests(
+        mock=respx_mock,
+        method="PATCH",
+        url_path=append_url_path,
+    )
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoFile(
+                file=ExternalFile(url=local_file.as_uri()),
+                name="Download the release bundle",
+                caption="Current release",
+            )
+        ],
+        page_id=None,
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    calls: list[Call] = list(respx_mock.calls)
+    append_calls = [
+        call
+        for call in calls
+        if call.request.method == "PATCH"
+        and call.request.url.path == append_url_path
+    ]
+    assert len(append_calls) == appends_before + 1
+    payload = json.loads(s=append_calls[-1].request.content)
+    uploaded_file = payload["children"][0]["file"]
+    assert uploaded_file["name"] == "Download the release bundle"
+    assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
 
 
 def test_upload_with_nested_file_block(
