@@ -11,6 +11,7 @@ from sphinx.testing.util import SphinxTestApp
 from sphinx_notion._upload import PageHasSubpagesError
 from tests._wiremock import (  # pyrefly: ignore[missing-import]
     count_mock_requests,
+    count_page_metadata_clear_requests,
 )
 
 
@@ -133,6 +134,7 @@ def test_publish_success(
             "extensions": ["sphinx_notion"],
             "notion_publish": True,
             "notion_parent_page_id": parent_page_id,
+            "notion_page_id": parent_page_id,
             "notion_page_title": "Upload Title",
             "notion_api_base_url": mock_api_base_url,
         },
@@ -143,6 +145,10 @@ def test_publish_success(
         method="PATCH",
         url_path=append_url_path,
     )
+    metadata_clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
     app.build()
     assert app.statuscode == 0
     assert (
@@ -152,6 +158,13 @@ def test_publish_success(
             url_path=append_url_path,
         )
         == before_count + 1
+    )
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == metadata_clears_before
     )
 
 

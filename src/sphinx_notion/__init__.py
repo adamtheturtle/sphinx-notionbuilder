@@ -390,7 +390,7 @@ def _process_rich_text_node(node: nodes.Node) -> Text:
 @_process_rich_text_node.register
 def _(node: nodes.line) -> Text:
     """Process line nodes by creating rich text."""
-    return _create_styled_text_from_node(node=node) + "\n"
+    return _create_rich_text_from_children(node=node) + "\n"
 
 
 @beartype
@@ -503,6 +503,13 @@ def _(node: nodes.title_reference) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: nodes.footnote_reference) -> Text:
+    """Process footnote references as bracketed numbers."""
+    return text(text=f"[{node.astext()}]")
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.Text) -> Text:
     """Process Text nodes by creating plain text."""
     return text(text=node.astext())
@@ -513,6 +520,21 @@ def _(node: nodes.Text) -> Text:
 def _(node: nodes.inline) -> Text:
     """Process inline nodes by creating styled text."""
     return _create_styled_text_from_node(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
+def _(node: nodes.subscript | nodes.superscript) -> Text:
+    """Process vertically positioned text as plain rich text."""
+    _LOGGER.warning(
+        "%s text cannot be vertically positioned by the Notion builder. "
+        "Rendering as plain text.",
+        type(node).__name__.capitalize(),
+        type="notion",
+        subtype="unsupported_inline",
+        location=node,
+    )
+    return _create_rich_text_from_children(node=node)
 
 
 @beartype
@@ -651,9 +673,13 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         *color_mapping.keys(),
         *bg_color_classes,
     }
-    # Cross-reference classes used by autosummary and autodoc.
-    # These don't affect styling as the node type (literal) handles it.
+    # Semantic classes that don't affect Notion styling. Cross-reference
+    # styling comes from literal nodes, while version status is already
+    # represented by generated text and the containing callout.
     ignored_style_classes = {
+        "added",
+        "changed",
+        "deprecated",
         "xref",
         "py",
         "py-obj",
@@ -666,6 +692,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         "std-option",
         "std-term",
         "std-token",
+        "versionmodified",
     }
     unsupported_styles = [
         css_class
@@ -1077,6 +1104,26 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.centered,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process centered text as a normal Notion paragraph."""
+    del section_level
+    _LOGGER.warning(
+        "Centered alignment cannot be represented by the Notion builder. "
+        "Rendering as a normal paragraph.",
+        type="notion",
+        subtype="unsupported_layout",
+        location=node,
+    )
+    rich_text = _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=rich_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.block_quote,
     *,
     section_level: int,
@@ -1095,6 +1142,19 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.attribution,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process quote attributions as nested paragraphs."""
+    del section_level
+    rich_text = text(text="— ") + _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=rich_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.literal_block,
     *,
     section_level: int,
@@ -1104,6 +1164,26 @@ def _(
     code_text = _create_rich_text_from_children(node=node)
     language = _get_code_language(node=node)
     return [UnoCode(text=code_text, language=language)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.productionlist,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process grammar productions as a plain-text code block."""
+    del section_level
+    production_text = "\n".join(
+        production.astext().rstrip() for production in node.children
+    )
+    return [
+        UnoCode(
+            text=text(text=production_text),
+            language=CodeLang.PLAIN_TEXT,
+        )
+    ]
 
 
 @beartype
@@ -1154,6 +1234,56 @@ def _(
                 )
                 todo_item_block.append(blocks=child_blocks)
             result.append(todo_item_block)
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.footnote,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process footnote bodies as numbered bulleted items."""
+    label_node = node.children[0]
+    assert isinstance(label_node, nodes.label)
+    footnote_item = UnoBulletedItem(
+        text=text(text=f"[{label_node.astext()}]", bold=True)
+    )
+    for child in node.children[1:]:
+        child_blocks = _process_node_to_blocks(
+            child,
+            section_level=section_level,
+        )
+        footnote_item.append(blocks=child_blocks)
+    return [footnote_item]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.hlist,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process horizontal lists as flat bulleted item blocks."""
+    _LOGGER.warning(
+        "Horizontal list columns cannot be represented by the Notion "
+        "builder. Flattening into a single bulleted list.",
+        type="notion",
+        subtype="unsupported_layout",
+        location=node,
+    )
+    result: list[Block] = []
+    for column in node.children:
+        assert isinstance(column, addnodes.hlistcol)
+        for child in column.children:
+            result.extend(
+                _process_node_to_blocks(
+                    child,
+                    section_level=section_level,
+                )
+            )
     return result
 
 
@@ -1275,6 +1405,35 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.option_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process command options as bullets with nested descriptions."""
+    result: list[Block] = []
+    for list_item in node.children:
+        assert isinstance(list_item, nodes.option_list_item)
+        option_group = list_item.children[0]
+        description = list_item.children[1]
+        assert isinstance(option_group, nodes.option_group)
+        assert isinstance(description, nodes.description)
+
+        bulleted_item = UnoBulletedItem(
+            text=text(text=option_group.astext(), code=True)
+        )
+        for child in description.children:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+            bulleted_item.append(blocks=child_blocks)
+        result.append(bulleted_item)
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.topic,
     *,
     section_level: int,
@@ -1294,13 +1453,40 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process Sphinx ``toctree`` nodes."""
-    del node
-    del section_level
-    # There are no specific Notion blocks for ``toctree`` nodes.
-    # We need to support ``toctree`` in ``index.rst``.
-    # Just ignore it.
-    return []
+    """Process compound content, except Sphinx navigation wrappers."""
+    if "toctree-wrapper" in node["classes"]:
+        return []
+
+    blocks: list[Block] = []
+    for child in node.children:
+        blocks.extend(
+            _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+        )
+    return blocks
+
+
+@beartype
+def _create_rich_text_from_line_block(
+    *,
+    node: nodes.line_block,
+    indentation_level: int = 0,
+) -> Text:
+    """Flatten a nested line block with deterministic indentation."""
+    rich_text = Text.from_plain_text(text="")
+    for child in node.children:
+        if isinstance(child, nodes.line):
+            rich_text += text(text="  " * indentation_level)
+            rich_text += _process_rich_text_node(child)
+        else:
+            assert isinstance(child, nodes.line_block)
+            rich_text += _create_rich_text_from_line_block(
+                node=child,
+                indentation_level=indentation_level + 1,
+            )
+    return rich_text
 
 
 @beartype
@@ -1373,6 +1559,22 @@ def _create_admonition_callout(
             )
         )
     return [block]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: addnodes.versionmodified,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process version change directives as Notion callout blocks."""
+    del section_level
+    return _create_admonition_callout(
+        node=node,
+        emoji="🏷️",
+        background_color=BGColor.GRAY,
+    )
 
 
 @beartype
@@ -1654,6 +1856,15 @@ def _(
     blocks: list[Block] = []
     for child in node.children:
         if isinstance(child, nodes.caption):
+            continue
+        if isinstance(child, nodes.legend):
+            for legend_child in child.children:
+                blocks.extend(
+                    _process_node_to_blocks(
+                        legend_child,
+                        section_level=section_level,
+                    )
+                )
             continue
         if isinstance(child, nodes.image) and caption_rich_text is not None:
             image_url = child.attributes["uri"]
@@ -2056,7 +2267,7 @@ def _(
     """
     del section_level
 
-    line_text = _create_rich_text_from_children(node=node)
+    line_text = _create_rich_text_from_line_block(node=node)
     return [UnoParagraph(text=line_text)]
 
 
@@ -2408,12 +2619,13 @@ def _validate_notion_config(
         return
 
     if (
-        not config.notion_parent_page_id
+        not config.notion_page_id
+        and not config.notion_parent_page_id
         and not config.notion_parent_database_id
     ):
         msg = (
-            "notion_publish is enabled but neither notion_parent_page_id "
-            "nor notion_parent_database_id is set"
+            "notion_publish is enabled but notion_page_id and both "
+            "notion_parent_page_id and notion_parent_database_id are unset"
         )
         raise ValueError(msg)
 

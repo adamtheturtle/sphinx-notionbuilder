@@ -365,6 +365,44 @@ def test_multiple_paragraphs(
     )
 
 
+def test_centered_text(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Centered directives become paragraphs with formatting preserved."""
+    rst_content = """
+        .. centered:: Important **bold** and *italic* announcement
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Centered alignment cannot be represented by the Notion builder. "
+        "Rendering as a normal paragraph. [notion.unsupported_layout]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="Important ")
+                + text(text="bold", bold=True)
+                + text(text=" and ")
+                + text(text="italic", italic=True)
+                + text(text=" announcement")
+            )
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
 def test_inline_formatting(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -406,6 +444,106 @@ def test_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+    )
+
+
+def test_subscript_and_superscript(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Subscript and superscript roles render as plain text with
+    warnings.
+    """
+    rst_content = r"""
+        Water is H\ :sub:`2`\ O and the area is x\ :sup:`2`.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Subscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+        f"{index_rst}:1:",
+        "Superscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="Water is H2O and the area is x2.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
+    )
+
+
+def test_subscript_and_superscript_preserve_child_formatting(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Subscript and superscript preserve nested rich text formatting."""
+    conf_py_content = """
+from docutils import nodes
+
+def setup(app):
+    def nested_subscript(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):
+        del name, lineno, inliner, options, content
+        node = nodes.subscript(rawtext)
+        node += nodes.strong(rawtext, text)
+        return [node], []
+
+    def nested_superscript(
+        name, rawtext, text, lineno, inliner, options={}, content=[]
+    ):
+        del name, lineno, inliner, options, content
+        node = nodes.superscript(rawtext)
+        node += nodes.emphasis(rawtext, text)
+        return [node], []
+
+    app.add_role('nested-sub', nested_subscript)
+    app.add_role('nested-sup', nested_superscript)
+"""
+    rst_content = """
+        Nested :nested-sub:`bold` and :nested-sup:`italic` text.
+    """
+
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Subscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+        f"{index_rst}:1:",
+        "Superscript text cannot be vertically positioned by the Notion "
+        "builder. Rendering as plain text. [notion.unsupported_inline]",
+    ]
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="Nested ")
+                + text(text="bold", bold=True)
+                + text(text=" and ")
+                + text(text="italic", italic=True)
+                + text(text=" text.")
+            )
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        conf_py_content=conf_py_content,
+        expected_warnings=expected_warnings,
     )
 
 
@@ -633,6 +771,81 @@ def test_multiple_links(
     )
 
 
+def test_footnotes(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Auto, explicit, and named footnotes retain references and
+    bodies.
+    """
+    rst_content = """
+        Auto [#]_. Explicit [1]_. Named [#note]_ and again [#note]_.
+
+        .. [#] Auto *body*.
+        .. [1] Explicit body.
+        .. [#note] Named ``body``.
+    """
+
+    reference_paragraph = UnoParagraph(
+        text=(
+            text(text="Auto ")
+            + text(text="[2]")
+            + text(text=". Explicit ")
+            + text(text="[1]")
+            + text(text=". Named ")
+            + text(text="[3]")
+            + text(text=" and again ")
+            + text(text="[3]")
+            + text(text=".")
+        )
+    )
+
+    auto_item = UnoBulletedItem(text=text(text="[2]", bold=True))
+    auto_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Auto ")
+                    + text(text="body", italic=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    explicit_item = UnoBulletedItem(text=text(text="[1]", bold=True))
+    explicit_item.append(
+        blocks=[UnoParagraph(text=text(text="Explicit body."))]
+    )
+
+    named_item = UnoBulletedItem(text=text(text="[3]", bold=True))
+    named_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Named ")
+                    + text(text="body", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[
+            reference_paragraph,
+            auto_item,
+            explicit_item,
+            named_item,
+        ],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_link_in_heading(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -847,6 +1060,71 @@ def test_multi_paragraph_quote(
     )
 
 
+def test_attributed_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Attributed block quotes retain their author after the quote
+    text.
+    """
+    rst_content = """
+        Some content.
+
+            Documentation is a love letter that you write to your future self.
+
+            -- Damian Conway
+    """
+    quote = UnoQuote(
+        text=text(
+            text="Documentation is a love letter that you write to your "
+            "future self."
+        )
+    )
+    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[
+            UnoParagraph(text=text(text="Some content.")),
+            quote,
+        ],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_epigraph(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Epigraph directives retain their attribution."""
+    rst_content = """
+        .. epigraph::
+
+           Documentation is a love letter that you write to your future self.
+
+           -- Damian Conway
+    """
+    quote = UnoQuote(
+        text=text(
+            text="Documentation is a love letter that you write to your "
+            "future self."
+        )
+    )
+    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[quote],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_table_of_contents(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -898,6 +1176,39 @@ def test_toctree_directive(
 
     expected_blocks = [
         UnoHeading1(text=text(text="Introduction")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_compound_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``compound`` directives preserve their visible child blocks."""
+    rst_content = """
+        Before.
+
+        .. compound::
+
+           This is the first compound paragraph.
+
+           This is the second compound paragraph.
+
+        After.
+    """
+    expected_blocks = [
+        UnoParagraph(text=text(text="Before.")),
+        UnoParagraph(text=text(text="This is the first compound paragraph.")),
+        UnoParagraph(text=text(text="This is the second compound paragraph.")),
+        UnoParagraph(text=text(text="After.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -1109,6 +1420,39 @@ def test_code_block_language_mapping(
     )
 
 
+def test_production_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Grammar productions become an aligned plain-text code block."""
+    rst_content = """
+        .. productionlist::
+           expression: `term` ("+" `term`)*
+           term: `NUMBER`
+           NUMBER: /[0-9]+/
+    """
+
+    expected_blocks = [
+        UnoCode(
+            text=text(
+                text='expression ::= term ("+" term)*\n'
+                "term       ::= NUMBER\n"
+                "NUMBER     ::= /[0-9]+/"
+            ),
+            language=CodeLang.PLAIN_TEXT,
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_flat_bullet_list(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -1161,6 +1505,47 @@ def test_bullet_list_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+    )
+
+
+@pytest.mark.parametrize(
+    argnames=("columns", "items"),
+    argvalues=[
+        (1, ("One", "Two", "Three")),
+        (2, ("One", "Two", "Three")),
+        (3, ("One", "Two", "Three", "Four", "Five")),
+    ],
+)
+def test_horizontal_list(
+    *,
+    columns: int,
+    items: tuple[str, ...],
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Horizontal lists flatten into bulleted items in source order."""
+    list_items = "\n".join(f"   * {item}" for item in items)
+    rst_content = f"""
+.. hlist::
+   :columns: {columns}
+
+{list_items}
+    """
+
+    expected_warnings = [
+        "Horizontal list columns cannot be represented by the Notion "
+        "builder. Flattening into a single bulleted list. "
+        "[notion.unsupported_layout]",
+    ]
+
+    expected_blocks = [UnoBulletedItem(text=text(text=item)) for item in items]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=expected_warnings,
     )
 
 
@@ -1409,6 +1794,70 @@ def test_admonition_with_bullet_points(
     )
 
 
+def test_version_change_directives(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Version change directives preserve labels, formatting, and
+    blocks.
+    """
+    rst_content = """
+        .. versionadded:: 1.2
+           Added *inline* body.
+
+           * Nested added item.
+
+        .. versionchanged:: 1.3
+           Changed **inline** body.
+
+        .. deprecated:: 1.4
+           Deprecated body.
+
+           Nested paragraph.
+    """
+
+    added = UnoCallout(
+        text=(
+            text(text="Added in version 1.2: Added ")
+            + text(text="inline", italic=True)
+            + text(text=" body.")
+        ),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+    added.append(
+        blocks=[UnoBulletedItem(text=text(text="Nested added item."))]
+    )
+
+    changed = UnoCallout(
+        text=(
+            text(text="Changed in version 1.3: Changed ")
+            + text(text="inline", bold=True)
+            + text(text=" body.")
+        ),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+
+    deprecated = UnoCallout(
+        text=text(text="Deprecated since version 1.4: Deprecated body."),
+        icon=Emoji(emoji="🏷️"),
+        color=BGColor.GRAY,
+    )
+    deprecated.append(
+        blocks=[UnoParagraph(text=text(text="Nested paragraph."))]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[added, changed, deprecated],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_definition_list(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -1569,6 +2018,58 @@ def test_definition_list_with_classifier(
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_option_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Option aliases, arguments, and descriptions become bullets."""
+    rst_content = """
+        -h, --help  Show command help.
+        -v, --verbose  Enable *verbose* logging.
+        --output FILE  Write output to ``FILE``.
+    """
+
+    help_item = UnoBulletedItem(text=text(text="-h, --help", code=True))
+    help_item.append(
+        blocks=[UnoParagraph(text=text(text="Show command help."))]
+    )
+
+    verbose_item = UnoBulletedItem(text=text(text="-v, --verbose", code=True))
+    verbose_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Enable ")
+                    + text(text="verbose", italic=True)
+                    + text(text=" logging.")
+                )
+            )
+        ]
+    )
+
+    output_item = UnoBulletedItem(text=text(text="--output FILE", code=True))
+    output_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Write output to ")
+                    + text(text="FILE", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[help_item, verbose_item, output_item],
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
@@ -4029,23 +4530,23 @@ def test_unsupported_node_types_in_rich_text(
 ) -> None:
     """Unsupported node types in rich text processing raise ValueError."""
     rst_content = """
-        This is a test with :footnote:`footnote node`.
+        This is a test with :unsupported:`unsupported node`.
     """
 
     conf_py_content = """
 from docutils import nodes
 
 def setup(app):
-    def footnote_role(
+    def unsupported_role(
         name, rawtext, text, lineno, inliner, options={}, content=[]
     ):  # noqa: PLR0913
-        node = nodes.footnote_reference(rawtext, text)
+        node = nodes.abbreviation(rawtext, text)
         return [node], []
 
-    app.add_role('footnote', footnote_role)
+    app.add_role('unsupported', unsupported_role)
     """
     expected_message = (
-        r"^Unsupported node type within text: footnote_reference on line 1 in "
+        r"^Unsupported node type within text: abbreviation on line 1 in "
         rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}\.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
@@ -4310,11 +4811,7 @@ def test_line_block(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """
-    Line blocks (created with pipe character) become empty Notion
-    paragraph
-    blocks.
-    """
+    """Line blocks become Notion paragraphs with preserved line breaks."""
     rst_content = """
         | This is a line block
         | with multiple lines
@@ -4329,6 +4826,44 @@ def test_line_block(
             + text(text="\n")
             + text(text="preserved exactly as written")
             + text(text="\n")
+        ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_nested_line_block(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Nested line blocks flatten with indentation and inline
+    formatting.
+    """
+    rst_content = """
+        | First line with *italic*
+        |   Indented **child** line
+        |     Deep line with ``code``
+        | Second line
+    """
+
+    expected_blocks = [
+        UnoParagraph(
+            text=(
+                text(text="First line with ")
+                + text(text="italic", italic=True)
+                + text(text="\n  Indented ")
+                + text(text="child", bold=True)
+                + text(text=" line\n    Deep line with ")
+                + text(text="code", code=True)
+                + text(text="\nSecond line\n")
+            )
         ),
     ]
 
@@ -5255,6 +5790,40 @@ def test_figure_directive(
             file=ExternalFile(url="https://www.example.com/path/to/image.png"),
             caption=text(text="This is a caption."),
         ),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_figure_directive_with_legend(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``figure`` directives preserve legend paragraphs after images."""
+    rst_content = """
+        .. figure:: https://www.example.com/path/to/image.png
+
+           This is a caption.
+
+           This is the first legend paragraph.
+
+           This is the second legend paragraph.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url="https://www.example.com/path/to/image.png"),
+            caption=text(text="This is a caption."),
+        ),
+        UnoParagraph(text=text(text="This is the first legend paragraph.")),
+        UnoParagraph(text=text(text="This is the second legend paragraph.")),
     ]
 
     _assert_rst_converts_to_notion_objects(
