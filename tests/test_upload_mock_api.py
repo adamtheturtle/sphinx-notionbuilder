@@ -2,9 +2,11 @@
 
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
@@ -18,6 +20,7 @@ from ultimate_notion.blocks import (
     ChildrenMixin,
     Divider,
 )
+from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
@@ -33,9 +36,11 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
+    PageTitleAmbiguousError,
 )
 from tests._wiremock import (
     count_mock_requests,
+    count_page_metadata_clear_requests,
 )
 
 if TYPE_CHECKING:
@@ -48,6 +53,56 @@ def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
         mock=mock,
         method="POST",
         url_path="/v1/file_uploads",
+    )
+
+
+def _page_update_count(*, mock: respx.MockRouter, page_id: str) -> int:
+    """Count metadata updates sent for a page."""
+    return count_mock_requests(
+        mock=mock,
+        method="PATCH",
+        url_path=f"/v1/pages/{page_id}",
+    )
+
+
+def _cover_clear_count(*, mock: respx.MockRouter) -> int:
+    """Count page updates that explicitly clear the cover."""
+    count = 0
+    calls: list[Call] = list(mock.calls)
+    for call in calls:
+        if (
+            call.request.method == "PATCH"
+            and call.request.url.path.startswith("/v1/pages/")
+            and json.loads(s=call.request.content).get("cover", "missing")
+            is None
+        ):
+            count += 1
+    return count
+
+
+def test_count_page_metadata_clear_requests(
+    *,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Icon and cover null updates are both recognized as clears."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    for payload in ({"icon": None}, {"cover": None}):
+        response = httpx.patch(
+            url=f"https://mock.notion.test/v1/pages/{parent_page_id}",
+            json=payload,
+        )
+        assert response.status_code == httpx.codes.OK
+
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before + 2
     )
 
 
@@ -175,6 +230,44 @@ def test_upload_replace_appends_before_deleting_existing_blocks(
         if request.method == "DELETE" and request.url.path == delete_url_path
     )
     assert append_index < delete_index
+
+
+def test_omitted_page_metadata_is_preserved(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Omitted icon and cover values do not clear existing metadata."""
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoParagraph(text=text(text="Hello from WireMock upload test"))
+        ],
+        page_id=parent_page_id,
+        parent_page_id=None,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    assert page.icon == "\N{MEMO}"
+    assert isinstance(page.cover, ExternalFile)
+    assert page.cover.url == "https://example.com/cover.png"
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before
+    )
 
 
 def test_upload_deletes_and_replaces_changed_blocks(
@@ -328,47 +421,74 @@ def test_upload_with_cover_url(
 
 
 def test_upload_page_has_subpages_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """PageHasSubpagesError raised when the target page has subpages."""
+    parent_page_id = "aaaa0000-0000-0000-0000-000000000001"
+    page_id = "aaaa0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(expected_exception=PageHasSubpagesError):
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
-            parent_page_id="aaaa0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_upload_page_has_databases_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """PageHasDatabasesError raised when the target page has databases."""
+    parent_page_id = "bbbb0000-0000-0000-0000-000000000001"
+    page_id = "bbbb0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(expected_exception=PageHasDatabasesError):
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
-            parent_page_id="bbbb0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_upload_discussions_exist_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """DiscussionsExistError raised when blocks to delete have discussions."""
+    parent_page_id = "cccc0000-0000-0000-0000-000000000001"
+    page_id = "cccc0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(
         expected_exception=DiscussionsExistError,
         match=r"1 block.*1 discussion",
@@ -381,14 +501,17 @@ def test_upload_discussions_exist_error(
                 ),
             ],
             page_id=None,
-            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=True,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_replace_cancels_for_discussion_on_unchanged_block(
@@ -512,6 +635,111 @@ def test_upload_with_database_parent(
     assert after_count == before_count + 1
 
 
+@pytest.mark.parametrize(
+    argnames="parent_kind",
+    argvalues=["page", "database"],
+)
+def test_ambiguous_title_does_not_mutate_pages(
+    *,
+    parent_kind: str,
+) -> None:
+    """Duplicate title lookup raises before creating or updating a
+    page.
+    """
+    session = MagicMock(spec=Session)
+    parent = MagicMock()
+    matching_pages = [MagicMock(title="Docs"), MagicMock(title="Docs")]
+    parent_page_id = "parent-page" if parent_kind == "page" else None
+    parent_database_id = (
+        "parent-database" if parent_kind == "database" else None
+    )
+    if parent_kind == "page":
+        session.get_page.return_value = parent
+        parent.subpages = matching_pages
+    else:
+        session.get_ds.return_value = parent
+        parent.get_all_pages.return_value.to_pages.return_value = (
+            matching_pages
+        )
+
+    message = (
+        "Found 2 pages matching title 'Docs'. "
+        "Use --page-id to select the page to update."
+    )
+    with pytest.raises(
+        expected_exception=PageTitleAmbiguousError,
+        match=re.escape(pattern=message),
+    ):
+        notion_upload.upload_to_notion(
+            session=session,
+            blocks=[],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=parent_database_id,
+            title="Docs",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    session.create_page.assert_not_called()
+    assert all(not page.mock_calls for page in matching_pages)
+
+
+def test_ambiguous_title_is_identical_with_optimized_python() -> None:
+    """Optimized Python raises the same ambiguity error for both
+    parents.
+    """
+    script = """
+from unittest.mock import MagicMock
+
+from ultimate_notion import Session
+
+from sphinx_notion._upload import PageTitleAmbiguousError, upload_to_notion
+
+for parent_kind in ("page", "database"):
+    session = MagicMock(spec=Session)
+    parent = MagicMock()
+    pages = [MagicMock(title="Docs"), MagicMock(title="Docs")]
+    if parent_kind == "page":
+        session.get_page.return_value = parent
+        parent.subpages = pages
+    else:
+        session.get_ds.return_value = parent
+        parent.get_all_pages.return_value.to_pages.return_value = pages
+    try:
+        upload_to_notion(
+            session=session,
+            blocks=[],
+            page_id=None,
+            parent_page_id="parent" if parent_kind == "page" else None,
+            parent_database_id="parent" if parent_kind == "database" else None,
+            title="Docs",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+    except PageTitleAmbiguousError as exc:
+        print(exc)
+    else:
+        raise RuntimeError("Ambiguous title did not raise")
+    session.create_page.assert_not_called()
+"""
+    result = subprocess.run(
+        args=[sys.executable, "-O", "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    message = (
+        "Found 2 pages matching title 'Docs'. "
+        "Use --page-id to select the page to update."
+    )
+    assert result.stdout.splitlines() == [message, message]
+
+
 def test_upload_with_cover_path(
     *,
     respx_mock: respx.MockRouter,
@@ -549,6 +777,43 @@ def test_upload_with_cover_path(
     assert isinstance(page.cover, ExternalFile)
     assert page.cover.url == "https://example.com/cover.png"
     assert after_upload_count == before_upload_count + 1
+
+
+def test_upload_with_unchanged_cover_path(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_session: Session,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """An unchanged local cover is neither uploaded nor cleared."""
+    cover_file = tmp_path / "cover.png"
+    cover_file.write_bytes(data=b"unchanged-cover")
+    before_clear_count = _cover_clear_count(mock=respx_mock)
+    before_upload_count = _file_upload_create_count(mock=respx_mock)
+
+    with patch.object(
+        target=notion_upload,
+        attribute="_get_uploaded_cover",
+        return_value=None,
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[
+                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+            ],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=cover_file,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert _cover_clear_count(mock=respx_mock) == before_clear_count
+    assert _file_upload_create_count(mock=respx_mock) == before_upload_count
 
 
 def test_upload_with_file_block(
@@ -591,6 +856,56 @@ def test_upload_with_file_block(
     assert str(object=uploaded_image_file.id) == (
         "ff000000-0000-0000-0000-000000000001"
     )
+
+
+def test_upload_local_file_preserves_name_and_caption(
+    *,
+    notion_session: Session,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+    tmp_path: Path,
+) -> None:
+    """A local file's custom presentation survives file upload."""
+    local_file = tmp_path / "archive.zip"
+    local_file.write_bytes(data=b"release-bundle")
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    appends_before = count_mock_requests(
+        mock=respx_mock,
+        method="PATCH",
+        url_path=append_url_path,
+    )
+
+    notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[
+            UnoFile(
+                file=ExternalFile(url=local_file.as_uri()),
+                name="Download the release bundle",
+                caption="Current release",
+            )
+        ],
+        page_id=None,
+        parent_page_id=parent_page_id,
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+    )
+
+    calls: list[Call] = list(respx_mock.calls)
+    append_calls = [
+        call
+        for call in calls
+        if call.request.method == "PATCH"
+        and call.request.url.path == append_url_path
+    ]
+    assert len(append_calls) == appends_before + 1
+    payload = json.loads(s=append_calls[-1].request.content)
+    uploaded_file = payload["children"][0]["file"]
+    assert uploaded_file["name"] == "Download the release bundle"
+    assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
 
 
 def test_upload_with_nested_file_block(

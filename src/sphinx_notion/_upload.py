@@ -106,6 +106,10 @@ class PageNotFoundError(Exception):
     """Raised when no page with the given ID exists."""
 
 
+class PageTitleAmbiguousError(Exception):
+    """Raised when multiple sibling pages match a requested title."""
+
+
 class CloudflareWAFBlockError(Exception):
     """Raised when a request is blocked by the Cloudflare WAF before
     reaching Notion.
@@ -454,7 +458,17 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
             _LOGGER.info("File '%s' uploaded", file_path.name)
 
-            block = block.__class__(file=uploaded_file, caption=block.caption)
+            if isinstance(block, UnoFile):
+                block = UnoFile(
+                    file=uploaded_file,
+                    name=block.name,
+                    caption=block.caption,
+                )
+            else:
+                block = block.__class__(
+                    file=uploaded_file,
+                    caption=block.caption,
+                )
 
     elif isinstance(block, ParentBlock) and block.has_children:
         new_child_blocks = [
@@ -640,24 +654,36 @@ def _set_page_appearance(
     *,
     session: Session,
     page: Page,
+    page_id: str | None,
+    title: str,
     icon: str | None,
     cover_path: Path | None,
     cover_url: str | None,
 ) -> None:
-    """Set a page's icon and cover."""
-    if icon:
-        _LOGGER.info("Setting page icon to '%s'", icon)
-    page.icon = Emoji(emoji=icon) if icon else None
+    """Set a page's title, icon and cover.
 
+    Omitted icon and cover values and unchanged covers are left untouched
+    rather than cleared.
+    """
+    prepared_cover: UploadedFile | ExternalFile | None
     if cover_path:
-        page.cover = _get_uploaded_cover(
+        prepared_cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
         )
     elif cover_url:
-        _LOGGER.info("Setting page cover to '%s'", cover_url)
-        page.cover = ExternalFile(url=cover_url)
+        prepared_cover = ExternalFile(url=cover_url)
     else:
-        page.cover = None
+        prepared_cover = None
+
+    if page_id is not None:
+        _LOGGER.info("Setting page title to '%s'", title)
+        page.title = title
+    if icon:
+        _LOGGER.info("Setting page icon to '%s'", icon)
+        page.icon = Emoji(emoji=icon)
+    if prepared_cover is not None:
+        _LOGGER.info("Setting page cover")
+        page.cover = prepared_cover
 
 
 @beartype
@@ -682,6 +708,7 @@ def upload_to_notion(
     Raises:
         PageNotFoundError: If page_id is given and no page with that ID
             exists or the page is not accessible.
+        PageTitleAmbiguousError: If multiple sibling pages match title.
         PageHasSubpagesError: If the page has subpages.
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
@@ -702,8 +729,6 @@ def upload_to_notion(
                 "integration."
             )
             raise PageNotFoundError(msg) from exc
-        _LOGGER.info("Setting page title to '%s'", title)
-        page.title = title
     else:
         parent: Page | DataSource
         if parent_page_id:
@@ -720,25 +745,19 @@ def upload_to_notion(
             child_page for child_page in subpages if child_page.title == title
         ]
 
-        if pages_matching_title:
+        if len(pages_matching_title) > 1:
             msg = (
-                f"Expected 1 page matching title {title}, but got "
-                f"{len(pages_matching_title)}"
+                f"Found {len(pages_matching_title)} pages matching title "
+                f"'{title}'. Use --page-id to select the page to update."
             )
-            assert len(pages_matching_title) == 1, msg
+            raise PageTitleAmbiguousError(msg)
+
+        if pages_matching_title:
             (page,) = pages_matching_title
             _LOGGER.info("Found existing page '%s'", title)
         else:
             _LOGGER.info("Creating new page '%s'", title)
             page = session.create_page(parent=parent, title=title)
-
-    _set_page_appearance(
-        session=session,
-        page=page,
-        icon=icon,
-        cover_path=cover_path,
-        cover_url=cover_url,
-    )
 
     if page.subpages:
         raise PageHasSubpagesError
@@ -754,5 +773,14 @@ def upload_to_notion(
         title=title,
         cancel_on_discussion=cancel_on_discussion,
         strategy=strategy,
+    )
+    _set_page_appearance(
+        session=session,
+        page=page,
+        page_id=page_id,
+        title=title,
+        icon=icon,
+        cover_path=cover_path,
+        cover_url=cover_url,
     )
     return page

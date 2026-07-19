@@ -1,0 +1,1 @@
+Attributed block quotes and epigraphs now retain their author in a nested paragraph instead of aborting the Notion build.

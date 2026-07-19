@@ -19,6 +19,7 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
+    PageTitleAmbiguousError,
     UploadStrategy,
     upload_to_notion,
 )
@@ -46,7 +47,11 @@ from sphinx_notion._upload import (
         "--parent-database-id",
         help="Parent database ID (integration connected)",
     ),
-    constraint=cloup.constraints.RequireExactly(n=1),
+    constraint=cloup.constraints.If(
+        condition="page_id",
+        then=cloup.constraints.mutually_exclusive,
+        else_=cloup.constraints.RequireExactly(n=1),
+    ),
 )
 @cloup.option(
     "--title",
@@ -175,6 +180,8 @@ def main(
     except DiscussionsExistError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     except PageNotFoundError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    except PageTitleAmbiguousError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     finally:
         session.close()

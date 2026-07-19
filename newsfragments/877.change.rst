@@ -1,0 +1,1 @@
+Ambiguous title-based uploads now stop with a stable error that directs users to ``--page-id`` instead of crashing with an assertion.
