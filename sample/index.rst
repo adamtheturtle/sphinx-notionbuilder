@@ -400,6 +400,17 @@ Task Lists
 
       3. [ ] Task C
 
+Footnotes
+~~~~~~~~~
+
+.. rest-example::
+
+   Auto [#]_. Explicit [1]_. Named [#note]_ and again [#note]_.
+
+   .. [#] Auto *body*.
+   .. [1] Explicit body.
+   .. [#note] Named ``body``.
+
 Block Quotes
 ~~~~~~~~~~~~
 

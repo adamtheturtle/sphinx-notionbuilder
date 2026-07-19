@@ -499,6 +499,13 @@ def _(node: nodes.title_reference) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: nodes.footnote_reference) -> Text:
+    """Process footnote references as bracketed numbers."""
+    return text(text=f"[{node.astext()}]")
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.Text) -> Text:
     """Process Text nodes by creating plain text."""
     return text(text=node.astext())
@@ -1169,6 +1176,28 @@ def _(
                 todo_item_block.append(blocks=child_blocks)
             result.append(todo_item_block)
     return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.footnote,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process footnote bodies as numbered bulleted items."""
+    label_node = node.children[0]
+    assert isinstance(label_node, nodes.label)
+    footnote_item = UnoBulletedItem(
+        text=text(text=f"[{label_node.astext()}]", bold=True)
+    )
+    for child in node.children[1:]:
+        child_blocks = _process_node_to_blocks(
+            child,
+            section_level=section_level,
+        )
+        footnote_item.append(blocks=child_blocks)
+    return [footnote_item]
 
 
 @beartype
