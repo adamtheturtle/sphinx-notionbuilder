@@ -373,6 +373,17 @@ Task Lists
 
       3. [ ] Task C
 
+Citations
+~~~~~~~~~
+
+.. rest-example::
+
+   The algorithm is described in [SMITH2024]_ and again [SMITH2024]_.
+   See [DOE2023]_.
+
+   .. [SMITH2024] Smith, A. (2024). *Example Paper*.
+   .. [DOE2023] Doe, J. (2023). ``Other Work``.
+
 Block Quotes
 ~~~~~~~~~~~~
 

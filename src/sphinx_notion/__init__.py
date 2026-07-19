@@ -401,6 +401,13 @@ def _(node: nodes.reference) -> Text:
     nodes), with a warning. Cross-references (e.g., from ``:doc:``) have
     ``internal=True`` and are rendered as plain text with a warning.
     """
+    refid = node.attributes.get("refid")
+    if isinstance(refid, str):
+        assert node.document is not None
+        target_node = node.document.ids.get(refid)
+        if isinstance(target_node, nodes.citation):
+            return text(text=node.astext())
+
     link_url = node.attributes.get("refuri")
     if link_url is None:
         _LOGGER.warning(
@@ -1244,6 +1251,28 @@ def _(
             bulleted_item.append(blocks=child_blocks)
         result.append(bulleted_item)
     return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: nodes.citation,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process bibliography entries as labeled bulleted items."""
+    label_node = node.children[0]
+    assert isinstance(label_node, nodes.label)
+    citation_item = UnoBulletedItem(
+        text=text(text=f"[{label_node.astext()}]", bold=True)
+    )
+    for child in node.children[1:]:
+        child_blocks = _process_node_to_blocks(
+            child,
+            section_level=section_level,
+        )
+        citation_item.append(blocks=child_blocks)
+    return [citation_item]
 
 
 @beartype
