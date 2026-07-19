@@ -1098,6 +1098,26 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: addnodes.productionlist,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process grammar productions as a plain-text code block."""
+    del section_level
+    production_text = "\n".join(
+        production.astext().rstrip() for production in node.children
+    )
+    return [
+        UnoCode(
+            text=text(text=production_text),
+            language=CodeLang.PLAIN_TEXT,
+        )
+    ]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.bullet_list,
     *,
     section_level: int,
