@@ -1728,6 +1728,58 @@ def test_definition_list_with_classifier(
     )
 
 
+def test_option_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Option aliases, arguments, and descriptions become bullets."""
+    rst_content = """
+        -h, --help  Show command help.
+        -v, --verbose  Enable *verbose* logging.
+        --output FILE  Write output to ``FILE``.
+    """
+
+    help_item = UnoBulletedItem(text=text(text="-h, --help", code=True))
+    help_item.append(
+        blocks=[UnoParagraph(text=text(text="Show command help."))]
+    )
+
+    verbose_item = UnoBulletedItem(text=text(text="-v, --verbose", code=True))
+    verbose_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Enable ")
+                    + text(text="verbose", italic=True)
+                    + text(text=" logging.")
+                )
+            )
+        ]
+    )
+
+    output_item = UnoBulletedItem(text=text(text="--output FILE", code=True))
+    output_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Write output to ")
+                    + text(text="FILE", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[help_item, verbose_item, output_item],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],
