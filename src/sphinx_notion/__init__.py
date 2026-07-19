@@ -1611,8 +1611,16 @@ def _caption_with_image_target(
     *,
     caption: Text | None,
     target_url: str,
+    location: nodes.Element,
 ) -> Text:
     """Append a linked image target to an optional caption."""
+    _LOGGER.warning(
+        "Image targets cannot be represented as clickable Notion images. "
+        "Preserving the target URL in the image caption.",
+        type="notion",
+        subtype="unsupported_image",
+        location=location,
+    )
     target_caption = text(text="Target: ") + text(
         text=target_url,
         href=target_url,
@@ -1679,6 +1687,7 @@ def _(
                     caption=_caption_with_image_target(
                         caption=caption_rich_text,
                         target_url=target_url,
+                        location=child,
                     ),
                 )
             )
@@ -1718,6 +1727,7 @@ def _(
     caption = _caption_with_image_target(
         caption=None,
         target_url=target_url,
+        location=node,
     )
     return [_create_image_block(node=image_node, caption=caption)]
 

@@ -1,1 +1,1 @@
-Images and figures with ``:target:`` now render normally and preserve the target URL as a linked ``Target:`` line in the image caption instead of aborting the build.
+Images and figures with ``:target:`` now keep the target URL in the image caption and emit a suppressible ``notion.unsupported_image`` warning, instead of aborting the build.

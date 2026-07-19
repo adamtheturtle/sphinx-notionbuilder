@@ -2117,7 +2117,12 @@ def test_image_with_target(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=[
+            f"{tmp_path / 'src' / 'index.rst'}::",
+            "Image targets cannot be represented as clickable Notion images. "
+            "Preserving the target URL in the image caption. "
+            "[notion.unsupported_image]",
+        ],
     )
 
 
@@ -5285,7 +5290,12 @@ def test_figure_directive_with_target(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=[
+            f"{tmp_path / 'src' / 'index.rst'}:1:",
+            "Image targets cannot be represented as clickable Notion images. "
+            "Preserving the target URL in the image caption. "
+            "[notion.unsupported_image]",
+        ],
     )
 
 

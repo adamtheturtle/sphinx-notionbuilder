@@ -1,8 +1,8 @@
 Suppressed Warnings Sample
 ==========================
 
-This sample demonstrates cross-reference features that produce warnings with the Notion builder.
-The warnings are suppressed via ``suppress_warnings = ["ref.notion"]`` in ``conf.py``.
+This sample demonstrates features that produce warnings with the Notion builder.
+The warnings are suppressed via ``suppress_warnings`` in ``conf.py``.
 
 Cross-references
 ~~~~~~~~~~~~~~~~
@@ -36,6 +36,23 @@ Autosummary
       :nosignatures:
 
       example_module.greet
+
+
+Linked Images
+~~~~~~~~~~~~~
+
+Notion images are not clickable, so ``:target:`` URLs are preserved in the
+caption with a suppressible ``notion.unsupported_image`` warning.
+
+.. rest-example::
+
+   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+      :target: https://example.com/full-size.png
+
+   .. figure:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+      :target: https://example.com/full-size.png
+
+      Diagram *caption*.
 
 .. toctree::
 
