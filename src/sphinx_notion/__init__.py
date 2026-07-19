@@ -1096,6 +1096,19 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.attribution,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process quote attributions as nested paragraphs."""
+    del section_level
+    rich_text = text(text="— ") + _create_rich_text_from_children(node=node)
+    return [UnoParagraph(text=rich_text)]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.literal_block,
     *,
     section_level: int,

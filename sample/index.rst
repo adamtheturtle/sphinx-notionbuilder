@@ -431,6 +431,18 @@ Block Quotes
 
          Like this.
 
+   Attributed quotes render the attribution after the body:
+
+         Documentation is a love letter that you write to your future self.
+
+         -- Damian Conway
+
+   .. epigraph::
+
+      Documentation is a love letter that you write to your future self.
+
+      -- Damian Conway
+
 Tables
 ~~~~~~
 

@@ -978,6 +978,71 @@ def test_multi_paragraph_quote(
     )
 
 
+def test_attributed_quote(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Attributed block quotes retain their author after the quote
+    text.
+    """
+    rst_content = """
+        Some content.
+
+            Documentation is a love letter that you write to your future self.
+
+            -- Damian Conway
+    """
+    quote = UnoQuote(
+        text=text(
+            text="Documentation is a love letter that you write to your "
+            "future self."
+        )
+    )
+    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[
+            UnoParagraph(text=text(text="Some content.")),
+            quote,
+        ],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
+def test_epigraph(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Epigraph directives retain their attribution."""
+    rst_content = """
+        .. epigraph::
+
+           Documentation is a love letter that you write to your future self.
+
+           -- Damian Conway
+    """
+    quote = UnoQuote(
+        text=text(
+            text="Documentation is a love letter that you write to your "
+            "future self."
+        )
+    )
+    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[quote],
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_table_of_contents(
     *,
     make_app: Callable[..., SphinxTestApp],
