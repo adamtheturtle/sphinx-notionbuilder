@@ -1450,6 +1450,12 @@ def test_horizontal_list(
 {list_items}
     """
 
+    expected_warnings = [
+        "Horizontal list columns cannot be represented by the Notion "
+        "builder. Flattening into a single bulleted list. "
+        "[notion.unsupported_layout]",
+    ]
+
     expected_blocks = [UnoBulletedItem(text=text(text=item)) for item in items]
 
     _assert_rst_converts_to_notion_objects(
@@ -1457,7 +1463,7 @@ def test_horizontal_list(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=expected_warnings,
     )
 
 

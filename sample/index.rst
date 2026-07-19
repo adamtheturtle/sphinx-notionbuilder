@@ -315,22 +315,6 @@ Including Files
       :language: python
       :caption: Example **Configuration** File
 
-Horizontal Lists
-~~~~~~~~~~~~~~~~
-
-Horizontal lists are flattened into ordinary bulleted items because Notion has
-no multi-column list layout.
-
-.. rest-example::
-
-   .. hlist::
-      :columns: 2
-
-      * One
-      * Two
-      * Three
-      * Four
-
 Bullet Lists
 ~~~~~~~~~~~~
 

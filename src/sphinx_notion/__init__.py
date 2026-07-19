@@ -1221,6 +1221,13 @@ def _(
     section_level: int,
 ) -> list[Block]:
     """Process horizontal lists as flat bulleted item blocks."""
+    _LOGGER.warning(
+        "Horizontal list columns cannot be represented by the Notion "
+        "builder. Flattening into a single bulleted list.",
+        type="notion",
+        subtype="unsupported_layout",
+        location=node,
+    )
     result: list[Block] = []
     for column in node.children:
         assert isinstance(column, addnodes.hlistcol)
