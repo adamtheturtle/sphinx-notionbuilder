@@ -2,9 +2,11 @@
 
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
@@ -34,6 +36,7 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
+    PageTitleAmbiguousError,
 )
 from tests._wiremock import (
     count_mock_requests,
@@ -508,6 +511,111 @@ def test_upload_with_database_parent(
 
     assert page.title == "Upload Title"
     assert after_count == before_count + 1
+
+
+@pytest.mark.parametrize(
+    argnames="parent_kind",
+    argvalues=["page", "database"],
+)
+def test_ambiguous_title_does_not_mutate_pages(
+    *,
+    parent_kind: str,
+) -> None:
+    """Duplicate title lookup raises before creating or updating a
+    page.
+    """
+    session = MagicMock(spec=Session)
+    parent = MagicMock()
+    matching_pages = [MagicMock(title="Docs"), MagicMock(title="Docs")]
+    parent_page_id = "parent-page" if parent_kind == "page" else None
+    parent_database_id = (
+        "parent-database" if parent_kind == "database" else None
+    )
+    if parent_kind == "page":
+        session.get_page.return_value = parent
+        parent.subpages = matching_pages
+    else:
+        session.get_ds.return_value = parent
+        parent.get_all_pages.return_value.to_pages.return_value = (
+            matching_pages
+        )
+
+    message = (
+        "Found 2 pages matching title 'Docs'. "
+        "Use --page-id to select the page to update."
+    )
+    with pytest.raises(
+        expected_exception=PageTitleAmbiguousError,
+        match=re.escape(pattern=message),
+    ):
+        notion_upload.upload_to_notion(
+            session=session,
+            blocks=[],
+            page_id=None,
+            parent_page_id=parent_page_id,
+            parent_database_id=parent_database_id,
+            title="Docs",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    session.create_page.assert_not_called()
+    assert all(not page.mock_calls for page in matching_pages)
+
+
+def test_ambiguous_title_is_identical_with_optimized_python() -> None:
+    """Optimized Python raises the same ambiguity error for both
+    parents.
+    """
+    script = """
+from unittest.mock import MagicMock
+
+from ultimate_notion import Session
+
+from sphinx_notion._upload import PageTitleAmbiguousError, upload_to_notion
+
+for parent_kind in ("page", "database"):
+    session = MagicMock(spec=Session)
+    parent = MagicMock()
+    pages = [MagicMock(title="Docs"), MagicMock(title="Docs")]
+    if parent_kind == "page":
+        session.get_page.return_value = parent
+        parent.subpages = pages
+    else:
+        session.get_ds.return_value = parent
+        parent.get_all_pages.return_value.to_pages.return_value = pages
+    try:
+        upload_to_notion(
+            session=session,
+            blocks=[],
+            page_id=None,
+            parent_page_id="parent" if parent_kind == "page" else None,
+            parent_database_id="parent" if parent_kind == "database" else None,
+            title="Docs",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+    except PageTitleAmbiguousError as exc:
+        print(exc)
+    else:
+        raise RuntimeError("Ambiguous title did not raise")
+    session.create_page.assert_not_called()
+"""
+    result = subprocess.run(
+        args=[sys.executable, "-O", "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    message = (
+        "Found 2 pages matching title 'Docs'. "
+        "Use --page-id to select the page to update."
+    )
+    assert result.stdout.splitlines() == [message, message]
 
 
 def test_upload_with_cover_path(

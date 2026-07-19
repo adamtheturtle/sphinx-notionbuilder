@@ -81,6 +81,10 @@ class PageNotFoundError(Exception):
     """Raised when no page with the given ID exists."""
 
 
+class PageTitleAmbiguousError(Exception):
+    """Raised when multiple sibling pages match a requested title."""
+
+
 class CloudflareWAFBlockError(Exception):
     """Raised when a request is blocked by the Cloudflare WAF before
     reaching Notion.
@@ -475,6 +479,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     Raises:
         PageNotFoundError: If page_id is given and no page with that ID
             exists or the page is not accessible.
+        PageTitleAmbiguousError: If multiple sibling pages match title.
         PageHasSubpagesError: If the page has subpages.
         PageHasDatabasesError: If the page has databases.
         DiscussionsExistError: If blocks to delete have discussions and
@@ -511,12 +516,14 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
             child_page for child_page in subpages if child_page.title == title
         ]
 
-        if pages_matching_title:
+        if len(pages_matching_title) > 1:
             msg = (
-                f"Expected 1 page matching title {title}, but got "
-                f"{len(pages_matching_title)}"
+                f"Found {len(pages_matching_title)} pages matching title "
+                f"'{title}'. Use --page-id to select the page to update."
             )
-            assert len(pages_matching_title) == 1, msg
+            raise PageTitleAmbiguousError(msg)
+
+        if pages_matching_title:
             (page,) = pages_matching_title
             _LOGGER.info("Found existing page '%s'", title)
         else:
