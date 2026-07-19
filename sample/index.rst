@@ -54,6 +54,17 @@ Option Lists
    -v, --verbose  Enable *verbose* logging.
    --output FILE  Write output to ``FILE``.
 
+Field Lists
+~~~~~~~~~~~
+
+.. rest-example::
+
+   :Status: *Draft*
+   :Owner: Documentation Team
+   :Notes: First paragraph.
+
+           Second paragraph with ``code``.
+
 Definition Lists
 ~~~~~~~~~~~~~~~~
 
