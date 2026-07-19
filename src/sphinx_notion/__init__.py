@@ -365,6 +365,7 @@ class _TableStructure:
 
     header_rows: list[nodes.row]
     body_rows: list[nodes.row]
+    num_columns: int
     num_stub_columns: int
 
 
@@ -798,6 +799,7 @@ def _extract_table_structure(
     return _TableStructure(
         header_rows=header_rows,
         body_rows=body_rows,
+        num_columns=int(tgroup.attributes["cols"]),
         num_stub_columns=stub_columns,
     )
 
@@ -998,6 +1000,42 @@ def _process_node_to_blocks(
 
 
 @beartype
+def _populate_table_cells(
+    *,
+    table: UnoTable,
+    rows: list[nodes.row],
+) -> bool:
+    """Fill Notion table cells, duplicating content across spans.
+
+    Returns whether any cell used a row span or column span.
+    """
+    occupied_cells: set[tuple[int, int]] = set()
+    table_has_spans = False
+    for row_index, row in enumerate(iterable=rows):
+        column_index = 0
+        for entry in row.children:
+            assert isinstance(entry, nodes.entry)
+            while (row_index, column_index) in occupied_cells:
+                column_index += 1
+
+            source = _cell_source_node(entry=entry)
+            rich_text = _create_rich_text_from_children(node=source)
+            row_span = int(entry.attributes.get("morerows", 0)) + 1
+            column_span = int(entry.attributes.get("morecols", 0)) + 1
+            if row_span > 1 or column_span > 1:
+                table_has_spans = True
+            for target_row in range(row_index, row_index + row_span):
+                for target_column in range(
+                    column_index,
+                    column_index + column_span,
+                ):
+                    table[target_row, target_column] = rich_text
+                    occupied_cells.add((target_row, target_column))
+            column_index += column_span
+    return table_has_spans
+
+
+@beartype
 @_process_node_to_blocks.register
 def _(
     node: nodes.table,
@@ -1056,17 +1094,19 @@ def _(
     table = UnoTable(
         n_rows=len(rows),
         # In Notion, all rows must have the same number of columns.
-        n_cols=len(rows[0]),
+        n_cols=table_structure.num_columns,
         header_row=bool(table_structure.header_rows),
         header_col=bool(table_structure.num_stub_columns),
     )
 
-    for row_index, row in enumerate(iterable=rows):
-        for column_index, entry in enumerate(iterable=row.children):
-            source = _cell_source_node(entry=entry)
-            table[row_index, column_index] = _create_rich_text_from_children(
-                node=source
-            )
+    if _populate_table_cells(table=table, rows=rows):
+        _LOGGER.warning(
+            "Table cell spans cannot be represented by the Notion builder. "
+            "Duplicating merged cell content across the covered cells.",
+            type="notion",
+            subtype="unsupported_table",
+            location=node,
+        )
 
     return [table]
 

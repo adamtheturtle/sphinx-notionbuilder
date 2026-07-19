@@ -18,4 +18,5 @@ suppress_warnings = [
     "ref.notion",
     "notion.unsupported_inline",
     "notion.unsupported_layout",
+    "notion.unsupported_table",
 ]

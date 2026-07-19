@@ -38,6 +38,28 @@ Autosummary
       example_module.greet
 
 
+Table Cell Spans
+~~~~~~~~~~~~~~~~
+
+Notion tables do not support merged cells, so rowspans and colspans are
+flattened by duplicating content with a suppressible
+``notion.unsupported_table`` warning.
+
+.. rest-example::
+
+   +---+---+
+   | A | B |
+   +===+===+
+   | merged|
+   +---+---+
+
+   +---+---+
+   | A | B |
+   +===+===+
+   | X | Y |
+   +   +---+
+   |   | Z |
+   +---+---+
 
 Subscript and Superscript
 ~~~~~~~~~~~~~~~~~~~~~~~~~
