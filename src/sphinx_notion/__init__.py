@@ -1084,6 +1084,13 @@ def _(
 ) -> list[Block]:
     """Process centered text as a normal Notion paragraph."""
     del section_level
+    _LOGGER.warning(
+        "Centered alignment cannot be represented by the Notion builder. "
+        "Rendering as a normal paragraph.",
+        type="notion",
+        subtype="unsupported_layout",
+        location=node,
+    )
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 

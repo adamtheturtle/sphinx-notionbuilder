@@ -106,16 +106,6 @@ Comments
    .. This is a comment that demonstrates comment support.
       Comments should not appear in the final output.
 
-Centered
-~~~~~~~~
-
-Centered content is rendered as a normal paragraph because Notion rich text has
-no alignment annotation.
-
-.. rest-example::
-
-   .. centered:: Important **bold** and *italic* announcement
-
 Text Formatting
 ~~~~~~~~~~~~~~~
 

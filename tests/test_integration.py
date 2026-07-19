@@ -375,6 +375,13 @@ def test_centered_text(
         .. centered:: Important **bold** and *italic* announcement
     """
 
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}:1:",
+        "Centered alignment cannot be represented by the Notion builder. "
+        "Rendering as a normal paragraph. [notion.unsupported_layout]",
+    ]
+
     expected_blocks = [
         UnoParagraph(
             text=(
@@ -392,7 +399,7 @@ def test_centered_text(
         expected_blocks=expected_blocks,
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=expected_warnings,
     )
 
 

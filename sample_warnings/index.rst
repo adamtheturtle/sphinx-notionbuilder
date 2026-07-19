@@ -67,6 +67,16 @@ flattened into a single bulleted list with a suppressible
       * Three
       * Four
 
+Centered
+~~~~~~~~
+
+Centered alignment cannot be represented in Notion, so the content is rendered
+as a normal paragraph with a suppressible ``notion.unsupported_layout`` warning.
+
+.. rest-example::
+
+   .. centered:: Important **bold** and *italic* announcement
+
 
 .. toctree::
 
