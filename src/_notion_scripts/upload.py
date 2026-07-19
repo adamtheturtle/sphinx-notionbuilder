@@ -46,7 +46,11 @@ from sphinx_notion._upload import (
         "--parent-database-id",
         help="Parent database ID (integration connected)",
     ),
-    constraint=cloup.constraints.RequireExactly(n=1),
+    constraint=cloup.constraints.If(
+        condition="page_id",
+        then=cloup.constraints.mutually_exclusive,
+        else_=cloup.constraints.RequireExactly(n=1),
+    ),
 )
 @cloup.option(
     "--title",
