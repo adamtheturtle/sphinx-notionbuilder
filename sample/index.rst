@@ -38,6 +38,15 @@ Rubric
 
    Rubrics can contain inline formatting like code and emphasis.
 
+Option Lists
+~~~~~~~~~~~~
+
+.. rest-example::
+
+   -h, --help  Show command help.
+   -v, --verbose  Enable *verbose* logging.
+   --output FILE  Write output to ``FILE``.
+
 Definition Lists
 ~~~~~~~~~~~~~~~~
 
