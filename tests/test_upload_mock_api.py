@@ -53,6 +53,15 @@ def _file_upload_create_count(*, mock: respx.MockRouter) -> int:
     )
 
 
+def _page_update_count(*, mock: respx.MockRouter, page_id: str) -> int:
+    """Count metadata updates sent for a page."""
+    return count_mock_requests(
+        mock=mock,
+        method="PATCH",
+        url_path=f"/v1/pages/{page_id}",
+    )
+
+
 def _cover_clear_count(*, mock: respx.MockRouter) -> int:
     """Count page updates that explicitly clear the cover."""
     count = 0
@@ -312,47 +321,74 @@ def test_upload_with_cover_url(
 
 
 def test_upload_page_has_subpages_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """PageHasSubpagesError raised when the target page has subpages."""
+    parent_page_id = "aaaa0000-0000-0000-0000-000000000001"
+    page_id = "aaaa0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(expected_exception=PageHasSubpagesError):
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
-            parent_page_id="aaaa0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_upload_page_has_databases_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """PageHasDatabasesError raised when the target page has databases."""
+    parent_page_id = "bbbb0000-0000-0000-0000-000000000001"
+    page_id = "bbbb0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(expected_exception=PageHasDatabasesError):
         notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
-            parent_page_id="bbbb0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_upload_discussions_exist_error(
+    respx_mock: respx.MockRouter,
     notion_session: Session,
 ) -> None:
     """DiscussionsExistError raised when blocks to delete have discussions."""
+    parent_page_id = "cccc0000-0000-0000-0000-000000000001"
+    page_id = "cccc0000-0000-0000-0000-000000000002"
+    before_update_count = _page_update_count(
+        mock=respx_mock,
+        page_id=page_id,
+    )
     with pytest.raises(
         expected_exception=DiscussionsExistError,
         match=r"1 block.*1 discussion",
@@ -365,14 +401,17 @@ def test_upload_discussions_exist_error(
                 ),
             ],
             page_id=None,
-            parent_page_id="cccc0000-0000-0000-0000-000000000001",
+            parent_page_id=parent_page_id,
             parent_database_id=None,
             title="Upload Title",
-            icon=None,
+            icon="\N{MEMO}",
             cover_path=None,
-            cover_url=None,
+            cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=True,
         )
+    assert _page_update_count(mock=respx_mock, page_id=page_id) == (
+        before_update_count
+    )
 
 
 def test_upload_with_page_id(

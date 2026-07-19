@@ -495,8 +495,6 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
                 "integration."
             )
             raise PageNotFoundError(msg) from exc
-        _LOGGER.info("Setting page title to '%s'", title)
-        page.title = title
     else:
         parent: Page | DataSource
         if parent_page_id:
@@ -524,19 +522,6 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         else:
             _LOGGER.info("Creating new page '%s'", title)
             page = session.create_page(parent=parent, title=title)
-
-    if icon:
-        _LOGGER.info("Setting page icon to '%s'", icon)
-        page.icon = Emoji(emoji=icon)
-    if cover_path:
-        uploaded_cover = _get_uploaded_cover(
-            page=page, cover=cover_path, session=session
-        )
-        if uploaded_cover is not None:
-            page.cover = uploaded_cover
-    elif cover_url:
-        _LOGGER.info("Setting page cover to '%s'", cover_url)
-        page.cover = ExternalFile(url=cover_url)
 
     if page.subpages:
         raise PageHasSubpagesError
@@ -606,6 +591,28 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
         _block_with_uploaded_file(block=block, session=session)
         for block in blocks_to_upload
     ]
+
+    prepared_cover: UploadedFile | ExternalFile | None
+    if cover_path:
+        prepared_cover = _get_uploaded_cover(
+            page=page,
+            cover=cover_path,
+            session=session,
+        )
+    elif cover_url:
+        prepared_cover = ExternalFile(url=cover_url)
+    else:
+        prepared_cover = None
+
+    if page_id is not None:
+        _LOGGER.info("Setting page title to '%s'", title)
+        page.title = title
+    if icon:
+        _LOGGER.info("Setting page icon to '%s'", icon)
+        page.icon = Emoji(emoji=icon)
+    if prepared_cover is not None:
+        _LOGGER.info("Setting page cover")
+        page.cover = prepared_cover
 
     for block_index, existing_page_block in enumerate(
         iterable=blocks_to_delete
