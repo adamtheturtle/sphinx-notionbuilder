@@ -37,6 +37,19 @@ Autosummary
 
       example_module.greet
 
+
+
+Subscript and Superscript
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Standard ``:sub:`` and ``:sup:`` roles render as plain text because Notion rich
+text has no vertical-position annotation. The builder emits a suppressible
+``notion.unsupported_inline`` warning.
+
+.. rest-example::
+
+   Water is H\ :sub:`2`\ O and the area is x\ :sup:`2`.
+
 .. toctree::
 
    other

@@ -513,6 +513,21 @@ def _(node: nodes.inline) -> Text:
 
 @beartype
 @_process_rich_text_node.register
+def _(node: nodes.subscript | nodes.superscript) -> Text:
+    """Process vertically positioned text as plain rich text."""
+    _LOGGER.warning(
+        "%s text cannot be vertically positioned by the Notion builder. "
+        "Rendering as plain text.",
+        type(node).__name__.capitalize(),
+        type="notion",
+        subtype="unsupported_inline",
+        location=node,
+    )
+    return _create_rich_text_from_children(node=node)
+
+
+@beartype
+@_process_rich_text_node.register
 def _(node: nodes.strong) -> Text:
     """Process strong nodes by creating bold text."""
     return _create_styled_text_from_node(node=node)
