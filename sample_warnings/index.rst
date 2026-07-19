@@ -61,6 +61,45 @@ flattened by duplicating content with a suppressible
    |   | Z |
    +---+---+
 
+Subscript and Superscript
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Standard ``:sub:`` and ``:sup:`` roles render as plain text because Notion rich
+text has no vertical-position annotation. The builder emits a suppressible
+``notion.unsupported_inline`` warning.
+
+.. rest-example::
+
+   Water is H\ :sub:`2`\ O and the area is x\ :sup:`2`.
+
+Horizontal Lists
+~~~~~~~~~~~~~~~~
+
+Multi-column horizontal lists cannot be represented in Notion, so items are
+flattened into a single bulleted list with a suppressible
+``notion.unsupported_layout`` warning.
+
+.. rest-example::
+
+   .. hlist::
+      :columns: 2
+
+      * One
+      * Two
+      * Three
+      * Four
+
+Centered
+~~~~~~~~
+
+Centered alignment cannot be represented in Notion, so the content is rendered
+as a normal paragraph with a suppressible ``notion.unsupported_layout`` warning.
+
+.. rest-example::
+
+   .. centered:: Important **bold** and *italic* announcement
+
+
 .. toctree::
 
    other

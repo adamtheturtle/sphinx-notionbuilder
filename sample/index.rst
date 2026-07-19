@@ -1,6 +1,13 @@
 Heading 1 with *bold*
 =====================
 
+:Authors: Ada Lovelace; Grace Hopper
+:Version: 1.0
+:Date: 2026-07-19
+
+Document metadata fields such as authors, version, and date appear as labeled
+items before the body.
+
 .. contents::
 
 Headings
@@ -37,6 +44,15 @@ Rubric
    .. rubric:: A rubric with ``code`` and *italic*
 
    Rubrics can contain inline formatting like code and emphasis.
+
+Option Lists
+~~~~~~~~~~~~
+
+.. rest-example::
+
+   -h, --help  Show command help.
+   -v, --verbose  Enable *verbose* logging.
+   --output FILE  Write output to ``FILE``.
 
 Definition Lists
 ~~~~~~~~~~~~~~~~
@@ -77,6 +93,17 @@ Describe
    .. describe:: Foo
 
       This is a describe directive example.
+
+Compound
+~~~~~~~~
+
+.. rest-example::
+
+   .. compound::
+
+      This is the first compound paragraph.
+
+      This is the second compound paragraph.
 
 Comments
 ~~~~~~~~
@@ -145,6 +172,24 @@ Link to Notion Page Block
    .. rest-example::
 
       .. notion-link-to-page:: {{ sample_page_id }}
+
+Version Changes
+~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. versionadded:: 1.2
+      Added *inline* body.
+
+      * Nested added item.
+
+   .. versionchanged:: 1.3
+      Changed **inline** body.
+
+   .. deprecated:: 1.4
+      Deprecated body.
+
+      Nested paragraph.
 
 Admonitions
 ~~~~~~~~~~~
@@ -373,6 +418,17 @@ Task Lists
 
       3. [ ] Task C
 
+Footnotes
+~~~~~~~~~
+
+.. rest-example::
+
+   Auto [#]_. Explicit [1]_. Named [#note]_ and again [#note]_.
+
+   .. [#] Auto *body*.
+   .. [1] Explicit body.
+   .. [#note] Named ``body``.
+
 Block Quotes
 ~~~~~~~~~~~~
 
@@ -392,6 +448,18 @@ Block Quotes
          And with different paragraphs within the quote.
 
          Like this.
+
+   Attributed quotes render the attribution after the body:
+
+         Documentation is a love letter that you write to your future self.
+
+         -- Damian Conway
+
+   .. epigraph::
+
+      Documentation is a love letter that you write to your future self.
+
+      -- Damian Conway
 
 Tables
 ~~~~~~
@@ -494,6 +562,16 @@ Downloads
 .. rest-example::
 
    Download an external file :download:`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` here.
+
+Production Lists
+~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. productionlist::
+      expression: `term` ("+" `term`)*
+      term: `NUMBER`
+      NUMBER: /[0-9]+/
 
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
