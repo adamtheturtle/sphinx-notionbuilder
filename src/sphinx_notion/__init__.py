@@ -1007,7 +1007,7 @@ def _populate_table_cells(
 ) -> bool:
     """Fill Notion table cells, duplicating content across spans.
 
-    Returns whether any cell used a rowspan or colspan.
+    Returns whether any cell used a row span or column span.
     """
     occupied_cells: set[tuple[int, int]] = set()
     table_has_spans = False
