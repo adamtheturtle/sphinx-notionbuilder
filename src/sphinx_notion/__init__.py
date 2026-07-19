@@ -97,6 +97,7 @@ from ultimate_notion.obj_api.objects import (
 from ultimate_notion.rich_text import Text, math, text
 
 from sphinx_notion._upload import (
+    UploadStrategy,
     serialize_block_with_children,
     upload_to_notion,
 )
@@ -2763,6 +2764,9 @@ def _publish_to_notion(
             cover_path=None,
             cover_url=app.config.notion_page_cover_url,
             cancel_on_discussion=app.config.notion_cancel_on_discussion,
+            strategy=UploadStrategy(
+                value=app.config.notion_upload_strategy,
+            ),
         )
     finally:
         session.close()
@@ -2821,6 +2825,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         default=False,
         rebuild="",
         types=(bool,),
+    )
+    app.add_config_value(
+        name="notion_upload_strategy",
+        default=UploadStrategy.DIFF.value,
+        rebuild="",
+        types=(str,),
     )
     app.add_config_value(
         name="notion_page_id",

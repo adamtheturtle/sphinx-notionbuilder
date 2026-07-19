@@ -168,6 +168,71 @@ def test_publish_success(
     )
 
 
+def test_publish_replace_strategy(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    mock_api_base_url: str,
+    respx_mock: respx.MockRouter,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """Automatic publishing passes its configured replace strategy."""
+    del notion_token
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data="Hello from WireMock upload test\n",
+        encoding="utf-8",
+    )
+    app = make_app(
+        buildername="notion",
+        srcdir=srcdir,
+        confoverrides={
+            "extensions": ["sphinx_notion"],
+            "notion_publish": True,
+            "notion_parent_page_id": parent_page_id,
+            "notion_page_title": "Upload Title",
+            "notion_api_base_url": mock_api_base_url,
+            "notion_upload_strategy": "replace",
+        },
+    )
+    append_url_path = f"/v1/blocks/{parent_page_id}/children"
+    delete_url_path = "/v1/blocks/c02fc1d3-db8b-45c5-a222-27595b15aea7"
+    before_append_count = count_mock_requests(
+        mock=respx_mock,
+        method="PATCH",
+        url_path=append_url_path,
+    )
+    before_delete_count = count_mock_requests(
+        mock=respx_mock,
+        method="DELETE",
+        url_path=delete_url_path,
+    )
+
+    app.build()
+
+    assert app.statuscode == 0
+    assert app.config.notion_upload_strategy == "replace"
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="PATCH",
+            url_path=append_url_path,
+        )
+        == before_append_count + 1
+    )
+    assert (
+        count_mock_requests(
+            mock=respx_mock,
+            method="DELETE",
+            url_path=delete_url_path,
+        )
+        == before_delete_count + 1
+    )
+
+
 def test_publish_propagates_error(
     *,
     make_app: Callable[..., SphinxTestApp],

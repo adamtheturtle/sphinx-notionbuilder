@@ -20,6 +20,10 @@ Other options:
                               is matched by title, and created if no page with
                               the title exists.
   --icon TEXT                 Icon of the page
+  --strategy [diff|replace]   Block sync strategy: 'diff' preserves unchanged
+                              block IDs and discussions; 'replace' appends all
+                              content before deleting old blocks.  [default:
+                              diff]
   --cancel-on-discussion      Cancel upload with error if blocks to be deleted
                               have discussion threads
   --notion-api-base-url TEXT  Override the Notion API base URL. Useful for tests

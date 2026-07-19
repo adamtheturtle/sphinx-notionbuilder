@@ -81,6 +81,7 @@ def test_notion_publish_config_defaults(
     assert app.config.notion_page_icon is None
     assert app.config.notion_page_cover_url is None
     assert app.config.notion_cancel_on_discussion is False
+    assert app.config.notion_upload_strategy == "diff"
 
 
 def test_notion_publish_requires_parent(

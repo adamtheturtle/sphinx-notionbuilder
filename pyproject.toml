@@ -401,6 +401,7 @@ ignore_names = [
     "notion_parent_database_id",
     "notion_parent_page_id",
     "notion_publish",
+    "notion_upload_strategy",
     "option_spec",
     "optional_arguments",
     "project_copyright",

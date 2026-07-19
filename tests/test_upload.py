@@ -41,6 +41,7 @@ def _invoke_upload(
     mock_api_base_url: str,
     cancel_on_discussion: bool = False,
     page_id: str | None = None,
+    strategy: str | None = None,
 ) -> Result:
     """Invoke the upload CLI against the mock Notion API."""
     runner = CliRunner()
@@ -58,6 +59,8 @@ def _invoke_upload(
         arguments.append("--cancel-on-discussion")
     if page_id is not None:
         arguments.extend(["--page-id", page_id])
+    if strategy is not None:
+        arguments.extend(["--strategy", strategy])
     return runner.invoke(
         cli=main,
         args=arguments,
@@ -115,6 +118,36 @@ def test_upload_success(
         blocks_file=blocks_file,
         parent_page_id=parent_page_id,
         mock_api_base_url=mock_api_base_url,
+    )
+
+    assert result.exit_code == 0, (result.stdout, result.stderr)
+    assert result.output == (
+        "Uploaded page: 'Upload Title' "
+        "(https://www.notion.so/Upload-Title-59833787)\n"
+    )
+
+
+def test_upload_replace_strategy_success(
+    *,
+    mock_api_base_url: str,
+    notion_token: str,
+    parent_page_id: str,
+    tmp_path: Path,
+) -> None:
+    """The CLI accepts and applies the replace strategy."""
+    assert notion_token
+    blocks_file = _write_blocks_file(
+        tmp_path=tmp_path,
+        block_dicts=_paragraph_blocks(
+            text_content="Hello from WireMock upload test",
+        ),
+    )
+
+    result = _invoke_upload(
+        blocks_file=blocks_file,
+        parent_page_id=parent_page_id,
+        mock_api_base_url=mock_api_base_url,
+        strategy="replace",
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)
