@@ -444,6 +444,16 @@ Images
 
    .. image:: _static/camera.svg
 
+   Linked images preserve their target URL in the caption:
+
+   .. image:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+      :target: https://example.com/full-size.png
+
+   .. figure:: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop
+      :target: https://example.com/full-size.png
+
+      Diagram *caption*.
+
 Video
 ~~~~~
 
