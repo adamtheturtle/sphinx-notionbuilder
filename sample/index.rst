@@ -495,6 +495,16 @@ Downloads
 
    Download an external file :download:`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` here.
 
+Production Lists
+~~~~~~~~~~~~~~~~
+
+.. rest-example::
+
+   .. productionlist::
+      expression: `term` ("+" `term`)*
+      term: `NUMBER`
+      NUMBER: /[0-9]+/
+
 Mathematical Equations
 ~~~~~~~~~~~~~~~~~~~~~~
 
