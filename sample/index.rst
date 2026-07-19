@@ -1,6 +1,13 @@
 Heading 1 with *bold*
 =====================
 
+:Authors: Ada Lovelace; Grace Hopper
+:Version: 1.0
+:Date: 2026-07-19
+
+Document metadata fields such as authors, version, and date appear as labeled
+items before the body.
+
 .. contents::
 
 Headings
