@@ -1,1 +1,1 @@
-Table rowspans and colspans now flatten by duplicating content across covered cells while preserving every value's logical source column.
+Grid tables with rowspans or colspans now duplicate merged content across the covered Notion cells and emit a suppressible ``notion.unsupported_table`` warning, instead of shifting later cells.

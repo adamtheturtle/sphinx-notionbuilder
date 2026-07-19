@@ -1,8 +1,8 @@
 Suppressed Warnings Sample
 ==========================
 
-This sample demonstrates cross-reference features that produce warnings with the Notion builder.
-The warnings are suppressed via ``suppress_warnings = ["ref.notion"]`` in ``conf.py``.
+This sample demonstrates features that produce warnings with the Notion builder.
+The warnings are suppressed via ``suppress_warnings`` in ``conf.py``.
 
 Cross-references
 ~~~~~~~~~~~~~~~~
@@ -36,6 +36,30 @@ Autosummary
       :nosignatures:
 
       example_module.greet
+
+
+Table Cell Spans
+~~~~~~~~~~~~~~~~
+
+Notion tables do not support merged cells, so rowspans and colspans are
+flattened by duplicating content with a suppressible
+``notion.unsupported_table`` warning.
+
+.. rest-example::
+
+   +---+---+
+   | A | B |
+   +===+===+
+   | merged|
+   +---+---+
+
+   +---+---+
+   | A | B |
+   +===+===+
+   | X | Y |
+   +   +---+
+   |   | Z |
+   +---+---+
 
 .. toctree::
 

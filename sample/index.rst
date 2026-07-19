@@ -428,23 +428,6 @@ Tables
         - Supports ``inline code``
         - ✅ Working
 
-   Merged cells are flattened by duplicating content across the span, because
-   Notion tables do not support colspan or rowspan:
-
-   +---+---+
-   | A | B |
-   +===+===+
-   | merged|
-   +---+---+
-
-   +---+---+
-   | A | B |
-   +===+===+
-   | X | Y |
-   +   +---+
-   |   | Z |
-   +---+---+
-
 Images
 ~~~~~~
 

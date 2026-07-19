@@ -1952,12 +1952,20 @@ def test_table_colspan_duplicates_content(
     table[1, 0] = text(text="merged")
     table[1, 1] = text(text="merged")
 
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}::",
+        "Table cell spans cannot be represented by the Notion builder. "
+        "Duplicating merged cell content across the covered cells. "
+        "[notion.unsupported_table]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[table],
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=expected_warnings,
     )
 
 
@@ -1984,12 +1992,20 @@ def test_table_rowspan_preserves_logical_columns(
     table[2, 0] = text(text="X")
     table[2, 1] = text(text="Z")
 
+    index_rst = tmp_path / "src" / "index.rst"
+    expected_warnings = [
+        f"{index_rst}::",
+        "Table cell spans cannot be represented by the Notion builder. "
+        "Duplicating merged cell content across the covered cells. "
+        "[notion.unsupported_table]",
+    ]
+
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[table],
         make_app=make_app,
         tmp_path=tmp_path,
-        expected_warnings=(),
+        expected_warnings=expected_warnings,
     )
 
 
