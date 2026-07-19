@@ -1478,12 +1478,23 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process topic nodes, specifically for table of contents."""
-    del section_level  # Not used for topics
-    # Later, we can support `.. topic::` directives, likely as
-    # a callout with no icon.
-    assert "contents" in node["classes"]
-    return [UnoTableOfContents()]
+    """Process contents topics and user-authored topic directives."""
+    if "contents" in node["classes"]:
+        return [UnoTableOfContents()]
+
+    title_node = node.children[0]
+    assert isinstance(title_node, nodes.title)
+    callout = UnoCallout(
+        text=_create_rich_text_from_children(node=title_node),
+    )
+    for child in node.children[1:]:
+        callout.append(
+            blocks=_process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+        )
+    return [callout]
 
 
 @beartype

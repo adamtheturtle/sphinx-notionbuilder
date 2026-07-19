@@ -194,6 +194,17 @@ Version Changes
 Topics
 ~~~~~~
 
+Regular topics become Notion callouts. The special topic emitted by
+``.. contents::`` remains a table of contents.
+
+.. rest-example::
+
+   .. topic:: Release *notes*
+
+      This is the visible topic body.
+
+      This is the second paragraph.
+
 Admonitions
 ~~~~~~~~~~~
 
