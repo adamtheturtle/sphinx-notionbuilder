@@ -78,6 +78,17 @@ Describe
 
       This is a describe directive example.
 
+Compound
+~~~~~~~~
+
+.. rest-example::
+
+   .. compound::
+
+      This is the first compound paragraph.
+
+      This is the second compound paragraph.
+
 Comments
 ~~~~~~~~
 
