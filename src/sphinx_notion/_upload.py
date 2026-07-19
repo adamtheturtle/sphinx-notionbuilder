@@ -429,7 +429,17 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
 
             _LOGGER.info("File '%s' uploaded", file_path.name)
 
-            block = block.__class__(file=uploaded_file, caption=block.caption)
+            if isinstance(block, UnoFile):
+                block = UnoFile(
+                    file=uploaded_file,
+                    name=block.name,
+                    caption=block.caption,
+                )
+            else:
+                block = block.__class__(
+                    file=uploaded_file,
+                    caption=block.caption,
+                )
 
     elif isinstance(block, ParentBlock) and block.has_children:
         new_child_blocks = [
@@ -517,7 +527,7 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
 
     if icon:
         _LOGGER.info("Setting page icon to '%s'", icon)
-    page.icon = Emoji(emoji=icon) if icon else None
+        page.icon = Emoji(emoji=icon)
     if cover_path:
         uploaded_cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
@@ -527,8 +537,6 @@ def upload_to_notion(  # noqa: C901, PLR0912, PLR0915
     elif cover_url:
         _LOGGER.info("Setting page cover to '%s'", cover_url)
         page.cover = ExternalFile(url=cover_url)
-    else:
-        page.cover = None
 
     if page.subpages:
         raise PageHasSubpagesError
