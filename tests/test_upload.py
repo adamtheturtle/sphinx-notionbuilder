@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import respx
 from click.testing import CliRunner, Result
 from pytest_regressions.file_regression import FileRegressionFixture
 from ultimate_notion.blocks import (
@@ -14,6 +15,7 @@ from ultimate_notion.blocks import (
 from ultimate_notion.rich_text import text
 
 from _notion_scripts.upload import main  # pylint: disable=import-private-name
+from tests._wiremock import count_page_metadata_clear_requests
 
 
 def _write_blocks_file(
@@ -197,6 +199,7 @@ def test_upload_with_page_id(
     mock_api_base_url: str,
     notion_token: str,
     parent_page_id: str,
+    respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
     """Uploading to a page given by ID reports success."""
@@ -208,6 +211,10 @@ def test_upload_with_page_id(
         ),
     )
 
+    clears_before = count_page_metadata_clear_requests(
+        mock=respx_mock,
+        page_id=parent_page_id,
+    )
     result = _invoke_upload(
         blocks_file=blocks_file,
         parent_page_id=parent_page_id,
@@ -219,6 +226,13 @@ def test_upload_with_page_id(
     assert result.output == (
         "Uploaded page: 'Upload Title' "
         "(https://www.notion.so/Upload-Title-59833787)\n"
+    )
+    assert (
+        count_page_metadata_clear_requests(
+            mock=respx_mock,
+            page_id=parent_page_id,
+        )
+        == clears_before
     )
 
 
