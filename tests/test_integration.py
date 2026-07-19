@@ -1105,6 +1105,39 @@ def test_toctree_directive(
     )
 
 
+def test_compound_directive(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """``compound`` directives preserve their visible child blocks."""
+    rst_content = """
+        Before.
+
+        .. compound::
+
+           This is the first compound paragraph.
+
+           This is the second compound paragraph.
+
+        After.
+    """
+    expected_blocks = [
+        UnoParagraph(text=text(text="Before.")),
+        UnoParagraph(text=text(text="This is the first compound paragraph.")),
+        UnoParagraph(text=text(text="This is the second compound paragraph.")),
+        UnoParagraph(text=text(text="After.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_simple_code_block(
     *,
     make_app: Callable[..., SphinxTestApp],
