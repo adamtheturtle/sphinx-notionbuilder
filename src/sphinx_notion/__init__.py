@@ -1474,6 +1474,35 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.field_list,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process custom fields as labeled bullets with nested bodies."""
+    result: list[Block] = []
+    for field in node.children:
+        assert isinstance(field, nodes.field)
+        field_name = field.children[0]
+        field_body = field.children[1]
+        assert isinstance(field_name, nodes.field_name)
+        assert isinstance(field_body, nodes.field_body)
+
+        bulleted_item = UnoBulletedItem(
+            text=text(text=field_name.astext(), bold=True)
+        )
+        for child in field_body.children:
+            child_blocks = _process_node_to_blocks(
+                child,
+                section_level=section_level,
+            )
+            bulleted_item.append(blocks=child_blocks)
+        result.append(bulleted_item)
+    return result
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: nodes.topic,
     *,
     section_level: int,

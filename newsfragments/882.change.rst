@@ -1,0 +1,1 @@
+Custom reStructuredText field lists now render as bold labeled bullets with nested bodies, preserving field order, inline formatting, and multiple paragraphs.

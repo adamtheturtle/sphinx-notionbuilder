@@ -2108,6 +2108,67 @@ def test_option_list(
     )
 
 
+def test_custom_field_list(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Custom fields preserve labels, formatting, and body paragraphs."""
+    rst_content = """
+        Project metadata:
+
+        :Status: *Draft*
+        :Owner: Documentation Team
+        :Notes: First paragraph.
+
+                Second paragraph with ``code``.
+
+        The rest of the document follows.
+    """
+
+    status_item = UnoBulletedItem(text=text(text="Status", bold=True))
+    status_item.append(
+        blocks=[UnoParagraph(text=text(text="Draft", italic=True))]
+    )
+
+    owner_item = UnoBulletedItem(text=text(text="Owner", bold=True))
+    owner_item.append(
+        blocks=[UnoParagraph(text=text(text="Documentation Team"))]
+    )
+
+    notes_item = UnoBulletedItem(text=text(text="Notes", bold=True))
+    notes_item.append(
+        blocks=[UnoParagraph(text=text(text="First paragraph."))]
+    )
+    notes_item.append(
+        blocks=[
+            UnoParagraph(
+                text=(
+                    text(text="Second paragraph with ")
+                    + text(text="code", code=True)
+                    + text(text=".")
+                )
+            )
+        ]
+    )
+
+    expected_blocks = [
+        UnoParagraph(text=text(text="Project metadata:")),
+        status_item,
+        owner_item,
+        notes_item,
+        UnoParagraph(text=text(text="The rest of the document follows.")),
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=(),
+    )
+
+
 def test_generic_admonition(
     *,
     make_app: Callable[..., SphinxTestApp],
