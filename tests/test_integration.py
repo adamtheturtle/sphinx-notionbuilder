@@ -378,8 +378,10 @@ def test_centered_text(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:1:",
-        "Centered alignment cannot be represented by the Notion builder. "
-        "Rendering as a normal paragraph. [notion.unsupported_layout]",
+        (
+            "Centered alignment cannot be represented by the Notion builder. "
+            "Rendering as a normal paragraph. [notion.unsupported_layout]"
+        ),
     ]
 
     expected_blocks = [
@@ -462,11 +464,15 @@ def test_subscript_and_superscript(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:1:",
-        "Subscript text cannot be vertically positioned by the Notion "
-        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
-        f"{index_rst}:1:",
-        "Superscript text cannot be vertically positioned by the Notion "
-        "builder. Rendering as plain text. [notion.unsupported_inline]",
+        (
+            "Subscript text cannot be vertically positioned by the Notion "
+            "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+            f"{index_rst}:1:"
+        ),
+        (
+            "Superscript text cannot be vertically positioned by the Notion "
+            "builder. Rendering as plain text. [notion.unsupported_inline]"
+        ),
     ]
 
     expected_blocks = [
@@ -518,11 +524,15 @@ def setup(app):
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:1:",
-        "Subscript text cannot be vertically positioned by the Notion "
-        "builder. Rendering as plain text. [notion.unsupported_inline]\n"
-        f"{index_rst}:1:",
-        "Superscript text cannot be vertically positioned by the Notion "
-        "builder. Rendering as plain text. [notion.unsupported_inline]",
+        (
+            "Subscript text cannot be vertically positioned by the Notion "
+            "builder. Rendering as plain text. [notion.unsupported_inline]\n"
+            f"{index_rst}:1:"
+        ),
+        (
+            "Superscript text cannot be vertically positioned by the Notion "
+            "builder. Rendering as plain text. [notion.unsupported_inline]"
+        ),
     ]
 
     expected_blocks = [
@@ -1565,9 +1575,11 @@ def test_horizontal_list(
     """
 
     expected_warnings = [
-        "Horizontal list columns cannot be represented by the Notion "
-        "builder. Flattening into a single bulleted list. "
-        "[notion.unsupported_layout]",
+        (
+            "Horizontal list columns cannot be represented by the Notion "
+            "builder. Flattening into a single bulleted list. "
+            "[notion.unsupported_layout]"
+        ),
     ]
 
     expected_blocks = [UnoBulletedItem(text=text(text=item)) for item in items]
@@ -2593,9 +2605,11 @@ def test_table_colspan_duplicates_content(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}::",
-        "Table cell spans cannot be represented by the Notion builder. "
-        "Duplicating merged cell content across the covered cells. "
-        "[notion.unsupported_table]",
+        (
+            "Table cell spans cannot be represented by the Notion builder. "
+            "Duplicating merged cell content across the covered cells. "
+            "[notion.unsupported_table]"
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -2633,9 +2647,11 @@ def test_table_rowspan_preserves_logical_columns(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}::",
-        "Table cell spans cannot be represented by the Notion builder. "
-        "Duplicating merged cell content across the covered cells. "
-        "[notion.unsupported_table]",
+        (
+            "Table cell spans cannot be represented by the Notion builder. "
+            "Duplicating merged cell content across the covered cells. "
+            "[notion.unsupported_table]"
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -2864,8 +2880,10 @@ def test_cross_reference_doc(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Cross-references are not supported by the Notion builder. "
-        "Rendering as plain text. [ref.notion]",
+        (
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text. [ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -2904,8 +2922,10 @@ def test_cross_reference_ref(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Cross-references are not supported by the Notion builder. "
-        "Rendering as plain text. [ref.notion]",
+        (
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text. [ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -2942,8 +2962,10 @@ def test_cross_reference_any(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Cross-references are not supported by the Notion builder. "
-        "Rendering as plain text. [ref.notion]",
+        (
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text. [ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -2974,8 +2996,10 @@ def test_cross_reference_download(
 
     expected_warnings = [
         f"{index_rst}:1:",
-        "Local file download references are not supported by the "
-        "Notion builder. Rendering as plain text. [ref.notion]",
+        (
+            "Local file download references are not supported by the "
+            "Notion builder. Rendering as plain text. [ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -3059,12 +3083,16 @@ def test_cross_reference_numref(
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
-        "Table has a title 'My Table' on line 3 in "
-        f"{index_rst}, but Notion tables do not have titles.\n"
-        f"{index_rst}:11:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Table has a title 'My Table' on line 3 in "
+            f"{index_rst}, but Notion tables do not have titles.\n"
+            f"{index_rst}:11:"
+        ),
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     table = UnoTable(n_rows=2, n_cols=2, header_row=True)
@@ -3106,9 +3134,11 @@ def test_cross_reference_keyword(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:6:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -3148,9 +3178,11 @@ def test_cross_reference_option(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:7:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     callout = UnoCallout(
@@ -3242,9 +3274,11 @@ def test_cross_reference_envvar_resolved(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -3273,9 +3307,11 @@ def test_cross_reference_confval(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     confval_callout = UnoCallout(
@@ -5561,9 +5597,11 @@ def test_autosummary_with_internal_references(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         f"{index_rst}:6:<autosummary>:1:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     _assert_rst_converts_to_notion_objects(
@@ -5666,9 +5704,11 @@ def test_glossary_term_same_page(
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
         f"{index_rst}:6:",
-        "Internal reference links (e.g., from autosummary) are not "
-        "supported by the Notion builder. Rendering as plain text. "
-        "[ref.notion]",
+        (
+            "Internal reference links (e.g., from autosummary) are not "
+            "supported by the Notion builder. Rendering as plain text. "
+            "[ref.notion]"
+        ),
     ]
 
     expected_blocks = [
@@ -5715,8 +5755,10 @@ def test_glossary_term_cross_page(
     index_rst = srcdir / "index.rst"
     expected_warnings = [
         f"{index_rst}:5:",
-        "Cross-references are not supported by the Notion builder. "
-        "Rendering as plain text. [ref.notion]",
+        (
+            "Cross-references are not supported by the Notion builder. "
+            "Rendering as plain text. [ref.notion]"
+        ),
     ]
 
     expected_blocks = [
