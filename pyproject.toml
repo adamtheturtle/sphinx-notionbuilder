@@ -139,15 +139,19 @@ lint.select = [
 lint.ignore = [
     # Ruff warns that this conflicts with the formatter.
     "COM812",
+    # Copyright headers are not required.
+    "CPY001",
     # Allow our chosen docstring line-style - pydocstringformatter handles formatting
     # but doesn't enforce D205 (blank line after summary) or D212 (summary on first line).
     "D205",
     "D212",
     # Ruff warns that this conflicts with the formatter.
     "ISC001",
+    "ISC004",
     # Ignore 'too-many-*' errors as they seem to get in the way more than
     # helping.
     "PLR0913",
+    "PLR0917",
     # We use asserts for type narrowing.
     "S101",
 ]
