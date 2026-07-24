@@ -147,10 +147,9 @@ lint.ignore = [
     "D212",
     # Ruff warns that this conflicts with the formatter.
     "ISC001",
-    # Ignore 'too-many-*' errors as they seem to get in the way more than
-    # helping.
+    # Ignore too many arguments; some functions genuinely need their
+    # independently meaningful keyword-only parameters.
     "PLR0913",
-    "PLR0917",
     # We use asserts for type narrowing.
     "S101",
 ]

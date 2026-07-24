@@ -16,7 +16,6 @@ from beartype import beartype
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import directives as rst_directives
-from docutils.parsers.rst.states import Inliner
 from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
@@ -284,17 +283,21 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
 
 
 @beartype
-def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
-    name: str,
-    rawtext: str,
-    text_content: str,
-    lineno: int,
-    inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
+def _role_text_content(
+    role_args: tuple[object, ...],
+) -> str:
+    """Extract text content from docutils role callback arguments."""
+    text_content = role_args[2]
+    assert isinstance(text_content, str)
+    return text_content
+
+
+@beartype
+def _notion_mention_user_role(
+    *role_args: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion user mention role."""
-    del name, rawtext, lineno, inliner, options, content
+    text_content = _role_text_content(role_args)
     user_uuid = UUID(hex=text_content)
     node = _MentionUserNode()
     node.attributes["user_id"] = user_uuid
@@ -303,17 +306,11 @@ def _notion_mention_user_role(  # pylint: disable=too-many-positional-arguments
 
 
 @beartype
-def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
-    name: str,
-    rawtext: str,
-    text_content: str,
-    lineno: int,
-    inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
+def _notion_mention_page_role(
+    *role_args: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion page mention role."""
-    del name, rawtext, lineno, inliner, options, content
+    text_content = _role_text_content(role_args)
     page_uuid = UUID(hex=text_content)
     node = _MentionPageNode()
     node.attributes["page_id"] = page_uuid
@@ -322,17 +319,11 @@ def _notion_mention_page_role(  # pylint: disable=too-many-positional-arguments
 
 
 @beartype
-def _notion_mention_database_role(  # pylint: disable=too-many-positional-arguments
-    name: str,
-    rawtext: str,
-    text_content: str,
-    lineno: int,
-    inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
+def _notion_mention_database_role(
+    *role_args: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion database mention role."""
-    del name, rawtext, lineno, inliner, options, content
+    text_content = _role_text_content(role_args)
     database_uuid = UUID(hex=text_content)
     node = _MentionDatabaseNode()
     node.attributes["database_id"] = database_uuid
@@ -341,17 +332,11 @@ def _notion_mention_database_role(  # pylint: disable=too-many-positional-argume
 
 
 @beartype
-def _notion_mention_date_role(  # pylint: disable=too-many-positional-arguments
-    name: str,
-    rawtext: str,
-    text_content: str,
-    lineno: int,
-    inliner: Inliner,
-    options: dict[str, Any] | None = None,
-    content: Sequence[str] = (),
+def _notion_mention_date_role(
+    *role_args: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion date mention role."""
-    del name, rawtext, lineno, inliner, options, content
+    text_content = _role_text_content(role_args)
     date_obj = dt.date.fromisoformat(text_content)
     node = _MentionDateNode()
     node.attributes["date"] = date_obj
