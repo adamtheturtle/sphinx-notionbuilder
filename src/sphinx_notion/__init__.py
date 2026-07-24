@@ -286,7 +286,7 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
 def _role_text_content(
     role_args: tuple[object, ...],
 ) -> str:
-    """Extract text content from docutils role callback arguments."""
+    """Extract text content from parser role callback arguments."""
     text_content = role_args[2]
     assert isinstance(text_content, str)
     return text_content
@@ -295,9 +295,11 @@ def _role_text_content(
 @beartype
 def _notion_mention_user_role(
     *role_args: object,
+    **role_kwargs: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion user mention role."""
-    text_content = _role_text_content(role_args)
+    del role_kwargs
+    text_content = _role_text_content(role_args=role_args)
     user_uuid = UUID(hex=text_content)
     node = _MentionUserNode()
     node.attributes["user_id"] = user_uuid
@@ -308,9 +310,11 @@ def _notion_mention_user_role(
 @beartype
 def _notion_mention_page_role(
     *role_args: object,
+    **role_kwargs: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion page mention role."""
-    text_content = _role_text_content(role_args)
+    del role_kwargs
+    text_content = _role_text_content(role_args=role_args)
     page_uuid = UUID(hex=text_content)
     node = _MentionPageNode()
     node.attributes["page_id"] = page_uuid
@@ -321,9 +325,11 @@ def _notion_mention_page_role(
 @beartype
 def _notion_mention_database_role(
     *role_args: object,
+    **role_kwargs: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion database mention role."""
-    text_content = _role_text_content(role_args)
+    del role_kwargs
+    text_content = _role_text_content(role_args=role_args)
     database_uuid = UUID(hex=text_content)
     node = _MentionDatabaseNode()
     node.attributes["database_id"] = database_uuid
@@ -334,9 +340,11 @@ def _notion_mention_database_role(
 @beartype
 def _notion_mention_date_role(
     *role_args: object,
+    **role_kwargs: object,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion date mention role."""
-    text_content = _role_text_content(role_args)
+    del role_kwargs
+    text_content = _role_text_content(role_args=role_args)
     date_obj = dt.date.fromisoformat(text_content)
     node = _MentionDateNode()
     node.attributes["date"] = date_obj
