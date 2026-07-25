@@ -81,6 +81,7 @@ def test_notion_publish_config_defaults(
     assert app.config.notion_page_icon is None
     assert app.config.notion_page_cover_url is None
     assert app.config.notion_cancel_on_discussion is False
+    assert app.config.notion_upload_strategy == "diff"
 
 
 def test_notion_publish_requires_parent(
@@ -93,7 +94,7 @@ def test_notion_publish_requires_parent(
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
 
-    with pytest.raises(ExtensionError, match="neither notion_parent_page_id"):
+    with pytest.raises(ExtensionError, match="notion_page_id and both"):
         make_app(
             srcdir=srcdir,
             confoverrides={
@@ -153,7 +154,7 @@ def test_notion_publish_valid_config_with_page_id(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Valid configuration with parent_page_id passes validation."""
+    """An existing page ID does not require a parent location."""
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
@@ -163,13 +164,15 @@ def test_notion_publish_valid_config_with_page_id(
         confoverrides={
             "extensions": ["sphinx_notion"],
             "notion_publish": True,
-            "notion_parent_page_id": "abc123",
+            "notion_page_id": "abc123",
             "notion_page_title": "Test Page",
         },
     )
 
     assert app.config.notion_publish is True
-    assert app.config.notion_parent_page_id == "abc123"
+    assert app.config.notion_page_id == "abc123"
+    assert app.config.notion_parent_page_id is None
+    assert app.config.notion_parent_database_id is None
     assert app.config.notion_page_title == "Test Page"
 
 

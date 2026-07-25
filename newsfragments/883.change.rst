@@ -1,0 +1,1 @@
+Native reStructuredText option lists now render as bulleted command options with nested descriptions, preserving aliases, arguments, and inline formatting.

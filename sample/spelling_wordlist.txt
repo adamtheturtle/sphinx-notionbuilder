@@ -1,4 +1,5 @@
 callout
+callouts
 Autodoc
 Args
 Autosummary

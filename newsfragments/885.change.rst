@@ -1,0 +1,1 @@
+Nested line blocks now flatten into Notion paragraphs with two-space indentation per nesting level, preserved line boundaries, and inline formatting instead of aborting the build.

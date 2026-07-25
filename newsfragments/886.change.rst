@@ -1,0 +1,1 @@
+Sphinx ``centered`` directives now render as normal Notion paragraphs with a suppressible ``notion.unsupported_layout`` warning, instead of aborting the build.

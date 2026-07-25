@@ -1,0 +1,1 @@
+Allow direct page updates by ID without requiring an unused parent location.

@@ -1,0 +1,1 @@
+Native reStructuredText footnotes now render bracketed inline numbers and numbered body bullets, including auto-numbered, explicit, named, and repeated references.
