@@ -1,0 +1,1 @@
+Native reStructuredText citations now render bracketed inline references and labeled bibliography bullets while preserving formatted citation bodies.
