@@ -132,6 +132,16 @@
           },
           "archived": false,
           "in_trash": false,
+          "icon": {
+            "type": "emoji",
+            "emoji": "\ud83d\udcdd"
+          },
+          "cover": {
+            "type": "external",
+            "external": {
+              "url": "https://example.com/cover.png"
+            }
+          },
           "parent": {
             "type": "workspace",
             "workspace": true

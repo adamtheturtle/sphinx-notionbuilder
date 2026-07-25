@@ -19,6 +19,8 @@ from sphinx_notion._upload import (
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
+    PageTitleAmbiguousError,
+    UploadStrategy,
     upload_to_notion,
 )
 
@@ -45,7 +47,11 @@ from sphinx_notion._upload import (
         "--parent-database-id",
         help="Parent database ID (integration connected)",
     ),
-    constraint=cloup.constraints.RequireExactly(n=1),
+    constraint=cloup.constraints.If(
+        condition="page_id",
+        then=cloup.constraints.mutually_exclusive,
+        else_=cloup.constraints.RequireExactly(n=1),
+    ),
 )
 @cloup.option(
     "--title",
@@ -87,6 +93,17 @@ from sphinx_notion._upload import (
     constraint=cloup.constraints.mutually_exclusive,
 )
 @cloup.option(
+    "--strategy",
+    type=click.Choice(choices=[strategy.value for strategy in UploadStrategy]),
+    default=UploadStrategy.DIFF.value,
+    show_default=True,
+    help=(
+        "Block sync strategy: 'diff' preserves unchanged block IDs and "
+        "discussions; 'replace' appends all content before deleting old "
+        "blocks."
+    ),
+)
+@cloup.option(
     "--cancel-on-discussion",
     help=(
         "Cancel upload with error if blocks to be deleted have discussion "
@@ -114,6 +131,7 @@ def main(
     icon: str | None,
     cover_path: Path | None,
     cover_url: str | None,
+    strategy: str,
     cancel_on_discussion: bool,
     notion_api_base_url: str | None,
 ) -> None:
@@ -145,6 +163,7 @@ def main(
             cover_path=cover_path,
             cover_url=cover_url,
             cancel_on_discussion=cancel_on_discussion,
+            strategy=UploadStrategy(value=strategy),
         )
     except PageHasSubpagesError:
         error_message = (
@@ -161,6 +180,8 @@ def main(
     except DiscussionsExistError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     except PageNotFoundError as exc:
+        raise click.ClickException(message=str(object=exc)) from None
+    except PageTitleAmbiguousError as exc:
         raise click.ClickException(message=str(object=exc)) from None
     finally:
         session.close()

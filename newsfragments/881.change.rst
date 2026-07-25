@@ -1,0 +1,1 @@
+Recognized document metadata such as authors, version, and date now renders as labeled bullets before the document body instead of being omitted.

@@ -1,0 +1,1 @@
+Keep an existing page cover when its local cover file is unchanged.

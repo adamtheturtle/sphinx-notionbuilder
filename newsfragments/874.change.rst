@@ -1,0 +1,1 @@
+Grid tables with rowspans or colspans now duplicate merged content across the covered Notion cells and emit a suppressible ``notion.unsupported_table`` warning, instead of shifting later cells.

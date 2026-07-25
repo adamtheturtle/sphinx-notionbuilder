@@ -1,0 +1,1 @@
+Standard ``:sub:`` and ``:sup:`` inline roles now render their content as plain Notion rich text, preserving nested formatting, instead of aborting the build.
