@@ -16,6 +16,7 @@ autosummary_generate = True
 
 suppress_warnings = [
     "ref.notion",
+    "notion.unsupported_image",
     "notion.unsupported_inline",
     "notion.unsupported_layout",
     "notion.unsupported_table",

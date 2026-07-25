@@ -2881,6 +2881,44 @@ def test_image_with_alt_text_only(
     )
 
 
+def test_image_with_target(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Linked images preserve their target in a linked caption."""
+    image_url = "https://example.com/thumbnail.png"
+    target_url = "https://example.com/full-size.png"
+    rst_content = f"""
+        .. image:: {image_url}
+           :target: {target_url}
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url=image_url),
+            caption=(
+                text(text="Target: ") + text(text=target_url, href=target_url)
+            ),
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[
+            f"{tmp_path / 'src' / 'index.rst'}::",
+            (
+                "Image targets cannot be represented as clickable Notion "
+                "images. Preserving the target URL in the image caption. "
+                "[notion.unsupported_image]"
+            ),
+        ],
+    )
+
+
 def test_literalinclude_without_caption(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -6070,6 +6108,49 @@ def test_figure_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+    )
+
+
+def test_figure_directive_with_target(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Linked figures retain both their caption and target URL."""
+    image_url = "https://example.com/thumbnail.png"
+    target_url = "https://example.com/full-size.png"
+    rst_content = f"""
+        .. figure:: {image_url}
+           :target: {target_url}
+
+           Diagram *caption*.
+    """
+
+    expected_blocks = [
+        UnoImage(
+            file=ExternalFile(url=image_url),
+            caption=(
+                text(text="Diagram ")
+                + text(text="caption", italic=True)
+                + text(text=".\nTarget: ")
+                + text(text=target_url, href=target_url)
+            ),
+        )
+    ]
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        expected_warnings=[
+            f"{tmp_path / 'src' / 'index.rst'}:1:",
+            (
+                "Image targets cannot be represented as clickable Notion "
+                "images. Preserving the target URL in the image caption. "
+                "[notion.unsupported_image]"
+            ),
+        ],
     )
 
 
