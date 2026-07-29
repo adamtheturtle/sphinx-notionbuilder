@@ -30,7 +30,7 @@ from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
 )
-from sphinx_toolbox.collapse import CollapseNode
+from sphinx_toolbox.collapse import CollapseNode, CollapseSummaryNode
 from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
     mermaid as mermaid_node,
 )
@@ -1892,10 +1892,22 @@ def _(
     """Process collapse nodes by creating Notion ToggleItem blocks."""
     del section_level
 
-    title_text = node.attributes["label"]
-    toggle_block = UnoToggleItem(text=text(text=title_text))
+    summary_node: CollapseSummaryNode | None = None
+    for child in node.children:
+        if isinstance(child, CollapseSummaryNode):
+            summary_node = child
+            break
+
+    if summary_node is None:
+        toggle_text = text(text=node.attributes["label"])
+    else:
+        toggle_text = _create_rich_text_from_children(node=summary_node)
+
+    toggle_block = UnoToggleItem(text=toggle_text)
 
     for child in node.children:
+        if child is summary_node:
+            continue
         toggle_block.append(
             blocks=_process_node_to_blocks(
                 child,
@@ -2252,6 +2264,32 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: nodes.sidebar,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process the custom wrapper emitted by ``rest-example``."""
+    if node.__class__.__name__ == "reSTExample":
+        return _process_rest_example_container(
+            node=node,
+            section_level=section_level,
+        )
+
+    line_number = node.line or node.parent.line
+    source = node.source or node.parent.source
+    if line_number is not None and source is not None:
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {node.tagname} on line "
+            f"{line_number} in {source}."
+        )
+    else:
+        unsupported_node_type_msg = f"Unsupported node type: {node.tagname}."
+    raise NotImplementedError(unsupported_node_type_msg)
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: iframe_node,
     *,
     section_level: int,
@@ -2277,7 +2315,7 @@ def _(
 @beartype
 def _process_rest_example_container(
     *,
-    node: nodes.container,
+    node: nodes.Element,
     section_level: int,
 ) -> list[Block]:
     """
