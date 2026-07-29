@@ -51,7 +51,7 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
         url2pathname,
     )
 
-    return Path(url2pathname(urlparse(url=uri).path))
+    return Path(url2pathname(urlparse(uri).path))  # noqa: KW001
 
 
 @beartype
@@ -461,7 +461,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             if isinstance(block, UnoFile):
                 block = UnoFile(
                     file=uploaded_file,
-                    name=block.name or file_path.name,
+                    name=block.name,
                     caption=block.caption,
                 )
             else:

@@ -908,42 +908,6 @@ def test_upload_local_file_preserves_name_and_caption(
     assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
 
 
-def test_upload_local_file_uses_filename_when_name_is_missing(
-    *,
-    notion_session: Session,
-    parent_page_id: str,
-    respx_mock: respx.MockRouter,
-    tmp_path: Path,
-) -> None:
-    """A local file without a display name uses its base name."""
-    local_file = tmp_path / "archive.zip"
-    local_file.write_bytes(data=b"release-bundle")
-    append_url_path = f"/v1/blocks/{parent_page_id}/children"
-
-    notion_upload.upload_to_notion(
-        session=notion_session,
-        blocks=[UnoFile(file=ExternalFile(url=local_file.as_uri()))],
-        page_id=None,
-        parent_page_id=parent_page_id,
-        parent_database_id=None,
-        title="Upload Title",
-        icon=None,
-        cover_path=None,
-        cover_url=None,
-        cancel_on_discussion=False,
-    )
-
-    calls: list[Call] = list(respx_mock.calls)
-    append_calls = [
-        call
-        for call in calls
-        if call.request.method == "PATCH"
-        and call.request.url.path == append_url_path
-    ]
-    payload = json.loads(s=append_calls[-1].request.content)
-    assert payload["children"][0]["file"]["name"] == "archive.zip"
-
-
 def test_upload_with_nested_file_block(
     *,
     notion_session: Session,
