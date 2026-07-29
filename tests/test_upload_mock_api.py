@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
+import requests
 import respx
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import ExternalFile, Session
@@ -908,30 +909,21 @@ def test_upload_local_file_preserves_name_and_caption(
     assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
 
 
-def test_upload_unnamed_local_file_omits_empty_name(
+def test_upload_local_file_uses_filename_when_name_is_missing(
     *,
     notion_session: Session,
     parent_page_id: str,
     respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
-    """An unnamed local file does not send an invalid empty name."""
+    """A local file without a display name uses its base name."""
     local_file = tmp_path / "archive.zip"
     local_file.write_bytes(data=b"release-bundle")
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
-    appends_before = count_mock_requests(
-        mock=respx_mock,
-        method="PATCH",
-        url_path=append_url_path,
-    )
 
     notion_upload.upload_to_notion(
         session=notion_session,
-        blocks=[
-            UnoFile(
-                file=ExternalFile(url=local_file.as_uri()),
-            )
-        ],
+        blocks=[UnoFile(file=ExternalFile(url=local_file.as_uri()))],
         page_id=None,
         parent_page_id=parent_page_id,
         parent_database_id=None,
@@ -949,16 +941,66 @@ def test_upload_unnamed_local_file_omits_empty_name(
         if call.request.method == "PATCH"
         and call.request.url.path == append_url_path
     ]
-    assert len(append_calls) == appends_before + 1
     payload = json.loads(s=append_calls[-1].request.content)
     uploaded_file = payload["children"][0]["file"]
     assert uploaded_file == {
         "type": "file_upload",
+        "name": "archive.zip",
         "caption": [],
         "file_upload": {
             "id": "ff000000-0000-0000-0000-000000000001",
         },
     }
+
+
+@pytest.mark.parametrize(
+    argnames="local_name",
+    argvalues=[
+        None,
+        "test.png",
+    ],
+)
+def test_upload_matching_local_file_is_unchanged(
+    *,
+    local_name: str | None,
+    notion_session: Session,
+    respx_mock: respx.MockRouter,
+    tmp_path: Path,
+) -> None:
+    """A matching local file is not uploaded again."""
+    local_file = tmp_path / "test.png"
+    local_file.write_bytes(data=b"image-data")
+    if local_name is None:
+        local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
+    else:
+        local_block = UnoFile(
+            file=ExternalFile(url=local_file.as_uri()),
+            name=local_name,
+        )
+    uploads_before = _file_upload_create_count(mock=respx_mock)
+
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.iter_content.return_value = [b"image-data"]
+    with patch.object(
+        target=requests,
+        attribute="get",
+        return_value=response,
+    ):
+        notion_upload.upload_to_notion(
+            session=notion_session,
+            blocks=[local_block],
+            page_id=None,
+            parent_page_id="eeee0000-0000-0000-0000-000000000001",
+            parent_database_id=None,
+            title="Upload Title",
+            icon=None,
+            cover_path=None,
+            cover_url=None,
+            cancel_on_discussion=False,
+        )
+
+    assert _file_upload_create_count(mock=respx_mock) == uploads_before
 
 
 def test_upload_with_nested_file_block(
@@ -1060,8 +1102,8 @@ def test_upload_file_block_name_mismatch(
     tmp_path: Path,
 ) -> None:
     """File block with name mismatch triggers re-upload."""
-    img_file = tmp_path / "different.png"
-    img_file.write_bytes(data=b"image-data")
+    local_file = tmp_path / "test.png"
+    local_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1069,11 +1111,11 @@ def test_upload_file_block_name_mismatch(
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoImage(
+            UnoFile(
                 file=ExternalFile(
-                    url=img_file.as_uri(),
-                    name="different.png",
+                    url=local_file.as_uri(),
                 ),
+                name="Download the image",
             ),
         ],
         page_id=None,
@@ -1099,8 +1141,8 @@ def test_upload_file_block_caption_mismatch(
     tmp_path: Path,
 ) -> None:
     """File block with caption mismatch triggers re-upload."""
-    img_file = tmp_path / "test.png"
-    img_file.write_bytes(data=b"image-data")
+    local_file = tmp_path / "test.png"
+    local_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1108,8 +1150,8 @@ def test_upload_file_block_caption_mismatch(
     notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoImage(
-                file=ExternalFile(url=img_file.as_uri()),
+            UnoFile(
+                file=ExternalFile(url=local_file.as_uri()),
                 caption="new caption",
             ),
         ],

@@ -357,13 +357,16 @@ def _is_existing_equivalent(
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":  # pragma: no cover - local duplicate check
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
+            local_file_path = _file_uri_to_path(uri=local_block.url)
+            local_name: str | None
+            if isinstance(local_block, UnoFile):
+                local_name = local_block.name or local_file_path.name
+            else:
+                local_name = local_block.file_info.name
 
             if (
                 not isinstance(existing_page_block.file_info, NotionFile)
-                or (
-                    existing_page_block.file_info.name
-                    != local_block.file_info.name
-                )
+                or (existing_page_block.file_info.name != local_name)
                 or (
                     existing_page_block.file_info.caption
                     != local_block.file_info.caption
@@ -371,7 +374,6 @@ def _is_existing_equivalent(
             ):
                 return False
 
-            local_file_path = _file_uri_to_path(uri=local_block.url)
             return _files_match(
                 existing_file_url=existing_page_block.file_info.url,
                 local_file_path=local_file_path,
@@ -461,7 +463,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             if isinstance(block, UnoFile):
                 block = UnoFile(
                     file=uploaded_file,
-                    name=block.name or None,
+                    name=block.name or file_path.name,
                     caption=block.caption,
                 )
             else:

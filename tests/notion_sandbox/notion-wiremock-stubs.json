@@ -3833,14 +3833,15 @@
               "has_children": false,
               "archived": false,
               "in_trash": false,
-              "type": "image",
-              "image": {
+              "type": "file",
+              "file": {
                 "type": "file",
                 "file": {
                   "url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/test.png",
                   "expiry_time": "2025-01-01T00:00:00.000Z"
                 },
-                "caption": []
+                "caption": [],
+                "name": "test.png"
               }
             }
           ]
@@ -3877,12 +3878,14 @@
               "has_children": false,
               "archived": false,
               "in_trash": false,
-              "type": "image",
-              "image": {
+              "type": "file",
+              "file": {
                 "type": "file_upload",
                 "file_upload": {
                   "id": "ff000000-0000-0000-0000-000000000001"
-                }
+                },
+                "caption": [],
+                "name": "test.png"
               }
             }
           ]
@@ -3913,14 +3916,15 @@
           "has_children": false,
           "archived": true,
           "in_trash": true,
-          "type": "image",
-          "image": {
+          "type": "file",
+          "file": {
             "type": "file",
             "file": {
               "url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/test.png",
               "expiry_time": "2025-01-01T00:00:00.000Z"
             },
-            "caption": []
+            "caption": [],
+            "name": "test.png"
           }
         }
       },
