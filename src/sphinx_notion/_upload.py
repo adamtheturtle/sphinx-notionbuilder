@@ -358,9 +358,11 @@ def _is_existing_equivalent(
         if parsed.scheme == "file":  # pragma: no cover - local duplicate check
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
             local_file_path = _file_uri_to_path(uri=local_block.url)
-            local_name = local_block.file_info.name
+            local_name: str | None
             if isinstance(local_block, UnoFile):
-                local_name = local_name or local_file_path.name
+                local_name = local_block.name or local_file_path.name
+            else:
+                local_name = local_block.file_info.name
 
             if (
                 not isinstance(existing_page_block.file_info, NotionFile)

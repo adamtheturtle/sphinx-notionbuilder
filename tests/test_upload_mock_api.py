@@ -944,17 +944,32 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
     assert payload["children"][0]["file"]["name"] == "archive.zip"
 
 
-def test_unnamed_local_file_matches_uploaded_filename(
+@pytest.mark.parametrize(
+    argnames=("local_name", "uploaded_name"),
+    argvalues=[
+        (None, "archive.zip"),
+        ("Download the release", "Download the release"),
+    ],
+)
+def test_local_file_matches_uploaded_name(
     *,
+    local_name: str | None,
+    uploaded_name: str,
     tmp_path: Path,
 ) -> None:
-    """The filename fallback does not trigger another upload."""
+    """Diff sync compares the same display name used for upload."""
     local_file = tmp_path / "archive.zip"
-    local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
+    if local_name is None:
+        local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
+    else:
+        local_block = UnoFile(
+            file=ExternalFile(url=local_file.as_uri()),
+            name=local_name,
+        )
     existing_block = UnoFile(
         file=NotionFile(
             url="https://example.com/archive.zip",
-            name="archive.zip",
+            name=uploaded_name,
         )
     )
 
