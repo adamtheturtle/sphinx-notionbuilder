@@ -461,7 +461,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             if isinstance(block, UnoFile):
                 block = UnoFile(
                     file=uploaded_file,
-                    name=block.name,
+                    name=block.name or None,
                     caption=block.caption,
                 )
             else:
