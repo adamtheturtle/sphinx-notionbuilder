@@ -12,7 +12,7 @@ import httpx
 import pytest
 import respx
 from notion_client.errors import HTTPResponseError
-from ultimate_notion import ExternalFile, Session
+from ultimate_notion import ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import (
     Block,
     BulletedItem,
@@ -942,6 +942,32 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
     ]
     payload = json.loads(s=append_calls[-1].request.content)
     assert payload["children"][0]["file"]["name"] == "archive.zip"
+
+
+def test_unnamed_local_file_matches_uploaded_filename(
+    *,
+    tmp_path: Path,
+) -> None:
+    """The filename fallback does not trigger another upload."""
+    local_file = tmp_path / "archive.zip"
+    local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
+    existing_block = UnoFile(
+        file=NotionFile(
+            url="https://example.com/archive.zip",
+            name="archive.zip",
+        )
+    )
+
+    with patch.object(
+        target=notion_upload,
+        attribute="_files_match",
+        return_value=True,
+    ):
+        # pylint: disable-next=protected-access
+        assert notion_upload._is_existing_equivalent(  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+            existing_page_block=existing_block,
+            local_block=local_block,
+        )
 
 
 def test_upload_with_nested_file_block(
