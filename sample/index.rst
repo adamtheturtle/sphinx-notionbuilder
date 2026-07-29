@@ -208,11 +208,13 @@ Topics
 Regular topics become Notion callouts. The special topic emitted by
 ``.. contents::`` remains a table of contents.
 
-.. topic:: Release *notes*
+.. rest-example::
 
-   This is the visible topic body.
+   .. topic:: Release *notes*
 
-   This is the second paragraph.
+      This is the visible topic body.
+
+      This is the second paragraph.
 
 Admonitions
 ~~~~~~~~~~~

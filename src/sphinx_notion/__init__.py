@@ -30,7 +30,8 @@ from sphinx_immaterial.task_lists import checkbox_label
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
 )
-from sphinx_toolbox.collapse import CollapseNode
+from sphinx_toolbox.collapse import CollapseNode, CollapseSummaryNode
+from sphinx_toolbox.rest_example import reSTExample
 from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
     mermaid as mermaid_node,
 )
@@ -1119,25 +1120,8 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process paragraph nodes by creating Notion Paragraph blocks.
-
-    Special case: if the paragraph contains only a container a
-    ``rest-example`` class, process the container directly instead of
-    trying to process it as rich text.
-    """
-    if (
-        len(node.children) == 1
-        and isinstance(
-            node.children[0],
-            nodes.container,
-        )
-        and node.children[0].attributes.get("classes", []) == ["rest-example"]
-    ):
-        return _process_node_to_blocks(
-            node.children[0],
-            section_level=section_level,
-        )
-
+    """Process paragraph nodes by creating Notion Paragraph blocks."""
+    del section_level
     rich_text = _create_rich_text_from_children(node=node)
     return [UnoParagraph(text=rich_text)]
 
@@ -1892,10 +1876,12 @@ def _(
     """Process collapse nodes by creating Notion ToggleItem blocks."""
     del section_level
 
-    title_text = node.attributes["label"]
-    toggle_block = UnoToggleItem(text=text(text=title_text))
+    summary_node = node.children[0]
+    assert isinstance(summary_node, CollapseSummaryNode)
+    toggle_text = _create_rich_text_from_children(node=summary_node)
+    toggle_block = UnoToggleItem(text=toggle_text)
 
-    for child in node.children:
+    for child in node.children[1:]:
         toggle_block.append(
             blocks=_process_node_to_blocks(
                 child,
@@ -2228,12 +2214,6 @@ def _(
         ]
 
     classes = node.attributes.get("classes", [])
-    if classes == ["rest-example"]:
-        return _process_rest_example_container(
-            node=node,
-            section_level=section_level,
-        )
-
     if "sphinx-tabs" in classes or "sd-tab-set" in classes:
         return _process_tabs_container(
             node=node,
@@ -2247,6 +2227,20 @@ def _(
         )
         blocks.extend(child_blocks)
     return blocks
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
+    node: reSTExample,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Process the custom wrapper emitted by ``rest-example``."""
+    return _process_rest_example_container(
+        node=node,
+        section_level=section_level,
+    )
 
 
 @beartype
@@ -2277,7 +2271,7 @@ def _(
 @beartype
 def _process_rest_example_container(
     *,
-    node: nodes.container,
+    node: reSTExample,
     section_level: int,
 ) -> list[Block]:
     """

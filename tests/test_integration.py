@@ -2469,14 +2469,16 @@ def test_collapse_block(
     content.
     """
     rst_content = """
-        .. collapse:: Click to expand
+        .. collapse:: Click to *expand*
 
            This content is hidden by default.
 
            It supports **formatting**.
     """
 
-    toggle_block = UnoToggleItem(text=text(text="Click to expand"))
+    toggle_block = UnoToggleItem(
+        text=text(text="Click to ") + text(text="expand", italic=True)
+    )
 
     nested_para1 = UnoParagraph(
         text=text(text="This content is hidden by default.")
@@ -5038,6 +5040,62 @@ def test_rest_example_block(
     _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
+        make_app=make_app,
+        tmp_path=tmp_path,
+        extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
+        expected_warnings=(),
+    )
+
+
+def test_rest_example_topic(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Topics inside ``rest-example`` blocks become nested callout
+    blocks.
+    """
+    rst_content = """
+        .. rest-example::
+
+           .. topic:: Release *notes*
+
+              This is the visible topic body.
+    """
+
+    topic_callout = UnoCallout(
+        text=text(text="Release ") + text(text="notes", italic=True),
+    )
+    topic_callout.append(
+        blocks=[
+            UnoParagraph(text=text(text="This is the visible topic body.")),
+        ]
+    )
+
+    code_callout = UnoCallout(text=text(text="Code"))
+    code_callout.append(
+        blocks=[
+            UnoCode(
+                text=text(
+                    text=(
+                        ".. topic:: Release *notes*\n\n"
+                        "   This is the visible topic body."
+                    )
+                ),
+                language="plain text",
+            ),
+        ]
+    )
+
+    output_callout = UnoCallout(text=text(text="Output"))
+    output_callout.append(blocks=[topic_callout])
+
+    main_callout = UnoCallout(text=text(text="Example"))
+    main_callout.append(blocks=[code_callout, output_callout])
+
+    _assert_rst_converts_to_notion_objects(
+        rst_content=rst_content,
+        expected_blocks=[main_callout],
         make_app=make_app,
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
