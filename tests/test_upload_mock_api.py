@@ -915,7 +915,7 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
     respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
-    """A local file without a display name uses its basename."""
+    """A local file without a display name uses its base name."""
     local_file = tmp_path / "archive.zip"
     local_file.write_bytes(data=b"release-bundle")
     append_url_path = f"/v1/blocks/{parent_page_id}/children"

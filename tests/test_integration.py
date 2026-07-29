@@ -5052,7 +5052,9 @@ def test_rest_example_topic(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """Topics inside ``rest-example`` blocks become nested callouts."""
+    """Topics inside ``rest-example`` blocks become nested callout
+    blocks.
+    """
     rst_content = """
         .. rest-example::
 
