@@ -942,7 +942,15 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         and call.request.url.path == append_url_path
     ]
     payload = json.loads(s=append_calls[-1].request.content)
-    assert payload["children"][0]["file"]["name"] == "archive.zip"
+    uploaded_file = payload["children"][0]["file"]
+    assert uploaded_file == {
+        "type": "file_upload",
+        "name": "archive.zip",
+        "caption": [],
+        "file_upload": {
+            "id": "ff000000-0000-0000-0000-000000000001",
+        },
+    }
 
 
 @pytest.mark.parametrize(
