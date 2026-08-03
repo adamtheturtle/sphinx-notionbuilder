@@ -2811,6 +2811,49 @@ def _load_blocks_from_file(*, output_file: Path) -> list[Block]:
 
 
 @beartype
+def _get_toctree_parent_docnames(
+    *,
+    root_doc: str,
+    toctree_includes: dict[str, list[str]],
+) -> dict[str, str]:
+    """Return the preferred parent of every document reachable from root.
+
+    Start with a breadth-first tree, then replace a parent only with one of
+    its descendants. This chooses the most deeply nested ``toctree`` reference
+    without introducing cycles or choosing between unrelated parents.
+    """
+    parent_docnames: dict[str, str] = {}
+    reachable_docnames = [root_doc]
+    queue = deque(iterable=[root_doc])
+    while queue:
+        parent_docname = queue.popleft()
+        for docname in toctree_includes.get(parent_docname, []):
+            if docname == root_doc or docname in parent_docnames:
+                continue
+            parent_docnames[docname] = parent_docname
+            reachable_docnames.append(docname)
+            queue.append(docname)
+
+    for parent_docname in reachable_docnames[1:]:
+        for docname in toctree_includes.get(parent_docname, []):
+            if docname == root_doc:
+                continue
+
+            current_parent_docname = parent_docnames[docname]
+            ancestor_docname = parent_docname
+            while ancestor_docname not in {
+                root_doc,
+                current_parent_docname,
+                docname,
+            }:
+                ancestor_docname = parent_docnames[ancestor_docname]
+            if ancestor_docname == current_parent_docname:
+                parent_docnames[docname] = parent_docname
+
+    return parent_docnames
+
+
+@beartype
 def _publish_to_notion(
     app: Sphinx,
     exception: Exception | None,
@@ -2835,6 +2878,13 @@ def _publish_to_notion(
         return
 
     toctree_includes: dict[str, list[str]] = app.env.toctree_includes
+    parent_docnames = _get_toctree_parent_docnames(
+        root_doc=root_doc,
+        toctree_includes=toctree_includes,
+    )
+    child_docnames_by_parent: dict[str, list[str]] = {}
+    for docname, parent_docname in parent_docnames.items():
+        child_docnames_by_parent.setdefault(parent_docname, []).append(docname)
 
     session = Session(base_url=app.config.notion_api_base_url)
     try:
@@ -2852,7 +2902,7 @@ def _publish_to_notion(
             strategy=UploadStrategy(
                 value=app.config.notion_upload_strategy,
             ),
-            allow_subpages=bool(toctree_includes.get(root_doc)),
+            allow_subpages=bool(child_docnames_by_parent.get(root_doc)),
         )
         _LOGGER.info(
             "Published page: '%s' (%s)",
@@ -2861,18 +2911,14 @@ def _publish_to_notion(
         )
 
         published_pages = {root_doc: root_page}
-        visited = {root_doc}
         queue = deque(
             iterable=(
                 (root_doc, child)
-                for child in toctree_includes.get(root_doc, [])
+                for child in child_docnames_by_parent.get(root_doc, [])
             )
         )
         while queue:
             parent_docname, docname = queue.popleft()
-            if docname in visited:
-                continue
-            visited.add(docname)
 
             doc_output_file = Path(app.outdir) / f"{docname}.json"
             if not doc_output_file.exists():
@@ -2888,7 +2934,7 @@ def _publish_to_notion(
                 else published_pages[parent_docname]
             )
             title = app.env.titles[docname].astext()
-            child_docnames = toctree_includes.get(docname, [])
+            child_docnames = child_docnames_by_parent.get(docname, [])
             page = upload_to_notion(
                 session=session,
                 blocks=_load_blocks_from_file(output_file=doc_output_file),
