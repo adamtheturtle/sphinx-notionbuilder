@@ -180,7 +180,7 @@ def test_publish_toctree_as_page_hierarchy(
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
     (srcdir / "index.rst").write_text(
-        data="Root\n====\n\n.. toctree::\n\n   guide\n",
+        data="Root\n====\n\n.. toctree::\n\n   detail\n   guide\n",
         encoding="utf-8",
     )
     (srcdir / "guide.rst").write_text(
@@ -211,7 +211,13 @@ def test_publish_toctree_as_page_hierarchy(
         patch(target="sphinx_notion.Session"),
         patch(
             target="sphinx_notion.upload_to_notion",
-            side_effect=[*pages, pages[0]],
+            side_effect=[
+                *pages,
+                pages[0],
+                pages[2],
+                pages[1],
+                pages[0],
+            ],
         ) as upload,
     ):
         app.build()
@@ -227,6 +233,17 @@ def test_publish_toctree_as_page_hierarchy(
         assert upload.call_args_list[2].kwargs["allow_subpages"] is False
 
         upload.reset_mock()
+        app.env.toctree_includes["detail"] = ["guide", "index"]
+        app.emit("build-finished", None)
+
+        assert upload.call_count == len(pages)
+        assert upload.call_args_list[1].kwargs["parent_page_id"] == "root-id"
+        assert upload.call_args_list[1].kwargs["title"] == "Detail"
+        assert upload.call_args_list[2].kwargs["parent_page_id"] == "detail-id"
+        assert upload.call_args_list[2].kwargs["title"] == "Guide"
+
+        upload.reset_mock()
+        app.env.toctree_includes["detail"] = []
         app.env.toctree_includes["index"].append("guide")
         (Path(app.outdir) / "guide.json").unlink()
         app.emit("build-finished", None)
