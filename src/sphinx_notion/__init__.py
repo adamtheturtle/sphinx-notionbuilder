@@ -2,6 +2,7 @@
 
 import datetime as dt
 import json
+from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import singledispatch
@@ -2800,6 +2801,16 @@ def _validate_notion_config(
 
 
 @beartype
+def _load_blocks_from_file(*, output_file: Path) -> list[Block]:
+    """Load Notion blocks from a builder output file."""
+    block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))
+    return [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in block_dicts
+    ]
+
+
+@beartype
 def _publish_to_notion(
     app: Sphinx,
     exception: Exception | None,
@@ -2814,25 +2825,22 @@ def _publish_to_notion(
     if app.builder.name != "notion":
         return
 
-    output_file = Path(app.outdir) / f"{app.config.root_doc}.json"
+    root_doc: str = app.config.root_doc
+    output_file = Path(app.outdir) / f"{root_doc}.json"
     if not output_file.exists():
         _LOGGER.warning(
             "No %s.json found, skipping publish",
-            app.config.root_doc,
+            root_doc,
         )
         return
 
-    block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))
-    blocks = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in block_dicts
-    ]
+    toctree_includes: dict[str, list[str]] = app.env.toctree_includes
 
     session = Session(base_url=app.config.notion_api_base_url)
     try:
-        page = upload_to_notion(
+        root_page = upload_to_notion(
             session=session,
-            blocks=blocks,
+            blocks=_load_blocks_from_file(output_file=output_file),
             page_id=app.config.notion_page_id,
             parent_page_id=app.config.notion_parent_page_id,
             parent_database_id=app.config.notion_parent_database_id,
@@ -2844,15 +2852,64 @@ def _publish_to_notion(
             strategy=UploadStrategy(
                 value=app.config.notion_upload_strategy,
             ),
+            allow_subpages=bool(toctree_includes.get(root_doc)),
         )
+        _LOGGER.info(
+            "Published page: '%s' (%s)",
+            app.config.notion_page_title,
+            root_page.url,
+        )
+
+        published_pages = {root_doc: root_page}
+        visited = {root_doc}
+        queue = deque(
+            iterable=(
+                (root_doc, child)
+                for child in toctree_includes.get(root_doc, [])
+            )
+        )
+        while queue:
+            parent_docname, docname = queue.popleft()
+            if docname in visited:
+                continue
+            visited.add(docname)
+
+            doc_output_file = Path(app.outdir) / f"{docname}.json"
+            if not doc_output_file.exists():
+                _LOGGER.warning(
+                    "No %s.json found, skipping publish",
+                    docname,
+                )
+                continue
+
+            parent_page = (
+                root_page
+                if parent_docname == root_doc
+                else published_pages[parent_docname]
+            )
+            title = app.env.titles[docname].astext()
+            child_docnames = toctree_includes.get(docname, [])
+            page = upload_to_notion(
+                session=session,
+                blocks=_load_blocks_from_file(output_file=doc_output_file),
+                page_id=None,
+                parent_page_id=str(object=parent_page.id),
+                parent_database_id=None,
+                title=title,
+                icon=None,
+                cover_path=None,
+                cover_url=None,
+                cancel_on_discussion=app.config.notion_cancel_on_discussion,
+                strategy=UploadStrategy(
+                    value=app.config.notion_upload_strategy,
+                ),
+                allow_subpages=bool(child_docnames),
+            )
+            published_pages[docname] = page
+            queue.extend((docname, child) for child in child_docnames)
+            _LOGGER.info("Published page: '%s' (%s)", title, page.url)
     finally:
         session.close()
-
-    _LOGGER.info(
-        "Published page: '%s' (%s)",
-        app.config.notion_page_title,
-        page.url,
-    )
 
 
 @beartype

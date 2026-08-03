@@ -2,6 +2,8 @@
 
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 import respx
@@ -166,6 +168,71 @@ def test_publish_success(
         )
         == metadata_clears_before
     )
+
+
+def test_publish_toctree_as_page_hierarchy(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Each reachable document is published under its parent."""
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+    (srcdir / "index.rst").write_text(
+        data="Root\n====\n\n.. toctree::\n\n   guide\n",
+        encoding="utf-8",
+    )
+    (srcdir / "guide.rst").write_text(
+        data="Guide\n=====\n\n.. toctree::\n\n   detail\n",
+        encoding="utf-8",
+    )
+    (srcdir / "detail.rst").write_text(
+        data="Detail\n======\n",
+        encoding="utf-8",
+    )
+    app = make_app(
+        buildername="notion",
+        srcdir=srcdir,
+        confoverrides={
+            "extensions": ["sphinx_notion"],
+            "notion_publish": True,
+            "notion_page_id": "root-page-id",
+            "notion_page_title": "Documentation",
+        },
+    )
+    pages = [
+        SimpleNamespace(id="root-id", url="https://notion.test/root"),
+        SimpleNamespace(id="guide-id", url="https://notion.test/guide"),
+        SimpleNamespace(id="detail-id", url="https://notion.test/detail"),
+    ]
+
+    with (
+        patch(target="sphinx_notion.Session"),
+        patch(
+            target="sphinx_notion.upload_to_notion",
+            side_effect=[*pages, pages[0]],
+        ) as upload,
+    ):
+        app.build()
+        assert app.statuscode == 0
+        assert upload.call_count == len(pages)
+        assert upload.call_args_list[0].kwargs["page_id"] == "root-page-id"
+        assert upload.call_args_list[0].kwargs["allow_subpages"] is True
+        assert upload.call_args_list[1].kwargs["parent_page_id"] == "root-id"
+        assert upload.call_args_list[1].kwargs["title"] == "Guide"
+        assert upload.call_args_list[1].kwargs["allow_subpages"] is True
+        assert upload.call_args_list[2].kwargs["parent_page_id"] == "guide-id"
+        assert upload.call_args_list[2].kwargs["title"] == "Detail"
+        assert upload.call_args_list[2].kwargs["allow_subpages"] is False
+
+        upload.reset_mock()
+        app.env.toctree_includes["index"].append("guide")
+        (Path(app.outdir) / "guide.json").unlink()
+        app.emit("build-finished", None)
+
+        assert upload.call_count == 1
+        assert "No guide.json found" in app.warning.getvalue()
 
 
 def test_publish_replace_strategy(

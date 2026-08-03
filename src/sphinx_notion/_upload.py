@@ -20,7 +20,7 @@ from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
 from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
@@ -609,13 +609,13 @@ def _sync_blocks(
     *,
     session: Session,
     page: Page,
+    existing_blocks: Sequence[Block],
     local_blocks: Sequence[Block],
     title: str,
     cancel_on_discussion: bool,
     strategy: UploadStrategy,
 ) -> None:
     """Synchronize local blocks to a page using the selected strategy."""
-    existing_blocks = page.blocks
     plan = (
         _diff_sync_plan(
             existing_blocks=existing_blocks,
@@ -702,6 +702,7 @@ def upload_to_notion(
     cover_url: str | None,
     cancel_on_discussion: bool,
     strategy: UploadStrategy = UploadStrategy.DIFF,
+    allow_subpages: bool = False,
 ) -> Page:
     """Upload documentation to Notion.
 
@@ -761,16 +762,26 @@ def upload_to_notion(
             _LOGGER.info("Creating new page '%s'", title)
             page = session.create_page(parent=parent, title=title)
 
-    if page.subpages:
-        raise PageHasSubpagesError
+    if not allow_subpages:
+        if page.subpages:
+            raise PageHasSubpagesError
 
-    if page.sub_dss:
-        raise PageHasDatabasesError
+        if page.sub_dss:
+            raise PageHasDatabasesError
 
     _LOGGER.info("Syncing page blocks using the '%s' strategy", strategy.value)
     _sync_blocks(
         session=session,
         page=page,
+        existing_blocks=(
+            [
+                block
+                for block in page.blocks
+                if not isinstance(block, (ChildPage, ChildDatabase))
+            ]
+            if allow_subpages
+            else page.blocks
+        ),
         local_blocks=blocks,
         title=title,
         cancel_on_discussion=cancel_on_discussion,
