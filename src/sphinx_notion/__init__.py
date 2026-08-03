@@ -2819,7 +2819,7 @@ def _get_toctree_parent_docnames(
     """Return the preferred parent of every document reachable from root.
 
     Start with a breadth-first tree, then replace a parent only with one of
-    its descendants. This chooses the most deeply nested toctree reference
+    its descendants. This chooses the most deeply nested ``toctree`` reference
     without introducing cycles or choosing between unrelated parents.
     """
     parent_docnames: dict[str, str] = {}
