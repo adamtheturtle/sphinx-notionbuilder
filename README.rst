@@ -380,6 +380,9 @@ Automatic Publishing Configuration
 
 Instead of using the command-line tool, you can configure automatic publishing to Notion in your ``conf.py``.
 When enabled, documentation will be uploaded to Notion automatically after a successful build with the ``notion`` builder.
+Every document reachable from the root document through a ``toctree`` is published as a child of its corresponding Notion page.
+The root uses ``notion_page_title`` and the other pages use their Sphinx document titles.
+Existing child pages are matched by title and kept in the same hierarchy.
 
 Add the following configuration options to your ``conf.py``:
 

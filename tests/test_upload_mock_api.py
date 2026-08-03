@@ -450,6 +450,28 @@ def test_upload_page_has_subpages_error(
     )
 
 
+def test_upload_can_preserve_subpages(
+    *,
+    notion_session: Session,
+) -> None:
+    """A hierarchy publish preserves child pages while syncing content."""
+    page = notion_upload.upload_to_notion(
+        session=notion_session,
+        blocks=[],
+        page_id=None,
+        parent_page_id="aaaa0000-0000-0000-0000-000000000001",
+        parent_database_id=None,
+        title="Upload Title",
+        icon=None,
+        cover_path=None,
+        cover_url=None,
+        cancel_on_discussion=False,
+        allow_subpages=True,
+    )
+
+    assert page.title == "Upload Title"
+
+
 def test_upload_page_has_databases_error(
     respx_mock: respx.MockRouter,
     notion_session: Session,

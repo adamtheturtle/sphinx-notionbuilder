@@ -1,0 +1,2 @@
+Publish every document reachable through the Sphinx toctree as a matching
+Notion page hierarchy when automatic publishing is enabled.
