@@ -701,8 +701,8 @@ def upload_to_notion(
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
-    strategy: UploadStrategy = UploadStrategy.DIFF,
-    allow_subpages: bool = False,
+    strategy: UploadStrategy = UploadStrategy.DIFF,  # noqa: NOD001
+    allow_subpages: bool = False,  # noqa: NOD001
 ) -> Page:
     """Upload documentation to Notion.
 

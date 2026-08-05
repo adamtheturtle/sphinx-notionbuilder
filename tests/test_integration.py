@@ -92,10 +92,10 @@ def _assert_rst_converts_to_notion_objects(
     expected_blocks: Sequence[Block],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    extensions: tuple[str, ...] = ("sphinx_notion",),
-    conf_py_content: str = "",
+    extensions: tuple[str, ...] = ("sphinx_notion",),  # noqa: NOD001
+    conf_py_content: str = "",  # noqa: NOD001
     expected_warnings: Collection[str],
-    confoverrides: dict[str, Any] | None = None,
+    confoverrides: dict[str, Any] | None = None,  # noqa: NOD001
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via
