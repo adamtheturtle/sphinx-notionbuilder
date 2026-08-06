@@ -164,6 +164,7 @@ def main(
             cover_url=cover_url,
             cancel_on_discussion=cancel_on_discussion,
             strategy=UploadStrategy(value=strategy),
+            allow_subpages=False,
         )
     except PageHasSubpagesError:
         error_message = (

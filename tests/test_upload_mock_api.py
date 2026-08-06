@@ -38,6 +38,7 @@ from sphinx_notion._upload import (
     PageHasSubpagesError,
     PageNotFoundError,
     PageTitleAmbiguousError,
+    UploadStrategy,
 )
 from tests._wiremock import (
     count_mock_requests,
@@ -139,6 +140,8 @@ def test_upload_to_notion_with_wiremock(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -200,6 +203,7 @@ def test_upload_replace_appends_before_deleting_existing_blocks(
         cover_url=None,
         cancel_on_discussion=False,
         strategy=notion_upload.UploadStrategy.REPLACE,
+        allow_subpages=False,
     )
 
     assert (
@@ -257,6 +261,8 @@ def test_omitted_page_metadata_is_preserved(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.icon == "\N{MEMO}"
@@ -301,6 +307,8 @@ def test_upload_deletes_and_replaces_changed_blocks(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=True,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -358,6 +366,8 @@ def test_failed_file_upload_leaves_existing_blocks(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     after_delete_count = count_mock_requests(
@@ -387,6 +397,8 @@ def test_upload_with_icon(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -413,6 +425,8 @@ def test_upload_with_cover_url(
         cover_path=None,
         cover_url="https://example.com/cover.png",
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -444,6 +458,8 @@ def test_upload_page_has_subpages_error(
             cover_path=None,
             cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
     assert _page_update_count(mock=respx_mock, page_id=page_id) == (
         before_update_count
@@ -467,6 +483,7 @@ def test_upload_can_preserve_subpages(
         cover_url=None,
         cancel_on_discussion=False,
         allow_subpages=True,
+        strategy=UploadStrategy.DIFF,
     )
 
     assert page.title == "Upload Title"
@@ -495,6 +512,8 @@ def test_upload_page_has_databases_error(
             cover_path=None,
             cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
     assert _page_update_count(mock=respx_mock, page_id=page_id) == (
         before_update_count
@@ -531,6 +550,8 @@ def test_upload_discussions_exist_error(
             cover_path=None,
             cover_url="https://example.com/new-cover.png",
             cancel_on_discussion=True,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
     assert _page_update_count(mock=respx_mock, page_id=page_id) == (
         before_update_count
@@ -559,6 +580,7 @@ def test_replace_cancels_for_discussion_on_unchanged_block(
             cover_url=None,
             cancel_on_discussion=True,
             strategy=notion_upload.UploadStrategy.REPLACE,
+            allow_subpages=False,
         )
 
 
@@ -581,6 +603,8 @@ def test_upload_with_page_id(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -615,6 +639,8 @@ def test_upload_page_not_found_error(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
 
@@ -646,6 +672,8 @@ def test_upload_with_database_parent(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     after_count = count_mock_requests(
@@ -704,6 +732,8 @@ def test_ambiguous_title_does_not_mutate_pages(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     session.create_page.assert_not_called()
@@ -719,7 +749,11 @@ from unittest.mock import MagicMock
 
 from ultimate_notion import Session
 
-from sphinx_notion._upload import PageTitleAmbiguousError, upload_to_notion
+from sphinx_notion._upload import (
+    PageTitleAmbiguousError,
+    UploadStrategy,
+    upload_to_notion,
+)
 
 for parent_kind in ("page", "database"):
     session = MagicMock(spec=Session)
@@ -743,6 +777,8 @@ for parent_kind in ("page", "database"):
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
     except PageTitleAmbiguousError as exc:
         print(exc)
@@ -790,6 +826,8 @@ def test_upload_with_cover_path(
         cover_path=cover_file,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -833,6 +871,8 @@ def test_upload_with_unchanged_cover_path(
             cover_path=cover_file,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     assert _cover_clear_count(mock=respx_mock) == before_clear_count
@@ -862,6 +902,8 @@ def test_upload_with_file_block(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -915,6 +957,8 @@ def test_upload_local_file_preserves_name_and_caption(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     calls: list[Call] = list(respx_mock.calls)
@@ -954,6 +998,8 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     calls: list[Call] = list(respx_mock.calls)
@@ -1020,6 +1066,8 @@ def test_upload_matching_local_file_is_unchanged(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     assert _file_upload_create_count(mock=respx_mock) == uploads_before
@@ -1051,6 +1099,8 @@ def test_upload_with_nested_file_block(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
 
     assert page.title == "Upload Title"
@@ -1101,6 +1151,8 @@ def test_upload_prefix_suffix_matching(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -1148,6 +1200,8 @@ def test_upload_file_block_name_mismatch(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1185,6 +1239,8 @@ def test_upload_file_block_caption_mismatch(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1219,6 +1275,8 @@ def test_upload_file_block_external_url(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1253,6 +1311,8 @@ def test_upload_file_block_existing_is_external(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_upload_count = _file_upload_create_count(
         mock=respx_mock,
@@ -1291,6 +1351,8 @@ def test_upload_matching_parent_blocks(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -1342,6 +1404,8 @@ def test_upload_parent_block_different_children_count(
         cover_path=None,
         cover_url=None,
         cancel_on_discussion=False,
+        strategy=UploadStrategy.DIFF,
+        allow_subpages=False,
     )
     after_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -1412,6 +1476,8 @@ def test_cloudflare_waf_block(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
 
@@ -1447,6 +1513,8 @@ def test_non_html_403_not_wrapped(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
 
@@ -1477,6 +1545,8 @@ def test_non_403_html_not_wrapped(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
 
@@ -1522,6 +1592,8 @@ def test_file_upload_waf_block_logs_body(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     (record,) = caplog.records
@@ -1575,6 +1647,8 @@ def test_file_upload_other_http_error_logs_body(
             cover_path=None,
             cover_url=None,
             cancel_on_discussion=False,
+            strategy=UploadStrategy.DIFF,
+            allow_subpages=False,
         )
 
     (record,) = caplog.records
