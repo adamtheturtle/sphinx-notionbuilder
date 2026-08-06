@@ -39,9 +39,9 @@ def _invoke_upload(
     blocks_file: Path,
     parent_page_id: str | None,
     mock_api_base_url: str,
-    cancel_on_discussion: bool = False,  # noqa: NOD001
-    page_id: str | None = None,  # noqa: NOD001
-    strategy: str | None = None,  # noqa: NOD001
+    cancel_on_discussion: bool,
+    page_id: str | None,
+    strategy: str | None,
 ) -> Result:
     """Invoke the upload CLI against the mock Notion API."""
     runner = CliRunner()
@@ -118,6 +118,9 @@ def test_upload_success(
         blocks_file=blocks_file,
         parent_page_id=parent_page_id,
         mock_api_base_url=mock_api_base_url,
+        cancel_on_discussion=False,
+        page_id=None,
+        strategy=None,
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)
@@ -148,6 +151,8 @@ def test_upload_replace_strategy_success(
         parent_page_id=parent_page_id,
         mock_api_base_url=mock_api_base_url,
         strategy="replace",
+        cancel_on_discussion=False,
+        page_id=None,
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)
@@ -174,6 +179,9 @@ def test_upload_page_has_subpages_error(
         blocks_file=blocks_file,
         parent_page_id="aaaa0000-0000-0000-0000-000000000001",
         mock_api_base_url=mock_api_base_url,
+        cancel_on_discussion=False,
+        page_id=None,
+        strategy=None,
     )
 
     assert result.exit_code == 1
@@ -197,6 +205,9 @@ def test_upload_page_has_databases_error(
         blocks_file=blocks_file,
         parent_page_id="bbbb0000-0000-0000-0000-000000000001",
         mock_api_base_url=mock_api_base_url,
+        cancel_on_discussion=False,
+        page_id=None,
+        strategy=None,
     )
 
     assert result.exit_code == 1
@@ -223,6 +234,8 @@ def test_upload_discussions_exist_error(
         parent_page_id="cccc0000-0000-0000-0000-000000000001",
         mock_api_base_url=mock_api_base_url,
         cancel_on_discussion=True,
+        page_id=None,
+        strategy=None,
     )
 
     assert result.exit_code == 1
@@ -255,6 +268,8 @@ def test_upload_with_page_id(
         parent_page_id=None,
         mock_api_base_url=mock_api_base_url,
         page_id=parent_page_id,
+        cancel_on_discussion=False,
+        strategy=None,
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)
@@ -282,6 +297,9 @@ def test_upload_without_page_id_or_parent(
         blocks_file=blocks_file,
         parent_page_id=None,
         mock_api_base_url="https://example.invalid",
+        cancel_on_discussion=False,
+        page_id=None,
+        strategy=None,
     )
 
     usage_error_exit_code = 2
@@ -325,6 +343,8 @@ def test_upload_page_not_found_error(
         parent_page_id=parent_page_id,
         mock_api_base_url=mock_api_base_url,
         page_id="40400000-0000-0000-0000-000000000404",
+        cancel_on_discussion=False,
+        strategy=None,
     )
 
     assert result.exit_code == 1
@@ -357,6 +377,9 @@ def test_upload_ambiguous_title_error(
             blocks_file=blocks_file,
             parent_page_id=parent_page_id,
             mock_api_base_url=mock_api_base_url,
+            cancel_on_discussion=False,
+            page_id=None,
+            strategy=None,
         )
 
     assert result.exit_code == 1
