@@ -1560,7 +1560,7 @@ def _(
 def _create_rich_text_from_line_block(
     *,
     node: nodes.line_block,
-    indentation_level: int = 0,  # noqa: NOD001
+    indentation_level: int,
 ) -> Text:
     """Flatten a nested line block with deterministic indentation."""
     rich_text = Text.from_plain_text(text="")
@@ -2426,7 +2426,9 @@ def _(
     """
     del section_level
 
-    line_text = _create_rich_text_from_line_block(node=node)
+    line_text = _create_rich_text_from_line_block(
+        node=node, indentation_level=0
+    )
     return [UnoParagraph(text=line_text)]
 
 

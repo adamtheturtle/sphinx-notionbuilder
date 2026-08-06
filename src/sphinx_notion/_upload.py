@@ -689,7 +689,7 @@ def _set_page_appearance(
 
 
 @beartype
-def upload_to_notion(  # noqa: NOD001
+def upload_to_notion(
     *,
     session: Session,
     blocks: Sequence[Block],
@@ -701,8 +701,8 @@ def upload_to_notion(  # noqa: NOD001
     cover_path: Path | None,
     cover_url: str | None,
     cancel_on_discussion: bool,
-    strategy: UploadStrategy = UploadStrategy.DIFF,
-    allow_subpages: bool = False,
+    strategy: UploadStrategy,
+    allow_subpages: bool,
 ) -> Page:
     """Upload documentation to Notion.
 
