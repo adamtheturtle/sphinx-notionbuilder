@@ -39,9 +39,9 @@ def _invoke_upload(
     blocks_file: Path,
     parent_page_id: str | None,
     mock_api_base_url: str,
-    cancel_on_discussion: bool = False,
-    page_id: str | None = None,
-    strategy: str | None = None,
+    cancel_on_discussion: bool = False,  # noqa: NOD001
+    page_id: str | None = None,  # noqa: NOD001
+    strategy: str | None = None,  # noqa: NOD001
 ) -> Result:
     """Invoke the upload CLI against the mock Notion API."""
     runner = CliRunner()
