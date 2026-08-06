@@ -92,10 +92,10 @@ def _assert_rst_converts_to_notion_objects(
     expected_blocks: Sequence[Block],
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
-    extensions: tuple[str, ...] = ("sphinx_notion",),  # noqa: NOD001
-    conf_py_content: str = "",  # noqa: NOD001
+    extensions: tuple[str, ...],
+    conf_py_content: str,
     expected_warnings: Collection[str],
-    confoverrides: dict[str, Any] | None = None,  # noqa: NOD001
+    confoverrides: dict[str, Any] | None,
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via
@@ -162,6 +162,9 @@ def test_single_paragraph(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -200,6 +203,9 @@ def test_rubric(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -233,6 +239,9 @@ def test_rubric_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -263,6 +272,9 @@ def test_notion_link_to_page(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -299,6 +311,9 @@ def test_notion_link_to_page_with_content_around(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -362,6 +377,9 @@ def test_multiple_paragraphs(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -402,6 +420,9 @@ def test_centered_text(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -446,6 +467,9 @@ def test_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -485,6 +509,9 @@ def test_subscript_and_superscript(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -554,6 +581,8 @@ def setup(app):
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        confoverrides=None,
     )
 
 
@@ -578,6 +607,9 @@ def test_single_heading(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -622,6 +654,9 @@ def test_document_metadata(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -673,6 +708,9 @@ def test_multiple_heading_levels(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -709,6 +747,9 @@ def test_heading_with_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -738,6 +779,9 @@ def test_simple_link(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -778,6 +822,9 @@ def test_multiple_links(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -839,6 +886,9 @@ def test_citations(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -914,6 +964,9 @@ def test_footnotes(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -945,6 +998,9 @@ def test_link_in_heading(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -986,6 +1042,9 @@ def test_mixed_formatting_with_links(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1019,6 +1078,9 @@ def test_unnamed_link_with_backticks(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1043,6 +1105,9 @@ def test_simple_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1076,6 +1141,9 @@ def test_multiline_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1128,6 +1196,9 @@ def test_multi_paragraph_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1163,6 +1234,9 @@ def test_attributed_quote(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1193,6 +1267,9 @@ def test_epigraph(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1226,6 +1303,9 @@ def test_table_of_contents(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1258,6 +1338,9 @@ def test_topic_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1287,6 +1370,9 @@ def test_toctree_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1320,6 +1406,9 @@ def test_compound_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1347,6 +1436,9 @@ def test_simple_code_block(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1387,6 +1479,9 @@ def test_code_block_unknown_language(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1421,6 +1516,8 @@ def test_code_block_unknown_language_suppressed(
         tmp_path=tmp_path,
         expected_warnings=[],
         confoverrides={"suppress_warnings": ["misc.highlighting_failure"]},
+        extensions=("sphinx_notion",),
+        conf_py_content="",
     )
 
 
@@ -1464,6 +1561,9 @@ def test_code_block_unknown_language_with_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1520,6 +1620,9 @@ def test_code_block_language_mapping(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1553,6 +1656,9 @@ def test_production_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1578,6 +1684,9 @@ def test_flat_bullet_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1608,6 +1717,9 @@ def test_bullet_list_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1651,6 +1763,9 @@ def test_horizontal_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1700,6 +1815,9 @@ def test_admonition_single_line(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1753,6 +1871,9 @@ def test_admonition_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1800,6 +1921,9 @@ def test_admonition_with_code_block(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1849,6 +1973,9 @@ def test_admonition_with_code_block_first(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1896,6 +2023,9 @@ def test_admonition_with_bullet_points(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -1960,6 +2090,9 @@ def test_version_change_directives(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2005,6 +2138,9 @@ def test_definition_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2043,6 +2179,9 @@ def test_definition_list_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2091,6 +2230,9 @@ def test_definition_list_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2126,6 +2268,9 @@ def test_definition_list_with_classifier(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2178,6 +2323,9 @@ def test_option_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2239,6 +2387,9 @@ def test_custom_field_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2287,6 +2438,9 @@ def test_generic_admonition(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2339,6 +2493,8 @@ def test_nested_bullet_list(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2366,6 +2522,9 @@ def test_flat_numbered_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2401,6 +2560,9 @@ def test_numbered_list_with_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2455,6 +2617,9 @@ def test_nested_numbered_list(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2505,6 +2670,8 @@ def test_collapse_block(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.collapse"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2554,6 +2721,8 @@ def test_tabs(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_tabs.tabs"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2603,6 +2772,8 @@ def test_sphinx_design_tabs(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_design"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2643,6 +2814,9 @@ def test_simple_table(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2681,6 +2855,9 @@ def test_table_colspan_duplicates_content(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2723,6 +2900,9 @@ def test_table_rowspan_preserves_logical_columns(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2756,6 +2936,9 @@ def test_table_without_header_row(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2789,6 +2972,9 @@ def test_table_inline_formatting(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2825,6 +3011,9 @@ def test_table_cell_non_paragraph_error(
             make_app=make_app,
             tmp_path=tmp_path,
             expected_warnings=(),
+            extensions=("sphinx_notion",),
+            conf_py_content="",
+            confoverrides=None,
         )
 
 
@@ -2850,6 +3039,9 @@ def test_simple_image(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2880,6 +3072,9 @@ def test_image_with_alt_text_only(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2918,6 +3113,9 @@ def test_image_with_target(
                 "[notion.unsupported_image]"
             ),
         ],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -2956,6 +3154,8 @@ def test_literalinclude_without_caption(
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        confoverrides=None,
     )
 
 
@@ -2997,6 +3197,9 @@ def test_cross_reference_doc(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3039,6 +3242,9 @@ def test_cross_reference_ref(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3079,6 +3285,9 @@ def test_cross_reference_any(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3122,6 +3331,9 @@ def test_cross_reference_download(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3157,6 +3369,9 @@ def test_cross_reference_download_external_url(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3214,6 +3429,8 @@ def test_cross_reference_numref(
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
         confoverrides={"numfig": True},
+        extensions=("sphinx_notion",),
+        conf_py_content="",
     )
 
 
@@ -3257,6 +3474,9 @@ def test_cross_reference_keyword(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3310,6 +3530,9 @@ def test_cross_reference_option(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3337,6 +3560,9 @@ def test_cross_reference_envvar_unresolved(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3388,6 +3614,9 @@ def test_cross_reference_envvar_resolved(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3439,6 +3668,9 @@ def test_cross_reference_confval(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3466,6 +3698,9 @@ def test_cross_reference_token(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3511,6 +3746,8 @@ def test_literalinclude_with_caption(
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        confoverrides=None,
     )
 
 
@@ -3554,6 +3791,9 @@ def test_heading_level_5_error(
             make_app=make_app,
             tmp_path=tmp_path,
             expected_warnings=(),
+            extensions=("sphinx_notion",),
+            conf_py_content="",
+            confoverrides=None,
         )
 
 
@@ -3588,6 +3828,9 @@ def test_local_image_file(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3614,6 +3857,8 @@ def test_simple_video(
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3646,6 +3891,8 @@ def test_video_with_caption(
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_notion"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3679,6 +3926,8 @@ def test_local_video_file(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib.video"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3705,6 +3954,8 @@ def test_simple_audio(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3738,6 +3989,8 @@ def test_local_audio_file(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "atsphinx.audioplayer"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3780,6 +4033,8 @@ def test_strikethrough_text(
             "sphinx_notion",
         ),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3814,6 +4069,9 @@ def test_comment_ignored(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3850,6 +4108,9 @@ def test_list_table_header_one_allowed(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3879,6 +4140,9 @@ def test_list_table_header_rows_zero_allowed(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3925,6 +4189,9 @@ def test_list_table_header_maximum_one_allowed(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -3975,6 +4242,9 @@ def test_list_table_stub_columns_one(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4025,6 +4295,9 @@ def test_list_table_stub_columns_two(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4068,6 +4341,9 @@ def test_list_table_with_title_error(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[expected_warning],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4105,6 +4381,8 @@ def test_simple_pdf(
         tmp_path=tmp_path,
         extensions=extensions,
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4135,6 +4413,8 @@ def test_pdf_with_options(
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4168,6 +4448,8 @@ def test_local_pdf_file(
         tmp_path=tmp_path,
         extensions=("sphinx_notion",),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4257,6 +4539,8 @@ and :text-green:`green text`.
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4315,6 +4599,8 @@ def test_individual_colors(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4351,6 +4637,8 @@ def test_text_styles_unsupported_color(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
         expected_warnings=[expected_warning],
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4393,6 +4681,8 @@ def setup(app):
         tmp_path=tmp_path,
         conf_py_content=conf_py_content,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        confoverrides=None,
     )
 
 
@@ -4439,6 +4729,8 @@ def test_text_styles_and_strike(
             "sphinxnotes.strike",
         ),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4484,6 +4776,8 @@ def test_additional_text_styles(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinxcontrib_text_styles"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4518,6 +4812,8 @@ def test_flat_task_list(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4573,6 +4869,9 @@ def test_bullet_list_with_nested_content(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4622,6 +4921,8 @@ def test_task_list_with_nested_content(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4691,6 +4992,8 @@ def test_nested_task_list(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4724,6 +5027,8 @@ def test_task_list_quote(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_immaterial.task_lists"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4745,6 +5050,9 @@ def test_inline_single_backticks(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4794,6 +5102,9 @@ def test_kbd_role(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4826,6 +5137,9 @@ def test_file_role(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4863,6 +5177,8 @@ def setup(app):
             tmp_path=tmp_path,
             conf_py_content=conf_py_content,
             expected_warnings=(),
+            extensions=("sphinx_notion",),
+            confoverrides=None,
         )
 
 
@@ -4909,6 +5225,9 @@ def test_unsupported_node_types_in_process_node_to_blocks(
             make_app=make_app,
             tmp_path=tmp_path,
             expected_warnings=(),
+            extensions=("sphinx_notion",),
+            conf_py_content="",
+            confoverrides=None,
         )
 
 
@@ -4939,6 +5258,8 @@ def test_inline_equation(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -4965,6 +5286,8 @@ def test_block_equation(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx.ext.mathjax"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5044,6 +5367,8 @@ def test_rest_example_block(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5100,6 +5425,8 @@ def test_rest_example_topic(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_toolbox.rest_example"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5131,6 +5458,8 @@ def test_embed_block(
         tmp_path=tmp_path,
         extensions=("sphinx_notion", "sphinx_iframes"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5165,6 +5494,8 @@ def test_embed_and_video(
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.video", "sphinx_iframes", "sphinx_notion"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5197,6 +5528,9 @@ def test_line_block(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5235,6 +5569,9 @@ def test_nested_line_block(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5264,6 +5601,9 @@ def test_transition_divider(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5299,6 +5639,9 @@ def test_notion_mention_user(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5333,6 +5676,9 @@ def test_notion_mention_page(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5370,6 +5716,9 @@ def test_notion_mention_database(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5405,6 +5754,9 @@ def test_notion_mention_date(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5552,6 +5904,9 @@ def test_describe_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5597,6 +5952,9 @@ def test_describe_directive_multiline(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5676,6 +6034,7 @@ def test_autosummary_directive(
         ),
         conf_py_content=conf_py_content,
         expected_warnings=(),
+        confoverrides=None,
     )
 
 
@@ -5773,6 +6132,7 @@ def test_autosummary_with_internal_references(
         ),
         conf_py_content=conf_py_content,
         expected_warnings=expected_warnings,
+        confoverrides=None,
     )
 
 
@@ -5831,6 +6191,9 @@ def test_glossary(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5879,6 +6242,9 @@ def test_glossary_term_same_page(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5928,6 +6294,9 @@ def test_glossary_term_cross_page(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=expected_warnings,
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5961,6 +6330,8 @@ def test_mermaid_diagram(
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -5988,6 +6359,9 @@ def test_simple_file(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6017,6 +6391,9 @@ def test_file_with_name(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6048,6 +6425,9 @@ def test_file_with_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6079,6 +6459,9 @@ def test_file_with_name_and_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6107,6 +6490,9 @@ def test_local_file(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=[],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6166,6 +6552,9 @@ def test_figure_directive(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6209,6 +6598,9 @@ def test_figure_directive_with_target(
                 "[notion.unsupported_image]"
             ),
         ],
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6243,6 +6635,9 @@ def test_figure_directive_with_legend(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6277,6 +6672,9 @@ def test_figure_directive_local_image(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6305,6 +6703,9 @@ def test_figure_directive_without_caption(
         make_app=make_app,
         tmp_path=tmp_path,
         expected_warnings=(),
+        extensions=("sphinx_notion",),
+        conf_py_content="",
+        confoverrides=None,
     )
 
 
@@ -6339,4 +6740,6 @@ def test_mermaid_diagram_with_caption(
         tmp_path=tmp_path,
         extensions=("sphinxcontrib.mermaid", "sphinx_notion"),
         expected_warnings=(),
+        conf_py_content="",
+        confoverrides=None,
     )
