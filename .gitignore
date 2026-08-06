@@ -214,3 +214,6 @@ build-sample_warnings/
 *.DS_Store
 
 .secrets
+
+# Vale styles downloaded by ``vale sync``
+styles/
