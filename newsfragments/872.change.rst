@@ -1,1 +1,0 @@
-Render user-authored topic directives as callouts instead of aborting the build.

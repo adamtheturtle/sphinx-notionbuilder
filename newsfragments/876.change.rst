@@ -1,1 +1,0 @@
-Omitting icon and cover options now preserves existing Notion page metadata instead of clearing editor-managed presentation.

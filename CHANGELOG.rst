@@ -3,6 +3,62 @@ Changelog
 
 .. towncrier release notes start
 
+2026.08.11
+----------
+
+- Add configurable ``diff`` and append-before-delete ``replace`` upload strategies
+  to the upload API, command-line tool, and automatic Sphinx publishing.
+
+- ``tab-set`` and ``tab-item`` directives (from the ``sphinx-design`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved, mirroring the existing ``sphinx-tabs`` support.
+
+- Keep an existing page cover when its local cover file is unchanged.
+
+- Delay page metadata changes until every upload cancellation check has passed.
+
+- Allow direct page updates by ID without requiring an unused parent location.
+
+- Preserve visible content inside compound directives.
+
+- Render user-authored topic directives as callouts instead of aborting the build.
+
+- Preserve figure legend paragraphs after the captioned image.
+
+- Grid tables with rowspans or colspans now duplicate merged content across the covered Notion cells and emit a suppressible ``notion.unsupported_table`` warning, instead of shifting later cells.
+
+- Local ``notion-file`` uploads now retain their configured display name as well as their caption.
+
+- Omitting icon and cover options now preserves existing Notion page metadata instead of clearing editor-managed presentation.
+
+- Ambiguous title-based uploads now stop with a stable error that directs users to ``--page-id`` instead of crashing with an assertion.
+
+- Attributed block quotes and epigraphs now retain their author in a nested paragraph instead of aborting the Notion build.
+
+- Native reStructuredText footnotes now render bracketed inline numbers and numbered body bullets, including auto-numbered, explicit, named, and repeated references.
+
+- Native reStructuredText citations now render bracketed inline references and labeled bibliography bullets while preserving formatted citation bodies.
+
+- Recognized document metadata such as authors, version, and date now renders as labeled bullets before the document body instead of being omitted.
+
+- Custom reStructuredText field lists now render as bold labeled bullets with nested bodies, preserving field order, inline formatting, and multiple paragraphs.
+
+- Native reStructuredText option lists now render as bulleted command options with nested descriptions, preserving aliases, arguments, and inline formatting.
+
+- Images and figures with ``:target:`` now keep the target URL in the image caption and emit a suppressible ``notion.unsupported_image`` warning, instead of aborting the build.
+
+- Nested line blocks now flatten into Notion paragraphs with two-space indentation per nesting level, preserved line boundaries, and inline formatting instead of aborting the build.
+
+- Sphinx ``centered`` directives now render as normal Notion paragraphs with a suppressible ``notion.unsupported_layout`` warning, instead of aborting the build.
+
+- Sphinx ``versionadded``, ``versionchanged``, and ``deprecated`` directives now render as Notion callouts with their generated labels, versions, inline formatting, and nested content preserved.
+
+- Sphinx ``productionlist`` grammar directives now render as aligned plain-text Notion code blocks instead of aborting the build.
+
+- Sphinx ``hlist`` directives now flatten into ordinary Notion bulleted items with a suppressible ``notion.unsupported_layout`` warning, instead of aborting the build.
+
+- Standard ``:sub:`` and ``:sup:`` inline roles now render their content as plain Notion rich text, preserving nested formatting, instead of aborting the build.
+
+- ``sphinx-tabs`` and ``sphinx-design`` are no longer installed automatically. They are not imported by ``sphinx_notion`` (their tabs are detected from the rendered output), so install them yourself alongside the other extensions you enable in ``conf.py`` if you use the ``tabs``/``tab`` or ``tab-set``/``tab-item`` directives.
+
 2026.06.28
 ----------
 

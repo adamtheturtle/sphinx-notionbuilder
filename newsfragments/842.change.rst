@@ -1,2 +1,0 @@
-Add configurable ``diff`` and append-before-delete ``replace`` upload strategies
-to the upload API, command-line tool, and automatic Sphinx publishing.

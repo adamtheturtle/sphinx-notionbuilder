@@ -1,1 +1,0 @@
-Sphinx ``versionadded``, ``versionchanged``, and ``deprecated`` directives now render as Notion callouts with their generated labels, versions, inline formatting, and nested content preserved.

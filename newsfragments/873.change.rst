@@ -1,1 +1,0 @@
-Preserve figure legend paragraphs after the captioned image.

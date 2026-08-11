@@ -1,1 +1,0 @@
-Sphinx ``productionlist`` grammar directives now render as aligned plain-text Notion code blocks instead of aborting the build.
