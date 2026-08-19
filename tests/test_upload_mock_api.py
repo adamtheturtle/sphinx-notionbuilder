@@ -786,7 +786,7 @@ for parent_kind in ("page", "database"):
         raise RuntimeError("Ambiguous title did not raise")
     session.create_page.assert_not_called()
 """
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         args=[sys.executable, "-O", "-c", script],
         check=True,
         capture_output=True,
