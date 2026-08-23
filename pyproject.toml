@@ -316,7 +316,7 @@ ignore = [
     ".cursor",
     ".cursor/**",
     ".git_archival.txt",
-    ".pre-commit-config.yaml",
+    "prek.toml",
     ".prettierrc",
     ".vale.ini",
     ".vscode",
