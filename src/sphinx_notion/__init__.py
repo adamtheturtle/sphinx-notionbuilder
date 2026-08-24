@@ -983,12 +983,18 @@ def _get_code_language(*, node: nodes.literal_block) -> CodeLang:
 @singledispatch
 @beartype
 def _process_node_to_blocks(
-    node: nodes.Element,
+    node: nodes.Node,
     *,
     section_level: int,
 ) -> list[Block]:
     """Required function for ``singledispatch``."""
     del section_level
+    if not isinstance(node, nodes.Element):
+        unsupported_node_type_msg = (
+            f"Unsupported node type: {type(node).__name__}."
+        )
+        raise NotImplementedError(unsupported_node_type_msg)
+
     line_number = node.line or node.parent.line
     source = node.source or node.parent.source
 
