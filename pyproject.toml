@@ -61,7 +61,7 @@ optional-dependencies.dev = [
     "furo==2025.12.19",
     "interrogate==1.7.0",
     "mypy[faster-cache]==2.3.1",
-    "mypy-strict-kwargs==2026.7.19.1",
+    "mypy-strict-kwargs==2026.8.20.1",
     "no-defaults==2.1.0",
     "prek==0.4.14",
     "pydocstringformatter==1.0.0",
@@ -502,12 +502,10 @@ type = [
 ]
 
 [tool.mypy_strict_kwargs]
-# ``url2pathname`` had its parameter renamed from ``pathname`` to ``url`` in
-# Python 3.14 (https://github.com/python/cpython/issues/127065), so we cannot
-# use a keyword argument that works across all supported Python versions.
-# On Windows, ``urllib.request`` re-exports ``url2pathname`` from ``nturl2path``,
-# so mypy resolves the fullname as ``nturl2path.url2pathname`` on that platform.
-ignore_names = [ "nturl2path.url2pathname", "urllib.request.url2pathname" ]
+ignore_names = [
+    "beartype._decor.decorcache.beartype",
+    "cloup._option_groups.option_group",
+]
 
 [tool.strict_kwargs]
 # ``url2pathname`` had its parameter renamed from ``pathname`` to ``url`` in

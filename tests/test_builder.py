@@ -226,3 +226,14 @@ def test_notion_publish_disabled_skips_validation(
     )
 
     assert app.config.notion_publish is False
+
+
+def test_process_node_to_blocks_rejects_non_element_nodes() -> None:
+    """Text nodes are not Elements and raise ``NotImplementedError``."""
+    process_node = sphinx_notion.__dict__["_process_node_to_blocks"]
+    text_node = nodes.Text(data="hello")
+    with pytest.raises(
+        expected_exception=NotImplementedError,
+        match=r"^Unsupported node type: Text\.$",
+    ):
+        process_node(text_node, section_level=1)
