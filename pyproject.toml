@@ -61,7 +61,7 @@ optional-dependencies.dev = [
     "furo==2025.12.19",
     "interrogate==1.7.0",
     "mypy[faster-cache]==2.3.1",
-    "mypy-strict-kwargs==2026.8.20.1",
+    "mypy-strict-kwargs==2026.8.25",
     "no-defaults==2.1.0",
     "prek==0.4.14",
     "pydocstringformatter==1.0.0",
@@ -502,8 +502,10 @@ type = [
 ]
 
 [tool.mypy_strict_kwargs]
+# ``@cloup.option_group("...", opt, opt)`` passes the option group's name
+# and its options positionally; the plugin resolves that callable to this
+# internal name.
 ignore_names = [
-    "beartype._decor.decorcache.beartype",
     "cloup._option_groups.option_group",
 ]
 
