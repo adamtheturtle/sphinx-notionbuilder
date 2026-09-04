@@ -93,7 +93,7 @@ optional-dependencies.dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "strict-kwargs==2026.8.28.post2",
     "towncrier==25.8.0",
-    "ty==0.0.75",
+    "ty==0.0.77",
     "types-docutils==0.23.0.20260827",
     "types-requests==2.33.0.20260712",
     "vale==3.18.0.0",
