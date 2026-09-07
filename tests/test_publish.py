@@ -11,7 +11,7 @@ from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 
 from sphinx_notion._upload import PageHasSubpagesError
-from tests._wiremock import (  # pyrefly: ignore[missing-import]
+from tests._wiremock import (
     count_mock_requests,
     count_page_metadata_clear_requests,
 )
@@ -243,7 +243,7 @@ def test_publish_toctree_as_page_hierarchy(
         assert upload.call_args_list[2].kwargs["title"] == "Guide"
 
         upload.reset_mock()
-        app.env.toctree_includes["detail"] = []
+        app.env.toctree_includes["detail"] = list[str]()
         app.env.toctree_includes["index"].append("guide")
         (Path(app.outdir) / "guide.json").unlink()
         app.emit("build-finished", None)
