@@ -92,7 +92,8 @@ def test_count_page_metadata_clear_requests(
         mock=respx_mock,
         page_id=parent_page_id,
     )
-    for payload in ({"icon": None}, {"cover": None}):
+    payloads: tuple[dict[str, None], ...] = ({"icon": None}, {"cover": None})
+    for payload in payloads:
         response = httpx.patch(
             url=f"https://mock.notion.test/v1/pages/{parent_page_id}",
             json=payload,

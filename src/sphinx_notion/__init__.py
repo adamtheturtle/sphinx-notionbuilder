@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 from uuid import UUID
 
 import bs4
@@ -196,6 +196,7 @@ class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
 class _NotionPdfIncludeDirective(PdfIncludeDirective):
     """PDF include directive that creates Notion PDF blocks."""
 
+    @override
     def run(self) -> list[nodes.raw]:
         """Create a Notion PDF block."""
         (pdf_file,) = self.arguments
@@ -240,6 +241,7 @@ class _NotionLinkToPageDirective(sphinx_docutils.SphinxDirective):
 
     required_arguments = 1
 
+    @override
     def run(self) -> list[nodes.Element]:
         """Create a Notion link-to-page block."""
         (page_id,) = self.arguments
@@ -267,6 +269,7 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
         "caption": rst_directives.unchanged,
     }
 
+    @override
     def run(self) -> list[nodes.Element]:
         """Create a Notion File block."""
         (file_url,) = self.arguments
@@ -2584,6 +2587,7 @@ class NotionTranslator(NodeVisitor):
         self.body: str
         self._section_level = 0
 
+    @override
     def dispatch_visit(self, node: nodes.Node) -> None:
         """Handle nodes by creating appropriate Notion heading blocks."""
         if isinstance(node, nodes.section):
@@ -2598,6 +2602,7 @@ class NotionTranslator(NodeVisitor):
         if not isinstance(node, nodes.document):
             raise nodes.SkipNode
 
+    @override
     def depart_section(self, node: nodes.Element) -> None:
         """
         Handle leaving section nodes by decreasing the section
@@ -2606,6 +2611,7 @@ class NotionTranslator(NodeVisitor):
         del node
         self._section_level -= 1
 
+    @override
     def depart_document(self, node: nodes.Element) -> None:
         """Output collected block tree as JSON at document end."""
         del node
