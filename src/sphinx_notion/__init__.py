@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, ClassVar, override
+from typing import Any, ClassVar, TypeGuard, override
 from uuid import UUID
 
 import bs4
@@ -21,7 +21,7 @@ from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.config import Config
-from sphinx.environment import BuildEnvironment  # noqa: TC002
+from sphinx.environment import BuildEnvironment
 from sphinx.ext.autosummary import autosummary_table
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
@@ -191,6 +191,49 @@ def _background_color_from_css_classes(
 @beartype
 class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
     """Custom PDF node for Notion PDF blocks."""
+
+
+@beartype
+def _string_attribute(*, node: nodes.Element, name: str) -> str:
+    """Return a string-valued document node attribute."""
+    value: object = node.attributes[name]
+    assert isinstance(value, str)
+    return value
+
+
+@beartype
+def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
+    """Return the Sphinx environment attached to a document node."""
+    assert node.document is not None
+    environment: object = node.document.settings.env
+    assert isinstance(environment, BuildEnvironment)
+    return environment
+
+
+@beartype
+def _is_object_list(value: object, /) -> TypeGuard[list[object]]:
+    """Return whether a value is a list with unchecked entries."""
+    return isinstance(value, list)
+
+
+@beartype
+def _is_object_tuple(value: object, /) -> TypeGuard[tuple[object, ...]]:
+    """Return whether a value is a tuple with unchecked entries."""
+    return isinstance(value, tuple)
+
+
+@beartype
+def _video_source(*, node: video_node) -> tuple[str, bool]:
+    """Return the location and remote flag for a video node's source."""
+    sources: object = node.attributes["sources"]
+    assert _is_object_list(sources)
+    primary_source = sources[0]
+    assert _is_object_tuple(primary_source)
+    video_location, media_type, is_remote = primary_source
+    assert isinstance(video_location, str)
+    assert isinstance(media_type, str)
+    assert isinstance(is_remote, bool)
+    return video_location, is_remote
 
 
 @beartype
@@ -1927,7 +1970,7 @@ def _(
 ) -> list[Block]:
     """Process mermaid diagram nodes by creating Notion Code blocks."""
     del section_level
-    code: str = node["code"]  # ty: ignore[unsound-assignment]
+    code = _string_attribute(node=node, name="code")
     return [UnoCode(text=text(text=code), language=CodeLang.MERMAID)]
 
 
@@ -1943,7 +1986,7 @@ def _create_image_block(
 
     assert node.document is not None
     if "://" not in image_url:
-        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
+        env = _build_environment(node=node)
         abs_path = Path(env.srcdir) / image_url
         image_url = abs_path.as_uri()
 
@@ -1993,7 +2036,7 @@ def _(
     ):
         mermaid_child = node.children[0]
         caption_node = node.children[1]
-        code: str = mermaid_child["code"]  # ty: ignore[unsound-assignment]
+        code = _string_attribute(node=mermaid_child, name="code")
         return [
             UnoCode(
                 text=text(text=code),
@@ -2095,16 +2138,13 @@ def _(
     """Process video nodes by creating Notion Video blocks."""
     del section_level
 
-    sources: list[tuple[str, str, bool]] = node.attributes["sources"]  # ty: ignore[unsound-assignment]
-    assert isinstance(sources, list)
-    primary_source = sources[0]
-    video_location, _, is_remote = primary_source
+    video_location, is_remote = _video_source(node=node)
 
     if is_remote:
         video_url = video_location
     else:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
+        env = _build_environment(node=node)
         abs_path = Path(env.srcdir) / video_location
         video_url = abs_path.as_uri()
 
@@ -2135,7 +2175,7 @@ def _(
 
     assert node.document is not None
     if "://" not in audio_url:
-        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
+        env = _build_environment(node=node)
         abs_path = Path(env.srcdir) / audio_url
         audio_url = abs_path.as_uri()
 
@@ -2160,7 +2200,7 @@ def _(
 
     if "://" not in pdf_url:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
+        env = _build_environment(node=node)
         abs_path = Path(env.srcdir) / pdf_url
         pdf_url = abs_path.as_uri()
 
@@ -2185,7 +2225,7 @@ def _(
 
     if "://" not in file_url:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
+        env = _build_environment(node=node)
         abs_path = Path(env.srcdir) / file_url
         file_url = abs_path.as_uri()
 
@@ -2906,7 +2946,8 @@ def _publish_to_notion(
     if app.builder.name != "notion":
         return
 
-    root_doc: str = app.config.root_doc  # ty: ignore[unsound-assignment]
+    root_doc: object = app.config.root_doc
+    assert isinstance(root_doc, str)
     output_file = Path(app.outdir) / f"{root_doc}.json"
     if not output_file.exists():
         _LOGGER.warning(

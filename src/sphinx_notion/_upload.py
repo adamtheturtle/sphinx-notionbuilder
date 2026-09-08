@@ -139,9 +139,11 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     cannot tell why a 403 is special-cased, and may remove it.
     """
     content_type = exc.headers.get(key="content-type", default="")
-    return exc.status == _HTTP_FORBIDDEN and content_type.startswith(
-        "text/html"
-    )  # ty: ignore[unsound-return-statement]
+    return (
+        exc.status == _HTTP_FORBIDDEN
+        and isinstance(content_type, str)
+        and content_type.startswith("text/html")
+    )
 
 
 @beartype
