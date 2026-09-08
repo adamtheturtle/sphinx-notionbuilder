@@ -166,7 +166,7 @@ def _upload_file(
     """
     try:
         uploaded_file = session.upload(file=file_stream, file_name=file_name)
-        uploaded_file.wait_until_uploaded()
+        _ = uploaded_file.wait_until_uploaded()
     except HTTPResponseError as exc:
         body = exc.body[:_MAX_LOGGED_BODY_CHARS]
         if _is_waf_block(exc=exc):
@@ -212,12 +212,12 @@ def _block_without_children(
         UnoObjAPIBlock.model_validate(obj=serialized_block)
     )
     assert isinstance(block_without_children, ParentBlock)
-    assert not block_without_children.blocks
+    assert len(block_without_children.blocks) == 0
     return block_without_children
 
 
 @beartype
-def serialize_block_with_children(*, block: Block) -> dict[str, Any]:
+def serialize_block_with_children(*, block: Block) -> dict[str, Any]:  # pyrefly: ignore[explicit-any]
     """
     Convert a block to a JSON-serializable format which includes its
     children.
@@ -360,7 +360,11 @@ def _is_existing_equivalent(
             local_file_path = _file_uri_to_path(uri=local_block.url)
             local_name: str | None
             if isinstance(local_block, UnoFile):
-                local_name = local_block.name or local_file_path.name
+                local_name = (
+                    local_block.name
+                    if local_block.name != ""
+                    else local_file_path.name
+                )
             else:
                 local_name = local_block.file_info.name
 
@@ -463,7 +467,7 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
             if isinstance(block, UnoFile):
                 block = UnoFile(
                     file=uploaded_file,
-                    name=block.name or file_path.name,
+                    name=(block.name if block.name != "" else file_path.name),
                     caption=block.caption,
                 )
             else:
@@ -556,7 +560,7 @@ def _delete_blocks(*, blocks: Sequence[Block]) -> None:
             block_index + 1,
             len(blocks),
         )
-        existing_page_block.delete()
+        _ = existing_page_block.delete()
 
 
 @beartype
@@ -567,12 +571,12 @@ def _append_blocks(
     after: Block | None,
 ) -> None:
     """Append blocks to a page, optionally after an existing block."""
-    if not blocks:
+    if len(blocks) == 0:
         return
 
     _LOGGER.info("Appending %d blocks to page", len(blocks))
     try:
-        page.append(blocks=blocks, after=after)
+        _ = page.append(blocks=blocks, after=after)
     except HTTPResponseError as exc:
         if not _is_waf_block(exc=exc):
             raise
@@ -590,7 +594,7 @@ def _check_discussions(
     blocks_with_discussions = [
         block for block in blocks_to_delete if len(block.discussions) > 0
     ]
-    if not cancel_on_discussion or not blocks_with_discussions:
+    if not cancel_on_discussion or len(blocks_with_discussions) == 0:
         return
 
     total_discussions = sum(
@@ -668,11 +672,11 @@ def _set_page_appearance(
     rather than cleared.
     """
     prepared_cover: UploadedFile | ExternalFile | None
-    if cover_path:
+    if cover_path is not None:
         prepared_cover = _get_uploaded_cover(
             page=page, cover=cover_path, session=session
         )
-    elif cover_url:
+    elif cover_url is not None and cover_url != "":
         prepared_cover = ExternalFile(url=cover_url)
     else:
         prepared_cover = None
@@ -680,7 +684,7 @@ def _set_page_appearance(
     if page_id is not None:
         _LOGGER.info("Setting page title to '%s'", title)
         page.title = title
-    if icon:
+    if icon is not None and icon != "":
         _LOGGER.info("Setting page icon to '%s'", icon)
         page.icon = Emoji(emoji=icon)
     if prepared_cover is not None:
@@ -734,7 +738,7 @@ def upload_to_notion(
             raise PageNotFoundError(msg) from exc
     else:
         parent: Page | DataSource
-        if parent_page_id:
+        if parent_page_id is not None and parent_page_id != "":
             _LOGGER.info("Fetching parent page '%s'", parent_page_id)
             parent = session.get_page(page_ref=parent_page_id)
             subpages = parent.subpages
@@ -755,7 +759,7 @@ def upload_to_notion(
             )
             raise PageTitleAmbiguousError(msg)
 
-        if pages_matching_title:
+        if len(pages_matching_title) > 0:
             (page,) = pages_matching_title
             _LOGGER.info("Found existing page '%s'", title)
         else:
@@ -763,10 +767,10 @@ def upload_to_notion(
             page = session.create_page(parent=parent, title=title)
 
     if not allow_subpages:
-        if page.subpages:
+        if len(page.subpages) > 0:
             raise PageHasSubpagesError
 
-        if page.sub_dss:
+        if len(page.sub_dss) > 0:
             raise PageHasDatabasesError
 
     _LOGGER.info("Syncing page blocks using the '%s' strategy", strategy.value)

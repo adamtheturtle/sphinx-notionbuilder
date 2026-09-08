@@ -21,6 +21,7 @@ from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.config import Config
+from sphinx.environment import BuildEnvironment  # noqa: TC002
 from sphinx.ext.autosummary import autosummary_table
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
@@ -423,7 +424,7 @@ def _(node: nodes.reference) -> Text:
         )
         return _create_rich_text_from_children(node=node)
 
-    if node.attributes.get("internal"):
+    if node.attributes.get("internal") is True:
         _LOGGER.warning(
             "Cross-references are not supported by the Notion builder. "
             "Rendering as plain text.",
@@ -667,7 +668,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
     is_strikethrough = (
         isinstance(node, strike_node) or "text-strike" in classes
     )
-    is_underline = "text-underline" in classes
+    is_underline: bool = "text-underline" in classes
 
     supported_style_classes = {
         "text-bold",
@@ -708,7 +709,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         and css_class not in ignored_style_classes
     ]
 
-    if unsupported_styles:
+    if len(unsupported_styles) > 0:
         unsupported_style_msg = (
             "Unsupported text style classes: "
             f"{', '.join(unsupported_styles)}. "
@@ -717,7 +718,9 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
         )
         _LOGGER.warning(unsupported_style_msg)
 
-    color: BGColor | Color | None = bg_color or text_color
+    color: BGColor | Color | None = (
+        bg_color if bg_color is not None else text_color
+    )
     return text(
         text=node.astext(),
         bold=is_bold,
@@ -764,7 +767,9 @@ def _create_docinfo_blocks(
 
         label = metadata_name.replace("_", " ").title()
         bulleted_item = UnoBulletedItem(text=text(text=label, bold=True))
-        bulleted_item.append(blocks=[UnoParagraph(text=text(text=value_text))])
+        _ = bulleted_item.append(
+            blocks=[UnoParagraph(text=text(text=value_text))]
+        )
         blocks.append(bulleted_item)
     return blocks
 
@@ -789,7 +794,8 @@ def _extract_table_structure(
     for tgroup_child in tgroup.children:
         match tgroup_child:
             case nodes.colspec():
-                if tgroup_child.attributes.get("stub"):
+                stub_value: object = tgroup_child.attributes.get("stub")
+                if isinstance(stub_value, int) and stub_value != 0:
                     stub_columns += 1
             case nodes.thead():
                 for row in tgroup_child.children:
@@ -830,7 +836,7 @@ def _cell_source_node(*, entry: nodes.Node) -> nodes.paragraph:
     non_paragraph_children = [
         c for c in entry.children if not isinstance(c, nodes.paragraph)
     ]
-    if non_paragraph_children:
+    if len(non_paragraph_children) > 0:
         first_child = non_paragraph_children[0]
         msg = (
             f"Notion table cells can only contain paragraph content. "
@@ -998,8 +1004,16 @@ def _process_node_to_blocks(
         )
         raise NotImplementedError(unsupported_node_type_msg)
 
-    line_number = node.line or node.parent.line
-    source = node.source or node.parent.source
+    line_number = (
+        node.line
+        if node.line is not None and node.line != 0
+        else node.parent.line
+    )
+    source = (
+        node.source
+        if node.source is not None and node.source != ""
+        else node.parent.source
+    )
 
     if line_number is not None and source is not None:
         unsupported_node_type_msg = (
@@ -1169,7 +1183,7 @@ def _(
     quote = UnoQuote(text=rich_text)
     for child in node.children[1:]:
         blocks = _process_node_to_blocks(child, section_level=section_level)
-        quote.append(blocks=blocks)
+        _ = quote.append(blocks=blocks)
 
     return [quote]
 
@@ -1246,7 +1260,7 @@ def _(
                     child,
                     section_level=section_level,
                 )
-                bulleted_item_block.append(blocks=child_blocks)
+                _ = bulleted_item_block.append(blocks=child_blocks)
             result.append(bulleted_item_block)
         else:
             assert isinstance(first_child, checkbox_label), (
@@ -1267,7 +1281,7 @@ def _(
                     child,
                     section_level=section_level,
                 )
-                todo_item_block.append(blocks=child_blocks)
+                _todo_item_block = todo_item_block.append(blocks=child_blocks)
             result.append(todo_item_block)
     return result
 
@@ -1290,7 +1304,7 @@ def _(
             child,
             section_level=section_level,
         )
-        footnote_item.append(blocks=child_blocks)
+        _ = footnote_item.append(blocks=child_blocks)
     return [footnote_item]
 
 
@@ -1348,7 +1362,7 @@ def _(
                     child,
                     section_level=section_level,
                 )
-                block.append(blocks=child_blocks)
+                _ = block.append(blocks=child_blocks)
             result.append(block)
         else:
             assert isinstance(first_child, checkbox_label), (
@@ -1369,7 +1383,7 @@ def _(
                     child,
                     section_level=section_level,
                 )
-                todo_item_block.append(blocks=child_blocks)
+                _todo_item_block = todo_item_block.append(blocks=child_blocks)
             result.append(todo_item_block)
     return result
 
@@ -1432,7 +1446,7 @@ def _(
                 child,
                 section_level=section_level,
             )
-            bulleted_item.append(blocks=child_blocks)
+            _ = bulleted_item.append(blocks=child_blocks)
         result.append(bulleted_item)
     return result
 
@@ -1455,7 +1469,7 @@ def _(
             child,
             section_level=section_level,
         )
-        citation_item.append(blocks=child_blocks)
+        _ = citation_item.append(blocks=child_blocks)
     return [citation_item]
 
 
@@ -1483,7 +1497,7 @@ def _(
                 child,
                 section_level=section_level,
             )
-            bulleted_item.append(blocks=child_blocks)
+            _ = bulleted_item.append(blocks=child_blocks)
         result.append(bulleted_item)
     return result
 
@@ -1512,7 +1526,7 @@ def _(
                 child,
                 section_level=section_level,
             )
-            bulleted_item.append(blocks=child_blocks)
+            _ = bulleted_item.append(blocks=child_blocks)
         result.append(bulleted_item)
     return result
 
@@ -1534,7 +1548,7 @@ def _(
         text=_create_rich_text_from_children(node=title_node),
     )
     for child in node.children[1:]:
-        callout.append(
+        _ = callout.append(
             blocks=_process_node_to_blocks(
                 child,
                 section_level=section_level,
@@ -1608,7 +1622,9 @@ def _(
         )
         raise ValueError(error_msg)
 
-    heading_levels: dict[int, type[UnoHeading[Any]]] = {
+    heading_levels: dict[  # pyrefly: ignore[explicit-any]
+        int, type[UnoHeading[Any]]
+    ] = {
         1: UnoHeading1,
         2: UnoHeading2,
         3: UnoHeading3,
@@ -1649,7 +1665,7 @@ def _create_admonition_callout(
     )
 
     for child in children_to_process:
-        block.append(
+        _ = block.append(
             blocks=_process_node_to_blocks(
                 child,
                 section_level=1,
@@ -1866,7 +1882,7 @@ def _(
     )
 
     for child in content_children:
-        block.append(
+        _ = block.append(
             blocks=_process_node_to_blocks(
                 child,
                 section_level=1,
@@ -1892,7 +1908,7 @@ def _(
     toggle_block = UnoToggleItem(text=toggle_text)
 
     for child in node.children[1:]:
-        toggle_block.append(
+        _ = toggle_block.append(
             blocks=_process_node_to_blocks(
                 child,
                 section_level=1,
@@ -1927,7 +1943,8 @@ def _create_image_block(
 
     assert node.document is not None
     if "://" not in image_url:
-        abs_path = Path(node.document.settings.env.srcdir) / image_url
+        env: BuildEnvironment = node.document.settings.env
+        abs_path = Path(env.srcdir) / image_url
         image_url = abs_path.as_uri()
 
     return UnoImage(file=ExternalFile(url=image_url), caption=caption)
@@ -1990,7 +2007,7 @@ def _(
     ]
     caption_rich_text: Text | None = (
         _create_rich_text_from_children(node=caption_children[0])
-        if caption_children
+        if len(caption_children) > 0
         else None
     )
 
@@ -2087,11 +2104,13 @@ def _(
         video_url = video_location
     else:
         assert node.document is not None
-        abs_path = Path(node.document.settings.env.srcdir) / video_location
+        env: BuildEnvironment = node.document.settings.env
+        abs_path = Path(env.srcdir) / video_location
         video_url = abs_path.as_uri()
 
     caption_text = node.attributes["caption"]
-    caption = text(text=caption_text) if caption_text else None
+    assert isinstance(caption_text, str)
+    caption = text(text=caption_text) if caption_text != "" else None
 
     return [
         UnoVideo(
@@ -2116,7 +2135,8 @@ def _(
 
     assert node.document is not None
     if "://" not in audio_url:
-        abs_path = Path(node.document.settings.env.srcdir) / audio_url
+        env: BuildEnvironment = node.document.settings.env
+        abs_path = Path(env.srcdir) / audio_url
         audio_url = abs_path.as_uri()
 
     return [UnoAudio(file=ExternalFile(url=audio_url))]
@@ -2136,10 +2156,12 @@ def _(
     del section_level
 
     pdf_url = node.attributes["uri"]
+    assert isinstance(pdf_url, str)
 
     if "://" not in pdf_url:
         assert node.document is not None
-        abs_path = Path(node.document.settings.env.srcdir) / pdf_url
+        env: BuildEnvironment = node.document.settings.env
+        abs_path = Path(env.srcdir) / pdf_url
         pdf_url = abs_path.as_uri()
 
     return [UnoPDF(file=ExternalFile(url=pdf_url))]
@@ -2159,10 +2181,12 @@ def _(
     del section_level
 
     file_url = node.attributes["uri"]
+    assert isinstance(file_url, str)
 
     if "://" not in file_url:
         assert node.document is not None
-        abs_path = Path(node.document.settings.env.srcdir) / file_url
+        env: BuildEnvironment = node.document.settings.env
+        abs_path = Path(env.srcdir) / file_url
         file_url = abs_path.as_uri()
 
     return [
@@ -2300,13 +2324,13 @@ def _process_rest_example_container(
         )
 
     code_callout = UnoCallout(text=text(text="Code"))
-    code_callout.append(blocks=code_blocks)
+    _ = code_callout.append(blocks=code_blocks)
 
     output_callout = UnoCallout(text=text(text="Output"))
-    output_callout.append(blocks=output_blocks)
+    _ = output_callout.append(blocks=output_blocks)
 
     main_callout = UnoCallout(text=text(text="Example"))
-    main_callout.append(blocks=[code_callout, output_callout])
+    _ = main_callout.append(blocks=[code_callout, output_callout])
 
     return [main_callout]
 
@@ -2340,7 +2364,7 @@ def _process_tabs_container(
             panel_blocks.extend(
                 _process_node_to_blocks(child, section_level=section_level)
             )
-        tabs_block[index].append(blocks=panel_blocks)
+        _ = tabs_block[index].append(blocks=panel_blocks)
 
     return [tabs_block]
 
@@ -2567,7 +2591,7 @@ def _(
         color=BGColor.GRAY,
     )
 
-    callout.append(blocks=content_blocks)
+    _ = callout.append(blocks=content_blocks)
 
     return [callout]
 
@@ -2839,7 +2863,7 @@ def _get_toctree_parent_docnames(
     parent_docnames: dict[str, str] = {}
     reachable_docnames = [root_doc]
     queue = deque(iterable=[root_doc])
-    while queue:
+    while len(queue) > 0:
         parent_docname = queue.popleft()
         for docname in toctree_includes.get(parent_docname, []):
             if docname == root_doc or docname in parent_docnames:
@@ -2931,7 +2955,7 @@ def _publish_to_notion(
                 for child in child_docnames_by_parent.get(root_doc, [])
             )
         )
-        while queue:
+        while len(queue) > 0:
             parent_docname, docname = queue.popleft()
 
             doc_output_file = Path(app.outdir) / f"{docname}.json"
@@ -3039,32 +3063,35 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         types=(str,),
     )
 
-    app.connect(event="config-inited", callback=_validate_notion_config)
-    app.connect(event="config-inited", callback=_register_strike_node_handlers)
+    _ = app.connect(event="config-inited", callback=_validate_notion_config)
+    _ = app.connect(
+        event="config-inited",
+        callback=_register_strike_node_handlers,
+    )
 
-    app.connect(
+    _ = app.connect(
         event="builder-inited",
         callback=_notion_register_pdf_include_directive,
     )
 
-    app.connect(
+    _ = app.connect(
         event="builder-inited",
         callback=_notion_register_link_to_page_directive,
     )
 
-    app.connect(
+    _ = app.connect(
         event="builder-inited",
         callback=_notion_register_file_directive,
     )
 
-    app.connect(
+    _ = app.connect(
         event="builder-inited",
         callback=_notion_register_mention_roles,
     )
 
-    app.connect(event="builder-inited", callback=_make_static_dir)
+    _ = app.connect(event="builder-inited", callback=_make_static_dir)
 
-    app.connect(event="build-finished", callback=_publish_to_notion)
+    _ = app.connect(event="build-finished", callback=_publish_to_notion)
 
     app.add_node(
         node=_MentionUserNode,

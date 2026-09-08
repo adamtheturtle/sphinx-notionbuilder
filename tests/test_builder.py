@@ -95,7 +95,7 @@ def test_notion_publish_requires_parent(
     (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="notion_page_id and both"):
-        make_app(
+        _ = make_app(
             srcdir=srcdir,
             confoverrides={
                 "extensions": ["sphinx_notion"],
@@ -116,7 +116,7 @@ def test_notion_publish_mutually_exclusive_parents(
     (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="mutually exclusive"):
-        make_app(
+        _ = make_app(
             srcdir=srcdir,
             confoverrides={
                 "extensions": ["sphinx_notion"],
@@ -139,7 +139,7 @@ def test_notion_publish_requires_title(
     (srcdir / "conf.py").touch()
 
     with pytest.raises(ExtensionError, match="notion_page_title is not set"):
-        make_app(
+        _ = make_app(
             srcdir=srcdir,
             confoverrides={
                 "extensions": ["sphinx_notion"],

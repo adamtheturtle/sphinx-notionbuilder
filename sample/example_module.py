@@ -41,6 +41,6 @@ class Calculator:
 
 
 if __name__ == "__main__":
-    greet(name="World")
+    _greeting = greet(name="World")
     calculator = Calculator(initial_value=10)
-    calculator.add(amount=5)
+    _total = calculator.add(amount=5)

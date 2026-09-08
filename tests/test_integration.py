@@ -73,7 +73,7 @@ from ultimate_notion.rich_text import Text, math, text
 
 
 @beartype
-def _details_from_block(*, block: Block) -> dict[str, Any]:
+def _details_from_block(*, block: Block) -> dict[str, Any]:  # pyrefly: ignore[explicit-any]
     """Create a serialized block details from a Block."""
     serialized_obj = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.has_children:
@@ -95,21 +95,21 @@ def _assert_rst_converts_to_notion_objects(
     extensions: tuple[str, ...],
     conf_py_content: str,
     expected_warnings: Collection[str],
-    confoverrides: dict[str, Any] | None,
+    confoverrides: dict[str, Any] | None,  # pyrefly: ignore[explicit-any]
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via
     Sphinx
     build process.
     """
-    confoverrides = confoverrides or {}
+    confoverrides = {} if confoverrides is None else confoverrides
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
 
-    (srcdir / "conf.py").write_text(data=conf_py_content)
+    _ = (srcdir / "conf.py").write_text(data=conf_py_content)
 
     cleaned_content = textwrap.dedent(text=rst_content).strip()
-    (srcdir / "index.rst").write_text(data=cleaned_content)
+    _ = (srcdir / "index.rst").write_text(data=cleaned_content)
 
     app = make_app(
         srcdir=srcdir,
@@ -125,15 +125,17 @@ def _assert_rst_converts_to_notion_objects(
     warnings = [
         item.strip()
         for item in ansi_stripped_warning_output.split(sep="WARNING: ")
-        if item.strip()
+        if item.strip() != ""
     ]
     assert list(expected_warnings) == warnings
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
-        generated_json: list[dict[str, Any]] = json.load(fp=f)
+        generated_json: list[  # pyrefly: ignore[explicit-any]
+            dict[str, Any]
+        ] = json.load(fp=f)
 
-    expected_json: list[dict[str, Any]] = [
+    expected_json: list[dict[str, Any]] = [  # pyrefly: ignore[explicit-any]
         _details_from_block(block=expected_object)
         for expected_object in expected_blocks
     ]
@@ -156,7 +158,7 @@ def test_single_paragraph(
         UnoParagraph(text=text(text="This is a simple paragraph for testing."))
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -197,7 +199,7 @@ def test_rubric(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -233,7 +235,7 @@ def test_rubric_with_inline_formatting(
         UnoParagraph(text=rubric_text),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -266,7 +268,7 @@ def test_notion_link_to_page(
         UnoLinkToPage.wrap_obj_ref(obj_link_to_page),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -305,7 +307,7 @@ def test_notion_link_to_page_with_content_around(
         UnoParagraph(text=text(text="This is a paragraph after.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -333,7 +335,7 @@ def test_notion_link_to_page_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -371,7 +373,7 @@ def test_multiple_paragraphs(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -414,7 +416,7 @@ def test_centered_text(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -461,7 +463,7 @@ def test_inline_formatting(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -503,7 +505,7 @@ def test_subscript_and_superscript(
         UnoParagraph(text=text(text="Water is H2O and the area is x2.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -574,7 +576,7 @@ def setup(app):
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -601,7 +603,7 @@ def test_single_heading(
         UnoHeading1(text=text(text="Main Title")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -632,13 +634,13 @@ def test_document_metadata(
     """
 
     authors_item = UnoBulletedItem(text=text(text="Authors", bold=True))
-    authors_item.append(
+    _ = authors_item.append(
         blocks=[UnoParagraph(text=text(text="Ada Lovelace, Grace Hopper"))]
     )
     version_item = UnoBulletedItem(text=text(text="Version", bold=True))
-    version_item.append(blocks=[UnoParagraph(text=text(text="2.0"))])
+    _ = version_item.append(blocks=[UnoParagraph(text=text(text="2.0"))])
     date_item = UnoBulletedItem(text=text(text="Date", bold=True))
-    date_item.append(blocks=[UnoParagraph(text=text(text="2026-07-16"))])
+    _ = date_item.append(blocks=[UnoParagraph(text=text(text="2026-07-16"))])
 
     expected_blocks = [
         authors_item,
@@ -648,7 +650,7 @@ def test_document_metadata(
         UnoParagraph(text=text(text="Body text.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -702,7 +704,7 @@ def test_multiple_heading_levels(
         UnoParagraph(text=text(text="Content under sub-subsection.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -741,7 +743,7 @@ def test_heading_with_formatting(
         expected_heading,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -773,7 +775,7 @@ def test_simple_link(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -800,7 +802,7 @@ def test_multiple_links(
         "Visit `Google <https://google.com>`_ and "
         "`GitHub <https://github.com>`_\ntoday."
     )
-    rst_file.write_text(data=content)
+    _ = rst_file.write_text(data=content)
     rst_content = rst_file.read_text()
 
     normal_text1 = text(text="Visit ")
@@ -816,7 +818,7 @@ def test_multiple_links(
     expected_paragraph = UnoParagraph(text=combined_text)
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -855,7 +857,7 @@ def test_citations(
     )
 
     smith_item = UnoBulletedItem(text=text(text="[SMITH2024]", bold=True))
-    smith_item.append(
+    _ = smith_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -868,7 +870,7 @@ def test_citations(
     )
 
     doe_item = UnoBulletedItem(text=text(text="[DOE2023]", bold=True))
-    doe_item.append(
+    _ = doe_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -880,7 +882,7 @@ def test_citations(
         ]
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[reference_paragraph, smith_item, doe_item],
         make_app=make_app,
@@ -923,7 +925,7 @@ def test_footnotes(
     )
 
     auto_item = UnoBulletedItem(text=text(text="[2]", bold=True))
-    auto_item.append(
+    _ = auto_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -936,12 +938,12 @@ def test_footnotes(
     )
 
     explicit_item = UnoBulletedItem(text=text(text="[1]", bold=True))
-    explicit_item.append(
+    _ = explicit_item.append(
         blocks=[UnoParagraph(text=text(text="Explicit body."))]
     )
 
     named_item = UnoBulletedItem(text=text(text="[3]", bold=True))
-    named_item.append(
+    _ = named_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -953,7 +955,7 @@ def test_footnotes(
         ]
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[
             reference_paragraph,
@@ -992,7 +994,7 @@ def test_link_in_heading(
         expected_heading,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1036,7 +1038,7 @@ def test_mixed_formatting_with_links(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1072,7 +1074,7 @@ def test_unnamed_link_with_backticks(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1099,7 +1101,7 @@ def test_simple_quote(
         UnoParagraph(text=text(text="Some content.")),
         UnoQuote(text=text(text="This is a block quote.")),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1135,7 +1137,7 @@ def test_multiline_quote(
             )
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1183,14 +1185,14 @@ def test_multi_paragraph_quote(
         )
     )
 
-    quote.append(blocks=[nested_paragraph])
+    _ = quote.append(blocks=[nested_paragraph])
 
     expected_blocks = [
         UnoParagraph(text=text(text="Some content.")),
         quote,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1223,9 +1225,9 @@ def test_attributed_quote(
             "future self."
         )
     )
-    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+    _ = quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[
             UnoParagraph(text=text(text="Some content.")),
@@ -1259,9 +1261,9 @@ def test_epigraph(
             "future self."
         )
     )
-    quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
+    _ = quote.append(blocks=[UnoParagraph(text=text(text="— Damian Conway"))])
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[quote],
         make_app=make_app,
@@ -1297,7 +1299,7 @@ def test_table_of_contents(
         UnoHeading2(text=text(text="First Section")),
         UnoHeading2(text=text(text="Second Section")),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1325,14 +1327,14 @@ def test_topic_directive(
     callout = UnoCallout(
         text=text(text="Release ") + text(text="notes", italic=True),
     )
-    callout.append(
+    _ = callout.append(
         blocks=[
             UnoParagraph(text=text(text="This is the visible topic body.")),
             UnoParagraph(text=text(text="This is the second paragraph.")),
         ]
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[callout],
         make_app=make_app,
@@ -1364,7 +1366,7 @@ def test_toctree_directive(
         UnoHeading1(text=text(text="Introduction")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1400,7 +1402,7 @@ def test_compound_directive(
         UnoParagraph(text=text(text="After.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1430,7 +1432,7 @@ def test_simple_code_block(
             language=CodeLang.PYTHON,
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1473,7 +1475,7 @@ def test_code_block_unknown_language(
             language=CodeLang.PLAIN_TEXT,
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1509,7 +1511,7 @@ def test_code_block_unknown_language_suppressed(
             language=CodeLang.PLAIN_TEXT,
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1537,8 +1539,8 @@ def test_code_block_unknown_language_with_caption(
     """
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "example.txt").write_text(data="some code here")
-    (srcdir / "conf.py").write_text(data="")
+    _ = (srcdir / "example.txt").write_text(data="some code here")
+    _ = (srcdir / "conf.py").write_text(data="")
 
     index_rst = tmp_path / "src" / "index.rst"
     expected_warnings = [
@@ -1555,7 +1557,7 @@ def test_code_block_unknown_language_with_caption(
             caption=text(text="My Caption"),
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1614,7 +1616,7 @@ def test_code_block_language_mapping(
             language=CodeLang.PLAIN_TEXT,
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1650,7 +1652,7 @@ def test_production_list(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1678,7 +1680,7 @@ def test_flat_bullet_list(
         UnoBulletedItem(text=text(text="Second bullet point")),
         UnoBulletedItem(text=text(text="Third bullet point with longer text")),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1711,7 +1713,7 @@ def test_bullet_list_with_inline_formatting(
         bullet,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1757,7 +1759,7 @@ def test_horizontal_list(
 
     expected_blocks = [UnoBulletedItem(text=text(text=item)) for item in items]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1809,7 +1811,7 @@ def test_admonition_single_line(
     expected_blocks = [
         callout,
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1860,12 +1862,12 @@ def test_admonition_multiline(
         text=text(text="This is the second paragraph that should be nested.")
     )
 
-    callout.append(blocks=[nested_paragraph])
+    _ = callout.append(blocks=[nested_paragraph])
 
     expected_blocks = [
         callout,
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1909,13 +1911,13 @@ def test_admonition_with_code_block(
         text=text(text="The code above demonstrates a simple function.")
     )
 
-    callout.append(blocks=[nested_code_block])
-    callout.append(blocks=[nested_paragraph])
+    _ = callout.append(blocks=[nested_code_block])
+    _ = callout.append(blocks=[nested_paragraph])
 
     expected_blocks = [
         callout,
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -1963,11 +1965,11 @@ def test_admonition_with_code_block_first(
         text=text(text="This paragraph comes after the code block.")
     )
 
-    callout.append(blocks=[nested_code_block])
-    callout.append(blocks=[nested_paragraph])
+    _ = callout.append(blocks=[nested_code_block])
+    _ = callout.append(blocks=[nested_paragraph])
 
     expected_blocks = [callout]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2010,14 +2012,14 @@ def test_admonition_with_bullet_points(
     bullet_a = UnoBulletedItem(text=text(text="A"))
     bullet_b = UnoBulletedItem(text=text(text="B"))
 
-    callout.append(blocks=[bullet_a])
-    callout.append(blocks=[bullet_b])
+    _ = callout.append(blocks=[bullet_a])
+    _ = callout.append(blocks=[bullet_b])
 
     expected_blocks = [
         callout,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2061,7 +2063,7 @@ def test_version_change_directives(
         icon=Emoji(emoji="🏷️"),
         color=BGColor.GRAY,
     )
-    added.append(
+    _ = added.append(
         blocks=[UnoBulletedItem(text=text(text="Nested added item."))]
     )
 
@@ -2080,11 +2082,11 @@ def test_version_change_directives(
         icon=Emoji(emoji="🏷️"),
         color=BGColor.GRAY,
     )
-    deprecated.append(
+    _ = deprecated.append(
         blocks=[UnoParagraph(text=text(text="Nested paragraph."))]
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[added, changed, deprecated],
         make_app=make_app,
@@ -2116,14 +2118,14 @@ def test_definition_list(
     first_item = UnoBulletedItem(
         text=text(text="Term 1"),
     )
-    first_item.append(
+    _ = first_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for term 1."))]
     )
 
     second_item = UnoBulletedItem(
         text=text(text="Term 2"),
     )
-    second_item.append(
+    _ = second_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for term 2."))]
     )
 
@@ -2132,7 +2134,7 @@ def test_definition_list(
         second_item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2160,10 +2162,10 @@ def test_definition_list_multiline(
     item = UnoBulletedItem(
         text=text(text="Term"),
     )
-    item.append(
+    _ = item.append(
         blocks=[UnoParagraph(text=text(text="First paragraph of definition."))]
     )
-    item.append(
+    _ = item.append(
         blocks=[
             UnoParagraph(text=text(text="Second paragraph of definition."))
         ]
@@ -2173,7 +2175,7 @@ def test_definition_list_multiline(
         item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2205,7 +2207,7 @@ def test_definition_list_with_inline_formatting(
     # Code term - code formatting preserved
     code_term_text = text(text="code_term", code=True)
     first_item = UnoBulletedItem(text=code_term_text)
-    first_item.append(
+    _ = first_item.append(
         blocks=[UnoParagraph(text=text(text="Definition for code term."))]
     )
 
@@ -2213,7 +2215,7 @@ def test_definition_list_with_inline_formatting(
     emph_text = text(text="emphasized", italic=True)
     space_text = text(text=" term")
     second_item = UnoBulletedItem(text=emph_text + space_text)
-    second_item.append(
+    _ = second_item.append(
         blocks=[
             UnoParagraph(text=text(text="Definition for emphasized term."))
         ]
@@ -2224,7 +2226,7 @@ def test_definition_list_with_inline_formatting(
         second_item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2254,7 +2256,7 @@ def test_definition_list_with_classifier(
     separator = text(text=" : ")
     classifier_text = text(text="classifier", italic=True)
     item = UnoBulletedItem(text=term_text + separator + classifier_text)
-    item.append(
+    _ = item.append(
         blocks=[UnoParagraph(text=text(text="Definition with classifier."))]
     )
 
@@ -2262,7 +2264,7 @@ def test_definition_list_with_classifier(
         item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2287,12 +2289,12 @@ def test_option_list(
     """
 
     help_item = UnoBulletedItem(text=text(text="-h, --help", code=True))
-    help_item.append(
+    _ = help_item.append(
         blocks=[UnoParagraph(text=text(text="Show command help."))]
     )
 
     verbose_item = UnoBulletedItem(text=text(text="-v, --verbose", code=True))
-    verbose_item.append(
+    _ = verbose_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -2305,7 +2307,7 @@ def test_option_list(
     )
 
     output_item = UnoBulletedItem(text=text(text="--output FILE", code=True))
-    output_item.append(
+    _ = output_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -2317,7 +2319,7 @@ def test_option_list(
         ]
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[help_item, verbose_item, output_item],
         make_app=make_app,
@@ -2348,20 +2350,20 @@ def test_custom_field_list(
     """
 
     status_item = UnoBulletedItem(text=text(text="Status", bold=True))
-    status_item.append(
+    _ = status_item.append(
         blocks=[UnoParagraph(text=text(text="Draft", italic=True))]
     )
 
     owner_item = UnoBulletedItem(text=text(text="Owner", bold=True))
-    owner_item.append(
+    _ = owner_item.append(
         blocks=[UnoParagraph(text=text(text="Documentation Team"))]
     )
 
     notes_item = UnoBulletedItem(text=text(text="Notes", bold=True))
-    notes_item.append(
+    _ = notes_item.append(
         blocks=[UnoParagraph(text=text(text="First paragraph."))]
     )
-    notes_item.append(
+    _ = notes_item.append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -2381,7 +2383,7 @@ def test_custom_field_list(
         UnoParagraph(text=text(text="The rest of the document follows.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2425,14 +2427,14 @@ def test_generic_admonition(
         text=text(text="This is the second paragraph.")
     )
 
-    callout.append(blocks=[nested_paragraph1])
-    callout.append(blocks=[nested_paragraph2])
+    _ = callout.append(blocks=[nested_paragraph1])
+    _ = callout.append(blocks=[nested_paragraph2])
 
     expected_blocks = [
         callout,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2474,9 +2476,9 @@ def test_nested_bullet_list(
     top_level_1 = UnoBulletedItem(text=text(text="Top level item"))
     top_level_2 = UnoBulletedItem(text=text(text="Top level with children"))
 
-    second_level_2.append(blocks=[third_level_1])
-    top_level_2.append(blocks=[second_level_1])
-    top_level_2.append(blocks=[second_level_2])
+    _ = second_level_2.append(blocks=[third_level_1])
+    _ = top_level_2.append(blocks=[second_level_1])
+    _ = top_level_2.append(blocks=[second_level_2])
 
     top_level_3 = UnoBulletedItem(text=text(text="Another top level item"))
 
@@ -2486,7 +2488,7 @@ def test_nested_bullet_list(
         top_level_3,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2516,7 +2518,7 @@ def test_flat_numbered_list(
             text=text(text="Third numbered point with longer text")
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2554,7 +2556,7 @@ def test_numbered_list_with_inline_formatting(
         numbered_item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2599,9 +2601,9 @@ def test_nested_numbered_list(
     top_level_1 = UnoNumberedItem(text=text(text="Top level item"))
     top_level_2 = UnoNumberedItem(text=text(text="Top level with children"))
 
-    second_level_2.append(blocks=[third_level_1])
-    top_level_2.append(blocks=[second_level_1])
-    top_level_2.append(blocks=[second_level_2])
+    _ = second_level_2.append(blocks=[third_level_1])
+    _ = top_level_2.append(blocks=[second_level_1])
+    _ = top_level_2.append(blocks=[second_level_2])
 
     top_level_3 = UnoNumberedItem(text=text(text="Another top level item"))
 
@@ -2611,7 +2613,7 @@ def test_nested_numbered_list(
         top_level_3,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2656,14 +2658,14 @@ def test_collapse_block(
         )
     )
 
-    toggle_block.append(blocks=[nested_para1])
-    toggle_block.append(blocks=[nested_para2])
+    _ = toggle_block.append(blocks=[nested_para1])
+    _ = toggle_block.append(blocks=[nested_para2])
 
     expected_blocks = [
         toggle_block,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2696,10 +2698,10 @@ def test_tabs(
     """
 
     tabs_block = UnoTabs(tabs=["Apple", "Pear"])
-    tabs_block[0].append(
+    _ = tabs_block[0].append(
         blocks=[UnoParagraph(text=text(text="Apple is a fruit."))]
     )
-    tabs_block[1].append(
+    _ = tabs_block[1].append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -2714,7 +2716,7 @@ def test_tabs(
 
     expected_blocks = [tabs_block]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2747,10 +2749,10 @@ def test_sphinx_design_tabs(
     """
 
     tabs_block = UnoTabs(tabs=["Apple", "Pear"])
-    tabs_block[0].append(
+    _ = tabs_block[0].append(
         blocks=[UnoParagraph(text=text(text="Apple is a fruit."))]
     )
-    tabs_block[1].append(
+    _ = tabs_block[1].append(
         blocks=[
             UnoParagraph(
                 text=(
@@ -2765,7 +2767,7 @@ def test_sphinx_design_tabs(
 
     expected_blocks = [tabs_block]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2808,7 +2810,7 @@ def test_simple_table(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2849,7 +2851,7 @@ def test_table_colspan_duplicates_content(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[table],
         make_app=make_app,
@@ -2894,7 +2896,7 @@ def test_table_rowspan_preserves_logical_columns(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[table],
         make_app=make_app,
@@ -2930,7 +2932,7 @@ def test_table_without_header_row(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -2966,7 +2968,7 @@ def test_table_inline_formatting(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3005,7 +3007,7 @@ def test_table_cell_non_paragraph_error(
         rf"in {re.escape(pattern=str(object=index_rst))}.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
+        _ = _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_blocks=[],
             make_app=make_app,
@@ -3033,7 +3035,7 @@ def test_simple_image(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3066,7 +3068,7 @@ def test_image_with_alt_text_only(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3100,7 +3102,7 @@ def test_image_with_target(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3147,7 +3149,7 @@ def test_literalinclude_without_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3176,7 +3178,9 @@ def test_cross_reference_doc(
     # Create the ``other.rst`` file so the ``:doc:`` reference resolves
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+    _ = (srcdir / "other.rst").write_text(
+        data="Other document\n==============\n"
+    )
 
     index_rst = srcdir / "index.rst"
     expected_warnings = [
@@ -3191,7 +3195,7 @@ def test_cross_reference_doc(
         UnoParagraph(text=text(text="See Other document for more details.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3219,7 +3223,7 @@ def test_cross_reference_ref(
 
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "other.rst").write_text(
+    _ = (srcdir / "other.rst").write_text(
         data=".. _my-label:\n\nOther document\n==============\n"
     )
 
@@ -3236,7 +3240,7 @@ def test_cross_reference_ref(
         UnoParagraph(text=text(text="See Other document for more details.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3264,7 +3268,9 @@ def test_cross_reference_any(
 
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "other.rst").write_text(data="Other document\n==============\n")
+    _ = (srcdir / "other.rst").write_text(
+        data="Other document\n==============\n"
+    )
 
     index_rst = srcdir / "index.rst"
     expected_warnings = [
@@ -3279,7 +3285,7 @@ def test_cross_reference_any(
         UnoParagraph(text=text(text="See Other document for more details.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3325,7 +3331,7 @@ def test_cross_reference_download(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3363,7 +3369,7 @@ def test_cross_reference_download_external_url(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3422,7 +3428,7 @@ def test_cross_reference_numref(
         UnoParagraph(text=text(text="See Table 1 for data.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3468,7 +3474,7 @@ def test_cross_reference_keyword(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3511,7 +3517,7 @@ def test_cross_reference_option(
         icon=Emoji(emoji="📋"),
         color=BGColor.GRAY,
     )
-    callout.append(
+    _ = callout.append(
         blocks=UnoParagraph(text=text(text="Enable verbose output."))
     )
 
@@ -3524,7 +3530,7 @@ def test_cross_reference_option(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3554,7 +3560,7 @@ def test_cross_reference_envvar_unresolved(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3585,7 +3591,7 @@ def test_cross_reference_envvar_resolved(
         icon=Emoji(emoji="📋"),
         color=BGColor.GRAY,
     )
-    envvar_callout.append(
+    _ = envvar_callout.append(
         blocks=[UnoParagraph(text=text(text="The system path."))],
     )
 
@@ -3608,7 +3614,7 @@ def test_cross_reference_envvar_resolved(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3649,7 +3655,7 @@ def test_cross_reference_confval(
         icon=Emoji(emoji="📋"),
         color=BGColor.GRAY,
     )
-    confval_callout.append(
+    _ = confval_callout.append(
         blocks=[UnoParagraph(text=text(text="Description of the setting."))],
     )
 
@@ -3662,7 +3668,7 @@ def test_cross_reference_confval(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3692,7 +3698,7 @@ def test_cross_reference_token(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3739,7 +3745,7 @@ def test_literalinclude_with_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3785,7 +3791,7 @@ def test_heading_level_5_error(
         expected_exception=ValueError,
         match=expected_message,
     ):
-        _assert_rst_converts_to_notion_objects(
+        _ = _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_blocks=[],
             make_app=make_app,
@@ -3812,7 +3818,7 @@ def test_local_image_file(
     png_data = base64.b64decode(
         s="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
     )
-    test_image_path.write_bytes(data=png_data)
+    _ = test_image_path.write_bytes(data=png_data)
 
     rst_content = """
         .. image:: test_image.png
@@ -3822,7 +3828,7 @@ def test_local_image_file(
         UnoImage(file=ExternalFile(url=test_image_path.as_uri())),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3850,7 +3856,7 @@ def test_simple_video(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3884,7 +3890,7 @@ def test_video_with_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3909,7 +3915,7 @@ def test_local_video_file(
     srcdir.mkdir()
     test_video_path = srcdir / "test_video.mp4"
     # Create a minimal MP4 file (just some dummy data)
-    test_video_path.write_bytes(data=b"fake mp4 content")
+    _ = test_video_path.write_bytes(data=b"fake mp4 content")
 
     rst_content = """
         .. video:: test_video.mp4
@@ -3919,7 +3925,7 @@ def test_local_video_file(
         UnoVideo(file=ExternalFile(url=test_video_path.as_uri())),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3947,7 +3953,7 @@ def test_simple_audio(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -3972,7 +3978,7 @@ def test_local_audio_file(
     srcdir.mkdir()
     test_audio_path = srcdir / "test_audio.mp3"
     # Create a minimal MP3 file (just some dummy data)
-    test_audio_path.write_bytes(data=b"fake mp3 content")
+    _ = test_audio_path.write_bytes(data=b"fake mp3 content")
 
     rst_content = """
         .. audio:: test_audio.mp3
@@ -3982,7 +3988,7 @@ def test_local_audio_file(
         UnoAudio(file=ExternalFile(url=test_audio_path.as_uri())),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4023,7 +4029,7 @@ def test_strikethrough_text(
         UnoParagraph(text=combined_text),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4063,7 +4069,7 @@ def test_comment_ignored(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4102,7 +4108,7 @@ def test_list_table_header_one_allowed(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4134,7 +4140,7 @@ def test_list_table_header_rows_zero_allowed(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4183,7 +4189,7 @@ def test_list_table_header_maximum_one_allowed(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4236,7 +4242,7 @@ def test_list_table_stub_columns_one(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4289,7 +4295,7 @@ def test_list_table_stub_columns_two(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4335,7 +4341,7 @@ def test_list_table_with_title_error(
 
     expected_blocks = [table]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4374,7 +4380,7 @@ def test_simple_pdf(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4406,7 +4412,7 @@ def test_pdf_with_options(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4431,7 +4437,7 @@ def test_local_pdf_file(
     srcdir.mkdir()
     test_pdf_path = srcdir / "test_document.pdf"
     # Create a minimal PDF file (just some dummy data)
-    test_pdf_path.write_bytes(data=b"fake pdf content")
+    _ = test_pdf_path.write_bytes(data=b"fake pdf content")
 
     rst_content = """
         .. pdf-include:: test_document.pdf
@@ -4441,7 +4447,7 @@ def test_local_pdf_file(
         UnoPDF(file=ExternalFile(url=test_pdf_path.as_uri())),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4475,8 +4481,8 @@ def test_pdf_with_html(
     (srcdir / "conf.py").touch()
     test_pdf_path = srcdir / "test_document.pdf"
     # Create a minimal PDF file (just some dummy data)
-    test_pdf_path.write_bytes(data=b"fake pdf content")
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = test_pdf_path.write_bytes(data=b"fake pdf content")
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -4485,7 +4491,7 @@ def test_pdf_with_html(
     )
     app.build()
     assert app.statuscode == 0
-    assert not app.warning.getvalue()
+    assert app.warning.getvalue() == ""
     index_html = (tmp_path / "build" / "html" / "index.html").read_text()
     expected_iframe = (
         "<iframe "
@@ -4532,7 +4538,7 @@ and :text-green:`green text`.
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4592,7 +4598,7 @@ def test_individual_colors(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4630,7 +4636,7 @@ def test_text_styles_unsupported_color(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4674,7 +4680,7 @@ def setup(app):
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4718,7 +4724,7 @@ def test_text_styles_and_strike(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4769,7 +4775,7 @@ def test_additional_text_styles(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4805,7 +4811,7 @@ def test_flat_task_list(
             checked=False,
         ),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4845,25 +4851,25 @@ def test_bullet_list_with_nested_content(
     nested_paragraph = UnoParagraph(
         text=text(text="This is a paragraph nested within a bullet list item.")
     )
-    first_bullet.append(blocks=[nested_paragraph])
+    _ = first_bullet.append(blocks=[nested_paragraph])
 
     nested_bullet_1 = UnoBulletedItem(text=text(text="Nested bullet point"))
     nested_bullet_2 = UnoBulletedItem(text=text(text="Another nested bullet"))
-    first_bullet.append(blocks=[nested_bullet_1])
-    first_bullet.append(blocks=[nested_bullet_2])
+    _ = first_bullet.append(blocks=[nested_bullet_1])
+    _ = first_bullet.append(blocks=[nested_bullet_2])
 
     second_bullet = UnoBulletedItem(text=text(text="Second bullet point"))
 
     nested_paragraph_2 = UnoParagraph(
         text=text(text="Another nested paragraph.")
     )
-    second_bullet.append(blocks=[nested_paragraph_2])
+    _ = second_bullet.append(blocks=[nested_paragraph_2])
 
     expected_blocks = [
         first_bullet,
         second_bullet,
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4904,17 +4910,17 @@ def test_task_list_with_nested_content(
     nested_paragraph = UnoParagraph(
         text=text(text="This is a paragraph nested within the task item.")
     )
-    task_item.append(blocks=[nested_paragraph])
+    _ = task_item.append(blocks=[nested_paragraph])
 
     # Add nested bullet list
     nested_bullet = UnoBulletedItem(
         text=text(text="A bullet point nested within the task item.")
     )
-    task_item.append(blocks=[nested_bullet])
+    _ = task_item.append(blocks=[nested_bullet])
 
     expected_blocks = [task_item]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -4953,39 +4959,39 @@ def test_nested_task_list(
     """
     # Create Task B with nested children (including the rogue paragraph)
     task_b = UnoToDoItem(text=text(text="Task B"), checked=False)
-    task_b.append(
+    _ = task_b.append(
         blocks=[UnoToDoItem(text=text(text="Task B1"), checked=True)]
     )
-    task_b.append(
+    _ = task_b.append(
         blocks=[UnoToDoItem(text=text(text="Task B2"), checked=True)]
     )
-    task_b.append(
+    _ = task_b.append(
         blocks=[UnoToDoItem(text=text(text="Task B3"), checked=False)]
     )
     # The rogue paragraph is nested within Task B
     # Note: The actual output has the text split across multiple rich text
     # segments
     rogue_paragraph = UnoParagraph(text=text(text="A rogue paragraph."))
-    task_b.append(blocks=[rogue_paragraph])
+    _ = task_b.append(blocks=[rogue_paragraph])
 
     # Regular bullet list items should be nested within Task B as bullet items
     regular_bullet = UnoBulletedItem(
         text=text(text="A list item without a checkbox.")
     )
-    task_b.append(blocks=[regular_bullet])
+    _ = task_b.append(blocks=[regular_bullet])
 
     # Another bullet item (has "[ ]" but should be treated as a bullet)
     another_bullet = UnoBulletedItem(
         text=text(text="[ ] Another bullet point.")
     )
-    task_b.append(blocks=[another_bullet])
+    _ = task_b.append(blocks=[another_bullet])
 
     expected_blocks = [
         UnoToDoItem(text=text(text="Task A"), checked=True),
         task_b,
         UnoToDoItem(text=text(text="Task C"), checked=False),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5020,7 +5026,7 @@ def test_task_list_quote(
         UnoQuote(text=text(text="foo")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5044,7 +5050,7 @@ def test_inline_single_backticks(
     expected_blocks = [
         UnoParagraph(text=text(text="A ") + text(text="B", italic=True)),
     ]
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5096,7 +5102,7 @@ def test_kbd_role(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5131,7 +5137,7 @@ def test_file_role(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5170,7 +5176,7 @@ def setup(app):
         rf"{re.escape(pattern=str(object=tmp_path / 'src' / 'index.rst'))}\.$"
     )
     with pytest.raises(expected_exception=ValueError, match=expected_message):
-        _assert_rst_converts_to_notion_objects(
+        _ = _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_blocks=[],
             make_app=make_app,
@@ -5219,7 +5225,7 @@ def test_unsupported_node_types_in_process_node_to_blocks(
         expected_exception=NotImplementedError,
         match=expected_message,
     ):
-        _assert_rst_converts_to_notion_objects(
+        _ = _assert_rst_converts_to_notion_objects(
             rst_content=rst_content,
             expected_blocks=[],
             make_app=make_app,
@@ -5251,7 +5257,7 @@ def test_inline_equation(
 
     expected_blocks = [expected_paragraph]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5279,7 +5285,7 @@ def test_block_equation(
         UnoEquation(latex="E = mc^2"),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5315,7 +5321,7 @@ def test_rest_example_block(
     code_callout = UnoCallout(
         text=text(text="Code"),
     )
-    code_callout.append(
+    _ = code_callout.append(
         blocks=[
             UnoCode(
                 text=text(
@@ -5337,7 +5343,7 @@ def test_rest_example_block(
     output_callout = UnoCallout(
         text=text(text="Output"),
     )
-    output_callout.append(
+    _ = output_callout.append(
         blocks=[
             UnoCode(
                 text=text(
@@ -5356,11 +5362,11 @@ def test_rest_example_block(
     )
 
     main_callout = UnoCallout(text=text(text="Example"))
-    main_callout.append(blocks=[code_callout, output_callout])
+    _ = main_callout.append(blocks=[code_callout, output_callout])
 
     expected_blocks = [main_callout]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5391,14 +5397,14 @@ def test_rest_example_topic(
     topic_callout = UnoCallout(
         text=text(text="Release ") + text(text="notes", italic=True),
     )
-    topic_callout.append(
+    _ = topic_callout.append(
         blocks=[
             UnoParagraph(text=text(text="This is the visible topic body.")),
         ]
     )
 
     code_callout = UnoCallout(text=text(text="Code"))
-    code_callout.append(
+    _ = code_callout.append(
         blocks=[
             UnoCode(
                 text=text(
@@ -5413,12 +5419,12 @@ def test_rest_example_topic(
     )
 
     output_callout = UnoCallout(text=text(text="Output"))
-    output_callout.append(blocks=[topic_callout])
+    _ = output_callout.append(blocks=[topic_callout])
 
     main_callout = UnoCallout(text=text(text="Example"))
-    main_callout.append(blocks=[code_callout, output_callout])
+    _ = main_callout.append(blocks=[code_callout, output_callout])
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=[main_callout],
         make_app=make_app,
@@ -5451,7 +5457,7 @@ def test_embed_block(
     static_dir = tmp_path / "build" / "notion" / "_static"
     static_dir.mkdir(parents=True, exist_ok=True)
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5487,7 +5493,7 @@ def test_embed_and_video(
         UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5522,7 +5528,7 @@ def test_line_block(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5563,7 +5569,7 @@ def test_nested_line_block(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5595,7 +5601,7 @@ def test_transition_divider(
         UnoParagraph(text=text(text="Second paragraph.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5633,7 +5639,7 @@ def test_notion_mention_user(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5670,7 +5676,7 @@ def test_notion_mention_page(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5710,7 +5716,7 @@ def test_notion_mention_database(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5748,7 +5754,7 @@ def test_notion_mention_date(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5773,7 +5779,7 @@ def test_notion_mention_user_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -5800,7 +5806,7 @@ def test_notion_mention_page_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -5827,7 +5833,7 @@ def test_notion_mention_database_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -5854,7 +5860,7 @@ def test_notion_mention_date_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -5892,13 +5898,13 @@ def test_describe_directive(
         text=text(text="This is a describe directive example.")
     )
 
-    callout.append(blocks=[nested_paragraph])
+    _ = callout.append(blocks=[nested_paragraph])
 
     expected_blocks = [
         callout,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5940,13 +5946,13 @@ def test_describe_directive_multiline(
         text=text(text="Second paragraph with more details.")
     )
 
-    callout.append(blocks=[paragraph1, paragraph2])
+    _ = callout.append(blocks=[paragraph1, paragraph2])
 
     expected_blocks = [
         callout,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -5975,7 +5981,7 @@ def test_autosummary_directive(
 
     # Create example_module.py with documented items
     example_module = srcdir / "example_module.py"
-    example_module.write_text(
+    _ = example_module.write_text(
         data=textwrap.dedent(
             text='''\
             """Example module for autosummary testing."""
@@ -6022,7 +6028,7 @@ def test_autosummary_directive(
         """,
     )
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6056,7 +6062,7 @@ def test_autosummary_with_internal_references(
 
     # Create example_module.py with documented items
     example_module = srcdir / "example_module.py"
-    example_module.write_text(
+    _ = example_module.write_text(
         data=textwrap.dedent(
             text='''\
             """Example module for autosummary testing."""
@@ -6093,7 +6099,7 @@ def test_autosummary_with_internal_references(
         icon=Emoji(emoji="📋"),
         color=BGColor.GRAY,
     )
-    autodoc_callout.append(
+    _ = autodoc_callout.append(
         blocks=[UnoParagraph(text=text(text="Return a greeting message."))],
     )
 
@@ -6120,7 +6126,7 @@ def test_autosummary_with_internal_references(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6157,7 +6163,7 @@ def test_glossary(
     first_item = UnoBulletedItem(
         text=text(text="environment"),
     )
-    first_item.append(
+    _ = first_item.append(
         blocks=[
             UnoParagraph(
                 text=text(
@@ -6170,7 +6176,7 @@ def test_glossary(
     second_item = UnoBulletedItem(
         text=text(text="source directory"),
     )
-    second_item.append(
+    _ = second_item.append(
         blocks=[
             UnoParagraph(
                 text=text(
@@ -6185,7 +6191,7 @@ def test_glossary(
         second_item,
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6217,7 +6223,7 @@ def test_glossary_term_same_page(
     glossary_item = UnoBulletedItem(
         text=text(text="myterm"),
     )
-    glossary_item.append(
+    _ = glossary_item.append(
         blocks=[UnoParagraph(text=text(text="A glossary term definition."))]
     )
 
@@ -6236,7 +6242,7 @@ def test_glossary_term_same_page(
         UnoParagraph(text=text(text="See myterm for details.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6266,7 +6272,7 @@ def test_glossary_term_cross_page(
 
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "other.rst").write_text(
+    _ = (srcdir / "other.rst").write_text(
         data=(
             "Other\n=====\n\n"
             ".. glossary::\n\n"
@@ -6288,7 +6294,7 @@ def test_glossary_term_cross_page(
         UnoParagraph(text=text(text="See myterm for details.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6323,7 +6329,7 @@ def test_mermaid_diagram(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6353,7 +6359,7 @@ def test_simple_file(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6385,7 +6391,7 @@ def test_file_with_name(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6419,7 +6425,7 @@ def test_file_with_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6453,7 +6459,7 @@ def test_file_with_name_and_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6474,7 +6480,7 @@ def test_local_file(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     test_file_path = srcdir / "test_document.zip"
-    test_file_path.write_bytes(data=b"fake zip content")
+    _ = test_file_path.write_bytes(data=b"fake zip content")
 
     rst_content = """
         .. notion-file:: test_document.zip
@@ -6484,7 +6490,7 @@ def test_local_file(
         UnoFile(file=ExternalFile(url=test_file_path.as_uri())),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6508,7 +6514,7 @@ def test_file_html_output(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data=rst_content)
+    _ = (srcdir / "index.rst").write_text(data=rst_content)
     app = make_app(
         srcdir=srcdir,
         builddir=tmp_path / "build",
@@ -6546,7 +6552,7 @@ def test_figure_directive(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6585,7 +6591,7 @@ def test_figure_directive_with_target(
         )
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6629,7 +6635,7 @@ def test_figure_directive_with_legend(
         UnoParagraph(text=text(text="This is the second legend paragraph.")),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6655,7 +6661,7 @@ def test_figure_directive_local_image(
 
     srcdir = tmp_path / "src"
     srcdir.mkdir(exist_ok=True)
-    (srcdir / "test-image.png").write_bytes(data=b"fake png data")
+    _ = (srcdir / "test-image.png").write_bytes(data=b"fake png data")
 
     expected_url = (srcdir / "test-image.png").as_uri()
 
@@ -6666,7 +6672,7 @@ def test_figure_directive_local_image(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6697,7 +6703,7 @@ def test_figure_directive_without_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,
@@ -6733,7 +6739,7 @@ def test_mermaid_diagram_with_caption(
         ),
     ]
 
-    _assert_rst_converts_to_notion_objects(
+    _ = _assert_rst_converts_to_notion_objects(
         rst_content=rst_content,
         expected_blocks=expected_blocks,
         make_app=make_app,

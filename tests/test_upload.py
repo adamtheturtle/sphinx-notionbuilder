@@ -23,11 +23,11 @@ from tests._wiremock import count_page_metadata_clear_requests
 def _write_blocks_file(
     *,
     tmp_path: Path,
-    block_dicts: list[dict[str, Any]],
+    block_dicts: list[dict[str, Any]],  # pyrefly: ignore[explicit-any]
 ) -> Path:
     """Write block payload JSON to a temporary file."""
     blocks_file = tmp_path / "blocks.json"
-    blocks_file.write_text(
+    _ = blocks_file.write_text(
         data=json.dumps(obj=block_dicts),
         encoding="utf-8",
     )
@@ -71,7 +71,7 @@ def _invoke_upload(
 def _paragraph_blocks(
     *,
     text_content: str,
-) -> list[dict[str, Any]]:
+) -> list[dict[str, Any]]:  # pyrefly: ignore[explicit-any]
     """Create serialized paragraph blocks."""
     return [
         UnoParagraph(
@@ -106,7 +106,7 @@ def test_upload_success(
     tmp_path: Path,
 ) -> None:
     """Uploading through the CLI reports success."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=_paragraph_blocks(
@@ -138,7 +138,7 @@ def test_upload_replace_strategy_success(
     tmp_path: Path,
 ) -> None:
     """The CLI accepts and applies the replace strategy."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=_paragraph_blocks(
@@ -169,7 +169,7 @@ def test_upload_page_has_subpages_error(
     tmp_path: Path,
 ) -> None:
     """A useful error is shown when the target page has subpages."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=[],
@@ -195,7 +195,7 @@ def test_upload_page_has_databases_error(
     tmp_path: Path,
 ) -> None:
     """A useful error is shown when the target page has databases."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=[],
@@ -221,7 +221,7 @@ def test_upload_discussions_exist_error(
     tmp_path: Path,
 ) -> None:
     """The discussion error message is forwarded to the CLI."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=_paragraph_blocks(
@@ -251,7 +251,7 @@ def test_upload_with_page_id(
     tmp_path: Path,
 ) -> None:
     """Uploading to a page given by ID reports success."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=_paragraph_blocks(
@@ -330,7 +330,7 @@ def test_upload_page_not_found_error(
         value=True,
     )
     caplog.set_level(level=logging.ERROR, logger="ultimate_notion.session")
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
         block_dicts=_paragraph_blocks(
@@ -362,7 +362,7 @@ def test_upload_ambiguous_title_error(
     tmp_path: Path,
 ) -> None:
     """The CLI explains how to resolve an ambiguous page title."""
-    assert notion_token
+    assert notion_token != ""
     blocks_file = _write_blocks_file(tmp_path=tmp_path, block_dicts=[])
     message = (
         "Found 2 pages matching title 'Upload Title'. "
