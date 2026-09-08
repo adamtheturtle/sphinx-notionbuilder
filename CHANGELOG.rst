@@ -6,8 +6,7 @@ Changelog
 2026.08.11
 ----------
 
-- Add configurable ``diff`` and append-before-delete ``replace`` upload strategies
-  to the upload API, command-line tool, and automatic Sphinx publishing.
+- Add configurable ``diff`` and append-before-delete ``replace`` upload strategies to the upload API, command-line tool, and automatic Sphinx publishing.
 
 - ``tab-set`` and ``tab-item`` directives (from the ``sphinx-design`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved, mirroring the existing ``sphinx-tabs`` support.
 
@@ -57,16 +56,20 @@ Changelog
 
 - Standard ``:sub:`` and ``:sup:`` inline roles now render their content as plain Notion rich text, preserving nested formatting, instead of aborting the build.
 
-- ``sphinx-tabs`` and ``sphinx-design`` are no longer installed automatically. They are not imported by ``sphinx_notion`` (their tabs are detected from the rendered output), so install them yourself alongside the other extensions you enable in ``conf.py`` if you use the ``tabs``/``tab`` or ``tab-set``/``tab-item`` directives.
+- ``sphinx-tabs`` and ``sphinx-design`` are no longer installed automatically.
+  They are not imported by ``sphinx_notion`` (their tabs are detected from the rendered output), so install them yourself alongside the other extensions you enable in ``conf.py`` if you use the ``tabs``/``tab`` or ``tab-set``/``tab-item`` directives.
 
 2026.06.28
 ----------
 
-- When a file upload to Notion fails, log the HTTP status and response body (with the filename of the failing asset) instead of discarding them. A non-JSON 403 is identified as a Cloudflare WAF block -- which Notion's upload endpoint sits behind -- with a hint that it is typically triggered by literal SQL or script text in the uploaded bytes, such as an SVG whose ``<text>`` contains ``CREATE TABLE ...``, and that rasterizing such diagrams to PNG avoids it.
+- When a file upload to Notion fails, log the HTTP status and response body (with the filename of the failing asset) instead of discarding them.
+  A non-JSON 403 is identified as a Cloudflare WAF block -- which Notion's upload endpoint sits behind -- with a hint that it is typically triggered by literal SQL or script text in the uploaded bytes, such as an SVG whose ``<text>`` contains ``CREATE TABLE ...``, and that rasterizing such diagrams to PNG avoids it.
 
-- Level-4 section headings now convert to Notion ``heading_4`` blocks (newly supported by the Notion API) instead of raising an error. Headings at level 5 or deeper are still rejected with a clear message.
+- Level-4 section headings now convert to Notion ``heading_4`` blocks (newly supported by the Notion API) instead of raising an error.
+  Headings at level 5 or deeper are still rejected with a clear message.
 
-- ``tabs`` and ``tab`` directives (from the ``sphinx-tabs`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved. Tab labels are rendered as plain text.
+- ``tabs`` and ``tab`` directives (from the ``sphinx-tabs`` extension) now convert to Notion ``Tabs`` blocks, with each tab's label and content preserved.
+  Tab labels are rendered as plain text.
 
 2026.06.24.1
 ------------
@@ -81,12 +84,14 @@ Changelog
 2026.06.23
 ----------
 
-- Require ``ultimate-notion`` 0.9.9 or newer. It strips the read-only ``archived``/``in_trash``/``is_archived``/``has_children`` fields from nested blocks and accepts the ``in_trash`` field on file uploads, so the internal workaround for these is no longer needed and has been removed.
+- Require ``ultimate-notion`` 0.9.9 or newer.
+  It strips the read-only ``archived``/``in_trash``/``is_archived``/``has_children`` fields from nested blocks and accepts the ``in_trash`` field on file uploads, so the internal workaround for these is no longer needed and has been removed.
 
 2026.06.09
 ----------
 
-- Add a ``--page-id`` option to ``notion-upload`` (and a matching ``notion_page_id`` Sphinx configuration value) to update an existing page by ID instead of matching by title. The page is renamed to the given title, and the upload fails if no page with that ID exists, preventing a silent fork when a page is renamed.
+- Add a ``--page-id`` option to ``notion-upload`` (and a matching ``notion_page_id`` Sphinx configuration value) to update an existing page by ID instead of matching by title.
+  The page is renamed to the given title, and the upload fails if no page with that ID exists, preventing a silent fork when a page is renamed.
 
 2026.04.28
 ----------

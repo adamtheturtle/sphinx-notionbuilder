@@ -5,16 +5,15 @@ Heading 1 with *bold*
 :Version: 1.0
 :Date: 2026-07-19
 
-Document metadata fields such as authors, version, and date appear as labeled
-items before the body.
+Document metadata fields such as authors, version, and date appear as labeled items before the body.
 
 .. contents::
 
 Headings
 ~~~~~~~~
 
-Notion supports heading levels 1 to 4. The page title above is heading level 1
-and this ``Headings`` section is heading level 2.
+Notion supports heading levels 1 to 4.
+The page title above is heading level 1 and this ``Headings`` section is heading level 2.
 
 Heading Level 3
 ^^^^^^^^^^^^^^^
@@ -205,8 +204,8 @@ Version Changes
 Topics
 ~~~~~~
 
-Regular topics become Notion callouts. The special topic emitted by
-``.. contents::`` remains a table of contents.
+Regular topics become Notion callouts.
+The special topic emitted by ``.. contents::`` remains a table of contents.
 
 .. rest-example::
 

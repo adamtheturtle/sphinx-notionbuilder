@@ -11,4 +11,5 @@
 - Be sure to typecheck when you’re done making a series of code changes
 - Prefer running the whole test suite rather than one test
 - Our test suite requires 100% line and branch coverage, so do not make an `if` statement unless both the if statement and the else will be covered in a test
-- To avoid getting stuck in an interactive prompt, do not use `help` in Python. Instead, use import `import inspect; doc = inspect.getdoc(str) ;    print(doc)` for example for `str`
+- To avoid getting stuck in an interactive prompt, do not use `help` in Python.
+  Instead, use import `import inspect; doc = inspect.getdoc(str) ;    print(doc)` for example for `str`
