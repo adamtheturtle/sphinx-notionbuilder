@@ -1672,7 +1672,7 @@ def _nested_callout_dict(*, depth: int) -> dict[str, object]:
         callout_body = serialized["callout"]
         assert isinstance(callout_body, dict)
         callout_body["children"] = [child]
-    return serialized
+    return serialized  # ty: ignore[unsound-return-statement]
 
 
 def test_deeply_nested_blocks_strip_rejected_fields() -> None:

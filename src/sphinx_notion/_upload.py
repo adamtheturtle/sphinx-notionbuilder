@@ -141,7 +141,7 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     content_type = exc.headers.get(key="content-type", default="")
     return exc.status == _HTTP_FORBIDDEN and content_type.startswith(
         "text/html"
-    )
+    )  # ty: ignore[unsound-return-statement]
 
 
 @beartype
