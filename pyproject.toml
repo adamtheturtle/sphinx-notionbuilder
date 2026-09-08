@@ -350,6 +350,7 @@ ignore = [
     "sample_warnings/",
     "sample_warnings/**",
     "spelling_private_dict.txt",
+    "styles/snapper/**",
     "tests",
     "tests-pylintrc",
     "tests/**",
