@@ -41,8 +41,7 @@ Autosummary
 Linked Images
 ~~~~~~~~~~~~~
 
-Notion images are not clickable, so ``:target:`` URLs are preserved in the
-caption with a suppressible ``notion.unsupported_image`` warning.
+Notion images are not clickable, so ``:target:`` URLs are preserved in the caption with a suppressible ``notion.unsupported_image`` warning.
 
 .. rest-example::
 
@@ -57,9 +56,7 @@ caption with a suppressible ``notion.unsupported_image`` warning.
 Table Cell Spans
 ~~~~~~~~~~~~~~~~
 
-Notion tables do not support merged cells, so rowspans and colspans are
-flattened by duplicating content with a suppressible
-``notion.unsupported_table`` warning.
+Notion tables do not support merged cells, so rowspans and colspans are flattened by duplicating content with a suppressible ``notion.unsupported_table`` warning.
 
 .. rest-example::
 
@@ -80,9 +77,8 @@ flattened by duplicating content with a suppressible
 Subscript and Superscript
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Standard ``:sub:`` and ``:sup:`` roles render as plain text because Notion rich
-text has no vertical-position annotation. The builder emits a suppressible
-``notion.unsupported_inline`` warning.
+Standard ``:sub:`` and ``:sup:`` roles render as plain text because Notion rich text has no vertical-position annotation.
+The builder emits a suppressible ``notion.unsupported_inline`` warning.
 
 .. rest-example::
 
@@ -91,9 +87,7 @@ text has no vertical-position annotation. The builder emits a suppressible
 Horizontal Lists
 ~~~~~~~~~~~~~~~~
 
-Multi-column horizontal lists cannot be represented in Notion, so items are
-flattened into a single bulleted list with a suppressible
-``notion.unsupported_layout`` warning.
+Multi-column horizontal lists cannot be represented in Notion, so items are flattened into a single bulleted list with a suppressible ``notion.unsupported_layout`` warning.
 
 .. rest-example::
 
@@ -108,8 +102,7 @@ flattened into a single bulleted list with a suppressible
 Centered
 ~~~~~~~~
 
-Centered alignment cannot be represented in Notion, so the content is rendered
-as a normal paragraph with a suppressible ``notion.unsupported_layout`` warning.
+Centered alignment cannot be represented in Notion, so the content is rendered as a normal paragraph with a suppressible ``notion.unsupported_layout`` warning.
 
 .. rest-example::
 

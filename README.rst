@@ -68,9 +68,7 @@ To set these up, install the extensions you want to use and add them to your ``c
    ]
 
 Most of these extensions are installed automatically with ``sphinx-notionbuilder``.
-``sphinx-tabs`` and ``sphinx-design`` are not, so to use their directives
-(``tabs``/``tab`` and ``tab-set``/``tab-item`` respectively) install them
-separately:
+``sphinx-tabs`` and ``sphinx-design`` are not, so to use their directives (``tabs``/``tab`` and ``tab-set``/``tab-item`` respectively) install them separately:
 
 .. code-block:: console
 
@@ -493,7 +491,9 @@ The Notion object IDs that the sample links to and mentions (a page, a user and 
 Targeting Your Own Workspace
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The committed ``sample.env`` points at the project's own demo workspace. To regenerate it for a workspace of your own, run the bootstrap script. It creates the linked page and database under a parent page shared with your integration, picks a user to mention, and writes the IDs to ``sample.env``:
+The committed ``sample.env`` points at the project's own demo workspace.
+To regenerate it for a workspace of your own, run the bootstrap script.
+It creates the linked page and database under a parent page shared with your integration, picks a user to mention, and writes the IDs to ``sample.env``:
 
 .. code-block:: console
 
