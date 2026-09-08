@@ -448,6 +448,13 @@ plugins = [
 search-path = [ "." ]
 errors.non-exhaustive-match = "error"
 preset = "all"
+sub-config = [
+    # On Windows, ``urllib.request.url2pathname`` is re-exported from the
+    # deprecated ``nturl2path`` module. The fallback is required for Python 3.12,
+    # where ``Path.from_uri`` is unavailable, and the diagnostic does not fire on
+    # POSIX, so a source suppression would be unused there.
+    { matches = "src/sphinx_notion/_upload.py", errors.deprecated = "ignore" }
+]
 
 [tool.pyright]
 typeCheckingMode = "strict"
