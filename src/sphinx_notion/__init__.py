@@ -1927,7 +1927,7 @@ def _(
 ) -> list[Block]:
     """Process mermaid diagram nodes by creating Notion Code blocks."""
     del section_level
-    code: str = node["code"]
+    code: str = node["code"]  # ty: ignore[unsound-assignment]
     return [UnoCode(text=text(text=code), language=CodeLang.MERMAID)]
 
 
@@ -1943,7 +1943,7 @@ def _create_image_block(
 
     assert node.document is not None
     if "://" not in image_url:
-        env: BuildEnvironment = node.document.settings.env
+        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
         abs_path = Path(env.srcdir) / image_url
         image_url = abs_path.as_uri()
 
@@ -1993,7 +1993,7 @@ def _(
     ):
         mermaid_child = node.children[0]
         caption_node = node.children[1]
-        code: str = mermaid_child["code"]
+        code: str = mermaid_child["code"]  # ty: ignore[unsound-assignment]
         return [
             UnoCode(
                 text=text(text=code),
@@ -2095,7 +2095,7 @@ def _(
     """Process video nodes by creating Notion Video blocks."""
     del section_level
 
-    sources: list[tuple[str, str, bool]] = node.attributes["sources"]
+    sources: list[tuple[str, str, bool]] = node.attributes["sources"]  # ty: ignore[unsound-assignment]
     assert isinstance(sources, list)
     primary_source = sources[0]
     video_location, _, is_remote = primary_source
@@ -2104,7 +2104,7 @@ def _(
         video_url = video_location
     else:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env
+        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
         abs_path = Path(env.srcdir) / video_location
         video_url = abs_path.as_uri()
 
@@ -2135,7 +2135,7 @@ def _(
 
     assert node.document is not None
     if "://" not in audio_url:
-        env: BuildEnvironment = node.document.settings.env
+        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
         abs_path = Path(env.srcdir) / audio_url
         audio_url = abs_path.as_uri()
 
@@ -2160,7 +2160,7 @@ def _(
 
     if "://" not in pdf_url:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env
+        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
         abs_path = Path(env.srcdir) / pdf_url
         pdf_url = abs_path.as_uri()
 
@@ -2185,7 +2185,7 @@ def _(
 
     if "://" not in file_url:
         assert node.document is not None
-        env: BuildEnvironment = node.document.settings.env
+        env: BuildEnvironment = node.document.settings.env  # ty: ignore[unsound-assignment]
         abs_path = Path(env.srcdir) / file_url
         file_url = abs_path.as_uri()
 
@@ -2906,7 +2906,7 @@ def _publish_to_notion(
     if app.builder.name != "notion":
         return
 
-    root_doc: str = app.config.root_doc
+    root_doc: str = app.config.root_doc  # ty: ignore[unsound-assignment]
     output_file = Path(app.outdir) / f"{root_doc}.json"
     if not output_file.exists():
         _LOGGER.warning(
