@@ -498,7 +498,7 @@ The committed ``sample.env`` points at the project's own demo workspace. To rege
 .. code-block:: console
 
    $ export NOTION_TOKEN="your_integration_token_here"
-   $ uv run --all-extras python bootstrap-sample-env.py --parent-page-id parent_page_id
+   $ uv run --group=sample python bootstrap-sample-env.py --parent-page-id parent_page_id
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sphinx-notionbuilder/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sphinx-notionbuilder/actions

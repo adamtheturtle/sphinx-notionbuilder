@@ -9,7 +9,7 @@ writes their IDs to an environment file (``sample.env`` by default) that
 Run it with the integration token in the environment::
 
     export NOTION_TOKEN="your_integration_token_here"
-    uv run --all-extras python bootstrap-sample-env.py \
+    uv run --group=sample python bootstrap-sample-env.py \
         --parent-page-id parent_page_id
 """
 
