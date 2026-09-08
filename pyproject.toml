@@ -442,6 +442,7 @@ plugins = [
 [tool.pyrefly]
 search-path = [ "." ]
 errors.non-exhaustive-match = "error"
+enabled-ignores = [ "pyrefly" ]
 preset = "all"
 sub-config = [
     # On Windows, ``urllib.request.url2pathname`` is re-exported from the
