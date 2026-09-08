@@ -50,7 +50,12 @@ dependencies = [
     "sphinxnotes-strike>=2.0",
     "ultimate-notion>=0.10.1,<0.11",
 ]
-optional-dependencies.dev = [
+urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
+scripts.notion-upload = "_notion_scripts.upload:main"
+scripts.upload-files = "_notion_scripts.upload_files:main"
+
+[dependency-groups]
+dev = [
     "actionlint-py==1.7.12.24",
     "anstrip==0.2.2",
     "check-manifest==0.51",
@@ -102,19 +107,13 @@ optional-dependencies.dev = [
     "yamlfix==1.19.1",
     "zizmor==1.30.0",
 ]
-optional-dependencies.release = [ "check-wheel-contents==0.6.3", "towncrier==26.9.0" ]
-optional-dependencies.sample = [
+release = [ "check-wheel-contents==0.6.3", "towncrier==26.9.0" ]
+sample = [
     "sphinx-design>=0.6.0",
     "sphinx-jinja==2.0.2",
     "sphinx-tabs>=3.5.0",
     "sphinxcontrib-text-styles==0.2.1",
 ]
-urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
-scripts.notion-upload = "_notion_scripts.upload:main"
-scripts.upload-files = "_notion_scripts.upload_files:main"
-
-[dependency-groups]
-dev = []
 
 [tool.setuptools]
 packages.find.where = [
@@ -349,13 +348,6 @@ ignore = [
     "tests/**",
     "towncrier_template.rst.jinja",
     "zizmor.yml",
-]
-
-[tool.deptry]
-optional_dependencies_dev_groups = [
-    "dev",
-    "release",
-    "sample",
 ]
 
 [tool.vulture]

@@ -38,14 +38,14 @@ jobs:
       - name: Build sample documentation
         run: |
           rm -rf ./build-sample
-          uv run --extra=sample sphinx-build -W -b notion sample ./build-sample
+          uv run --group=sample sphinx-build -W -b notion sample ./build-sample
 
       - name: Publish sample to Notion
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_SAMPLE_PAGE_ID: ${{ vars.NOTION_SAMPLE_PAGE_ID }}
         run: |
-          uv run --all-extras notion-upload \
+          uv run --group=sample notion-upload \
             --parent-page-id "$NOTION_SAMPLE_PAGE_ID" \
             --file "./build-sample/index.json" \
             --title "Sphinx-Notionbuilder Sample" \
@@ -54,14 +54,14 @@ jobs:
       - name: Build sample_warnings documentation
         run: |
           rm -rf ./build-sample_warnings
-          uv run --extra=sample sphinx-build -W -b notion sample_warnings ./build-sample_warnings
+          uv run --group=sample sphinx-build -W -b notion sample_warnings ./build-sample_warnings
 
       - name: Publish sample_warnings to Notion
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_SAMPLE_PAGE_ID: ${{ vars.NOTION_SAMPLE_PAGE_ID }}
         run: |-
-          uv run --all-extras notion-upload \
+          uv run --group=sample notion-upload \
             --parent-page-id "$NOTION_SAMPLE_PAGE_ID" \
             --file "./build-sample_warnings/index.json" \
             --title "Sphinx-Notionbuilder Suppressed Warnings Sample" \
