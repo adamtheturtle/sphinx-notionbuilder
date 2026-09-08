@@ -190,7 +190,7 @@ def test_upload_replace_appends_before_deleting_existing_blocks(
     )
     before_call_count = len(respx_mock.calls)
 
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="Hello from WireMock upload test"))
@@ -354,7 +354,7 @@ def test_failed_file_upload_leaves_existing_blocks(
         ),
         pytest.raises(expected_exception=RuntimeError, match="File rejected"),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(text=text(text="Different content triggers sync"))
@@ -448,7 +448,7 @@ def test_upload_page_has_subpages_error(
         page_id=page_id,
     )
     with pytest.raises(expected_exception=PageHasSubpagesError):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
@@ -502,7 +502,7 @@ def test_upload_page_has_databases_error(
         page_id=page_id,
     )
     with pytest.raises(expected_exception=PageHasDatabasesError):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[],
             page_id=None,
@@ -536,7 +536,7 @@ def test_upload_discussions_exist_error(
         expected_exception=DiscussionsExistError,
         match=r"1 block.*1 discussion",
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(
@@ -567,7 +567,7 @@ def test_replace_cancels_for_discussion_on_unchanged_block(
         expected_exception=DiscussionsExistError,
         match=r"1 block.*1 discussion",
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(text=text(text="Block with a discussion")),
@@ -625,7 +625,7 @@ def test_upload_page_not_found_error(
         expected_exception=PageNotFoundError,
         match=f"No page found with ID '{missing_page_id}'.",
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(
@@ -722,7 +722,7 @@ def test_ambiguous_title_does_not_mutate_pages(
         expected_exception=PageTitleAmbiguousError,
         match=re.escape(pattern=message),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=session,
             blocks=[],
             page_id=None,
@@ -738,7 +738,7 @@ def test_ambiguous_title_does_not_mutate_pages(
         )
 
     session.create_page.assert_not_called()
-    assert all(not page.mock_calls for page in matching_pages)
+    assert all(len(page.mock_calls) == 0 for page in matching_pages)
 
 
 def test_ambiguous_title_is_identical_with_optimized_python() -> None:
@@ -809,7 +809,7 @@ def test_upload_with_cover_path(
 ) -> None:
     """It is possible to upload a page with a local cover file."""
     cover_file = tmp_path / "cover.png"
-    cover_file.write_bytes(data=b"fake-png-data")
+    _ = cover_file.write_bytes(data=b"fake-png-data")
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
     )
@@ -850,7 +850,7 @@ def test_upload_with_unchanged_cover_path(
 ) -> None:
     """An unchanged local cover is neither uploaded nor cleared."""
     cover_file = tmp_path / "cover.png"
-    cover_file.write_bytes(data=b"unchanged-cover")
+    _ = cover_file.write_bytes(data=b"unchanged-cover")
     before_clear_count = _cover_clear_count(mock=respx_mock)
     before_upload_count = _file_upload_create_count(mock=respx_mock)
 
@@ -859,7 +859,7 @@ def test_upload_with_unchanged_cover_path(
         attribute="_get_uploaded_cover",
         return_value=None,
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
                 UnoParagraph(text=text(text="Hello from Microcks upload test"))
@@ -888,7 +888,7 @@ def test_upload_with_file_block(
 ) -> None:
     """It is possible to upload a page with a file:// image block."""
     img_file = tmp_path / "test.png"
-    img_file.write_bytes(data=b"fake-image-data")
+    _ = img_file.write_bytes(data=b"fake-image-data")
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
@@ -933,7 +933,7 @@ def test_upload_local_file_preserves_name_and_caption(
 ) -> None:
     """A local file's custom presentation survives file upload."""
     local_file = tmp_path / "archive.zip"
-    local_file.write_bytes(data=b"release-bundle")
+    _ = local_file.write_bytes(data=b"release-bundle")
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
     appends_before = count_mock_requests(
         mock=respx_mock,
@@ -941,7 +941,7 @@ def test_upload_local_file_preserves_name_and_caption(
         url_path=append_url_path,
     )
 
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoFile(
@@ -971,7 +971,7 @@ def test_upload_local_file_preserves_name_and_caption(
     ]
     assert len(append_calls) == appends_before + 1
     payload = json.loads(s=append_calls[-1].request.content)
-    uploaded_file = payload["children"][0]["file"]
+    uploaded_file = payload["children"][0]["file"]  # pyrefly: ignore[unknown-variable-type]
     assert uploaded_file["name"] == "Download the release bundle"
     assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
 
@@ -985,10 +985,10 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
 ) -> None:
     """A local file without a display name uses its base name."""
     local_file = tmp_path / "archive.zip"
-    local_file.write_bytes(data=b"release-bundle")
+    _ = local_file.write_bytes(data=b"release-bundle")
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
 
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[UnoFile(file=ExternalFile(url=local_file.as_uri()))],
         page_id=None,
@@ -1011,7 +1011,7 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         and call.request.url.path == append_url_path
     ]
     payload = json.loads(s=append_calls[-1].request.content)
-    uploaded_file = payload["children"][0]["file"]
+    uploaded_file = payload["children"][0]["file"]  # pyrefly: ignore[unknown-variable-type]
     assert uploaded_file == {
         "type": "file_upload",
         "name": "archive.zip",
@@ -1038,7 +1038,7 @@ def test_upload_matching_local_file_is_unchanged(
 ) -> None:
     """A matching local file is not uploaded again."""
     local_file = tmp_path / "test.png"
-    local_file.write_bytes(data=b"image-data")
+    _ = local_file.write_bytes(data=b"image-data")
     if local_name is None:
         local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
     else:
@@ -1056,7 +1056,7 @@ def test_upload_matching_local_file_is_unchanged(
         attribute="get",
         return_value=response,
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[local_block],
             page_id=None,
@@ -1082,10 +1082,10 @@ def test_upload_with_nested_file_block(
 ) -> None:
     """Upload with a parent block containing a file child block."""
     img_file = tmp_path / "nested.png"
-    img_file.write_bytes(data=b"fake-nested-image-data")
+    _ = img_file.write_bytes(data=b"fake-nested-image-data")
 
     parent_block = BulletedItem(text=text(text="Item with image"))
-    parent_block.append(
+    _ = parent_block.append(
         blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
     )
 
@@ -1137,7 +1137,7 @@ def test_upload_prefix_suffix_matching(
         method="PATCH",
         url_path="/v1/blocks/dddd0000-0000-0000-0000-000000000002/children",
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoParagraph(text=text(text="same")),
@@ -1178,12 +1178,12 @@ def test_upload_file_block_name_mismatch(
 ) -> None:
     """File block with name mismatch triggers re-upload."""
     local_file = tmp_path / "test.png"
-    local_file.write_bytes(data=b"image-data")
+    _ = local_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoFile(
@@ -1219,12 +1219,12 @@ def test_upload_file_block_caption_mismatch(
 ) -> None:
     """File block with caption mismatch triggers re-upload."""
     local_file = tmp_path / "test.png"
-    local_file.write_bytes(data=b"image-data")
+    _ = local_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoFile(
@@ -1259,7 +1259,7 @@ def test_upload_file_block_external_url(
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoImage(
@@ -1294,12 +1294,12 @@ def test_upload_file_block_existing_is_external(
 ) -> None:
     """File block with existing ExternalFile triggers re-upload."""
     img_file = tmp_path / "test.png"
-    img_file.write_bytes(data=b"image-data")
+    _ = img_file.write_bytes(data=b"image-data")
 
     before_upload_count = _file_upload_create_count(
         mock=respx_mock,
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
             UnoImage(file=ExternalFile(url=img_file.as_uri())),
@@ -1329,7 +1329,7 @@ def test_upload_matching_parent_blocks(
 ) -> None:
     """Matching parent blocks with children are not re-uploaded."""
     local_block = BulletedItem(text=text(text="item"))
-    local_block.append(blocks=[Divider()])
+    _ = local_block.append(blocks=[Divider()])
 
     before_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -1341,7 +1341,7 @@ def test_upload_matching_parent_blocks(
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000002/children",
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[local_block],
         page_id=None,
@@ -1377,7 +1377,7 @@ def test_upload_parent_block_different_children_count(
 ) -> None:
     """Parent block with different children count triggers re-upload."""
     local_block = BulletedItem(text=text(text="item"))
-    local_block.append(blocks=[Divider(), Divider()])
+    _ = local_block.append(blocks=[Divider(), Divider()])
 
     before_delete_count = count_mock_requests(
         mock=respx_mock,
@@ -1394,7 +1394,7 @@ def test_upload_parent_block_different_children_count(
         method="PATCH",
         url_path="/v1/blocks/aabb0000-0000-0000-0000-000000000020/children",
     )
-    notion_upload.upload_to_notion(
+    _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[local_block],
         page_id=None,
@@ -1466,7 +1466,7 @@ def test_cloudflare_waf_block(
             match=f"^{re.escape(pattern=expected)}$",
         ),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="WAF trigger content"))],
             page_id=None,
@@ -1503,7 +1503,7 @@ def test_non_html_403_not_wrapped(
         ),
         pytest.raises(expected_exception=HTTPResponseError),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="Content"))],
             page_id=None,
@@ -1535,7 +1535,7 @@ def test_non_403_html_not_wrapped(
         ),
         pytest.raises(expected_exception=HTTPResponseError),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoParagraph(text=text(text="Content"))],
             page_id=None,
@@ -1562,7 +1562,9 @@ def test_file_upload_waf_block_logs_body(
     the response body so the cause can be diagnosed.
     """
     img_file = tmp_path / "diagram.svg"
-    img_file.write_bytes(data=b"<svg>CREATE TABLE x (y VARCHAR(255))</svg>")
+    _ = img_file.write_bytes(
+        data=b"<svg>CREATE TABLE x (y VARCHAR(255))</svg>"
+    )
 
     waf_body = "<!DOCTYPE html><html>Sorry, you have been blocked</html>"
     waf_error = HTTPResponseError(
@@ -1582,7 +1584,7 @@ def test_file_upload_waf_block_logs_body(
         ),
         pytest.raises(expected_exception=CloudflareWAFBlockError),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
             page_id=None,
@@ -1619,7 +1621,7 @@ def test_file_upload_other_http_error_logs_body(
     response body is still logged.
     """
     img_file = tmp_path / "photo.png"
-    img_file.write_bytes(data=b"fake-image-data")
+    _ = img_file.write_bytes(data=b"fake-image-data")
 
     body = '{"code": "validation_error", "message": "too large"}'
     http_error = HTTPResponseError(
@@ -1637,7 +1639,7 @@ def test_file_upload_other_http_error_logs_body(
         ),
         pytest.raises(expected_exception=HTTPResponseError),
     ):
-        notion_upload.upload_to_notion(
+        _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[UnoImage(file=ExternalFile(url=img_file.as_uri()))],
             page_id=None,

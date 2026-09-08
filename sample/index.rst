@@ -292,7 +292,7 @@ Tabbed content is created using the `sphinx-tabs <https://sphinx-tabs.readthedoc
 
             import sys
 
-            sys.stdout.write("Hello from the Python tab\n")
+            _ = sys.stdout.write("Hello from the Python tab\n")
 
       .. tab:: Notes
 
@@ -316,7 +316,7 @@ Tabbed content can also be created using the `sphinx-design <https://sphinx-desi
 
             import sys
 
-            sys.stdout.write("Hello from the Python tab\n")
+            _ = sys.stdout.write("Hello from the Python tab\n")
 
       .. tab-item:: Notes
 
@@ -376,7 +376,7 @@ Bullet Lists
 
          import sys
 
-         sys.stdout.write("Hello, world!")
+         _ = sys.stdout.write("Hello, world!")
 
      And here's a note admonition nested within the bullet list:
 
@@ -656,7 +656,7 @@ This is useful for documentation that demonstrates how to write reStructuredText
              return f"Hello, {name}!"
 
 
-         greet(name="World")
+         _ = greet(name="World")
 
 Embed Blocks
 ~~~~~~~~~~~~

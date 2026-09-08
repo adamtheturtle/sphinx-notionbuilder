@@ -73,7 +73,7 @@ def main(
             inline=True,
         )
         people = [user for user in session.all_users() if user.is_person]
-        user = people[0] if people else session.whoami()
+        user = people[0] if len(people) > 0 else session.whoami()
         user_id = str(object=user.id)
     finally:
         session.close()
@@ -83,7 +83,7 @@ def main(
         user_id=user_id,
         database_id=database.id.hex,
     )
-    output.write_text(data=contents, encoding="utf-8")
+    _ = output.write_text(data=contents, encoding="utf-8")
     click.echo(message=f"Wrote {output}")
 
 

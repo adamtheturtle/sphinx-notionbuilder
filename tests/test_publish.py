@@ -33,7 +33,7 @@ def test_publish_skips_on_exception(
         confoverrides={"extensions": ["sphinx_notion"]},
     )
     warnings_before = app.warning.getvalue()
-    app.emit("build-finished", RuntimeError("build failed"))
+    _ = app.emit("build-finished", RuntimeError("build failed"))
     assert app.warning.getvalue() == warnings_before
 
 
@@ -46,7 +46,9 @@ def test_publish_skips_when_disabled(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data="Test\n====\n", encoding="utf-8")
+    _ = (srcdir / "index.rst").write_text(
+        data="Test\n====\n", encoding="utf-8"
+    )
     app = make_app(
         buildername="notion",
         srcdir=srcdir,
@@ -70,7 +72,9 @@ def test_publish_skips_when_not_notion_builder(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data="Test\n====\n", encoding="utf-8")
+    _ = (srcdir / "index.rst").write_text(
+        data="Test\n====\n", encoding="utf-8"
+    )
     app = make_app(
         srcdir=srcdir,
         confoverrides={
@@ -105,7 +109,7 @@ def test_publish_skips_when_no_output_file(
             "notion_page_title": "Test",
         },
     )
-    app.emit("build-finished", None)
+    _ = app.emit("build-finished", None)
     assert "index.json found" in app.warning.getvalue()
 
 
@@ -125,7 +129,7 @@ def test_publish_success(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(
+    _ = (srcdir / "index.rst").write_text(
         data="Hello from publish test.\n",
         encoding="utf-8",
     )
@@ -179,15 +183,15 @@ def test_publish_toctree_as_page_hierarchy(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(
+    _ = (srcdir / "index.rst").write_text(
         data="Root\n====\n\n.. toctree::\n\n   detail\n   guide\n",
         encoding="utf-8",
     )
-    (srcdir / "guide.rst").write_text(
+    _ = (srcdir / "guide.rst").write_text(
         data="Guide\n=====\n\n.. toctree::\n\n   detail\n",
         encoding="utf-8",
     )
-    (srcdir / "detail.rst").write_text(
+    _ = (srcdir / "detail.rst").write_text(
         data="Detail\n======\n",
         encoding="utf-8",
     )
@@ -234,7 +238,7 @@ def test_publish_toctree_as_page_hierarchy(
 
         upload.reset_mock()
         app.env.toctree_includes["detail"] = ["guide", "index"]
-        app.emit("build-finished", None)
+        _ = app.emit("build-finished", None)
 
         assert upload.call_count == len(pages)
         assert upload.call_args_list[1].kwargs["parent_page_id"] == "root-id"
@@ -246,7 +250,7 @@ def test_publish_toctree_as_page_hierarchy(
         app.env.toctree_includes["detail"] = list[str]()
         app.env.toctree_includes["index"].append("guide")
         (Path(app.outdir) / "guide.json").unlink()
-        app.emit("build-finished", None)
+        _ = app.emit("build-finished", None)
 
         assert upload.call_count == 1
         assert "No guide.json found" in app.warning.getvalue()
@@ -266,7 +270,7 @@ def test_publish_replace_strategy(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(
+    _ = (srcdir / "index.rst").write_text(
         data="Hello from WireMock upload test\n",
         encoding="utf-8",
     )
@@ -329,7 +333,7 @@ def test_publish_propagates_error(
     srcdir = tmp_path / "src"
     srcdir.mkdir()
     (srcdir / "conf.py").touch()
-    (srcdir / "index.rst").write_text(data="", encoding="utf-8")
+    _ = (srcdir / "index.rst").write_text(data="", encoding="utf-8")
     app = make_app(
         buildername="notion",
         srcdir=srcdir,
