@@ -6,7 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
@@ -219,23 +219,32 @@ def _block_without_children(
 
 
 @beartype
+def _serialized_object(*, value: Mapping[str, object]) -> dict[str, object]:
+    """Return a mutable copy of a serialized JSON object."""
+    return dict(value)
+
+
+@beartype
 def serialize_block_with_children(*, block: Block) -> dict[str, object]:
     """
     Convert a block to a JSON-serializable format which includes its
     children.
     """
-    serialized_obj: dict[str, object] = block.obj_ref.serialize_for_api()
+    serialized_obj = _serialized_object(
+        value=block.obj_ref.serialize_for_api()
+    )
     if isinstance(block, ParentBlock) and block.has_children:
         block_type = block.obj_ref.type
         assert block_type is not None
         block_body = serialized_obj[block_type]
-        if not isinstance(block_body, dict):
-            msg = "Ultimate Notion returned non-object block details."
-            raise TypeError(msg)
-        block_body["children"] = [
-            serialize_block_with_children(block=child)
-            for child in block.blocks
-        ]
+        assert isinstance(block_body, dict)
+        serialized_obj[block_type] = {
+            **block_body,
+            "children": [
+                serialize_block_with_children(block=child)
+                for child in block.blocks
+            ],
+        }
     return serialized_obj
 
 
