@@ -13,24 +13,28 @@ if TYPE_CHECKING:
     import respx
     from respx.models import Call
 
+type JSONValue = (
+    bool | int | float | str | list[JSONValue] | dict[str, JSONValue] | None
+)
 
-def _is_json_object(value: object, /) -> TypeIs[dict[str, object]]:
+
+def _is_json_object(value: object, /) -> TypeIs[dict[str, JSONValue]]:
     """Return whether a decoded value is a string-keyed object."""
-    return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
+    return TypeHint(hint=dict[str, JSONValue]).is_bearable(obj=value)
 
 
-def json_object(value: object, /) -> dict[str, object]:
+def json_object(value: object, /) -> dict[str, JSONValue]:
     """Return a runtime-validated decoded JSON object."""
     assert _is_json_object(value)
     return value
 
 
-def _is_json_array(value: object, /) -> TypeIs[list[object]]:
+def _is_json_array(value: object, /) -> TypeIs[list[JSONValue]]:
     """Return whether a decoded value is an array."""
-    return isinstance(value, list)
+    return TypeHint(hint=list[JSONValue]).is_bearable(obj=value)
 
 
-def json_array(value: object, /) -> list[object]:
+def json_array(value: object, /) -> list[JSONValue]:
     """Return a runtime-validated decoded JSON array."""
     assert _is_json_array(value)
     return value

@@ -41,6 +41,7 @@ from sphinx_notion._upload import (
     UploadStrategy,
 )
 from tests._wiremock import (
+    JSONValue,
     count_mock_requests,
     count_page_metadata_clear_requests,
     json_array,
@@ -1670,7 +1671,7 @@ def test_file_upload_other_http_error_logs_body(
     )
 
 
-def _nested_callout_dict(*, depth: int) -> dict[str, object]:
+def _nested_callout_dict(*, depth: int) -> dict[str, JSONValue]:
     """A callout dict nested ``depth`` levels deep, as produced by the
     builder.
     """
