@@ -21,9 +21,7 @@ def _is_json_object(value: object, /) -> TypeIs[dict[str, object]]:
 
 def json_object(value: object, /) -> dict[str, object]:
     """Return a runtime-validated decoded JSON object."""
-    if not _is_json_object(value):
-        message = "Expected a JSON object."
-        raise TypeError(message)
+    assert _is_json_object(value)
     return value
 
 
@@ -34,9 +32,7 @@ def _is_json_array(value: object, /) -> TypeIs[list[object]]:
 
 def json_array(value: object, /) -> list[object]:
     """Return a runtime-validated decoded JSON array."""
-    if not _is_json_array(value):
-        message = "Expected a JSON array."
-        raise TypeError(message)
+    assert _is_json_array(value)
     return value
 
 
