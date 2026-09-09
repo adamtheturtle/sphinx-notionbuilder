@@ -7,7 +7,6 @@ import re
 import textwrap
 from collections.abc import Callable, Collection, Sequence
 from pathlib import Path
-from typing import Any
 from uuid import UUID
 
 import anstrip
@@ -17,7 +16,7 @@ from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
-from ultimate_notion.blocks import Block, ParentBlock
+from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
 from ultimate_notion.blocks import Callout as UnoCallout
 from ultimate_notion.blocks import Code as UnoCode
@@ -71,18 +70,7 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
-
-@beartype
-def _details_from_block(*, block: Block) -> dict[str, Any]:  # pyrefly: ignore[explicit-any]
-    """Create a serialized block details from a Block."""
-    serialized_obj = block.obj_ref.serialize_for_api()
-    if isinstance(block, ParentBlock) and block.has_children:
-        block_type = block.obj_ref.type
-        assert block_type is not None
-        serialized_obj[block_type]["children"] = [
-            _details_from_block(block=child) for child in block.blocks
-        ]
-    return serialized_obj
+from sphinx_notion._upload import serialize_block_with_children
 
 
 @beartype
@@ -95,7 +83,7 @@ def _assert_rst_converts_to_notion_objects(
     extensions: tuple[str, ...],
     conf_py_content: str,
     expected_warnings: Collection[str],
-    confoverrides: dict[str, Any] | None,  # pyrefly: ignore[explicit-any]
+    confoverrides: dict[str, object] | None,
 ) -> SphinxTestApp:
     """
     ReStructuredText content converts to expected Notion objects via
@@ -131,12 +119,10 @@ def _assert_rst_converts_to_notion_objects(
 
     output_file = app.outdir / "index.json"
     with output_file.open(encoding="utf-8") as f:
-        generated_json: list[  # pyrefly: ignore[explicit-any]
-            dict[str, Any]
-        ] = json.load(fp=f)
+        generated_json: object = json.load(fp=f)
 
-    expected_json: list[dict[str, Any]] = [  # pyrefly: ignore[explicit-any]
-        _details_from_block(block=expected_object)
+    expected_json = [
+        serialize_block_with_children(block=expected_object)
         for expected_object in expected_blocks
     ]
 

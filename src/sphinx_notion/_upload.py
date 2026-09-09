@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 from urllib.parse import urlparse
 
 import requests
@@ -219,16 +219,20 @@ def _block_without_children(
 
 
 @beartype
-def serialize_block_with_children(*, block: Block) -> dict[str, Any]:  # pyrefly: ignore[explicit-any]
+def serialize_block_with_children(*, block: Block) -> dict[str, object]:
     """
     Convert a block to a JSON-serializable format which includes its
     children.
     """
-    serialized_obj = block.obj_ref.serialize_for_api()
+    serialized_obj: dict[str, object] = block.obj_ref.serialize_for_api()
     if isinstance(block, ParentBlock) and block.has_children:
         block_type = block.obj_ref.type
         assert block_type is not None
-        serialized_obj[block_type]["children"] = [
+        block_body = serialized_obj[block_type]
+        if not isinstance(block_body, dict):
+            msg = "Ultimate Notion returned non-object block details."
+            raise TypeError(msg)
+        block_body["children"] = [
             serialize_block_with_children(block=child)
             for child in block.blocks
         ]
