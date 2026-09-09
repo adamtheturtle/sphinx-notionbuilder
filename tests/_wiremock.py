@@ -23,7 +23,7 @@ def _is_json_object(value: object, /) -> TypeIs[dict[str, JSONValue]]:
     return TypeHint(hint=dict[str, JSONValue]).is_bearable(obj=value)
 
 
-def json_object(value: object, /) -> dict[str, JSONValue]:
+def json_object(value: object) -> dict[str, JSONValue]:
     """Return a runtime-validated decoded JSON object."""
     assert _is_json_object(value)
     return value
@@ -34,7 +34,7 @@ def _is_json_array(value: object, /) -> TypeIs[list[JSONValue]]:
     return TypeHint(hint=list[JSONValue]).is_bearable(obj=value)
 
 
-def json_array(value: object, /) -> list[JSONValue]:
+def json_array(value: object) -> list[JSONValue]:
     """Return a runtime-validated decoded JSON array."""
     assert _is_json_array(value)
     return value
@@ -74,7 +74,7 @@ def count_page_metadata_clear_requests(
             call.request.method == "PATCH"
             and call.request.url.path in page_paths
         ):
-            payload = json_object(json.loads(s=call.request.content))
+            payload = json_object(value=json.loads(s=call.request.content))
             if (
                 payload.get("icon", object()) is None
                 or payload.get("cover", object()) is None
