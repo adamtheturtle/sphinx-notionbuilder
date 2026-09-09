@@ -6,16 +6,17 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING, BinaryIO, TypeGuard
 from urllib.parse import urlparse
 
 import requests
 from beartype import beartype
+from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
@@ -40,6 +41,10 @@ _HTTP_FORBIDDEN = 403
 # large HTML documents, so we cap the output to keep logs readable while
 # still including the diagnostic content (e.g. the Cloudflare Ray ID).
 _MAX_LOGGED_BODY_CHARS = 2000
+
+type _JSONValue = (
+    bool | int | float | str | list[_JSONValue] | dict[str, _JSONValue] | None
+)
 
 
 def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
@@ -219,13 +224,20 @@ def _block_without_children(
 
 
 @beartype
-def _serialized_object(*, value: Mapping[str, object]) -> dict[str, object]:
+def _is_json_object(value: object, /) -> TypeGuard[dict[str, _JSONValue]]:
+    """Return whether a value is a JSON object."""
+    return TypeHint(hint=dict[str, _JSONValue]).is_bearable(obj=value)
+
+
+@beartype
+def _serialized_object(*, value: object) -> dict[str, _JSONValue]:
     """Return a mutable copy of a serialized JSON object."""
+    assert _is_json_object(value)
     return dict(value)
 
 
 @beartype
-def serialize_block_with_children(*, block: Block) -> dict[str, object]:
+def serialize_block_with_children(*, block: Block) -> dict[str, _JSONValue]:
     """
     Convert a block to a JSON-serializable format which includes its
     children.
@@ -236,8 +248,7 @@ def serialize_block_with_children(*, block: Block) -> dict[str, object]:
     if isinstance(block, ParentBlock) and block.has_children:
         block_type = block.obj_ref.type
         assert block_type is not None
-        block_body = serialized_obj[block_type]
-        assert isinstance(block_body, dict)
+        block_body = _serialized_object(value=serialized_obj[block_type])
         serialized_obj[block_type] = {
             **block_body,
             "children": [
