@@ -43,6 +43,8 @@ from sphinx_notion._upload import (
 from tests._wiremock import (
     count_mock_requests,
     count_page_metadata_clear_requests,
+    json_array,
+    json_object,
 )
 
 if TYPE_CHECKING:
@@ -970,10 +972,15 @@ def test_upload_local_file_preserves_name_and_caption(
         and call.request.url.path == append_url_path
     ]
     assert len(append_calls) == appends_before + 1
-    payload = json.loads(s=append_calls[-1].request.content)
-    uploaded_file = payload["children"][0]["file"]  # pyrefly: ignore[unknown-variable-type]
+    payload = json_object(json.loads(s=append_calls[-1].request.content))
+    children = json_array(payload["children"])
+    child = json_object(children[0])
+    uploaded_file = json_object(child["file"])
     assert uploaded_file["name"] == "Download the release bundle"
-    assert uploaded_file["caption"][0]["text"]["content"] == "Current release"
+    caption = json_array(uploaded_file["caption"])
+    caption_item = json_object(caption[0])
+    text_item = json_object(caption_item["text"])
+    assert text_item["content"] == "Current release"
 
 
 def test_upload_local_file_uses_filename_when_name_is_missing(
@@ -1010,8 +1017,10 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         if call.request.method == "PATCH"
         and call.request.url.path == append_url_path
     ]
-    payload = json.loads(s=append_calls[-1].request.content)
-    uploaded_file = payload["children"][0]["file"]  # pyrefly: ignore[unknown-variable-type]
+    payload = json_object(json.loads(s=append_calls[-1].request.content))
+    children = json_array(payload["children"])
+    child = json_object(children[0])
+    uploaded_file = json_object(child["file"])
     assert uploaded_file == {
         "type": "file_upload",
         "name": "archive.zip",
@@ -1666,13 +1675,12 @@ def _nested_callout_dict(*, depth: int) -> dict[str, object]:
     builder.
     """
     callout = Callout(text=text(text=f"Level {depth}"))
-    serialized = callout.obj_ref.serialize_for_api()
+    serialized = json_object(callout.obj_ref.serialize_for_api())
     if depth > 1:
         child = _nested_callout_dict(depth=depth - 1)
-        callout_body = serialized["callout"]
-        assert isinstance(callout_body, dict)
+        callout_body = json_object(serialized["callout"])
         callout_body["children"] = [child]
-    return serialized  # ty: ignore[unsound-return-statement]
+    return serialized
 
 
 def test_deeply_nested_blocks_strip_rejected_fields() -> None:

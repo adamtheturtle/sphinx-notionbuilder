@@ -6,10 +6,38 @@ import json
 from typing import TYPE_CHECKING
 
 from beartype import beartype
+from beartype.door import TypeHint
+from typing_extensions import TypeIs
 
 if TYPE_CHECKING:
     import respx
     from respx.models import Call
+
+
+def _is_json_object(value: object, /) -> TypeIs[dict[str, object]]:
+    """Return whether a decoded value is a string-keyed object."""
+    return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
+
+
+def json_object(value: object, /) -> dict[str, object]:
+    """Return a runtime-validated decoded JSON object."""
+    if not _is_json_object(value):
+        message = "Expected a JSON object."
+        raise TypeError(message)
+    return value
+
+
+def _is_json_array(value: object, /) -> TypeIs[list[object]]:
+    """Return whether a decoded value is an array."""
+    return isinstance(value, list)
+
+
+def json_array(value: object, /) -> list[object]:
+    """Return a runtime-validated decoded JSON array."""
+    if not _is_json_array(value):
+        message = "Expected a JSON array."
+        raise TypeError(message)
+    return value
 
 
 @beartype
@@ -46,7 +74,7 @@ def count_page_metadata_clear_requests(
             call.request.method == "PATCH"
             and call.request.url.path in page_paths
         ):
-            payload: dict[str, object] = json.loads(s=call.request.content)  # ty: ignore[unsound-assignment]
+            payload = json_object(json.loads(s=call.request.content))
             if (
                 payload.get("icon", object()) is None
                 or payload.get("cover", object()) is None
