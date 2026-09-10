@@ -14,6 +14,7 @@ from uuid import UUID
 import bs4
 from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
+from beartype.door import TypeHint
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import directives as rst_directives
@@ -209,29 +210,21 @@ def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
     return environment
 
 
-@beartype
-def _is_object_list(value: object, /) -> TypeGuard[list[object]]:
-    """Return whether a value is a list with unchecked entries."""
-    return isinstance(value, list)
+type _VideoSources = list[tuple[str, str, bool]]
 
 
 @beartype
-def _is_object_tuple(value: object, /) -> TypeGuard[tuple[object, ...]]:
-    """Return whether a value is a tuple with unchecked entries."""
-    return isinstance(value, tuple)
+def _is_video_sources(value: object, /) -> TypeGuard[_VideoSources]:
+    """Return whether a value has the video-source attribute shape."""
+    return TypeHint(hint=list[tuple[str, str, bool]]).is_bearable(obj=value)
 
 
 @beartype
 def _video_source(*, node: video_node) -> tuple[str, bool]:
     """Return the location and remote flag for a video node's source."""
     sources: object = node.attributes["sources"]
-    assert _is_object_list(sources)
-    primary_source = sources[0]
-    assert _is_object_tuple(primary_source)
-    video_location, media_type, is_remote = primary_source
-    assert isinstance(video_location, str)
-    assert isinstance(media_type, str)
-    assert isinstance(is_remote, bool)
+    assert _is_video_sources(sources)
+    video_location, _media_type, is_remote = sources[0]
     return video_location, is_remote
 
 
