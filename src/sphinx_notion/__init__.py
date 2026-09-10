@@ -213,7 +213,7 @@ def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
 @beartype
 @dataclass(frozen=True, kw_only=True, slots=True)
 class _VideoSource:
-    """A source declared on a sphinxcontrib-video node."""
+    """A source declared on a video extension node."""
 
     location: str
     media_type: str
