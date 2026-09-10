@@ -15,11 +15,11 @@ from typing import TYPE_CHECKING, BinaryIO, TypeGuard
 from urllib.parse import urlparse
 
 import requests
+import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
 from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
-from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
 from ultimate_notion.blocks import File as UnoFile
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(name=__name__)
 
-_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, UnoPDF, UnoFile)
+_FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, uno_blocks.PDF, UnoFile)
 _HTTP_FORBIDDEN = 403
 # How much of the response body to surface in logs. WAF block pages are
 # large HTML documents, so we cap the output to keep logs readable while
