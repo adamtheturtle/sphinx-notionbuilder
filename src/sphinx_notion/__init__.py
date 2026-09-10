@@ -8,12 +8,13 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import ClassVar, TypeGuard, override
+from typing import ClassVar, Self, TypeGuard, override
 from uuid import UUID
 
 import bs4
 from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
+from beartype.door import TypeHint
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import directives as rst_directives
@@ -210,29 +211,34 @@ def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
 
 
 @beartype
-def _is_object_list(value: object, /) -> TypeGuard[list[object]]:
-    """Return whether a value is a list with unchecked entries."""
-    return isinstance(value, list)
+@dataclass(frozen=True, kw_only=True, slots=True)
+class _VideoSource:
+    """A source declared on a video extension node."""
 
+    location: str
+    media_type: str
+    is_remote: bool
 
-@beartype
-def _is_object_tuple(value: object, /) -> TypeGuard[tuple[object, ...]]:
-    """Return whether a value is a tuple with unchecked entries."""
-    return isinstance(value, tuple)
+    @staticmethod
+    def _has_expected_shape(
+        value: object, /
+    ) -> TypeGuard[list[tuple[str, str, bool]]]:
+        """Return whether a value is a list of video source triples."""
+        return TypeHint(hint=list[tuple[str, str, bool]]).is_bearable(
+            obj=value
+        )
 
-
-@beartype
-def _video_source(*, node: video_node) -> tuple[str, bool]:
-    """Return the location and remote flag for a video node's source."""
-    sources: object = node.attributes["sources"]
-    assert _is_object_list(sources)
-    primary_source = sources[0]
-    assert _is_object_tuple(primary_source)
-    video_location, media_type, is_remote = primary_source
-    assert isinstance(video_location, str)
-    assert isinstance(media_type, str)
-    assert isinstance(is_remote, bool)
-    return video_location, is_remote
+    @classmethod
+    def from_node(cls, *, node: video_node) -> Self:
+        """Create a source from the primary source on the node."""
+        sources: object = node.attributes["sources"]
+        assert cls._has_expected_shape(sources)
+        location, media_type, is_remote = sources[0]
+        return cls(
+            location=location,
+            media_type=media_type,
+            is_remote=is_remote,
+        )
 
 
 @beartype
@@ -2136,14 +2142,14 @@ def _(
     """Process video nodes by creating Notion Video blocks."""
     del section_level
 
-    video_location, is_remote = _video_source(node=node)
+    source = _VideoSource.from_node(node=node)
 
-    if is_remote:
-        video_url = video_location
+    if source.is_remote:
+        video_url = source.location
     else:
         assert node.document is not None
         env = _build_environment(node=node)
-        abs_path = Path(env.srcdir) / video_location
+        abs_path = Path(env.srcdir) / source.location
         video_url = abs_path.as_uri()
 
     caption_text = node.attributes["caption"]
