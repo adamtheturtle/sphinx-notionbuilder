@@ -1,0 +1,1 @@
+Type Notion mention role callbacks using the Docutils role argument domain.
