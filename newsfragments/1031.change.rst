@@ -1,0 +1,1 @@
+Type Sphinx document metadata using its actual scalar and author-list values.
