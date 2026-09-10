@@ -3,7 +3,6 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -19,11 +18,15 @@ from _notion_scripts.upload import main  # pylint: disable=import-private-name
 from sphinx_notion._upload import PageTitleAmbiguousError
 from tests._wiremock import count_page_metadata_clear_requests
 
+type _JSONValue = (
+    bool | int | float | str | list[_JSONValue] | dict[str, _JSONValue] | None
+)
+
 
 def _write_blocks_file(
     *,
     tmp_path: Path,
-    block_dicts: list[dict[str, Any]],  # pyrefly: ignore[explicit-any]
+    block_dicts: list[dict[str, _JSONValue]],
 ) -> Path:
     """Write block payload JSON to a temporary file."""
     blocks_file = tmp_path / "blocks.json"
@@ -71,7 +74,7 @@ def _invoke_upload(
 def _paragraph_blocks(
     *,
     text_content: str,
-) -> list[dict[str, Any]]:  # pyrefly: ignore[explicit-any]
+) -> list[dict[str, _JSONValue]]:
     """Create serialized paragraph blocks."""
     return [
         UnoParagraph(
