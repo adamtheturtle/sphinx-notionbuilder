@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import ClassVar, TypeGuard, override
+from typing import ClassVar, Self, TypeGuard, override
 from uuid import UUID
 
 import bs4
@@ -210,22 +210,35 @@ def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
     return environment
 
 
-type _VideoSources = list[tuple[str, str, bool]]
-
-
 @beartype
-def _is_video_sources(value: object, /) -> TypeGuard[_VideoSources]:
-    """Return whether a value has the video-source attribute shape."""
-    return TypeHint(hint=list[tuple[str, str, bool]]).is_bearable(obj=value)
+@dataclass(frozen=True, kw_only=True, slots=True)
+class _VideoSource:
+    """A source declared on a sphinxcontrib-video node."""
 
+    location: str
+    media_type: str
+    is_remote: bool
 
-@beartype
-def _video_source(*, node: video_node) -> tuple[str, bool]:
-    """Return the location and remote flag for a video node's source."""
-    sources: object = node.attributes["sources"]
-    assert _is_video_sources(sources)
-    video_location, _media_type, is_remote = sources[0]
-    return video_location, is_remote
+    @staticmethod
+    def _has_expected_shape(
+        value: object, /
+    ) -> TypeGuard[list[tuple[str, str, bool]]]:
+        """Return whether a value is a list of video source triples."""
+        return TypeHint(hint=list[tuple[str, str, bool]]).is_bearable(
+            obj=value
+        )
+
+    @classmethod
+    def from_node(cls, *, node: video_node) -> Self:
+        """Create a source from the primary source on the node."""
+        sources: object = node.attributes["sources"]
+        assert cls._has_expected_shape(sources)
+        location, media_type, is_remote = sources[0]
+        return cls(
+            location=location,
+            media_type=media_type,
+            is_remote=is_remote,
+        )
 
 
 @beartype
@@ -2129,14 +2142,14 @@ def _(
     """Process video nodes by creating Notion Video blocks."""
     del section_level
 
-    video_location, is_remote = _video_source(node=node)
+    source = _VideoSource.from_node(node=node)
 
-    if is_remote:
-        video_url = video_location
+    if source.is_remote:
+        video_url = source.location
     else:
         assert node.document is not None
         env = _build_environment(node=node)
-        abs_path = Path(env.srcdir) / video_location
+        abs_path = Path(env.srcdir) / source.location
         video_url = abs_path.as_uri()
 
     caption_text = node.attributes["caption"]
