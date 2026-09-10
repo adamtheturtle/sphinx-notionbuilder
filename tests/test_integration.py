@@ -11,10 +11,10 @@ from uuid import UUID
 
 import anstrip
 import pytest
+import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
-from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -4359,7 +4359,7 @@ def test_simple_pdf(
     """
 
     expected_blocks = [
-        UnoPDF(
+        uno_blocks.PDF(
             file=ExternalFile(
                 url="https://www.example.com/path/to/document.pdf"
             )
@@ -4391,7 +4391,7 @@ def test_pdf_with_options(
     """
 
     expected_blocks = [
-        UnoPDF(
+        uno_blocks.PDF(
             file=ExternalFile(
                 url="https://www.example.com/path/to/document.pdf"
             ),
@@ -4430,7 +4430,7 @@ def test_local_pdf_file(
     """
 
     expected_blocks = [
-        UnoPDF(file=ExternalFile(url=test_pdf_path.as_uri())),
+        uno_blocks.PDF(file=ExternalFile(url=test_pdf_path.as_uri())),
     ]
 
     _ = _assert_rst_converts_to_notion_objects(

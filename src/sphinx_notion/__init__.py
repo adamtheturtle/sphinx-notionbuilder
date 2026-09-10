@@ -12,6 +12,7 @@ from typing import ClassVar, Self, TypeGuard, override
 from uuid import UUID
 
 import bs4
+import ultimate_notion.blocks as uno_blocks
 from atsphinx.audioplayer.nodes import audio as audio_node
 from beartype import beartype
 from beartype.door import TypeHint
@@ -42,7 +43,6 @@ from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
 from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji, Session
-from ultimate_notion.blocks import PDF as UnoPDF  # noqa: N811
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -2211,7 +2211,7 @@ def _(
         abs_path = Path(env.srcdir) / pdf_url
         pdf_url = abs_path.as_uri()
 
-    return [UnoPDF(file=ExternalFile(url=pdf_url))]
+    return [uno_blocks.PDF(file=ExternalFile(url=pdf_url))]
 
 
 @beartype
