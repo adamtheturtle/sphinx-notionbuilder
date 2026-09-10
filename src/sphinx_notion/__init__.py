@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, ClassVar, TypeGuard, override
+from typing import ClassVar, TypeGuard, override
 from uuid import UUID
 
 import bs4
@@ -50,7 +50,6 @@ from ultimate_notion.blocks import Divider as UnoDivider
 from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import Equation as UnoEquation
 from ultimate_notion.blocks import File as UnoFile
-from ultimate_notion.blocks import Heading as UnoHeading
 from ultimate_notion.blocks import (
     Heading1 as UnoHeading1,
 )
@@ -1657,7 +1656,7 @@ def _(
     rich_text = _create_rich_text_from_children(node=node)
 
     max_heading_level = 4
-    if section_level > max_heading_level:
+    if not 1 <= section_level <= max_heading_level:
         error_msg = (
             f"Notion only supports heading levels 1-{max_heading_level}, "
             f"but found heading level {section_level} on line {node.line} "
@@ -1665,16 +1664,15 @@ def _(
         )
         raise ValueError(error_msg)
 
-    heading_levels: dict[  # pyrefly: ignore[explicit-any]
-        int, type[UnoHeading[Any]]
-    ] = {
-        1: UnoHeading1,
-        2: UnoHeading2,
-        3: UnoHeading3,
-        4: UnoHeading4,
-    }
-    heading_cls = heading_levels[section_level]
-    return [heading_cls(text=rich_text)]
+    match section_level:
+        case 1:
+            return [UnoHeading1(text=rich_text)]
+        case 2:
+            return [UnoHeading2(text=rich_text)]
+        case 3:
+            return [UnoHeading3(text=rich_text)]
+        case _:
+            return [UnoHeading4(text=rich_text)]
 
 
 @beartype
