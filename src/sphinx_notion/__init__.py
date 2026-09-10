@@ -3,7 +3,7 @@
 import datetime as dt
 import json
 from collections import deque
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
@@ -800,7 +800,7 @@ def _create_rich_text_from_children(*, node: nodes.Element) -> Text:
 
 @beartype
 def _create_docinfo_blocks(
-    *, metadata: dict[str, str | int | list[object]]
+    *, metadata: Mapping[str, str | int | list[str]]
 ) -> list[Block]:
     """Create labeled bullets from Sphinx document metadata."""
     blocks: list[Block] = []
