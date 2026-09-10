@@ -18,6 +18,7 @@ from beartype.door import TypeHint
 from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import directives as rst_directives
+from docutils.parsers.rst.states import Inliner
 from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
@@ -336,10 +337,12 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
         return [paragraph]
 
 
+type _RoleKeywordArgument = dict[str, object] | Sequence[str] | None
+type _RoleArgument = str | int | Inliner | _RoleKeywordArgument
+
+
 @beartype
-def _role_text_content(
-    role_args: tuple[object, ...],
-) -> str:
+def _role_text_content(role_args: tuple[_RoleArgument, ...]) -> str:
     """Extract text content from parser role callback arguments."""
     text_content = role_args[2]
     assert isinstance(text_content, str)
@@ -348,8 +351,8 @@ def _role_text_content(
 
 @beartype
 def _notion_mention_user_role(
-    *role_args: object,
-    **role_kwargs: object,
+    *role_args: _RoleArgument,
+    **role_kwargs: _RoleKeywordArgument,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion user mention role."""
     del role_kwargs
@@ -363,8 +366,8 @@ def _notion_mention_user_role(
 
 @beartype
 def _notion_mention_page_role(
-    *role_args: object,
-    **role_kwargs: object,
+    *role_args: _RoleArgument,
+    **role_kwargs: _RoleKeywordArgument,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion page mention role."""
     del role_kwargs
@@ -378,8 +381,8 @@ def _notion_mention_page_role(
 
 @beartype
 def _notion_mention_database_role(
-    *role_args: object,
-    **role_kwargs: object,
+    *role_args: _RoleArgument,
+    **role_kwargs: _RoleKeywordArgument,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion database mention role."""
     del role_kwargs
@@ -393,8 +396,8 @@ def _notion_mention_database_role(
 
 @beartype
 def _notion_mention_date_role(
-    *role_args: object,
-    **role_kwargs: object,
+    *role_args: _RoleArgument,
+    **role_kwargs: _RoleKeywordArgument,
 ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
     """Create a Notion date mention role."""
     del role_kwargs
