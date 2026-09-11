@@ -6,6 +6,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import sys
+import urllib.request
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -51,12 +52,10 @@ def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
     """Convert a ``file://`` URI to a :class:`Path`."""
     if sys.version_info >= (3, 13):
         return Path.from_uri(uri=uri)
-    # pylint: disable-next=import-outside-toplevel
-    from urllib.request import (  # noqa: PLC0415
-        url2pathname,
-    )
-
-    return Path(url2pathname(urlparse(uri).path))  # noqa: KW001
+    parsed_uri = urlparse(url=uri)
+    # Python 3.12 names this parameter ``pathname`` while newer versions name
+    # it ``url``, so no keyword works across the supported Python versions.
+    return Path(urllib.request.url2pathname(parsed_uri.path))  # noqa: KW001
 
 
 @beartype
