@@ -288,7 +288,7 @@ def _block_with_replaced_children(
 def _calculate_file_sha(
     *,
     file_path: Path,
-) -> str:  # pragma: no cover - live file duplicate check
+) -> str:
     """Calculate SHA-256 hash of a file."""
     sha256_hash = hashlib.sha256()
     with file_path.open(mode="rb") as f:
@@ -302,7 +302,7 @@ def _calculate_file_sha(
 def _calculate_file_sha_from_url(
     *,
     file_url: str,
-) -> str:  # pragma: no cover - requires network file download
+) -> str:
     """Calculate SHA-256 hash of a file from a URL."""
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
@@ -318,7 +318,7 @@ def _files_match(
     *,
     existing_file_url: str,
     local_file_path: Path,
-) -> bool:  # pragma: no cover - live file hash comparison path
+) -> bool:
     """
     Check if an existing file matches a local file by comparing SHA-256
     hashes.
@@ -380,7 +380,7 @@ def _is_existing_equivalent(
 
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
-        if parsed.scheme == "file":  # pragma: no cover - local duplicate check
+        if parsed.scheme == "file":
             assert isinstance(existing_page_block, _FILE_BLOCK_TYPES)
             local_file_path = _file_uri_to_path(uri=local_block.url)
             local_name: str | None
