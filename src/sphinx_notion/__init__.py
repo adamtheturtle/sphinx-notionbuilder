@@ -33,7 +33,7 @@ from sphinx.writers.html5 import HTML5Translator
 from sphinx_iframes import iframe_node
 from sphinx_immaterial.task_lists import checkbox_label
 
-# sphinx-simplepdf does not publish typing metadata:
+# This dependency does not publish typing metadata:
 # https://github.com/useblocks/sphinx-simplepdf/issues/158
 from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMissingTypeStubs]
     PdfIncludeDirective,
@@ -41,7 +41,7 @@ from sphinx_simplepdf.directives.pdfinclude import (  # pyright: ignore[reportMi
 from sphinx_toolbox.collapse import CollapseNode, CollapseSummaryNode
 from sphinx_toolbox.rest_example import reSTExample
 
-# sphinxcontrib-mermaid does not publish typing metadata:
+# This dependency does not publish typing metadata:
 # https://github.com/mgaitan/sphinxcontrib-mermaid/issues/266
 from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
     mermaid as mermaid_node,
