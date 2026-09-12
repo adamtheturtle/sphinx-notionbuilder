@@ -4,6 +4,7 @@ Usage: main [OPTIONS]
 
 Parent location:
   [mutually exclusive if --page-id is set, otherwise exactly 1 required]
+
   --parent-page-id TEXT       Parent page ID (integration connected)
   --parent-database-id TEXT   Parent database ID (integration connected)
 
