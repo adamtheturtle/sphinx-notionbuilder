@@ -1064,7 +1064,7 @@ def test_upload_matching_local_file_is_unchanged(
 
     response = MagicMock()
     response.__enter__.return_value = response
-    response.iter_content.return_value = [b"image-data"]
+    response.iter_content.return_value = [b"image-data", b""]
     with patch.object(
         target=requests,
         attribute="get",
@@ -1276,7 +1276,7 @@ def test_upload_file_block_external_url(
     _ = notion_upload.upload_to_notion(
         session=notion_session,
         blocks=[
-            UnoImage(
+            UnoFile(
                 file=ExternalFile(
                     url="https://example.com/different.png",
                 ),
