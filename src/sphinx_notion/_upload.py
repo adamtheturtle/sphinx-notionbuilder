@@ -48,6 +48,7 @@ type _JSONValue = (
 )
 
 
+@beartype
 def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
     """Convert a ``file://`` URI to a :class:`Path`."""
     if sys.version_info >= (3, 13):
@@ -114,6 +115,7 @@ class PageTitleAmbiguousError(Exception):
     """Raised when multiple sibling pages match a requested title."""
 
 
+@beartype
 class CloudflareWAFBlockError(Exception):
     """Raised when a request is blocked by the Cloudflare WAF before
     reaching Notion.
