@@ -451,7 +451,7 @@ def _get_uploaded_cover(
     Get uploaded cover file, or None if it matches the existing
     cover.
     """
-    if (  # pragma: no cover - remote cover check
+    if (
         page.cover is not None
         and isinstance(page.cover, NotionFile)
         and _files_match(
