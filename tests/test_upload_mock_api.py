@@ -848,7 +848,6 @@ def test_upload_with_unchanged_cover_path(
     *,
     respx_mock: respx.MockRouter,
     notion_session: Session,
-    parent_page_id: str,
     tmp_path: Path,
 ) -> None:
     """An unchanged local cover is neither uploaded nor cleared."""
@@ -857,18 +856,21 @@ def test_upload_with_unchanged_cover_path(
     before_clear_count = _cover_clear_count(mock=respx_mock)
     before_upload_count = _file_upload_create_count(mock=respx_mock)
 
+    response = MagicMock(spec=requests.Response)
+    response.__enter__.return_value = response
+    response.iter_content.return_value = [b"unchanged-cover"]
     with patch.object(
-        target=notion_upload,
-        attribute="_get_uploaded_cover",
-        return_value=None,
-    ):
+        target=requests,
+        attribute="get",
+        return_value=response,
+    ) as get_cover:
         _ = notion_upload.upload_to_notion(
             session=notion_session,
             blocks=[
-                UnoParagraph(text=text(text="Hello from Microcks upload test"))
+                UnoParagraph(text=text(text="Hello from WireMock upload test"))
             ],
             page_id=None,
-            parent_page_id=parent_page_id,
+            parent_page_id="aa110000-0000-0000-0000-000000000001",
             parent_database_id=None,
             title="Upload Title",
             icon=None,
@@ -879,6 +881,11 @@ def test_upload_with_unchanged_cover_path(
             allow_subpages=False,
         )
 
+    get_cover.assert_called_once_with(
+        url="https://prod-files-secure.s3.us-west-2.amazonaws.com/cover.png",
+        stream=True,
+        timeout=10,
+    )
     assert _cover_clear_count(mock=respx_mock) == before_clear_count
     assert _file_upload_create_count(mock=respx_mock) == before_upload_count
 
