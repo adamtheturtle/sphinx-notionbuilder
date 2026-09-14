@@ -49,7 +49,7 @@ type _JSONValue = (
 
 
 @beartype
-def _file_uri_to_path(*, uri: str) -> Path:  # pragma: no cover
+def _file_uri_to_path(*, uri: str) -> Path:
     """Convert a ``file://`` URI to a :class:`Path`."""
     if sys.version_info >= (3, 13):
         return Path.from_uri(uri=uri)

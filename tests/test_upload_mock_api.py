@@ -890,15 +890,35 @@ def test_upload_with_unchanged_cover_path(
     assert _file_upload_create_count(mock=respx_mock) == before_upload_count
 
 
+@pytest.mark.parametrize(
+    argnames="python_version",
+    argvalues=[(3, 12), (3, 13)],
+)
 def test_upload_with_file_block(
     *,
+    monkeypatch: pytest.MonkeyPatch,
     notion_session: Session,
     parent_page_id: str,
+    python_version: tuple[int, int],
     tmp_path: Path,
 ) -> None:
-    """It is possible to upload a page with a file:// image block."""
+    """The supported file URI paths both upload a local image."""
     img_file = tmp_path / "test.png"
     _ = img_file.write_bytes(data=b"fake-image-data")
+    monkeypatch.setattr(
+        target=sys,
+        name="version_info",
+        value=python_version,
+    )
+
+    if python_version >= (3, 13):
+        path_factory = MagicMock(side_effect=Path)
+        path_factory.from_uri.return_value = img_file
+        monkeypatch.setattr(
+            target=notion_upload,
+            name="Path",
+            value=path_factory,
+        )
 
     page = notion_upload.upload_to_notion(
         session=notion_session,
