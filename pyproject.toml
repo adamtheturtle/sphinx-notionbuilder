@@ -533,16 +533,22 @@ type = [
 # ``@cloup.option_group("...", opt, opt)`` passes the option group's name
 # and its options positionally; the plugin resolves that callable to this
 # internal name.
+# ``url2pathname`` renamed its parameter from ``pathname`` to ``url`` in
+# Python 3.14 (https://github.com/python/cpython/issues/127065), so no keyword
+# works across all supported Python versions. Windows resolves the re-export
+# to the ``nturl2path`` name.
 ignore_names = [
     "cloup._option_groups.option_group",
+    "nturl2path.url2pathname",
+    "urllib.request.url2pathname",
 ]
 
 [tool.strict_kwargs]
 # ``url2pathname`` had its parameter renamed from ``pathname`` to ``url`` in
 # Python 3.14 (https://github.com/python/cpython/issues/127065), so we cannot
 # use a keyword argument that works across all supported Python versions.
-# On Windows, ``urllib.request`` re-exports ``url2pathname`` from ``nturl2path``,
-# so mypy resolves the fullname as ``nturl2path.url2pathname`` on that platform.
+# On Windows, ``urllib.request`` re-exports it from ``nturl2path``, so the
+# checker resolves the callable to that name on that platform.
 ignore_names = [ "nturl2path.url2pathname", "urllib.request.url2pathname" ]
 
 [tool.pydocstringformatter]

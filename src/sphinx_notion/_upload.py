@@ -1,3 +1,7 @@
+# Pyright reports the Python 3.12 URI compatibility API as deprecated only on
+# Windows and cannot scope that diagnostic without an unused-ignore error on
+# POSIX. Remove this setting with the compatibility path when 3.12 is dropped.
+# pyright: reportDeprecated=false
 """Upload documentation to Notion.
 
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
@@ -5,7 +9,6 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import logging
-import sys
 import urllib.request
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -51,12 +54,10 @@ type _JSONValue = (
 @beartype
 def _file_uri_to_path(*, uri: str) -> Path:
     """Convert a ``file://`` URI to a :class:`Path`."""
-    if sys.version_info >= (3, 13):
-        return Path.from_uri(uri=uri)
     parsed_uri = urlparse(url=uri)
     # Python 3.12 names this parameter ``pathname`` while newer versions name
     # it ``url``, so no keyword works across the supported Python versions.
-    return Path(urllib.request.url2pathname(parsed_uri.path))  # noqa: KW001
+    return Path(urllib.request.url2pathname(parsed_uri.path))
 
 
 @beartype
