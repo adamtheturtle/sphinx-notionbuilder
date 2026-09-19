@@ -5460,16 +5460,20 @@ def test_embed_and_video(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """The upstream iframe and video integrations work together."""
+    """The upstream frame and video integration works together."""
     rst_content = """
         .. iframe:: https://example.com/embed
 
         .. video:: https://example.com/video.mp4
+           :caption: Example video
     """
 
     expected_blocks = [
         UnoEmbed(url="https://example.com/embed"),
-        UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
+        UnoVideo(
+            file=ExternalFile(url="https://example.com/video.mp4"),
+            caption=text(text="Example video"),
+        ),
     ]
 
     _ = _assert_rst_converts_to_notion_objects(

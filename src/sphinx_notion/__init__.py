@@ -46,7 +46,7 @@ from sphinx_toolbox.rest_example import reSTExample
 from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
     mermaid as mermaid_node,
 )
-from sphinxcontrib.video import video_node
+from sphinxcontrib.video import Video, video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -2337,7 +2337,7 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Process an iframe from ``sphinx-iframes``."""
+    """Process a node from ``sphinx-iframes``."""
     del section_level
 
     soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
@@ -3156,6 +3156,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         node=_MentionDateNode,
         html=(_visit_mention_date_node_html, None),
     )
+
+    # ``sphinx-iframes`` 1.2 delegates video files to
+    # ``sphinxcontrib.video``, but rejects options such as ``caption``
+    # before delegating. Register the full directive when it is available.
+    if "sphinxcontrib.video" in app.extensions:
+        app.add_directive(name="video", cls=Video, override=True)
 
     return {
         "parallel_read_safe": True,
