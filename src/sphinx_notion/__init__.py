@@ -2337,16 +2337,9 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process raw nodes, specifically those containing HTML from the
-    extension
-    ``sphinx-iframes``.
-    """
+    """Process a node from ``sphinx-iframes``."""
     del section_level
 
-    # Check if this is an ``iframe`` from ``sphinx-iframes``.
-    # See https://github.com/TeachBooks/sphinx-iframes/issues/9
-    # for making this more robust.
     soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
     iframes = soup.find_all(name="iframe")
     (iframe,) = iframes
@@ -3164,11 +3157,9 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         html=(_visit_mention_date_node_html, None),
     )
 
-    # ``sphinxcontrib.video`` implements a ``video`` directive
-    # that we use. The ``sphinx-iframes`` extension implements a ``video``
-    # directive that we don't use.
-    # Make sure that if they are both enabled, we use the
-    # ``sphinxcontrib.video`` extension.
+    # ``sphinx-iframes`` 1.2 delegates video files to
+    # ``sphinxcontrib.video``, but rejects options such as ``caption``
+    # before delegating. Register the full directive when it is available.
     if "sphinxcontrib.video" in app.extensions:
         app.add_directive(name="video", cls=Video, override=True)
 

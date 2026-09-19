@@ -5460,23 +5460,20 @@ def test_embed_and_video(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together
-    in
-    this with ``sphinx-notionbuilder``.
-
-    We check this because there was a conflict between the two
-    extensions. See
-    https://github.com/TeachBooks/sphinx-iframes/issues/8.
-    """
+    """The upstream frame and video integration works together."""
     rst_content = """
         .. iframe:: https://example.com/embed
 
         .. video:: https://example.com/video.mp4
+           :caption: Example video
     """
 
     expected_blocks = [
         UnoEmbed(url="https://example.com/embed"),
-        UnoVideo(file=ExternalFile(url="https://example.com/video.mp4")),
+        UnoVideo(
+            file=ExternalFile(url="https://example.com/video.mp4"),
+            caption=text(text="Example video"),
+        ),
     ]
 
     _ = _assert_rst_converts_to_notion_objects(

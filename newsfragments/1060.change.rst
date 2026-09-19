@@ -1,0 +1,1 @@
+Require ``sphinx-iframes`` 1.2.0 for its dedicated node type while retaining support for the full set of ``sphinxcontrib-video`` options.
