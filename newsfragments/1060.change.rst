@@ -1,0 +1,1 @@
+Require ``sphinx-iframes`` 1.2.0 and rely on its integration with ``sphinxcontrib-video`` instead of re-registering the ``video`` directive.
