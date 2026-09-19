@@ -5460,14 +5460,7 @@ def test_embed_and_video(
     make_app: Callable[..., SphinxTestApp],
     tmp_path: Path,
 ) -> None:
-    """``sphinx-iframes`` and ``sphinxcontrib.video`` can be used together
-    in
-    this with ``sphinx-notionbuilder``.
-
-    We check this because there was a conflict between the two
-    extensions. See
-    https://github.com/TeachBooks/sphinx-iframes/issues/8.
-    """
+    """The upstream iframe and video integrations work together."""
     rst_content = """
         .. iframe:: https://example.com/embed
 

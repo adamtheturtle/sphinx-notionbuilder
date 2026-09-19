@@ -46,7 +46,7 @@ from sphinx_toolbox.rest_example import reSTExample
 from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
     mermaid as mermaid_node,
 )
-from sphinxcontrib.video import Video, video_node
+from sphinxcontrib.video import video_node
 from sphinxnotes.strike import strike_node
 from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -2337,16 +2337,9 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """
-    Process raw nodes, specifically those containing HTML from the
-    extension
-    ``sphinx-iframes``.
-    """
+    """Process an iframe from ``sphinx-iframes``."""
     del section_level
 
-    # Check if this is an ``iframe`` from ``sphinx-iframes``.
-    # See https://github.com/TeachBooks/sphinx-iframes/issues/9
-    # for making this more robust.
     soup = bs4.BeautifulSoup(markup=node.rawsource, features="html.parser")
     iframes = soup.find_all(name="iframe")
     (iframe,) = iframes
@@ -3163,14 +3156,6 @@ def setup(app: Sphinx) -> ExtensionMetadata:
         node=_MentionDateNode,
         html=(_visit_mention_date_node_html, None),
     )
-
-    # ``sphinxcontrib.video`` implements a ``video`` directive
-    # that we use. The ``sphinx-iframes`` extension implements a ``video``
-    # directive that we don't use.
-    # Make sure that if they are both enabled, we use the
-    # ``sphinxcontrib.video`` extension.
-    if "sphinxcontrib.video" in app.extensions:
-        app.add_directive(name="video", cls=Video, override=True)
 
     return {
         "parallel_read_safe": True,
