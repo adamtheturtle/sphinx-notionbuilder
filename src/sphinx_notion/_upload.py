@@ -1,6 +1,8 @@
-# Pyright reports the Python 3.12 URI compatibility API as deprecated only on
-# Windows and cannot scope that diagnostic without an unused-ignore error on
-# POSIX. Remove this setting with the compatibility path when 3.12 is dropped.
+# Pyright reports ``urllib.request.url2pathname`` as deprecated only on Windows
+# before Python 3.14. An inline suppression is therefore unnecessary on other
+# platforms and versions, where ``reportUnnecessaryTypeIgnoreComment`` rejects
+# it. Remove this file-level suppression after Pyright bundles the fix from
+# https://github.com/python/typeshed/pull/16427.
 # pyright: reportDeprecated=false
 """Upload documentation to Notion.
 

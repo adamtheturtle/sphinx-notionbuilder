@@ -449,6 +449,9 @@ errors.non-exhaustive-match = "error"
 enabled-ignores = [ "pyrefly" ]
 preset = "all"
 sub-config = [
+    # Remove this suppression once
+    # https://github.com/python/typeshed/pull/16427 is included in
+    # Pyrefly's bundled typeshed.
     # On Windows, ``urllib.request.url2pathname`` is re-exported from the
     # deprecated ``nturl2path`` module. The fallback is required for Python 3.12,
     # where ``Path.from_uri`` is unavailable, and the diagnostic does not fire on
@@ -462,20 +465,13 @@ enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 
 [tool.ty]
-rules.blanket-ignore-comment = "error"
-rules.division-by-zero = "warn"
-rules.dynamic-function-decorator-return = "error"
-rules.missing-type-argument = "error"
-rules.possibly-missing-attribute = "warn"
-rules.possibly-missing-import = "warn"
-rules.possibly-unresolved-reference = "warn"
-rules.unsound-assignment = "error"
-rules.unsound-return-statement = "error"
-rules.unsound-yield = "error"
-rules.unsupported-dynamic-base = "warn"
+rules.all = "error"
 # Error if ty emits any warning-level diagnostics.
 terminal.error-on-warning = true
 overrides = [
+    # Remove this suppression once
+    # https://github.com/python/typeshed/pull/16427 is included in
+    # ty's bundled typeshed.
     # On Windows, ``urllib.request.url2pathname`` is re-exported from the
     # deprecated ``nturl2path`` module, so ty reports a ``deprecated`` diagnostic
     # for our Python 3.12 ``file://`` URI fallback there. The diagnostic does not
