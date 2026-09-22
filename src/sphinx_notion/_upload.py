@@ -1,6 +1,5 @@
-# Remove this suppression once
-# https://github.com/python/typeshed/pull/16427 is included in
-# Pyright's bundled typeshed.
+# Remove this suppression after Pyright bundles the fix from
+# https://github.com/python/typeshed/pull/16427.
 # pyright: reportDeprecated=false
 """Upload documentation to Notion.
 
