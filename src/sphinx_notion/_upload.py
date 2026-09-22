@@ -1,3 +1,7 @@
+# Remove this suppression once
+# https://github.com/python/typeshed/pull/16427 is included in
+# Pyright's bundled typeshed.
+# pyright: reportDeprecated=false
 """Upload documentation to Notion.
 
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
@@ -5,15 +9,14 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 
 import hashlib
 import logging
-import string
-import sys
+import urllib.request
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, TypeGuard
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 import requests
 import ultimate_notion.blocks as uno_blocks
@@ -38,7 +41,6 @@ _LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, uno_blocks.PDF, UnoFile)
 _HTTP_FORBIDDEN = 403
-_WINDOWS_DRIVE_COMPONENT_COUNT = 2
 # How much of the response body to surface in logs. WAF block pages are
 # large HTML documents, so we cap the output to keep logs readable while
 # still including the diagnostic content (e.g. the Cloudflare Ray ID).
@@ -53,31 +55,9 @@ type _JSONValue = (
 def _file_uri_to_path(*, uri: str) -> Path:
     """Convert a ``file://`` URI to a :class:`Path`."""
     parsed_uri = urlparse(url=uri)
-    url_path = parsed_uri.path
-    if sys.platform == "win32":  # pragma: no cover - Windows-only path logic
-        url_path = url_path.replace(":", "|")
-        if "|" not in url_path:
-            if url_path[:4] == "////":
-                url_path = url_path[2:]
-            return Path(unquote(string="\\".join(url_path.split(sep="/"))))
-
-        components = url_path.split(sep="|")
-        if (
-            len(components) != _WINDOWS_DRIVE_COMPONENT_COUNT
-            or components[0] == ""
-            or components[0][-1] not in string.ascii_letters
-        ):
-            msg = f"Bad URL path: {url_path}"
-            raise OSError(msg)
-        drive = components[0][-1].upper()
-        path = f"{drive}:"
-        for component in components[1].split(sep="/"):
-            if component != "":
-                path = f"{path}\\{unquote(string=component)}"
-        if path.endswith(":") and url_path.endswith("/"):
-            path = f"{path}\\"
-        return Path(path)
-    return Path(unquote(string=url_path))  # pragma: no cover - POSIX-only path
+    # Python 3.12 names this parameter ``pathname`` while newer versions name
+    # it ``url``, so no keyword works across the supported Python versions.
+    return Path(urllib.request.url2pathname(parsed_uri.path))
 
 
 @beartype
