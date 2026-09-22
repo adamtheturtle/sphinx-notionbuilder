@@ -56,7 +56,7 @@ scripts.upload-files = "_notion_scripts.upload_files:main"
 
 [dependency-groups]
 dev = [
-    "actionlint-py==1.7.12.24",
+    "actionlint-py==1.7.12.25",
     "anstrip==0.2.2",
     "check-manifest==0.51",
     "deptry==0.25.1",
