@@ -99,7 +99,7 @@ dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "strict-kwargs==2026.8.28.post2",
     "towncrier==26.9.0",
-    "ty==0.0.82",
+    "ty==0.0.83",
     "types-docutils==0.23.0.20260917",
     "types-requests==2.33.0.20260906",
     "vale==3.22.0.0",
