@@ -58,6 +58,7 @@ scripts.upload-files = "_notion_scripts.upload_files:main"
 dev = [
     "actionlint-py==1.7.12.25",
     "anstrip==0.2.2",
+    "beartype==0.23.0rc2",
     "check-manifest==0.51",
     "deptry==0.25.1",
     "doc8==2.0.0",
@@ -79,7 +80,7 @@ dev = [
     "pyright==1.1.414",
     "pyroma==5.0.1",
     "pytest==9.1.1",
-    "pytest-beartype-tests==2026.8.16",
+    "pytest-beartype==0.3.0",
     "pytest-cov==7.1.0",
     "pytest-regressions==2.11.0",
     "pyyaml==6.0.3",
@@ -486,6 +487,13 @@ analysis.strict-equality-semantics = true
 analysis.strict-generic-narrowing = true
 
 [tool.pytest]
+# Keep the script package checked. Source functions in sphinx_notion already
+# use @beartype. Add sphinx_notion to beartype_packages once its import hook
+# no longer adds false missing branches to the 100% coverage gate:
+# https://github.com/beartype/beartype/issues/706
+beartype_packages = [ "_notion_scripts" ]
+beartype_test_fixtures = true
+beartype_tests = true
 log_cli = true
 xfail_strict = true
 
