@@ -488,11 +488,10 @@ analysis.strict-generic-narrowing = true
 
 [tool.pytest]
 # Keep the script package checked. Source functions in sphinx_notion already
-# use @beartype, while its import hook affects the 100% coverage gate.
-beartype_packages = [ "_notion_scripts" ]
-# sphinx_notion source functions already use @beartype. Its import hook adds
-# false missing generator exit branches to the 100% coverage gate.
+# use @beartype. Add sphinx_notion to beartype_packages once its import hook
+# no longer adds false missing branches to the 100% coverage gate:
 # https://github.com/beartype/beartype/issues/706
+beartype_packages = [ "_notion_scripts" ]
 beartype_test_fixtures = true
 beartype_tests = true
 log_cli = true
