@@ -1,0 +1,1 @@
+Require ``sphinx-iframes`` 1.2.1 and use its upstream video directive with caption support.
