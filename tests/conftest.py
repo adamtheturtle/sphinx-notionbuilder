@@ -3,11 +3,13 @@
 import json
 import os
 from collections.abc import Iterator
+from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 import respx
+from pyprojroot import find_root, has_file
 from ultimate_notion import Session
 from wiremock_mock import add_wiremock_to_respx
 
@@ -15,13 +17,13 @@ pytest_plugins = "sphinx.testing.fixtures"  # pylint: disable=invalid-name
 
 
 @pytest.fixture(name="respx_mock", scope="module")
-def fixture_respx_mock(
-    *,
-    request: pytest.FixtureRequest,
-) -> Iterator[respx.MockRouter]:
+def fixture_respx_mock() -> Iterator[respx.MockRouter]:
     """Provide a respx mock router loaded with WireMock stubs."""
     mappings_path = (
-        request.config.rootpath
+        find_root(
+            criterion=has_file(file="pyproject.toml"),
+            start=Path(__file__).resolve(),
+        )
         / "tests"
         / "notion_sandbox"
         / "notion-wiremock-stubs.json"
