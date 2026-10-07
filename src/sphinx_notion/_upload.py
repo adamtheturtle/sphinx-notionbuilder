@@ -237,9 +237,7 @@ def _is_json_object(value: object, /) -> TypeGuard[dict[str, _JSONValue]]:
 def _serialized_object(*, value: object) -> dict[str, _JSONValue]:
     """Return a mutable copy of a serialized JSON object."""
     assert _is_json_object(value)
-    # Remove the explicit type arguments once ty fixes recursive alias copying:
-    # https://github.com/astral-sh/ty/issues/4598.
-    return dict[str, _JSONValue](value)
+    return dict(value)
 
 
 @beartype
