@@ -428,7 +428,7 @@ hooks = [
     name = "linkcheck",
     entry = "bash -c 'set -a && source sample.env && set +a && uv run --group=sample sphinx-build -W -b linkcheck sample build-sample/'",
     language = "python",
-    types_or = ["rst"],
+    types_or = ["rst", "markdown"],
     stages = ["manual"],
     pass_filenames = false,
     additional_dependencies = ["uv==0.11.7"]
@@ -438,7 +438,7 @@ hooks = [
     name = "spelling",
     entry = "bash -c 'set -a && source sample.env && set +a && uv run --group=sample sphinx-build -W -b spelling sample build-sample/'",
     language = "python",
-    types_or = ["rst"],
+    types_or = ["rst", "markdown"],
     stages = ["manual"],
     pass_filenames = false,
     additional_dependencies = ["uv==0.11.7"]
