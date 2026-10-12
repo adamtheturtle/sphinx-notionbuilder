@@ -105,7 +105,7 @@ dev = [
     "towncrier==26.9.0",
     "ty==0.0.85",
     "types-docutils==0.23.0.20260923",
-    "types-requests==2.33.0.20260906",
+    "types-requests==2.33.0.20261006",
     "vale==3.22.0.0",
     "vulture==2.16",
     "wiremock-mock==2026.9.7",
