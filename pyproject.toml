@@ -59,7 +59,7 @@ scripts.upload-files = "_notion_scripts.upload_files:main"
 dev = [
     "actionlint-py==1.7.12.25",
     "anstrip==0.2.2",
-    "beartype==0.23.0",
+    "beartype==0.23.1",
     "check-manifest==0.51",
     "deptry==0.25.1",
     "doc8==2.0.0",
