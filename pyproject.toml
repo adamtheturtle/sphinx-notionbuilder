@@ -101,7 +101,7 @@ dev = [
     "sphinx-tabs>=3.5.0",
     "sphinxcontrib-spelling==8.0.2",
     "sphinxcontrib-text-styles==0.2.1",
-    "strict-kwargs==2026.8.28.post2",
+    "strict-kwargs==2026.10.9",
     "towncrier==26.9.0",
     "ty==0.0.85",
     "types-docutils==0.23.0.20260923",
