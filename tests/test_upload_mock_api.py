@@ -701,21 +701,26 @@ def test_ambiguous_title_does_not_mutate_pages(
     """Duplicate title lookup raises before creating or updating a
     page.
     """
-    session = MagicMock(spec=Session)
-    parent = MagicMock()
     matching_pages = [MagicMock(title="Docs"), MagicMock(title="Docs")]
+    parent = MagicMock(
+        subpages=matching_pages,
+        get_all_pages=MagicMock(
+            return_value=MagicMock(
+                to_pages=MagicMock(return_value=matching_pages),
+            ),
+        ),
+    )
+    create_page = MagicMock()
+    session = MagicMock(
+        spec=Session,
+        get_page=MagicMock(return_value=parent),
+        get_ds=MagicMock(return_value=parent),
+        create_page=create_page,
+    )
     parent_page_id = "parent-page" if parent_kind == "page" else None
     parent_database_id = (
         "parent-database" if parent_kind == "database" else None
     )
-    if parent_kind == "page":
-        session.get_page.return_value = parent
-        parent.subpages = matching_pages
-    else:
-        session.get_ds.return_value = parent
-        parent.get_all_pages.return_value.to_pages.return_value = (
-            matching_pages
-        )
 
     message = (
         "Found 2 pages matching title 'Docs'. "
@@ -740,7 +745,7 @@ def test_ambiguous_title_does_not_mutate_pages(
             allow_subpages=False,
         )
 
-    session.create_page.assert_not_called()
+    create_page.assert_not_called()
     assert all(len(page.mock_calls) == 0 for page in matching_pages)
 
 
@@ -856,9 +861,11 @@ def test_upload_with_unchanged_cover_path(
     before_clear_count = _cover_clear_count(mock=respx_mock)
     before_upload_count = _file_upload_create_count(mock=respx_mock)
 
-    response = MagicMock(spec=requests.Response)
-    response.__enter__.return_value = response
-    response.iter_content.return_value = [b"unchanged-cover"]
+    response = MagicMock(
+        spec=requests.Response,
+        iter_content=MagicMock(return_value=[b"unchanged-cover"]),
+    )
+    response.configure_mock(**{"__enter__.return_value": response})
     with patch.object(
         target=requests,
         attribute="get",
@@ -1069,9 +1076,10 @@ def test_upload_matching_local_file_is_unchanged(
         )
     uploads_before = _file_upload_create_count(mock=respx_mock)
 
-    response = MagicMock()
-    response.__enter__.return_value = response
-    response.iter_content.return_value = [b"image-data", b""]
+    response = MagicMock(
+        iter_content=MagicMock(return_value=[b"image-data", b""]),
+    )
+    response.configure_mock(**{"__enter__.return_value": response})
     with patch.object(
         target=requests,
         attribute="get",
