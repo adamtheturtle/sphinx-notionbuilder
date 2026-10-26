@@ -351,7 +351,7 @@ Bullet Lists
 
 .. rest-example::
 
-   This demonstrates the new support for nesting various content types within bullet lists:
+   This demonstrates support for nesting paragraphs, images, and lists within bullet lists:
 
    * First bullet point with **bold text**
 

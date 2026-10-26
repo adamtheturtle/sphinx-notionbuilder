@@ -26,7 +26,7 @@ Add the following to ``conf.py`` to enable the extension:
 
    extensions = ["sphinx_notion"]
 
-``sphinx-notionbuilder`` also works with a variety of Sphinx extensions:
+``sphinx-notionbuilder`` also works with the following Sphinx extensions:
 
 * `sphinx-toolbox collapse`_
 * `sphinx-toolbox rest_example`_
