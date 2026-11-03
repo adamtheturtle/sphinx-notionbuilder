@@ -106,7 +106,7 @@ dev = [
     "ty==0.0.95",
     "types-docutils==0.23.0.20261030",
     "types-requests==2.33.0.20261030",
-    "vale==3.25.1.0",
+    "vale==3.26.0.1",
     "vulture==2.16",
     "wiremock-mock==2026.10.9",
     "yamlfix==1.19.1",
