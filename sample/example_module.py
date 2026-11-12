@@ -25,7 +25,7 @@ class Calculator:
         Args:
             initial_value: The starting value.
         """
-        self.value = initial_value
+        self.value: float = initial_value
 
     def add(self, *, amount: float) -> float:
         """Add an amount to the current value.
