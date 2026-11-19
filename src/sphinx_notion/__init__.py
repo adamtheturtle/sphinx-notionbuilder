@@ -48,7 +48,7 @@ from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxcontrib.video import video_node
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji, Session
+from ultimate_notion import Emoji
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -105,6 +105,7 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
+from sphinx_notion._notifications import publishing_session
 from sphinx_notion._upload import (
     UploadStrategy,
     serialize_block_with_children,
@@ -2971,7 +2972,10 @@ def _publish_to_notion(
     for docname, parent_docname in parent_docnames.items():
         child_docnames_by_parent.setdefault(parent_docname, []).append(docname)
 
-    session = Session(base_url=app.config.notion_api_base_url)
+    session = publishing_session(
+        base_url=app.config.notion_api_base_url,
+        notification_mode=app.config.notion_notification_mode,
+    )
     try:
         root_page = upload_to_notion(
             session=session,
@@ -3094,6 +3098,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_config_value(
         name="notion_upload_strategy",
         default=UploadStrategy.DIFF.value,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_notification_mode",
+        default=None,
         rebuild="",
         types=(str,),
     )

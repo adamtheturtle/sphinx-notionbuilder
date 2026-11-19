@@ -353,11 +353,16 @@ Arguments:
 - ``--icon``: (Optional) Icon for the page (emoji)
 - ``--cover-path``: (Optional) Path to a cover image file for the page
 - ``--strategy``: (Optional) Block upload strategy, ``diff`` (the default) or ``replace``
+- ``--notification-mode silent``: (Optional) Suppress Notion notifications during publication
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
 With ``--page-id``, the page is looked up by ID instead of by title, and the command fails if no page with that ID exists.
 This avoids a silent fork where renaming a page (in Notion or in your configuration) causes a new page to be created alongside the old one.
+
+Silent mode suppresses Notion page-update, mention, and Person property notifications for page creation, page updates, and block appends.
+Notion automations, reminders, and webhooks still run.
+Omitting the option uses Notion's default notification behavior.
 
 Upload Strategies
 ~~~~~~~~~~~~~~~~~
@@ -414,6 +419,9 @@ Add the following configuration options to your ``conf.py``:
    # Optional: Use "diff" (default) or append-then-delete "replace"
    notion_upload_strategy = "diff"
 
+   # Optional: Suppress Notion notifications during publication
+   notion_notification_mode = "silent"
+
 **Configuration Options:**
 
 ``notion_publish``
@@ -466,6 +474,10 @@ Add the following configuration options to your ``conf.py``:
    Selects the block synchronization strategy: ``"diff"`` preserves matching block IDs and discussions while uploading only changes, and ``"replace"`` appends the complete new document before deleting all old blocks.
    With ``"replace"``, all existing blocks are considered deletable by ``notion_cancel_on_discussion``.
    Default: ``"diff"``
+
+``notion_notification_mode``
+   Set to ``"silent"`` to suppress Notion notifications for the root page and its published child pages.
+   The default, ``None``, uses Notion's default notification behavior.
 
 Publishing the Sample Document Locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,11 +7,13 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import httpx
 import pytest
 import requests
 import respx
+from notion_client.constants import DEFAULT_BASE_URL
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import ExternalFile, Session
 from ultimate_notion.blocks import (
@@ -27,10 +29,13 @@ from ultimate_notion.blocks import (
     Paragraph as UnoParagraph,
 )
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
+from ultimate_notion.obj_api.blocks import Page as UnoObjAPIPage
 from ultimate_notion.obj_api.objects import UploadedFile as UnoUploadedFile
+from ultimate_notion.page import Page
 from ultimate_notion.rich_text import text
 
 import sphinx_notion._upload as notion_upload
+from sphinx_notion._notifications import publishing_session
 from sphinx_notion._upload import (
     CloudflareWAFBlockError,
     DiscussionsExistError,
@@ -170,6 +175,62 @@ def test_upload_to_notion_with_wiremock(
         )
         == before_append_count
     )
+
+
+def test_silent_mode_reaches_every_append_batch(
+    *,
+    respx_mock: respx.MockRouter,
+    notion_token: str,
+    parent_page_id: str,
+) -> None:
+    """Apply the mode to every HTTP request when Ultimate Notion batches."""
+    assert notion_token != ""
+    batch_sizes: list[int] = []
+
+    def append_response(request: httpx.Request) -> httpx.Response:
+        """Echo the appended blocks with server-assigned IDs."""
+        payload = json_object(value=json.loads(s=request.content))
+        assert payload["notifications"] == {"mode": "silent"}
+        children = json_array(value=payload["children"])
+        batch_sizes.append(len(children))
+        return httpx.Response(
+            status_code=200,
+            json={
+                "object": "list",
+                "type": "block",
+                "block": {},
+                "results": [
+                    {**json_object(value=child), "id": str(object=uuid4())}
+                    for child in children
+                ],
+                "next_cursor": None,
+                "has_more": False,
+            },
+        )
+
+    url = f"{DEFAULT_BASE_URL}/v1/blocks/{parent_page_id}/children"
+    _ = respx_mock.get(url=f"{url}?page_size=100").respond(
+        json={
+            "object": "list",
+            "type": "block",
+            "block": {},
+            "results": [],
+            "next_cursor": None,
+            "has_more": False,
+        },
+    )
+    _ = respx_mock.patch(url=url).mock(side_effect=append_response)
+    with publishing_session(base_url=None, notification_mode="silent"):
+        page = Page.wrap_obj_ref(
+            UnoObjAPIPage.model_validate(
+                obj={
+                    "id": parent_page_id,
+                    "parent": {"type": "workspace", "workspace": True},
+                },
+            ),
+        )
+        _ = page.append(blocks=[Divider() for _ in range(101)])
+    assert batch_sizes == [100, 1]
 
 
 def test_upload_replace_appends_before_deleting_existing_blocks(
