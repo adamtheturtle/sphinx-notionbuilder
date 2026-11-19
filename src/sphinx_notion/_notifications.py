@@ -18,7 +18,9 @@ class NotificationMode(StrEnum):
 
 
 class _PublishingClient(Client):
-    """Apply the publishing mode after the client filters endpoint fields."""
+    """Apply the publishing mode after the client filters endpoint
+    fields.
+    """
 
     def __init__(self, *, client: Client, mode: NotificationMode) -> None:
         self._mode = mode
@@ -59,7 +61,9 @@ class _PublishingClient(Client):
 def publishing_session(
     *, base_url: str | None, notification_mode: str | None
 ) -> Session:
-    """Create a publishing session with the requested notification mode."""
+    """Create a publishing session with the requested notification
+    mode.
+    """
     api_base_url = DEFAULT_BASE_URL if base_url is None else base_url
     if notification_mode is None:
         return Session(base_url=api_base_url)

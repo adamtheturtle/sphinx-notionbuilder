@@ -183,7 +183,9 @@ def test_silent_mode_reaches_every_append_batch(
     notion_token: str,
     parent_page_id: str,
 ) -> None:
-    """Apply the mode to every HTTP request when Ultimate Notion batches."""
+    """Apply the mode to every HTTP request when Ultimate Notion
+    batches.
+    """
     assert notion_token != ""
     batch_sizes: list[int] = []
 
