@@ -48,7 +48,7 @@ from sphinxcontrib.mermaid import (  # pyright: ignore[reportMissingTypeStubs]
 )
 from sphinxcontrib.video import video_node
 from sphinxnotes.strike import strike_node
-from ultimate_notion import Emoji
+from ultimate_notion import Emoji, Session
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block
 from ultimate_notion.blocks import BulletedItem as UnoBulletedItem
@@ -105,8 +105,8 @@ from ultimate_notion.obj_api.objects import (
 )
 from ultimate_notion.rich_text import Text, math, text
 
-from sphinx_notion._notifications import publishing_session
 from sphinx_notion._upload import (
+    NotificationMode,
     UploadStrategy,
     serialize_block_with_children,
     upload_to_notion,
@@ -2862,6 +2862,12 @@ def _validate_notion_config(
     if not config.notion_publish:
         return
 
+    notification_modes = [mode.value for mode in NotificationMode]
+    if config.notion_notification_mode not in notification_modes:
+        choices = ", ".join(notification_modes)
+        msg = f"notion_notification_mode must be one of {choices}"
+        raise ValueError(msg)
+
     if (
         not config.notion_page_id
         and not config.notion_parent_page_id
@@ -2972,10 +2978,7 @@ def _publish_to_notion(
     for docname, parent_docname in parent_docnames.items():
         child_docnames_by_parent.setdefault(parent_docname, []).append(docname)
 
-    session = publishing_session(
-        base_url=app.config.notion_api_base_url,
-        notification_mode=app.config.notion_notification_mode,
-    )
+    session = Session(base_url=app.config.notion_api_base_url)
     try:
         root_page = upload_to_notion(
             session=session,
@@ -3103,7 +3106,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     )
     app.add_config_value(
         name="notion_notification_mode",
-        default=None,
+        default=NotificationMode.DEFAULT.value,
         rebuild="",
         types=(str,),
     )

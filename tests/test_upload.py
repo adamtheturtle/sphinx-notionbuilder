@@ -3,7 +3,6 @@
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -17,10 +16,7 @@ from ultimate_notion.rich_text import text
 
 from _notion_scripts.upload import main  # pylint: disable=import-private-name
 from sphinx_notion._upload import PageTitleAmbiguousError
-from tests._wiremock import count_page_metadata_clear_requests, json_object
-
-if TYPE_CHECKING:
-    from respx.models import Call
+from tests._wiremock import count_page_metadata_clear_requests
 
 type _JSONValue = (
     bool | int | float | str | list[_JSONValue] | dict[str, _JSONValue] | None
@@ -112,7 +108,7 @@ def test_upload_success(
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """Uploading through the CLI reports success."""
+    """Uploading through the CLI with the default mode reports success."""
     assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
@@ -121,13 +117,21 @@ def test_upload_success(
         ),
     )
 
-    result = _invoke_upload(
-        blocks_file=blocks_file,
-        parent_page_id=parent_page_id,
-        mock_api_base_url=mock_api_base_url,
-        cancel_on_discussion=False,
-        page_id=None,
-        strategy=None,
+    result = CliRunner().invoke(
+        cli=main,
+        args=[
+            "--file",
+            str(object=blocks_file),
+            "--parent-page-id",
+            parent_page_id,
+            "--title",
+            "Upload Title",
+            "--notion-api-base-url",
+            mock_api_base_url,
+            "--notification-mode",
+            "default",
+        ],
+        catch_exceptions=False,
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)
@@ -167,75 +171,6 @@ def test_upload_replace_strategy_success(
         "Uploaded page: 'Upload Title' "
         "(https://www.notion.so/Upload-Title-59833787)\n"
     )
-
-
-@pytest.mark.parametrize(
-    argnames=("location_option", "page_write_method"),
-    argvalues=[("--parent-page-id", "POST"), ("--page-id", "PATCH")],
-)
-def test_upload_silent(
-    *,
-    location_option: str,
-    page_write_method: str,
-    mock_api_base_url: str,
-    notion_token: str,
-    parent_page_id: str,
-    respx_mock: respx.MockRouter,
-    tmp_path: Path,
-) -> None:
-    """Silent replace sends the mode when writing pages and blocks."""
-    assert notion_token != ""
-    blocks_file = _write_blocks_file(
-        tmp_path=tmp_path,
-        block_dicts=_paragraph_blocks(
-            text_content="Hello from WireMock upload test",
-        ),
-    )
-    calls_before = len(respx_mock.calls)
-    result = CliRunner().invoke(
-        cli=main,
-        args=[
-            "--file",
-            str(object=blocks_file),
-            "--title",
-            "Upload Title",
-            "--notion-api-base-url",
-            mock_api_base_url,
-            location_option,
-            parent_page_id,
-            "--strategy",
-            "replace",
-            "--notification-mode",
-            "silent",
-        ],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == 0, (result.stdout, result.stderr)
-
-    calls: list[Call] = list(respx_mock.calls)
-    requests = [call.request for call in calls[calls_before:]]
-    page_writes = [
-        request
-        for request in requests
-        if request.method == page_write_method
-        and request.url.path
-        in {
-            "/v1/pages",
-            f"/v1/pages/{parent_page_id}",
-            f"/v1/pages/{parent_page_id.replace('-', '')}",
-        }
-    ]
-    appends = [
-        request
-        for request in requests
-        if request.method == "PATCH"
-        and request.url.path == f"/v1/blocks/{parent_page_id}/children"
-    ]
-    assert len(page_writes) == 1
-    assert len(appends) == 1
-    for request in [*page_writes, *appends]:
-        payload = json_object(value=json.loads(s=request.content))
-        assert payload["notifications"] == {"mode": "silent"}
 
 
 def test_upload_page_has_subpages_error(

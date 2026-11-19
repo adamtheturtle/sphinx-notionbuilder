@@ -1,10 +1,8 @@
 """Tests for the _publish_to_notion event callback."""
 
-import json
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -16,11 +14,7 @@ from sphinx_notion._upload import PageHasSubpagesError
 from tests._wiremock import (
     count_mock_requests,
     count_page_metadata_clear_requests,
-    json_object,
 )
-
-if TYPE_CHECKING:
-    from respx.models import Call
 
 
 def test_publish_skips_on_exception(
@@ -65,6 +59,33 @@ def test_publish_skips_when_disabled(
     )
     app.build()
     assert app.statuscode == 0
+    assert app.config.notion_notification_mode == "default"
+
+
+def test_publish_rejects_unsupported_notification_mode(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Publishing requires a supported notification mode."""
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+
+    with pytest.raises(
+        expected_exception=ExtensionError,
+        match="notion_notification_mode must be one of default",
+    ):
+        _ = make_app(
+            srcdir=srcdir,
+            confoverrides={
+                "extensions": ["sphinx_notion"],
+                "notion_publish": True,
+                "notion_page_id": "abc123",
+                "notion_page_title": "Test Page",
+                "notion_notification_mode": "silent",
+            },
+        )
 
 
 def test_publish_skips_when_not_notion_builder(
@@ -119,10 +140,6 @@ def test_publish_skips_when_no_output_file(
     assert "index.json found" in app.warning.getvalue()
 
 
-@pytest.mark.parametrize(
-    argnames="notification_mode",
-    argvalues=[None, "silent"],
-)
 def test_publish_success(
     *,
     make_app: Callable[..., SphinxTestApp],
@@ -131,7 +148,6 @@ def test_publish_success(
     notion_token: str,
     parent_page_id: str,
     tmp_path: Path,
-    notification_mode: str | None,
 ) -> None:
     """A Notion build with notion_publish=True uploads to the mock Notion
     API.
@@ -154,7 +170,7 @@ def test_publish_success(
             "notion_page_id": parent_page_id,
             "notion_page_title": "Upload Title",
             "notion_api_base_url": mock_api_base_url,
-            "notion_notification_mode": notification_mode,
+            "notion_notification_mode": "default",
         },
     )
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
@@ -167,21 +183,8 @@ def test_publish_success(
         mock=respx_mock,
         page_id=parent_page_id,
     )
-    calls_before = len(respx_mock.calls)
     app.build()
     assert app.statuscode == 0
-    calls: list[Call] = list(respx_mock.calls)
-    append_payloads = [
-        json_object(value=json.loads(s=call.request.content))
-        for call in calls[calls_before:]
-        if call.request.method == "PATCH"
-        and call.request.url.path == append_url_path
-    ]
-    assert len(append_payloads) == 1
-    if notification_mode is None:
-        assert "notifications" not in append_payloads[0]
-    else:
-        assert append_payloads[0]["notifications"] == {"mode": "silent"}
     assert (
         count_mock_requests(
             mock=respx_mock,
@@ -237,7 +240,7 @@ def test_publish_toctree_as_page_hierarchy(
     ]
 
     with (
-        patch(target="sphinx_notion.publishing_session"),
+        patch(target="sphinx_notion.Session"),
         patch(
             target="sphinx_notion.upload_to_notion",
             side_effect=[

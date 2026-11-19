@@ -10,12 +10,13 @@ from pathlib import Path
 import click
 import cloup
 from beartype import beartype
+from ultimate_notion import Session
 from ultimate_notion.blocks import Block
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
-from sphinx_notion._notifications import NotificationMode, publishing_session
 from sphinx_notion._upload import (
     DiscussionsExistError,
+    NotificationMode,
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
@@ -106,7 +107,10 @@ from sphinx_notion._upload import (
 @cloup.option(
     "--notification-mode",
     type=click.Choice(choices=[mode.value for mode in NotificationMode]),
-    help="Suppress Notion notifications for this upload.",
+    default=NotificationMode.DEFAULT.value,
+    expose_value=False,
+    show_default=True,
+    help="Notion notification mode for this upload.",
 )
 @cloup.option(
     "--cancel-on-discussion",
@@ -137,7 +141,6 @@ def main(
     cover_path: Path | None,
     cover_url: str | None,
     strategy: str,
-    notification_mode: str | None,
     cancel_on_discussion: bool,
     notion_api_base_url: str | None,
 ) -> None:
@@ -146,15 +149,18 @@ def main(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
-    session = publishing_session(
-        base_url=notion_api_base_url, notification_mode=notification_mode
+    session = (
+        Session(base_url=notion_api_base_url)
+        if notion_api_base_url is not None
+        else Session()
     )
+    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    blocks = [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in block_dicts
+    ]
+
     try:
-        block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
-        blocks = [
-            Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-            for details in block_dicts
-        ]
         page = upload_to_notion(
             session=session,
             blocks=blocks,

@@ -5,29 +5,30 @@ Usage: main [OPTIONS]
 Parent location:
   [mutually exclusive if --page-id is set, otherwise exactly 1 required]
 
-  --parent-page-id TEXT         Parent page ID (integration connected)
-  --parent-database-id TEXT     Parent database ID (integration connected)
+  --parent-page-id TEXT          Parent page ID (integration connected)
+  --parent-database-id TEXT      Parent database ID (integration connected)
 
 Cover image: [mutually exclusive]
-  --cover-path FILE             Cover image file path for the page
-  --cover-url TEXT              Cover image URL for the page
+  --cover-path FILE              Cover image file path for the page
+  --cover-url TEXT               Cover image URL for the page
 
 Other options:
-  --file FILE                   JSON File to upload  [required]
-  --title TEXT                  Title of the page to update (or create if it
-                                does not exist)  [required]
-  --page-id TEXT                ID of an existing page to update. The page is
-                                renamed to the given title. Without this, the
-                                page is matched by title, and created if no page
-                                with the title exists.
-  --icon TEXT                   Icon of the page
-  --strategy [diff|replace]     Block sync strategy: 'diff' preserves unchanged
-                                block IDs and discussions; 'replace' appends all
-                                content before deleting old blocks.  [default:
-                                diff]
-  --notification-mode [silent]  Suppress Notion notifications for this upload.
-  --cancel-on-discussion        Cancel upload with error if blocks to be deleted
-                                have discussion threads
-  --notion-api-base-url TEXT    Override the Notion API base URL. Useful for
-                                tests against a mock Notion API.
-  --help                        Show this message and exit.
+  --file FILE                    JSON File to upload  [required]
+  --title TEXT                   Title of the page to update (or create if it
+                                 does not exist)  [required]
+  --page-id TEXT                 ID of an existing page to update. The page is
+                                 renamed to the given title. Without this, the
+                                 page is matched by title, and created if no
+                                 page with the title exists.
+  --icon TEXT                    Icon of the page
+  --strategy [diff|replace]      Block sync strategy: 'diff' preserves unchanged
+                                 block IDs and discussions; 'replace' appends
+                                 all content before deleting old blocks.
+                                 [default: diff]
+  --notification-mode [default]  Notion notification mode for this upload.
+                                 [default: default]
+  --cancel-on-discussion         Cancel upload with error if blocks to be
+                                 deleted have discussion threads
+  --notion-api-base-url TEXT     Override the Notion API base URL. Useful for
+                                 tests against a mock Notion API.
+  --help                         Show this message and exit.
