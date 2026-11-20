@@ -16,6 +16,7 @@ from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 from sphinx_notion._upload import (
     DiscussionsExistError,
+    NotificationMode,
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
@@ -102,6 +103,14 @@ from sphinx_notion._upload import (
         "discussions; 'replace' appends all content before deleting old "
         "blocks."
     ),
+)
+@cloup.option(
+    "--notification-mode",
+    type=click.Choice(choices=[mode.value for mode in NotificationMode]),
+    default=NotificationMode.DEFAULT.value,
+    expose_value=False,
+    show_default=True,
+    help="Notion notification mode for this upload.",
 )
 @cloup.option(
     "--cancel-on-discussion",

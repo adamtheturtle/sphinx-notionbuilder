@@ -353,6 +353,7 @@ Arguments:
 - ``--icon``: (Optional) Icon for the page (emoji)
 - ``--cover-path``: (Optional) Path to a cover image file for the page
 - ``--strategy``: (Optional) Block upload strategy, ``diff`` (the default) or ``replace``
+- ``--notification-mode default``: (Optional) Use Notion's default notification behavior
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
@@ -414,6 +415,9 @@ Add the following configuration options to your ``conf.py``:
    # Optional: Use "diff" (default) or append-then-delete "replace"
    notion_upload_strategy = "diff"
 
+   # Optional: Use Notion's default notification behavior
+   notion_notification_mode = "default"
+
 **Configuration Options:**
 
 ``notion_publish``
@@ -466,6 +470,9 @@ Add the following configuration options to your ``conf.py``:
    Selects the block synchronization strategy: ``"diff"`` preserves matching block IDs and discussions while uploading only changes, and ``"replace"`` appends the complete new document before deleting all old blocks.
    With ``"replace"``, all existing blocks are considered deletable by ``notion_cancel_on_discussion``.
    Default: ``"diff"``
+
+``notion_notification_mode``
+   The supported value is ``"default"``, which uses Notion's default notification behavior and is also used when the setting is omitted.
 
 Publishing the Sample Document Locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

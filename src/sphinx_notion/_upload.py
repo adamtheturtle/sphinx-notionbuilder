@@ -71,6 +71,12 @@ class _MatchLengths:
     suffix: int
 
 
+class NotificationMode(Enum):
+    """Notification mode used when publishing to Notion."""
+
+    DEFAULT = "default"
+
+
 class UploadStrategy(Enum):
     """Strategy used to synchronize local blocks with a Notion page.
 
