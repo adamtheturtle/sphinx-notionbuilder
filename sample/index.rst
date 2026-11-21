@@ -270,7 +270,7 @@ Collapsible Content
 
       This content is hidden by default and can be expanded by clicking the toggle.
 
-      It supports **all the same formatting** as regular content.
+      It supports the same formatting as regular content.
 
 Tabs
 ~~~~
