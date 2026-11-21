@@ -87,7 +87,7 @@ The builder emits a suppressible ``notion.unsupported_inline`` warning.
 Horizontal Lists
 ~~~~~~~~~~~~~~~~
 
-Multi-column horizontal lists cannot be represented in Notion, so items are flattened into a single bulleted list with a suppressible ``notion.unsupported_layout`` warning.
+The Notion builder renders a horizontal list as one bulleted list and emits a suppressible ``notion.unsupported_layout`` warning.
 
 .. rest-example::
 

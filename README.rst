@@ -180,7 +180,7 @@ Roles
 ``notion-mention-user``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a Notion user mention inline.
+Inserts an inline mention of a Notion user.
 
 **Usage:**
 
@@ -202,7 +202,7 @@ Creates a Notion user mention inline.
 ``notion-mention-page``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a Notion page mention inline.
+Inserts an inline mention of a Notion page.
 
 **Usage:**
 
@@ -223,7 +223,7 @@ Creates a Notion page mention inline.
 ``notion-mention-database``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a Notion database mention inline.
+Inserts an inline mention of a Notion database.
 
 **Usage:**
 
@@ -244,7 +244,7 @@ Creates a Notion database mention inline.
 ``notion-mention-date``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a Notion date mention inline.
+Inserts an inline mention for a date in Notion.
 
 **Usage:**
 
@@ -445,7 +445,6 @@ Add the following configuration options to your ``conf.py``:
 ``notion_page_id``
    The ID of an existing Notion page to update.
    When set, the page is looked up by ID instead of by title, and is renamed to ``notion_page_title``.
-   No parent page or database ID is required in this mode.
    Publishing fails with an error if no page with this ID exists.
    Default: ``None``
 
