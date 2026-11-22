@@ -10,9 +10,10 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
 import hashlib
+import json
 import logging
 import urllib.request
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
@@ -153,7 +154,7 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     request never reached Notion. Without this check a future maintainer
     cannot tell why a 403 is special-cased, and may remove it.
     """
-    content_type = exc.headers.get(key="content-type", default="")
+    content_type: object = exc.headers.get(key="content-type", default="")
     return (
         exc.status == _HTTP_FORBIDDEN
         and isinstance(content_type, str)
@@ -187,7 +188,7 @@ def _upload_file(
     except HTTPResponseError as exc:
         body = exc.body[:_MAX_LOGGED_BODY_CHARS]
         if _is_waf_block(exc=exc):
-            cf_ray = exc.headers.get(key="cf-ray", default="unknown")
+            cf_ray: object = exc.headers.get(key="cf-ray", default="unknown")
             _LOGGER.exception(
                 "Notion upload of '%s' was blocked by the Cloudflare WAF "
                 "(HTTP %s, Cloudflare Ray ID: %s). The file never reached "
@@ -219,7 +220,9 @@ def _block_without_children(
     """Return a copy of a block without children."""
     serialized_block = block.obj_ref.serialize_for_api()
     if block.has_children:
-        serialized_block[serialized_block["type"]]["children"] = []
+        block_type: object = serialized_block["type"]
+        assert isinstance(block_type, str)
+        serialized_block[block_type]["children"] = []
 
     # Delete the ID, else the block will have the children from Notion.
     if "id" in serialized_block:
@@ -231,6 +234,22 @@ def _block_without_children(
     assert isinstance(block_without_children, ParentBlock)
     assert len(block_without_children.blocks) == 0
     return block_without_children
+
+
+def _is_block_array(value: object, /) -> TypeGuard[list[object]]:
+    """Return whether a decoded builder output has an array of blocks."""
+    return isinstance(value, list)
+
+
+@beartype
+def load_blocks_from_file(*, file: Path) -> list[Block]:
+    """Read a builder output file and validate each Notion block."""
+    decoded: object = json.loads(s=file.read_text(encoding="utf-8"))
+    assert _is_block_array(decoded)
+    return [
+        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
+        for details in decoded
+    ]
 
 
 @beartype
@@ -318,8 +337,10 @@ def _calculate_file_sha_from_url(
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
         response.raise_for_status()
-        for chunk in response.iter_content(chunk_size=4096):
-            if chunk:
+        chunks: Iterable[object] = response.iter_content(chunk_size=4096)
+        for chunk in chunks:
+            assert isinstance(chunk, bytes)
+            if len(chunk) > 0:
                 sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
 

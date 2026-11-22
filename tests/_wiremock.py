@@ -29,6 +29,12 @@ def json_object(value: object) -> dict[str, JSONValue]:
     return value
 
 
+def decode_json_object(*, content: bytes) -> dict[str, JSONValue]:
+    """Decode a JSON object from a request body."""
+    decoded: object = json.loads(s=content)
+    return json_object(value=decoded)
+
+
 def _is_json_array(value: object, /) -> TypeIs[list[JSONValue]]:
     """Return whether a decoded value is an array."""
     return TypeHint(hint=list[JSONValue]).is_bearable(obj=value)
@@ -74,7 +80,7 @@ def count_page_metadata_clear_requests(
             call.request.method == "PATCH"
             and call.request.url.path in page_paths
         ):
-            payload = json_object(value=json.loads(s=call.request.content))
+            payload = decode_json_object(content=call.request.content)
             if (
                 payload.get("icon", object()) is None
                 or payload.get("cover", object()) is None

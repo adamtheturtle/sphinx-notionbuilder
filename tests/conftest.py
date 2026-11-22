@@ -13,6 +13,8 @@ from pyprojroot import find_root, has_file
 from ultimate_notion import Session
 from wiremock_mock import add_wiremock_to_respx
 
+from tests._wiremock import json_object
+
 pytest_plugins = "sphinx.testing.fixtures"  # pylint: disable=invalid-name
 
 
@@ -31,12 +33,12 @@ def fixture_respx_mock() -> Iterator[respx.MockRouter]:
     assert mappings_path.is_file()
 
     with mappings_path.open(encoding="utf-8") as mappings_file:
-        stubs = json.load(fp=mappings_file)
+        decoded: object = json.load(fp=mappings_file)
 
     mock = respx.MockRouter(assert_all_called=False)
     add_wiremock_to_respx(
         mock_obj=mock,
-        stubs=stubs,
+        stubs=json_object(value=decoded),
         base_url="https://mock.notion.test",
     )
     mock.start()

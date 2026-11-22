@@ -3,7 +3,6 @@
 Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 """
 
-import json
 import logging
 from pathlib import Path
 
@@ -11,8 +10,6 @@ import click
 import cloup
 from beartype import beartype
 from ultimate_notion import Session
-from ultimate_notion.blocks import Block
-from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 from sphinx_notion._upload import (
     DiscussionsExistError,
@@ -22,6 +19,7 @@ from sphinx_notion._upload import (
     PageNotFoundError,
     PageTitleAmbiguousError,
     UploadStrategy,
+    load_blocks_from_file,
     upload_to_notion,
 )
 
@@ -154,11 +152,7 @@ def main(
         if notion_api_base_url is not None
         else Session()
     )
-    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
-    blocks = [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in block_dicts
-    ]
+    blocks = load_blocks_from_file(file=file)
 
     try:
         page = upload_to_notion(

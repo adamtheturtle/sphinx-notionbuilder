@@ -44,6 +44,7 @@ from tests._wiremock import (
     JSONValue,
     count_mock_requests,
     count_page_metadata_clear_requests,
+    decode_json_object,
     json_array,
     json_object,
 )
@@ -78,7 +79,9 @@ def _cover_clear_count(*, mock: respx.MockRouter) -> int:
         if (
             call.request.method == "PATCH"
             and call.request.url.path.startswith("/v1/pages/")
-            and json.loads(s=call.request.content).get("cover", "missing")
+            and decode_json_object(content=call.request.content).get(
+                "cover", "missing"
+            )
             is None
         ):
             count += 1
@@ -987,9 +990,7 @@ def test_upload_local_file_preserves_name_and_caption(
         and call.request.url.path == append_url_path
     ]
     assert len(append_calls) == appends_before + 1
-    payload = json_object(
-        value=json.loads(s=append_calls[-1].request.content),
-    )
+    payload = decode_json_object(content=append_calls[-1].request.content)
     children = json_array(value=payload["children"])
     child = json_object(value=children[0])
     uploaded_file = json_object(value=child["file"])
@@ -1034,9 +1035,7 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         if call.request.method == "PATCH"
         and call.request.url.path == append_url_path
     ]
-    payload = json_object(
-        value=json.loads(s=append_calls[-1].request.content),
-    )
+    payload = decode_json_object(content=append_calls[-1].request.content)
     children = json_array(value=payload["children"])
     child = json_object(value=children[0])
     uploaded_file = json_object(value=child["file"])

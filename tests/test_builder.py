@@ -46,18 +46,32 @@ def test_meta(
     assert translator.body == "[]"
 
 
-def test_extract_table_structure_rejects_unexpected_tgroup_child() -> None:
+@pytest.fixture(name="translator")
+def fixture_translator(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> sphinx_notion.NotionTranslator:
+    """Build a translator that can visit test nodes."""
+    (tmp_path / "conf.py").touch()
+    app = make_app(srcdir=tmp_path)
+    builder = sphinx_notion.NotionBuilder(app=app, env=app.env)
+    document = docutils.utils.new_document(source_path=".")
+    return sphinx_notion.NotionTranslator(document=document, builder=builder)
+
+
+def test_extract_table_structure_rejects_unexpected_tgroup_child(
+    *,
+    translator: sphinx_notion.NotionTranslator,
+) -> None:
     """Unexpected ``tgroup`` children fail during table extraction."""
     table = nodes.table()
     tgroup = nodes.tgroup()
     tgroup += nodes.paragraph()
     table += tgroup
 
-    extract_table_structure = sphinx_notion.__dict__[
-        "_extract_table_structure"
-    ]
     with pytest.raises(expected_exception=AssertionError):
-        extract_table_structure(node=table)
+        translator.dispatch_visit(node=table)
 
 
 def test_notion_publish_config_defaults(
@@ -74,14 +88,14 @@ def test_notion_publish_config_defaults(
         confoverrides={"extensions": ["sphinx_notion"]},
     )
 
-    assert app.config.notion_publish is False
-    assert app.config.notion_parent_page_id is None
-    assert app.config.notion_parent_database_id is None
-    assert app.config.notion_page_title is None
-    assert app.config.notion_page_icon is None
-    assert app.config.notion_page_cover_url is None
-    assert app.config.notion_cancel_on_discussion is False
-    assert app.config.notion_upload_strategy == "diff"
+    assert app.config["notion_publish"] is False
+    assert app.config["notion_parent_page_id"] is None
+    assert app.config["notion_parent_database_id"] is None
+    assert app.config["notion_page_title"] is None
+    assert app.config["notion_page_icon"] is None
+    assert app.config["notion_page_cover_url"] is None
+    assert app.config["notion_cancel_on_discussion"] is False
+    assert app.config["notion_upload_strategy"] == "diff"
 
 
 def test_notion_publish_requires_parent(
@@ -169,11 +183,11 @@ def test_notion_publish_valid_config_with_page_id(
         },
     )
 
-    assert app.config.notion_publish is True
-    assert app.config.notion_page_id == "abc123"
-    assert app.config.notion_parent_page_id is None
-    assert app.config.notion_parent_database_id is None
-    assert app.config.notion_page_title == "Test Page"
+    assert app.config["notion_publish"] is True
+    assert app.config["notion_page_id"] == "abc123"
+    assert app.config["notion_parent_page_id"] is None
+    assert app.config["notion_parent_database_id"] is None
+    assert app.config["notion_page_title"] == "Test Page"
 
 
 def test_notion_publish_valid_config_with_database_id(
@@ -199,12 +213,14 @@ def test_notion_publish_valid_config_with_database_id(
         },
     )
 
-    assert app.config.notion_publish is True
-    assert app.config.notion_parent_database_id == "def456"
-    assert app.config.notion_page_title == "Test Page"
-    assert app.config.notion_page_icon == "📚"
-    assert app.config.notion_page_cover_url == "https://example.com/cover.jpg"
-    assert app.config.notion_cancel_on_discussion is True
+    assert app.config["notion_publish"] is True
+    assert app.config["notion_parent_database_id"] == "def456"
+    assert app.config["notion_page_title"] == "Test Page"
+    assert app.config["notion_page_icon"] == "📚"
+    assert (
+        app.config["notion_page_cover_url"] == "https://example.com/cover.jpg"
+    )
+    assert app.config["notion_cancel_on_discussion"] is True
 
 
 def test_notion_publish_disabled_skips_validation(
@@ -225,15 +241,17 @@ def test_notion_publish_disabled_skips_validation(
         },
     )
 
-    assert app.config.notion_publish is False
+    assert app.config["notion_publish"] is False
 
 
-def test_process_node_to_blocks_rejects_non_element_nodes() -> None:
+def test_process_node_to_blocks_rejects_non_element_nodes(
+    *,
+    translator: sphinx_notion.NotionTranslator,
+) -> None:
     """Text nodes are not Elements and raise ``NotImplementedError``."""
-    process_node = sphinx_notion.__dict__["_process_node_to_blocks"]
     text_node = nodes.Text(data="hello")
     with pytest.raises(
         expected_exception=NotImplementedError,
         match=r"^Unsupported node type: Text\.$",
     ):
-        process_node(text_node, section_level=1)
+        translator.dispatch_visit(node=text_node)

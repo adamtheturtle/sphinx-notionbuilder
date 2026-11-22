@@ -8,7 +8,15 @@ from dataclasses import dataclass
 from functools import singledispatch
 from importlib.metadata import version
 from pathlib import Path
-from typing import ClassVar, Self, TypeGuard, override
+from typing import (
+    ClassVar,
+    Literal,
+    Protocol,
+    Self,
+    TypeGuard,
+    override,
+    runtime_checkable,
+)
 from uuid import UUID
 
 import bs4
@@ -90,7 +98,6 @@ from ultimate_notion.blocks import (
 )
 from ultimate_notion.blocks import Video as UnoVideo
 from ultimate_notion.file import ExternalFile
-from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.obj_api.blocks import LinkToPage as ObjLinkToPage
 from ultimate_notion.obj_api.core import ObjectRef, UserRef
 from ultimate_notion.obj_api.enums import BGColor, CodeLang, Color
@@ -108,6 +115,7 @@ from ultimate_notion.rich_text import Text, math, text
 from sphinx_notion._upload import (
     NotificationMode,
     UploadStrategy,
+    load_blocks_from_file,
     serialize_block_with_children,
     upload_to_notion,
 )
@@ -209,11 +217,24 @@ def _string_attribute(*, node: nodes.Element, name: str) -> str:
     return value
 
 
+def _is_string_sequence(value: object, /) -> TypeGuard[Sequence[str]]:
+    """Return whether a node attribute contains a sequence of strings."""
+    return TypeHint(hint=Sequence[str]).is_bearable(obj=value)
+
+
+def _node_classes(*, node: nodes.Element) -> Sequence[str]:
+    """Return the CSS classes attached to a document node."""
+    classes: object = node.attributes.get("classes", [])
+    assert _is_string_sequence(classes)
+    return classes
+
+
 @beartype
 def _build_environment(*, node: nodes.Element) -> BuildEnvironment:
     """Return the Sphinx environment attached to a document node."""
     assert node.document is not None
-    environment: object = node.document.settings.env
+    settings: Mapping[str, object] = vars(node.document.settings)
+    environment = settings["env"]
     assert isinstance(environment, BuildEnvironment)
     return environment
 
@@ -471,7 +492,7 @@ def _(node: nodes.reference) -> Text:
         if isinstance(target_node, nodes.citation):
             return text(text=node.astext())
 
-    link_url = node.attributes.get("refuri")
+    link_url: object = node.attributes.get("refuri")
     if link_url is None:
         _LOGGER.warning(
             "Internal reference links (e.g., from autosummary) are not "
@@ -492,7 +513,8 @@ def _(node: nodes.reference) -> Text:
         )
         return text(text=node.astext())
 
-    link_text = node.attributes.get("name", link_url)
+    assert isinstance(link_url, str)
+    link_text: object = node.attributes.get("name", link_url)
     assert isinstance(link_text, str)
 
     return text(
@@ -513,7 +535,7 @@ def _(node: addnodes.download_reference) -> Text:
     Local file references are rendered as plain text with a warning,
     since Notion does not support file:// URIs.
     """
-    link_url = node.attributes.get("refuri")
+    link_url: object = node.attributes.get("refuri")
     if link_url is None:
         _LOGGER.warning(
             "Local file download references are not supported by the "
@@ -524,6 +546,7 @@ def _(node: addnodes.download_reference) -> Text:
         )
         return _create_rich_text_from_children(node=node)
 
+    assert isinstance(link_url, str)
     return text(
         text=node.astext(),
         href=link_url,
@@ -649,7 +672,8 @@ def _(node: nodes.math) -> Text:
 @_process_rich_text_node.register
 def _(node: _MentionUserNode) -> Text:
     """Process mention user nodes by creating user mention rich text."""
-    user_id = node.attributes["user_id"]
+    user_id: object = node.attributes["user_id"]
+    assert isinstance(user_id, UUID)
     user_ref = UserRef(id=user_id)
     mention_obj = MentionUser.build_mention_from(
         user=user_ref,
@@ -662,7 +686,8 @@ def _(node: _MentionUserNode) -> Text:
 @_process_rich_text_node.register
 def _(node: _MentionPageNode) -> Text:
     """Process mention page nodes by creating page mention rich text."""
-    page_id = node.attributes["page_id"]
+    page_id: object = node.attributes["page_id"]
+    assert isinstance(page_id, UUID)
     page_obj_ref = ObjectRef(id=page_id)
     mention_obj = MentionPage.build_mention_from(
         page=page_obj_ref,
@@ -678,7 +703,8 @@ def _(node: _MentionDatabaseNode) -> Text:
     Process mention database nodes by creating database mention rich
     text.
     """
-    database_id = node.attributes["database_id"]
+    database_id: object = node.attributes["database_id"]
+    assert isinstance(database_id, UUID)
     database_obj_ref = ObjectRef(id=database_id)
     mention_obj = MentionDatabase.build_mention_from(
         db=database_obj_ref,
@@ -691,7 +717,8 @@ def _(node: _MentionDatabaseNode) -> Text:
 @_process_rich_text_node.register
 def _(node: _MentionDateNode) -> Text:
     """Process mention date nodes by creating date mention rich text."""
-    parsed_date = node.attributes["date"]
+    parsed_date: object = node.attributes["date"]
+    assert isinstance(parsed_date, dt.date)
     date_range = DateRange.build(dt_spec=parsed_date)
 
     mention_obj = MentionDate.build_mention_from(
@@ -708,7 +735,7 @@ def _create_styled_text_from_node(*, node: nodes.Element) -> Text:
     This helper function handles the complex styling logic that was
     previously inline in the main function.
     """
-    classes = node.attributes.get("classes", [])
+    classes = _node_classes(node=node)
     bg_color = _background_color_from_css_classes(classes=classes)
     text_color = _color_from_css_classes(classes=classes)
 
@@ -866,10 +893,12 @@ def _extract_table_structure(
             case _:
                 raise AssertionError
 
+    num_columns: object = tgroup.attributes["cols"]
+    assert isinstance(num_columns, int | str)
     return _TableStructure(
         header_rows=header_rows,
         body_rows=body_rows,
-        num_columns=int(tgroup.attributes["cols"]),
+        num_columns=int(num_columns),
         num_stub_columns=stub_columns,
     )
 
@@ -1104,8 +1133,12 @@ def _populate_table_cells(
 
             source = _cell_source_node(entry=entry)
             rich_text = _create_rich_text_from_children(node=source)
-            row_span = int(entry.attributes.get("morerows", 0)) + 1
-            column_span = int(entry.attributes.get("morecols", 0)) + 1
+            more_rows: object = entry.attributes.get("morerows", 0)
+            more_columns: object = entry.attributes.get("morecols", 0)
+            assert isinstance(more_rows, int | str)
+            assert isinstance(more_columns, int | str)
+            row_span = int(more_rows) + 1
+            column_span = int(more_columns) + 1
             if row_span > 1 or column_span > 1:
                 table_has_spans = True
             for target_row in range(row_index, row_index + row_span):
@@ -1327,7 +1360,8 @@ def _(
             )
             label_text_node = list_item.children[1]
             # Get the checked state from the checkbox_label node
-            checked = first_child.attributes.get("checked", False)
+            checked: object = first_child.attributes.get("checked", False)
+            assert isinstance(checked, bool)
             assert isinstance(label_text_node, nodes.paragraph)
             rich_text = _create_rich_text_from_children(
                 node=label_text_node,
@@ -1429,7 +1463,8 @@ def _(
             )
             label_text_node = list_item.children[1]
             # Get the checked state from the checkbox_label node
-            checked = first_child.attributes.get("checked", False)
+            checked: object = first_child.attributes.get("checked", False)
+            assert isinstance(checked, bool)
             assert isinstance(label_text_node, nodes.paragraph)
             rich_text = _create_rich_text_from_children(
                 node=label_text_node,
@@ -1995,8 +2030,7 @@ def _create_image_block(
     caption: Text | None,
 ) -> UnoImage:
     """Create a Notion image block from a Sphinx image node."""
-    image_url = node.attributes["uri"]
-    assert isinstance(image_url, str)
+    image_url = _string_attribute(node=node, name="uri")
 
     assert node.document is not None
     if "://" not in image_url:
@@ -2089,8 +2123,7 @@ def _(
         if isinstance(child, nodes.reference):
             image_node = child.children[0]
             assert isinstance(image_node, nodes.image)
-            target_url = child.attributes["refuri"]
-            assert isinstance(target_url, str)
+            target_url = _string_attribute(node=child, name="refuri")
             blocks.append(
                 _create_image_block(
                     node=image_node,
@@ -2132,8 +2165,7 @@ def _(
     del section_level
     image_node = node.children[0]
     assert isinstance(image_node, nodes.image)
-    target_url = node.attributes["refuri"]
-    assert isinstance(target_url, str)
+    target_url = _string_attribute(node=node, name="refuri")
     caption = _caption_with_image_target(
         caption=None,
         target_url=target_url,
@@ -2162,8 +2194,7 @@ def _(
         abs_path = Path(env.srcdir) / source.location
         video_url = abs_path.as_uri()
 
-    caption_text = node.attributes["caption"]
-    assert isinstance(caption_text, str)
+    caption_text = _string_attribute(node=node, name="caption")
     caption = text(text=caption_text) if caption_text != "" else None
 
     return [
@@ -2184,8 +2215,7 @@ def _(
     """Process audio nodes by creating Notion Audio blocks."""
     del section_level
 
-    audio_url = node.attributes["uri"]
-    assert isinstance(audio_url, str)
+    audio_url = _string_attribute(node=node, name="uri")
 
     assert node.document is not None
     if "://" not in audio_url:
@@ -2209,8 +2239,7 @@ def _(
     """
     del section_level
 
-    pdf_url = node.attributes["uri"]
-    assert isinstance(pdf_url, str)
+    pdf_url = _string_attribute(node=node, name="uri")
 
     if "://" not in pdf_url:
         assert node.document is not None
@@ -2234,8 +2263,7 @@ def _(
     """
     del section_level
 
-    file_url = node.attributes["uri"]
-    assert isinstance(file_url, str)
+    file_url = _string_attribute(node=node, name="uri")
 
     if "://" not in file_url:
         assert node.document is not None
@@ -2243,11 +2271,15 @@ def _(
         abs_path = Path(env.srcdir) / file_url
         file_url = abs_path.as_uri()
 
+    name: object = node.attributes.get("name")
+    caption: object = node.attributes.get("caption")
+    assert isinstance(name, (str, type(None)))
+    assert isinstance(caption, (str, type(None)))
     return [
         UnoFile(
             file=ExternalFile(url=file_url),
-            name=node.attributes.get("name"),
-            caption=node.attributes.get("caption"),
+            name=name,
+            caption=caption,
         )
     ]
 
@@ -2264,7 +2296,8 @@ def _(
     This handles nodes created by our custom NotionLinkToPageDirective.
     """
     del section_level
-    page_id = node.attributes["page_id"]
+    page_id: object = node.attributes["page_id"]
+    assert isinstance(page_id, UUID)
     page_ref = PageRef(page_id=page_id)
     obj_link_to_page = ObjLinkToPage(link_to_page=page_ref)
 
@@ -2301,7 +2334,7 @@ def _(
             )
         ]
 
-    classes = node.attributes.get("classes", [])
+    classes = _node_classes(node=node)
     if "sphinx-tabs" in classes or "sd-tab-set" in classes:
         return _process_tabs_container(
             node=node,
@@ -2804,7 +2837,8 @@ def _visit_mention_user_node_html(
 
     Renders as a link to the Notion user page.
     """
-    user_id = node.attributes["user_id"]
+    user_id: object = node.attributes["user_id"]
+    assert isinstance(user_id, UUID)
     url = f"https://www.notion.so/{user_id.hex}"
     self.body.append(f'<a href="{url}">@{user_id}</a>')
     raise nodes.SkipNode
@@ -2819,7 +2853,8 @@ def _visit_mention_page_node_html(
 
     Renders as a link to the Notion page.
     """
-    page_id = node.attributes["page_id"]
+    page_id: object = node.attributes["page_id"]
+    assert isinstance(page_id, UUID)
     url = f"https://www.notion.so/{page_id.hex}"
     self.body.append(f'<a href="{url}">{page_id}</a>')
     raise nodes.SkipNode
@@ -2834,7 +2869,8 @@ def _visit_mention_database_node_html(
 
     Renders as a link to the Notion database.
     """
-    database_id = node.attributes["database_id"]
+    database_id: object = node.attributes["database_id"]
+    assert isinstance(database_id, UUID)
     url = f"https://www.notion.so/{database_id.hex}"
     self.body.append(f'<a href="{url}">{database_id}</a>')
     raise nodes.SkipNode
@@ -2853,52 +2889,71 @@ def _visit_mention_date_node_html(
     raise nodes.SkipNode
 
 
+def _config_value[T](
+    *,
+    config: Config,
+    name: str,
+    value_type: type[T] | tuple[type[T], ...],
+) -> T:
+    """Read a registered Sphinx setting and narrow it to its declared type."""
+    value: object = config[name]
+    assert isinstance(value, value_type)
+    return value
+
+
 @beartype
 def _validate_notion_config(
     _app: Sphinx,
     config: Config,
 ) -> None:
     """Validate Notion configuration values."""
-    if not config.notion_publish:
+    if not _config_value(
+        config=config, name="notion_publish", value_type=bool
+    ):
         return
 
     notification_modes = [mode.value for mode in NotificationMode]
-    if config.notion_notification_mode not in notification_modes:
+    notification_mode = _config_value(
+        config=config, name="notion_notification_mode", value_type=str
+    )
+    if notification_mode not in notification_modes:
         choices = ", ".join(notification_modes)
         msg = f"notion_notification_mode must be one of {choices}"
         raise ValueError(msg)
 
-    if (
-        not config.notion_page_id
-        and not config.notion_parent_page_id
-        and not config.notion_parent_database_id
-    ):
+    page_id = _config_value(
+        config=config, name="notion_page_id", value_type=(str, type(None))
+    )
+    parent_page_id = _config_value(
+        config=config,
+        name="notion_parent_page_id",
+        value_type=(str, type(None)),
+    )
+    parent_database_id = _config_value(
+        config=config,
+        name="notion_parent_database_id",
+        value_type=(str, type(None)),
+    )
+    if not any((page_id, parent_page_id, parent_database_id)):
         msg = (
             "notion_publish is enabled but notion_page_id and both "
             "notion_parent_page_id and notion_parent_database_id are unset"
         )
         raise ValueError(msg)
 
-    if config.notion_parent_page_id and config.notion_parent_database_id:
+    if bool(parent_page_id) and bool(parent_database_id):
         msg = (
             "notion_parent_page_id and notion_parent_database_id are "
             "mutually exclusive"
         )
         raise ValueError(msg)
 
-    if not config.notion_page_title:
+    title = _config_value(
+        config=config, name="notion_page_title", value_type=(str, type(None))
+    )
+    if not bool(title):
         msg = "notion_publish is enabled but notion_page_title is not set"
         raise ValueError(msg)
-
-
-@beartype
-def _load_blocks_from_file(*, output_file: Path) -> list[Block]:
-    """Load Notion blocks from a builder output file."""
-    block_dicts = json.loads(s=output_file.read_text(encoding="utf-8"))
-    return [
-        Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in block_dicts
-    ]
 
 
 @beartype
@@ -2953,14 +3008,16 @@ def _publish_to_notion(
     if exception is not None:
         return
 
-    if not app.config.notion_publish:
+    config = app.config
+    if not _config_value(
+        config=config, name="notion_publish", value_type=bool
+    ):
         return
 
     if app.builder.name != "notion":
         return
 
-    root_doc: object = app.config.root_doc
-    assert isinstance(root_doc, str)
+    root_doc = _config_value(config=config, name="root_doc", value_type=str)
     output_file = Path(app.outdir) / f"{root_doc}.json"
     if not output_file.exists():
         _LOGGER.warning(
@@ -2978,27 +3035,59 @@ def _publish_to_notion(
     for docname, parent_docname in parent_docnames.items():
         child_docnames_by_parent.setdefault(parent_docname, []).append(docname)
 
-    session = Session(base_url=app.config.notion_api_base_url)
+    base_url = _config_value(
+        config=config, name="notion_api_base_url", value_type=str
+    )
+    root_title = _config_value(
+        config=config, name="notion_page_title", value_type=str
+    )
+    cancel_on_discussion = _config_value(
+        config=config, name="notion_cancel_on_discussion", value_type=bool
+    )
+    strategy = UploadStrategy(
+        value=_config_value(
+            config=config, name="notion_upload_strategy", value_type=str
+        ),
+    )
+    session = Session(base_url=base_url)
     try:
         root_page = upload_to_notion(
             session=session,
-            blocks=_load_blocks_from_file(output_file=output_file),
-            page_id=app.config.notion_page_id,
-            parent_page_id=app.config.notion_parent_page_id,
-            parent_database_id=app.config.notion_parent_database_id,
-            title=app.config.notion_page_title,
-            icon=app.config.notion_page_icon,
-            cover_path=None,
-            cover_url=app.config.notion_page_cover_url,
-            cancel_on_discussion=app.config.notion_cancel_on_discussion,
-            strategy=UploadStrategy(
-                value=app.config.notion_upload_strategy,
+            blocks=load_blocks_from_file(file=output_file),
+            page_id=_config_value(
+                config=config,
+                name="notion_page_id",
+                value_type=(str, type(None)),
             ),
+            parent_page_id=_config_value(
+                config=config,
+                name="notion_parent_page_id",
+                value_type=(str, type(None)),
+            ),
+            parent_database_id=_config_value(
+                config=config,
+                name="notion_parent_database_id",
+                value_type=(str, type(None)),
+            ),
+            title=root_title,
+            icon=_config_value(
+                config=config,
+                name="notion_page_icon",
+                value_type=(str, type(None)),
+            ),
+            cover_path=None,
+            cover_url=_config_value(
+                config=config,
+                name="notion_page_cover_url",
+                value_type=(str, type(None)),
+            ),
+            cancel_on_discussion=cancel_on_discussion,
+            strategy=strategy,
             allow_subpages=bool(child_docnames_by_parent.get(root_doc)),
         )
         _LOGGER.info(
             "Published page: '%s' (%s)",
-            app.config.notion_page_title,
+            root_title,
             root_page.url,
         )
 
@@ -3029,7 +3118,7 @@ def _publish_to_notion(
             child_docnames = child_docnames_by_parent.get(docname, [])
             page = upload_to_notion(
                 session=session,
-                blocks=_load_blocks_from_file(output_file=doc_output_file),
+                blocks=load_blocks_from_file(file=doc_output_file),
                 page_id=None,
                 parent_page_id=str(object=parent_page.id),
                 parent_database_id=None,
@@ -3037,10 +3126,8 @@ def _publish_to_notion(
                 icon=None,
                 cover_path=None,
                 cover_url=None,
-                cancel_on_discussion=app.config.notion_cancel_on_discussion,
-                strategy=UploadStrategy(
-                    value=app.config.notion_upload_strategy,
-                ),
+                cancel_on_discussion=cancel_on_discussion,
+                strategy=strategy,
                 allow_subpages=bool(child_docnames),
             )
             published_pages[docname] = page
@@ -3050,78 +3137,48 @@ def _publish_to_notion(
         session.close()
 
 
+@runtime_checkable
+class _ConfigRegistration(Protocol):
+    """Register settings with Sphinx."""
+
+    def add_config_value(
+        self,
+        *,
+        name: str,
+        default: object,
+        rebuild: Literal[""],
+        types: tuple[type[object], ...],
+    ) -> None:
+        """Register one of the extension's settings."""
+
+
 @beartype
 def setup(app: Sphinx) -> ExtensionMetadata:
     """Add the builder to Sphinx."""
     app.add_builder(builder=NotionBuilder)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
-    app.add_config_value(
-        name="notion_publish",
-        default=False,
-        rebuild="",
-        types=(bool,),
-    )
-    app.add_config_value(
-        name="notion_parent_page_id",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_parent_database_id",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_page_title",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_page_icon",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_page_cover_url",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_cancel_on_discussion",
-        default=False,
-        rebuild="",
-        types=(bool,),
-    )
-    app.add_config_value(
-        name="notion_upload_strategy",
-        default=UploadStrategy.DIFF.value,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_notification_mode",
-        default=NotificationMode.DEFAULT.value,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_page_id",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    app.add_config_value(
-        name="notion_api_base_url",
-        default="https://api.notion.com",
-        rebuild="",
-        types=(str,),
-    )
+    settings: object = app
+    assert isinstance(settings, _ConfigRegistration)
+    config_values: dict[str, tuple[object, type[object]]] = {
+        "notion_publish": (False, bool),
+        "notion_parent_page_id": (None, str),
+        "notion_parent_database_id": (None, str),
+        "notion_page_title": (None, str),
+        "notion_page_icon": (None, str),
+        "notion_page_cover_url": (None, str),
+        "notion_cancel_on_discussion": (False, bool),
+        "notion_upload_strategy": (UploadStrategy.DIFF.value, str),
+        "notion_notification_mode": (NotificationMode.DEFAULT.value, str),
+        "notion_page_id": (None, str),
+        "notion_api_base_url": ("https://api.notion.com", str),
+    }
+    rebuild: Literal[""] = ""
+    for name, (default, value_type) in config_values.items():
+        types = (value_type,)
+        settings.add_config_value(
+            name=name, default=default, rebuild=rebuild, types=types
+        )
 
     _ = app.connect(event="config-inited", callback=_validate_notion_config)
     _ = app.connect(
