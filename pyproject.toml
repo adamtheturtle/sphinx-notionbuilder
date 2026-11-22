@@ -80,7 +80,7 @@ dev = [
     "pylint-per-file-ignores==4.0.0",
     "pyproject-fmt==2.30.6",
     "pyprojroot==0.3.0",
-    "pyrefly==1.4.1",
+    "pyrefly==1.5.0",
     "pyright==1.1.414",
     "pyroma==5.0.1",
     "pytest==9.2.0",
@@ -455,19 +455,12 @@ num_workers = "auto"
 
 [tool.pyrefly]
 search-path = [ "." ]
+# Keep the 1.4.1 preset baseline for checks introduced in 1.5.0.
+errors.explicit-any-use = "ignore"
 errors.non-exhaustive-match = "error"
+errors.partially-unknown-type = "ignore"
 enabled-ignores = [ "pyrefly" ]
 preset = "all"
-sub-config = [
-    # Remove this suppression once
-    # https://github.com/python/typeshed/pull/16427 is included in
-    # Pyrefly's bundled typeshed.
-    # On Windows, ``urllib.request.url2pathname`` is re-exported from the
-    # deprecated ``nturl2path`` module. The fallback is required for Python 3.12,
-    # where ``Path.from_uri`` is unavailable, and the diagnostic does not fire on
-    # POSIX, so a source suppression would be unused there.
-    { matches = "src/sphinx_notion/_upload.py", errors.deprecated = "ignore" }
-]
 
 [tool.pyright]
 typeCheckingMode = "strict"
