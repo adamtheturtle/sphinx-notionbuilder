@@ -353,7 +353,7 @@ Arguments:
 - ``--icon``: (Optional) Icon for the page (emoji)
 - ``--cover-path``: (Optional) Path to a cover image file for the page
 - ``--strategy``: (Optional) Block upload strategy, ``diff`` (the default) or ``replace``
-- ``--notification-mode default``: (Optional) Use Notion's default notification behavior
+- ``--notification-mode default``: (Optional) Let Notion send notifications as usual
 
 The command will create a new page if one with the given title doesn't exist, or update the existing page if one with the given title already exists.
 
@@ -472,7 +472,8 @@ Add the following configuration options to your ``conf.py``:
    Default: ``"diff"``
 
 ``notion_notification_mode``
-   The supported value is ``"default"``, which uses Notion's default notification behavior and is also used when the setting is omitted.
+   The only supported value is ``"default"``.
+   If you omit this setting or set it to ``"default"``, Notion sends notifications as usual.
 
 Publishing the Sample Document Locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
