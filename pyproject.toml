@@ -455,10 +455,7 @@ num_workers = "auto"
 
 [tool.pyrefly]
 search-path = [ "." ]
-# Keep the 1.4.1 preset baseline for checks introduced in 1.5.0.
-errors.explicit-any-use = "ignore"
 errors.non-exhaustive-match = "error"
-errors.partially-unknown-type = "ignore"
 enabled-ignores = [ "pyrefly" ]
 preset = "all"
 
