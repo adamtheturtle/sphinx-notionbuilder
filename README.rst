@@ -415,7 +415,7 @@ Add the following configuration options to your ``conf.py``:
    # Optional: Use "diff" (default) or append-then-delete "replace"
    notion_upload_strategy = "diff"
 
-   # Optional: Use Notion's default notification behavior
+   # Optional: Use the default notification behavior
    notion_notification_mode = "default"
 
 **Configuration Options:**
