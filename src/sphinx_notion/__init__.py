@@ -106,6 +106,7 @@ from ultimate_notion.obj_api.objects import (
 from ultimate_notion.rich_text import Text, math, text
 
 from sphinx_notion._upload import (
+    NotificationMode,
     UploadStrategy,
     serialize_block_with_children,
     upload_to_notion,
@@ -2861,6 +2862,12 @@ def _validate_notion_config(
     if not config.notion_publish:
         return
 
+    notification_modes = [mode.value for mode in NotificationMode]
+    if config.notion_notification_mode not in notification_modes:
+        choices = ", ".join(notification_modes)
+        msg = f"notion_notification_mode must be one of {choices}"
+        raise ValueError(msg)
+
     if (
         not config.notion_page_id
         and not config.notion_parent_page_id
@@ -3094,6 +3101,12 @@ def setup(app: Sphinx) -> ExtensionMetadata:
     app.add_config_value(
         name="notion_upload_strategy",
         default=UploadStrategy.DIFF.value,
+        rebuild="",
+        types=(str,),
+    )
+    app.add_config_value(
+        name="notion_notification_mode",
+        default=NotificationMode.DEFAULT.value,
         rebuild="",
         types=(str,),
     )
