@@ -49,7 +49,7 @@ dependencies = [
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
-    "ultimate-notion>=0.10.1,<0.11",
+    "ultimate-notion>=0.11.0,<0.12",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 scripts.notion-upload = "_notion_scripts.upload:main"
