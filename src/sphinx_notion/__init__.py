@@ -104,11 +104,11 @@ from ultimate_notion.obj_api.objects import (
     PageRef,
 )
 from ultimate_notion.rich_text import Text, math, text
+from ultimate_notion.utils import serialize_block_with_children
 
 from sphinx_notion._upload import (
     NotificationMode,
     UploadStrategy,
-    serialize_block_with_children,
     upload_to_notion,
 )
 

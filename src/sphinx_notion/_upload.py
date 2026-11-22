@@ -17,13 +17,12 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, TypeGuard
+from typing import TYPE_CHECKING, BinaryIO
 from urllib.parse import urlparse
 
 import requests
 import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
-from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -35,6 +34,7 @@ from ultimate_notion.errors import UnknownPageError
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
+from ultimate_notion.utils import serialize_block_with_children
 
 if TYPE_CHECKING:
     from ultimate_notion.database import DataSource
@@ -47,10 +47,6 @@ _HTTP_FORBIDDEN = 403
 # large HTML documents, so we cap the output to keep logs readable while
 # still including the diagnostic content (e.g. the Cloudflare Ray ID).
 _MAX_LOGGED_BODY_CHARS = 2000
-
-type _JSONValue = (
-    bool | int | float | str | list[_JSONValue] | dict[str, _JSONValue] | None
-)
 
 
 @beartype
@@ -231,42 +227,6 @@ def _block_without_children(
     assert isinstance(block_without_children, ParentBlock)
     assert len(block_without_children.blocks) == 0
     return block_without_children
-
-
-@beartype
-def _is_json_object(value: object, /) -> TypeGuard[dict[str, _JSONValue]]:
-    """Return whether a value is a JSON object."""
-    return TypeHint(hint=dict[str, _JSONValue]).is_bearable(obj=value)
-
-
-@beartype
-def _serialized_object(*, value: object) -> dict[str, _JSONValue]:
-    """Return a mutable copy of a serialized JSON object."""
-    assert _is_json_object(value)
-    return dict(value)
-
-
-@beartype
-def serialize_block_with_children(*, block: Block) -> dict[str, _JSONValue]:
-    """
-    Convert a block to a JSON-serializable format which includes its
-    children.
-    """
-    serialized_obj = _serialized_object(
-        value=block.obj_ref.serialize_for_api()
-    )
-    if isinstance(block, ParentBlock) and block.has_children:
-        block_type = block.obj_ref.type
-        assert block_type is not None
-        block_body = _serialized_object(value=serialized_obj[block_type])
-        serialized_obj[block_type] = {
-            **block_body,
-            "children": [
-                serialize_block_with_children(block=child)
-                for child in block.blocks
-            ],
-        }
-    return serialized_obj
 
 
 @beartype
