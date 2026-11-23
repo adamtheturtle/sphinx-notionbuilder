@@ -211,7 +211,7 @@ class _PdfNode(nodes.raw):  # pylint: disable=too-many-ancestors
 
 
 def _is_string_list(value: object, /) -> TypeGuard[list[str]]:
-    """Check the CSS classes supplied by Docutils."""
+    """Check the style classes supplied by a document node."""
     return TypeHint(hint=list[str]).is_bearable(obj=value)
 
 
@@ -3143,11 +3143,11 @@ class _ConfigRegistrar(Protocol):
 
     def add_config_value(
         self,
-        *,
-        name: str,
-        default: object,
-        rebuild: Literal[""],
-        types: tuple[type[object], ...],
+        _name: str,
+        _default: object,
+        _rebuild: Literal[""],
+        _types: tuple[type[object], ...],
+        /,
     ) -> None:
         """Register a Notion configuration option."""
         ...
@@ -3156,71 +3156,25 @@ class _ConfigRegistrar(Protocol):
 @beartype
 def _register_notion_config(*, registrar: _ConfigRegistrar) -> None:
     """Register the Notion configuration options."""
+    disabled_default = False
+    registrar.add_config_value("notion_publish", disabled_default, "", (bool,))
+    registrar.add_config_value("notion_parent_page_id", None, "", (str,))
+    registrar.add_config_value("notion_parent_database_id", None, "", (str,))
+    registrar.add_config_value("notion_page_title", None, "", (str,))
+    registrar.add_config_value("notion_page_icon", None, "", (str,))
+    registrar.add_config_value("notion_page_cover_url", None, "", (str,))
     registrar.add_config_value(
-        name="notion_publish",
-        default=False,
-        rebuild="",
-        types=(bool,),
+        "notion_cancel_on_discussion", disabled_default, "", (bool,)
     )
     registrar.add_config_value(
-        name="notion_parent_page_id",
-        default=None,
-        rebuild="",
-        types=(str,),
+        "notion_upload_strategy", UploadStrategy.DIFF.value, "", (str,)
     )
     registrar.add_config_value(
-        name="notion_parent_database_id",
-        default=None,
-        rebuild="",
-        types=(str,),
+        "notion_notification_mode", NotificationMode.DEFAULT.value, "", (str,)
     )
+    registrar.add_config_value("notion_page_id", None, "", (str,))
     registrar.add_config_value(
-        name="notion_page_title",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_page_icon",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_page_cover_url",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_cancel_on_discussion",
-        default=False,
-        rebuild="",
-        types=(bool,),
-    )
-    registrar.add_config_value(
-        name="notion_upload_strategy",
-        default=UploadStrategy.DIFF.value,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_notification_mode",
-        default=NotificationMode.DEFAULT.value,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_page_id",
-        default=None,
-        rebuild="",
-        types=(str,),
-    )
-    registrar.add_config_value(
-        name="notion_api_base_url",
-        default="https://api.notion.com",
-        rebuild="",
-        types=(str,),
+        "notion_api_base_url", "https://api.notion.com", "", (str,)
     )
 
 
