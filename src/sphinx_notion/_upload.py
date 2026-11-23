@@ -259,7 +259,9 @@ def _block_with_replaced_children(
     serialized_block = block.obj_ref.serialize_for_api()
     block_type = block.obj_ref.type
     assert block_type is not None
-    serialized_block[block_type]["children"] = [
+    block_fields = serialized_block[block_type]
+    assert isinstance(block_fields, dict)
+    block_fields["children"] = [
         serialize_block_with_children(block=child) for child in children
     ]
 
