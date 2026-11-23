@@ -12,7 +12,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import urllib.request
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
@@ -23,7 +23,9 @@ from urllib.parse import urlparse
 import requests
 import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
+from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
+from typing_extensions import TypeIs
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
@@ -149,7 +151,7 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     request never reached Notion. Without this check a future maintainer
     cannot tell why a 403 is special-cased, and may remove it.
     """
-    content_type = exc.headers.get(key="content-type", default="")
+    content_type: object = exc.headers.get(key="content-type", default="")
     return (
         exc.status == _HTTP_FORBIDDEN
         and isinstance(content_type, str)
@@ -183,7 +185,7 @@ def _upload_file(
     except HTTPResponseError as exc:
         body = exc.body[:_MAX_LOGGED_BODY_CHARS]
         if _is_waf_block(exc=exc):
-            cf_ray = exc.headers.get(key="cf-ray", default="unknown")
+            cf_ray: object = exc.headers.get(key="cf-ray", default="unknown")
             _LOGGER.exception(
                 "Notion upload of '%s' was blocked by the Cloudflare WAF "
                 "(HTTP %s, Cloudflare Ray ID: %s). The file never reached "
@@ -207,6 +209,16 @@ def _upload_file(
     return uploaded_file
 
 
+def is_json_array(value: object, /) -> TypeIs[list[object]]:
+    """Check that a decoded JSON value is an array."""
+    return isinstance(value, list)
+
+
+def _is_block_object(value: object, /) -> TypeIs[dict[str, object]]:
+    """Check that the serialized block fields are a JSON object."""
+    return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
+
+
 @beartype
 def _block_without_children(
     *,
@@ -215,7 +227,12 @@ def _block_without_children(
     """Return a copy of a block without children."""
     serialized_block = block.obj_ref.serialize_for_api()
     if block.has_children:
-        serialized_block[serialized_block["type"]]["children"] = []
+        block_type: object = serialized_block["type"]
+        assert isinstance(block_type, str)
+        fields: object = serialized_block[block_type]
+        assert _is_block_object(fields)
+        empty_children: list[object] = []
+        fields["children"] = empty_children
 
     # Delete the ID, else the block will have the children from Notion.
     if "id" in serialized_block:
@@ -278,8 +295,10 @@ def _calculate_file_sha_from_url(
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
         response.raise_for_status()
-        for chunk in response.iter_content(chunk_size=4096):
-            if chunk:
+        chunks: Iterable[object] = response.iter_content(chunk_size=4096)
+        for chunk in chunks:
+            assert isinstance(chunk, bytes)
+            if bool(chunk):
                 sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
 
