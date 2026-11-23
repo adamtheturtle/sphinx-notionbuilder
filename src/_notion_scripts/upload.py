@@ -16,11 +16,13 @@ from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 
 from sphinx_notion._upload import (
     DiscussionsExistError,
+    NotificationMode,
     PageHasDatabasesError,
     PageHasSubpagesError,
     PageNotFoundError,
     PageTitleAmbiguousError,
     UploadStrategy,
+    is_json_array,
     upload_to_notion,
 )
 
@@ -104,6 +106,14 @@ from sphinx_notion._upload import (
     ),
 )
 @cloup.option(
+    "--notification-mode",
+    type=click.Choice(choices=[mode.value for mode in NotificationMode]),
+    default=NotificationMode.DEFAULT.value,
+    expose_value=False,
+    show_default=True,
+    help="Notion notification mode for this upload.",
+)
+@cloup.option(
     "--cancel-on-discussion",
     help=(
         "Cancel upload with error if blocks to be deleted have discussion "
@@ -145,10 +155,11 @@ def main(
         if notion_api_base_url is not None
         else Session()
     )
-    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    decoded: object = json.loads(s=file.read_text(encoding="utf-8"))
+    assert is_json_array(decoded)
     blocks = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in block_dicts
+        for details in decoded
     ]
 
     try:

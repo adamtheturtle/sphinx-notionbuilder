@@ -74,7 +74,8 @@ def count_page_metadata_clear_requests(
             call.request.method == "PATCH"
             and call.request.url.path in page_paths
         ):
-            payload = json_object(value=json.loads(s=call.request.content))
+            decoded: object = json.loads(s=call.request.content)
+            payload = json_object(value=decoded)
             if (
                 payload.get("icon", object()) is None
                 or payload.get("cover", object()) is None

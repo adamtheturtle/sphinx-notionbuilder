@@ -108,7 +108,7 @@ def test_upload_success(
     parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """Uploading through the CLI reports success."""
+    """Uploading through the CLI with the default mode reports success."""
     assert notion_token != ""
     blocks_file = _write_blocks_file(
         tmp_path=tmp_path,
@@ -117,13 +117,21 @@ def test_upload_success(
         ),
     )
 
-    result = _invoke_upload(
-        blocks_file=blocks_file,
-        parent_page_id=parent_page_id,
-        mock_api_base_url=mock_api_base_url,
-        cancel_on_discussion=False,
-        page_id=None,
-        strategy=None,
+    result = CliRunner().invoke(
+        cli=main,
+        args=[
+            "--file",
+            str(object=blocks_file),
+            "--parent-page-id",
+            parent_page_id,
+            "--title",
+            "Upload Title",
+            "--notion-api-base-url",
+            mock_api_base_url,
+            "--notification-mode",
+            "default",
+        ],
+        catch_exceptions=False,
     )
 
     assert result.exit_code == 0, (result.stdout, result.stderr)

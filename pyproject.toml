@@ -49,7 +49,7 @@ dependencies = [
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-video>=0.4.0",
     "sphinxnotes-strike>=2.0",
-    "ultimate-notion>=0.10.1,<0.11",
+    "ultimate-notion>=0.11.0,<0.12",
 ]
 urls.Source = "https://github.com/adamtheturtle/sphinx-notionbuilder"
 scripts.notion-upload = "_notion_scripts.upload:main"
@@ -78,7 +78,7 @@ dev = [
     "pygments==2.21.0",
     "pylint[spelling]==4.1.4",
     "pylint-per-file-ignores==4.0.0",
-    "pyproject-fmt==2.30.6",
+    "pyproject-fmt==2.31.2",
     "pyprojroot==0.3.0",
     "pyrefly==1.5.0",
     "pyright==1.1.414",
@@ -88,7 +88,7 @@ dev = [
     "pytest-cov==7.1.0",
     "pytest-regressions==2.11.0",
     "pyyaml==6.0.3",
-    "ruff==0.17.5",
+    "ruff==0.17.6",
     # We add shellcheck-py not only for shell scripts and shell code blocks,
     # but also because having it installed means that ``actionlint-py`` will
     # use it to lint shell commands in GitHub workflow files.
@@ -104,7 +104,7 @@ dev = [
     "sphinxcontrib-text-styles==0.2.1",
     "strict-kwargs==2026.11.14",
     "towncrier==26.9.0",
-    "ty==0.0.104",
+    "ty==0.0.107",
     "types-docutils==0.23.0.20261107",
     "types-requests==2.33.0.20261030",
     "vale==3.27.0.0",
@@ -408,6 +408,7 @@ ignore_names = [
     "nitpick_ignore",
     "nitpicky",
     "notion_cancel_on_discussion",
+    "notion_notification_mode",
     "notion_page_cover_url",
     "notion_page_icon",
     "notion_page_id",

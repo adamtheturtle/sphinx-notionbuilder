@@ -59,6 +59,33 @@ def test_publish_skips_when_disabled(
     )
     app.build()
     assert app.statuscode == 0
+    assert app.config["notion_notification_mode"] == "default"
+
+
+def test_publish_rejects_unsupported_notification_mode(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """Publishing requires a supported notification mode."""
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    (srcdir / "conf.py").touch()
+
+    with pytest.raises(
+        expected_exception=ExtensionError,
+        match="notion_notification_mode must be one of default",
+    ):
+        _ = make_app(
+            srcdir=srcdir,
+            confoverrides={
+                "extensions": ["sphinx_notion"],
+                "notion_publish": True,
+                "notion_page_id": "abc123",
+                "notion_page_title": "Test Page",
+                "notion_notification_mode": "silent",
+            },
+        )
 
 
 def test_publish_skips_when_not_notion_builder(
@@ -143,6 +170,7 @@ def test_publish_success(
             "notion_page_id": parent_page_id,
             "notion_page_title": "Upload Title",
             "notion_api_base_url": mock_api_base_url,
+            "notion_notification_mode": "default",
         },
     )
     append_url_path = f"/v1/blocks/{parent_page_id}/children"
@@ -302,7 +330,7 @@ def test_publish_replace_strategy(
     app.build()
 
     assert app.statuscode == 0
-    assert app.config.notion_upload_strategy == "replace"
+    assert app.config["notion_upload_strategy"] == "replace"
     assert (
         count_mock_requests(
             mock=respx_mock,

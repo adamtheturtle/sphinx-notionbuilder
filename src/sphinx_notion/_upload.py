@@ -12,7 +12,7 @@ Inspired by https://github.com/ftnext/sphinx-notion/blob/main/upload.py.
 import hashlib
 import logging
 import urllib.request
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
@@ -35,6 +35,7 @@ from ultimate_notion.errors import UnknownPageError
 from ultimate_notion.file import UploadedFile
 from ultimate_notion.obj_api.blocks import Block as UnoObjAPIBlock
 from ultimate_notion.page import Page
+from ultimate_notion.utils import serialize_block_with_children
 
 if TYPE_CHECKING:
     from ultimate_notion.database import DataSource
@@ -47,10 +48,6 @@ _HTTP_FORBIDDEN = 403
 # large HTML documents, so we cap the output to keep logs readable while
 # still including the diagnostic content (e.g. the Cloudflare Ray ID).
 _MAX_LOGGED_BODY_CHARS = 2000
-
-type _JSONValue = (
-    bool | int | float | str | list[_JSONValue] | dict[str, _JSONValue] | None
-)
 
 
 @beartype
@@ -69,6 +66,12 @@ class _MatchLengths:
 
     prefix: int
     suffix: int
+
+
+class NotificationMode(Enum):
+    """Notification mode used when publishing to Notion."""
+
+    DEFAULT = "default"
 
 
 class UploadStrategy(Enum):
@@ -147,7 +150,7 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     request never reached Notion. Without this check a future maintainer
     cannot tell why a 403 is special-cased, and may remove it.
     """
-    content_type = exc.headers.get(key="content-type", default="")
+    content_type: object = exc.headers.get(key="content-type", default="")
     return (
         exc.status == _HTTP_FORBIDDEN
         and isinstance(content_type, str)
@@ -181,7 +184,7 @@ def _upload_file(
     except HTTPResponseError as exc:
         body = exc.body[:_MAX_LOGGED_BODY_CHARS]
         if _is_waf_block(exc=exc):
-            cf_ray = exc.headers.get(key="cf-ray", default="unknown")
+            cf_ray: object = exc.headers.get(key="cf-ray", default="unknown")
             _LOGGER.exception(
                 "Notion upload of '%s' was blocked by the Cloudflare WAF "
                 "(HTTP %s, Cloudflare Ray ID: %s). The file never reached "
@@ -205,6 +208,16 @@ def _upload_file(
     return uploaded_file
 
 
+def is_json_array(value: object, /) -> TypeGuard[list[object]]:
+    """Check that a decoded JSON value is an array."""
+    return isinstance(value, list)
+
+
+def _is_block_object(value: object, /) -> TypeGuard[dict[str, object]]:
+    """Check that the serialized block fields are a JSON object."""
+    return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
+
+
 @beartype
 def _block_without_children(
     *,
@@ -213,7 +226,12 @@ def _block_without_children(
     """Return a copy of a block without children."""
     serialized_block = block.obj_ref.serialize_for_api()
     if block.has_children:
-        serialized_block[serialized_block["type"]]["children"] = []
+        block_type: object = serialized_block["type"]
+        assert isinstance(block_type, str)
+        fields: object = serialized_block[block_type]
+        assert _is_block_object(fields)
+        empty_children: list[object] = []
+        fields["children"] = empty_children
 
     # Delete the ID, else the block will have the children from Notion.
     if "id" in serialized_block:
@@ -225,42 +243,6 @@ def _block_without_children(
     assert isinstance(block_without_children, ParentBlock)
     assert len(block_without_children.blocks) == 0
     return block_without_children
-
-
-@beartype
-def _is_json_object(value: object, /) -> TypeGuard[dict[str, _JSONValue]]:
-    """Return whether a value is a JSON object."""
-    return TypeHint(hint=dict[str, _JSONValue]).is_bearable(obj=value)
-
-
-@beartype
-def _serialized_object(*, value: object) -> dict[str, _JSONValue]:
-    """Return a mutable copy of a serialized JSON object."""
-    assert _is_json_object(value)
-    return dict(value)
-
-
-@beartype
-def serialize_block_with_children(*, block: Block) -> dict[str, _JSONValue]:
-    """
-    Convert a block to a JSON-serializable format which includes its
-    children.
-    """
-    serialized_obj = _serialized_object(
-        value=block.obj_ref.serialize_for_api()
-    )
-    if isinstance(block, ParentBlock) and block.has_children:
-        block_type = block.obj_ref.type
-        assert block_type is not None
-        block_body = _serialized_object(value=serialized_obj[block_type])
-        serialized_obj[block_type] = {
-            **block_body,
-            "children": [
-                serialize_block_with_children(block=child)
-                for child in block.blocks
-            ],
-        }
-    return serialized_obj
 
 
 @beartype
@@ -312,8 +294,10 @@ def _calculate_file_sha_from_url(
     sha256_hash = hashlib.sha256()
     with requests.get(url=file_url, stream=True, timeout=10) as response:
         response.raise_for_status()
-        for chunk in response.iter_content(chunk_size=4096):
-            if chunk:
+        chunks: Iterable[object] = response.iter_content(chunk_size=4096)
+        for chunk in chunks:
+            assert isinstance(chunk, bytes)
+            if bool(chunk):
                 sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
 
