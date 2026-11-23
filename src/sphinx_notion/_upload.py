@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING, BinaryIO, TypeGuard
 from urllib.parse import urlparse
 
 import requests
@@ -25,7 +25,6 @@ import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
 from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
-from typing_extensions import TypeIs
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
@@ -209,12 +208,12 @@ def _upload_file(
     return uploaded_file
 
 
-def is_json_array(value: object, /) -> TypeIs[list[object]]:
+def is_json_array(value: object, /) -> TypeGuard[list[object]]:
     """Check that a decoded JSON value is an array."""
     return isinstance(value, list)
 
 
-def _is_block_object(value: object, /) -> TypeIs[dict[str, object]]:
+def _is_block_object(value: object, /) -> TypeGuard[dict[str, object]]:
     """Check that the serialized block fields are a JSON object."""
     return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
 
