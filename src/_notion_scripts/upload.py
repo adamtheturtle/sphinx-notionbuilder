@@ -22,6 +22,7 @@ from sphinx_notion._upload import (
     PageNotFoundError,
     PageTitleAmbiguousError,
     UploadStrategy,
+    is_json_array,
     upload_to_notion,
 )
 
@@ -154,10 +155,11 @@ def main(
         if notion_api_base_url is not None
         else Session()
     )
-    block_dicts = json.loads(s=file.read_text(encoding="utf-8"))
+    decoded: object = json.loads(s=file.read_text(encoding="utf-8"))
+    assert is_json_array(decoded)
     blocks = [
         Block.wrap_obj_ref(UnoObjAPIBlock.model_validate(obj=details))
-        for details in block_dicts
+        for details in decoded
     ]
 
     try:

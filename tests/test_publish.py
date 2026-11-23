@@ -59,7 +59,7 @@ def test_publish_skips_when_disabled(
     )
     app.build()
     assert app.statuscode == 0
-    assert app.config.notion_notification_mode == "default"
+    assert app.config["notion_notification_mode"] == "default"
 
 
 def test_publish_rejects_unsupported_notification_mode(
@@ -330,7 +330,7 @@ def test_publish_replace_strategy(
     app.build()
 
     assert app.statuscode == 0
-    assert app.config.notion_upload_strategy == "replace"
+    assert app.config["notion_upload_strategy"] == "replace"
     assert (
         count_mock_requests(
             mock=respx_mock,

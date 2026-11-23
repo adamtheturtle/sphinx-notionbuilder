@@ -75,13 +75,13 @@ def _cover_clear_count(*, mock: respx.MockRouter) -> int:
     count = 0
     calls: list[Call] = list(mock.calls)
     for call in calls:
-        if (
-            call.request.method == "PATCH"
-            and call.request.url.path.startswith("/v1/pages/")
-            and json.loads(s=call.request.content).get("cover", "missing")
-            is None
+        if call.request.method == "PATCH" and call.request.url.path.startswith(
+            "/v1/pages/"
         ):
-            count += 1
+            decoded: object = json.loads(s=call.request.content)
+            payload = json_object(value=decoded)
+            if payload.get("cover", "missing") is None:
+                count += 1
     return count
 
 
@@ -987,9 +987,8 @@ def test_upload_local_file_preserves_name_and_caption(
         and call.request.url.path == append_url_path
     ]
     assert len(append_calls) == appends_before + 1
-    payload = json_object(
-        value=json.loads(s=append_calls[-1].request.content),
-    )
+    decoded: object = json.loads(s=append_calls[-1].request.content)
+    payload = json_object(value=decoded)
     children = json_array(value=payload["children"])
     child = json_object(value=children[0])
     uploaded_file = json_object(value=child["file"])
@@ -1034,9 +1033,8 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         if call.request.method == "PATCH"
         and call.request.url.path == append_url_path
     ]
-    payload = json_object(
-        value=json.loads(s=append_calls[-1].request.content),
-    )
+    decoded: object = json.loads(s=append_calls[-1].request.content)
+    payload = json_object(value=decoded)
     children = json_array(value=payload["children"])
     child = json_object(value=children[0])
     uploaded_file = json_object(value=child["file"])
