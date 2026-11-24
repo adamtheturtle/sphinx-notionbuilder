@@ -33,6 +33,7 @@ from sphinx.application import Sphinx
 from sphinx.builders.text import TextBuilder
 from sphinx.config import Config
 from sphinx.environment import BuildEnvironment
+from sphinx.errors import SphinxError
 from sphinx.ext.autosummary import autosummary_table
 from sphinx.util import docutils as sphinx_docutils
 from sphinx.util import logging as sphinx_logging
@@ -115,6 +116,7 @@ from ultimate_notion.rich_text import Text, math, text
 from ultimate_notion.utils import serialize_block_with_children
 
 from sphinx_notion._upload import (
+    LOCAL_HTML_URI_PREFIX,
     NotificationMode,
     UploadStrategy,
     is_json_array,
@@ -283,6 +285,11 @@ class _FileNode(nodes.Element):
 
 
 @beartype
+class _HtmlEmbedNode(nodes.Element):
+    """Local HTML artifact to embed in Notion."""
+
+
+@beartype
 class _LinkToPageNode(nodes.Element):
     """Custom node for Notion link-to-page blocks."""
 
@@ -354,6 +361,49 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
             return [node]
 
         reference = nodes.reference(refuri=file_url, text=file_url)
+        paragraph = nodes.paragraph()
+        paragraph += reference
+        return [paragraph]
+
+
+@beartype
+class _NotionHtmlDirective(sphinx_docutils.SphinxDirective):
+    """Embed a local HTML file in Notion or link to a copy in HTML output."""
+
+    required_arguments = 1
+    final_argument_whitespace = True
+
+    @override
+    def run(self) -> list[nodes.Element]:
+        """Resolve the source artifact and record it as a Sphinx dependency."""
+        (filename,) = self.arguments
+        if "://" in filename or Path(filename).suffix.lower() not in {
+            ".html",
+            ".htm",
+        }:
+            msg = (
+                f"{self.get_location()} notion-html requires a local "
+                f".html or .htm file, got {filename!r}"
+            )
+            raise SphinxError(msg)
+
+        relative_path, absolute_path = self.env.relfn2path(filename=filename)
+        path = Path(absolute_path)
+        if not path.is_file():
+            msg = f"{self.get_location()} notion-html file not found: {path}"
+            raise SphinxError(msg)
+
+        if isinstance(self.env.app.builder, NotionBuilder):
+            self.env.note_dependency(filename=relative_path)
+            node = _HtmlEmbedNode()
+            node.attributes["uri"] = (
+                LOCAL_HTML_URI_PREFIX + path.as_uri().removeprefix("file:")
+            )
+            return [node]
+
+        reference = addnodes.download_reference(
+            text=path.name, reftarget=filename
+        )
         paragraph = nodes.paragraph()
         paragraph += reference
         return [paragraph]
@@ -2359,6 +2409,18 @@ def _(
 @beartype
 @_process_node_to_blocks.register
 def _(
+    node: _HtmlEmbedNode,
+    *,
+    section_level: int,
+) -> list[Block]:
+    """Represent an explicitly included HTML artifact in the builder JSON."""
+    del section_level
+    return [UnoEmbed(url=_string_attribute(node=node, name="uri"))]
+
+
+@beartype
+@_process_node_to_blocks.register
+def _(
     node: iframe_node,
     *,
     section_level: int,
@@ -3182,6 +3244,7 @@ def _register_notion_config(*, registrar: _ConfigRegistrar) -> None:
 def setup(app: Sphinx) -> ExtensionMetadata:
     """Add the builder to Sphinx."""
     app.add_builder(builder=NotionBuilder)
+    app.add_directive(name="notion-html", cls=_NotionHtmlDirective)
     app.set_translator(name="notion", translator_class=NotionTranslator)
 
     _register_notion_config(registrar=app)

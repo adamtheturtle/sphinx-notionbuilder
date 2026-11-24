@@ -27,6 +27,7 @@ from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import Audio as UnoAudio
 from ultimate_notion.blocks import Block, ChildDatabase, ChildPage, ParentBlock
+from ultimate_notion.blocks import Embed as UnoEmbed
 from ultimate_notion.blocks import File as UnoFile
 from ultimate_notion.blocks import Image as UnoImage
 from ultimate_notion.blocks import Video as UnoVideo
@@ -40,6 +41,8 @@ if TYPE_CHECKING:
     from ultimate_notion.database import DataSource
 
 _LOGGER = logging.getLogger(name=__name__)
+
+LOCAL_HTML_URI_PREFIX = "notion-html:"
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, uno_blocks.PDF, UnoFile)
 _HTTP_FORBIDDEN = 403
@@ -266,7 +269,6 @@ def _block_with_replaced_children(
 
 
 @beartype
-@cache
 def _calculate_file_sha(
     *,
     file_path: Path,
@@ -312,6 +314,28 @@ def _files_match(
     )
     local_file_sha = _calculate_file_sha(file_path=local_file_path)
     return existing_file_sha == local_file_sha
+
+
+@beartype
+def _local_html_path(*, block: UnoEmbed) -> Path | None:
+    """Read the local artifact reference stored in builder JSON."""
+    url = block.url
+    if url is not None and url.startswith(LOCAL_HTML_URI_PREFIX):
+        return _file_uri_to_path(uri=url)
+    return None
+
+
+@beartype
+def _uploaded_html_matches(*, block: UnoEmbed, path: Path) -> bool:
+    """Compare a Notion-hosted embed with the source artifact."""
+    url = block.url
+    return (
+        url is not None
+        and url.startswith(
+            "https://prod-files-secure.s3.us-west-2.amazonaws.com/"
+        )
+        and _files_match(existing_file_url=url, local_file_path=path)
+    )
 
 
 @beartype
@@ -362,6 +386,12 @@ def _is_existing_equivalent(
     if type(existing_page_block) is not type(local_block):
         return False
 
+    if isinstance(local_block, UnoEmbed):
+        path = _local_html_path(block=local_block)
+        if path is not None:
+            assert isinstance(existing_page_block, UnoEmbed)
+            return _uploaded_html_matches(block=existing_page_block, path=path)
+
     if isinstance(local_block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=local_block.url)
         if parsed.scheme == "file":
@@ -377,19 +407,15 @@ def _is_existing_equivalent(
             else:
                 local_name = local_block.file_info.name
 
-            if (
-                not isinstance(existing_page_block.file_info, NotionFile)
-                or (existing_page_block.file_info.name != local_name)
-                or (
-                    existing_page_block.file_info.caption
-                    != local_block.file_info.caption
+            return (
+                isinstance(existing_page_block.file_info, NotionFile)
+                and existing_page_block.file_info.name == local_name
+                and existing_page_block.file_info.caption
+                == local_block.file_info.caption
+                and _files_match(
+                    existing_file_url=existing_page_block.file_info.url,
+                    local_file_path=local_file_path,
                 )
-            ):
-                return False
-
-            return _files_match(
-                existing_file_url=existing_page_block.file_info.url,
-                local_file_path=local_file_path,
             )
     elif isinstance(existing_page_block, ParentBlock):
         assert isinstance(local_block, ParentBlock)
@@ -456,22 +482,25 @@ def _get_uploaded_cover(
 
 
 @beartype
+def _upload_block_file(*, path: Path, session: Session) -> UploadedFile:
+    """Upload the source file of a block."""
+    _LOGGER.info("Uploading file '%s'", path.name)
+    with path.open(mode="rb") as file_stream:
+        uploaded_file = _upload_file(
+            session=session, file_stream=file_stream, file_name=path.name
+        )
+    _LOGGER.info("File '%s' uploaded", path.name)
+    return uploaded_file
+
+
+@beartype
 def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
     """Replace a file block with an uploaded file block."""
     if isinstance(block, _FILE_BLOCK_TYPES):
         parsed = urlparse(url=block.url)
         if parsed.scheme == "file":
             file_path = _file_uri_to_path(uri=block.url)
-            _LOGGER.info("Uploading file '%s'", file_path.name)
-
-            with file_path.open(mode="rb") as file_stream:
-                uploaded_file = _upload_file(
-                    session=session,
-                    file_stream=file_stream,
-                    file_name=file_path.name,
-                )
-
-            _LOGGER.info("File '%s' uploaded", file_path.name)
+            uploaded_file = _upload_block_file(path=file_path, session=session)
 
             if isinstance(block, UnoFile):
                 block = UnoFile(
@@ -484,6 +513,11 @@ def _block_with_uploaded_file(*, block: Block, session: Session) -> Block:
                     file=uploaded_file,
                     caption=block.caption,
                 )
+
+    elif isinstance(block, UnoEmbed):
+        path = _local_html_path(block=block)
+        if path is not None:
+            return UnoEmbed(url=_upload_block_file(path=path, session=session))
 
     elif isinstance(block, ParentBlock) and block.has_children:
         new_child_blocks = [

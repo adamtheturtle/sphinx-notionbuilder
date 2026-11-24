@@ -664,6 +664,13 @@ Embed blocks can be created using the `sphinx-iframes <https://pypi.org/project/
 
 .. iframe:: https://www.youtube.com/embed/dQw4w9WgXcQ
 
+Interactive HTML
+~~~~~~~~~~~~~~~~
+
+Use ``notion-html`` to publish a self-contained HTML artifact.
+
+.. notion-html:: _static/interactive.html
+
 Sphinx ``toctree``\s are hidden
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
