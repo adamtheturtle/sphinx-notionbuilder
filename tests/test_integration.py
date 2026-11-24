@@ -5473,7 +5473,9 @@ def test_notion_html_rejects_invalid_file(
     filename: str,
     message: str,
 ) -> None:
-    """An invalid HTML artifact fails the build with its source location."""
+    """An invalid HTML artifact fails the build with its source
+    location.
+    """
     (tmp_path / "conf.py").touch()
     _ = (tmp_path / "index.rst").write_text(
         data=f".. notion-html:: {filename}\n", encoding="utf-8"

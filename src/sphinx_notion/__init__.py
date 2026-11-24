@@ -368,14 +368,18 @@ class _NotionFileDirective(sphinx_docutils.SphinxDirective):
 
 @beartype
 class _NotionHtmlDirective(sphinx_docutils.SphinxDirective):
-    """Embed a local HTML file in Notion or link to a copy in HTML output."""
+    """Embed a local HTML file in Notion or link to a copy in HTML
+    output.
+    """
 
     required_arguments = 1
     final_argument_whitespace = True
 
     @override
     def run(self) -> list[nodes.Element]:
-        """Resolve the source artifact and record it as a Sphinx dependency."""
+        """Resolve the source artifact and record it as a Sphinx
+        dependency.
+        """
         (filename,) = self.arguments
         if "://" in filename or Path(filename).suffix.lower() not in {
             ".html",
@@ -2413,7 +2417,9 @@ def _(
     *,
     section_level: int,
 ) -> list[Block]:
-    """Represent an explicitly included HTML artifact in the builder JSON."""
+    """Represent an explicitly included HTML artifact in the builder
+    JSON.
+    """
     del section_level
     return [UnoEmbed(url=_string_attribute(node=node, name="uri"))]
 
