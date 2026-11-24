@@ -13,6 +13,7 @@ import anstrip
 import pytest
 import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
+from sphinx.errors import SphinxError
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion import Emoji
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -5452,6 +5453,73 @@ def test_embed_block(
         conf_py_content="",
         confoverrides=None,
     )
+
+
+@pytest.mark.parametrize(
+    argnames=("filename", "message"),
+    argvalues=[
+        ("missing.htm", "notion-html file not found"),
+        ("chart.svg", "notion-html requires a local .html or .htm file"),
+        (
+            "https://example.com/chart.html",
+            "notion-html requires a local .html or .htm file",
+        ),
+    ],
+)
+def test_notion_html_rejects_invalid_file(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+    filename: str,
+    message: str,
+) -> None:
+    """An invalid HTML artifact fails the build with its source
+    location.
+    """
+    (tmp_path / "conf.py").touch()
+    _ = (tmp_path / "index.rst").write_text(
+        data=f".. notion-html:: {filename}\n", encoding="utf-8"
+    )
+    app = make_app(
+        srcdir=tmp_path,
+        buildername="notion",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    with pytest.raises(
+        expected_exception=SphinxError,
+        match=(
+            rf"index\.rst:1 {re.escape(pattern=message)}"
+            rf".*{re.escape(pattern=filename)}"
+        ),
+    ):
+        app.build()
+
+
+def test_notion_html_download_in_html_output(
+    *,
+    make_app: Callable[..., SphinxTestApp],
+    tmp_path: Path,
+) -> None:
+    """The HTML builder provides a working download link."""
+    (tmp_path / "conf.py").touch()
+    _ = (tmp_path / "index.rst").write_text(
+        data=".. notion-html:: example.html\n", encoding="utf-8"
+    )
+    artifact = "<p>Example artifact</p>"
+    _ = (tmp_path / "example.html").write_text(data=artifact, encoding="utf-8")
+    app = make_app(
+        srcdir=tmp_path,
+        buildername="html",
+        confoverrides={"extensions": ["sphinx_notion"]},
+    )
+    app.build()
+    outdir = Path(app.outdir)
+    html = (outdir / "index.html").read_text(encoding="utf-8")
+    download = re.search(
+        pattern=r'href="(_downloads/[^"]+/example\.html)"', string=html
+    )
+    assert download is not None
+    assert (outdir / download[1]).read_text(encoding="utf-8") == artifact
 
 
 def test_embed_and_video(

@@ -94,6 +94,7 @@ The following syntax is supported:
 - Audio (with URLs or local paths)
 - PDFs (with URLs or local paths)
 - Files (with URLs or local paths)
+- Local interactive HTML (using the ``notion-html`` directive)
 - Embed blocks (using the ``iframe`` directive from `sphinx-iframes`_ )
 - Tables
 - Dividers (horizontal rules / transitions)
@@ -171,6 +172,24 @@ Creates a Notion File block that links to an external file by URL, or uploads a 
       :caption: CSV export of the project data
 
 When not using the Notion builder (e.g. HTML), the directive renders as a link to the file.
+
+``notion-html``
+~~~~~~~~~~~~~~~
+
+Publishes a local ``.html`` or ``.htm`` file as an interactive Notion HTML block.
+The path is relative to the source document.
+
+.. code-block:: rst
+
+   .. notion-html:: charts/interactive.html
+
+Notion renders the file in a sandboxed iframe.
+Bundle the CSS, JavaScript, and other assets into the HTML file so it works on its own.
+The directive uploads the HTML file.
+Relative links to other local assets will break in Notion.
+The Sphinx HTML builder copies the file and renders a download link.
+
+See the `Notion API reference for HTML blocks <https://developers.notion.com/reference/block#html-blocks>`_.
 
 Roles
 -----
