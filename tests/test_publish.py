@@ -1,10 +1,13 @@
 """Tests for the _publish_to_notion event callback."""
 
 import json
-from collections.abc import Callable, Sequence
+import textwrap
+from collections.abc import Callable
+from http import HTTPStatus
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import httpx
 import pytest
@@ -14,6 +17,7 @@ from sphinx.errors import ExtensionError
 from sphinx.testing.util import SphinxTestApp
 from ultimate_notion.blocks import BulletedItem
 from ultimate_notion.rich_text import text
+from ultimate_notion.utils import serialize_block_with_children
 
 from sphinx_notion._upload import PageHasSubpagesError
 from tests._wiremock import (
@@ -210,8 +214,28 @@ def test_publish_success(
     )
 
 
-def _block_list(*, blocks: Sequence[object]) -> dict[str, object]:
-    """Build the response envelope for the Notion block list endpoint."""
+@pytest.fixture(name="html_publish_page_id")
+def fixture_html_publish_page_id(
+    *,
+    mock_api_base_url: str,
+    parent_page_id: str,
+    respx_mock: respx.MockRouter,
+) -> str:
+    """Reuse the page metadata stubs with a separate page ID for HTML."""
+    pages_url = f"{mock_api_base_url}/v1/pages"
+    decoded: object = httpx.get(url=f"{pages_url}/{parent_page_id}").json()
+    page = json_object(value=decoded)
+    page_id = "11440000-0000-0000-0000-000000000001"
+    page["id"] = page_id
+    _ = respx_mock.get(url=f"{pages_url}/{page_id}").respond(json=page)
+    _ = respx_mock.patch(
+        url=f"{pages_url}/{page_id.replace('-', '')}"
+    ).respond(json=page)
+    return page_id
+
+
+def _block_list(*blocks: dict[str, JSONValue]) -> dict[str, JSONValue]:
+    """Build a Notion block list response."""
     return {
         "object": "list",
         "type": "block",
@@ -222,138 +246,143 @@ def _block_list(*, blocks: Sequence[object]) -> dict[str, object]:
     }
 
 
-def _appended_block(*, route: respx.Route, index: int) -> dict[str, JSONValue]:
-    """Extract a block from an append request."""
+def _embed_block(*, block_id: str, url: str) -> dict[str, JSONValue]:
+    """Build the Notion response for an embed block."""
+    return {
+        "object": "block",
+        "type": "embed",
+        "id": block_id,
+        "embed": {"url": url},
+    }
+
+
+def _appended_blocks(*, route: respx.Route) -> list[dict[str, JSONValue]]:
+    """Read the blocks sent in the latest append request."""
     decoded: object = json.loads(s=route.calls.last.request.content)
     body = json_object(value=decoded)
-    return json_object(value=json_array(value=body["children"])[index])
+    return [
+        json_object(value=block)
+        for block in json_array(value=body["children"])
+    ]
 
 
 def test_publish_nested_html_and_reuse_unchanged_upload(
     *,
     make_app: Callable[..., SphinxTestApp],
     mock_api_base_url: str,
+    html_publish_page_id: str,
     respx_mock: respx.MockRouter,
     notion_token: str,
-    parent_page_id: str,
     tmp_path: Path,
 ) -> None:
-    """Publish HTML by ID and compare the file at the refreshed URL."""
+    """Upload nested HTML once and reuse it after its signed URL
+    changes.
+    """
     del notion_token
-    srcdir = tmp_path / "src"
-    guide = srcdir / "guide"
-    guide.mkdir(parents=True)
-    (srcdir / "conf.py").touch()
+    iframe_url = "https://example.com/frame"
+    html = b"<p>Interactive artifact</p>"
+    guide = tmp_path / "guide"
+    guide.mkdir()
+    (tmp_path / "conf.py").touch()
     _ = (guide / "index.rst").write_text(
-        data=(
-            "* Item with HTML\n\n"
-            "  .. notion-html:: chart file.htm\n\n"
-            ".. iframe:: https://example.com/frame\n"
+        data=textwrap.dedent(
+            text=f"""\
+                * Item with HTML
+
+                  .. notion-html:: chart file.htm
+
+                .. iframe:: {iframe_url}
+                """
         ),
         encoding="utf-8",
     )
-    html = b"<p>Interactive artifact</p>"
     _ = (guide / "chart file.htm").write_bytes(data=html)
 
-    page_id = "11440000-0000-0000-0000-000000000001"
     item_id = "11440000-0000-0000-0000-000000000002"
-    original_page = httpx.get(
-        url=f"{mock_api_base_url}/v1/pages/{parent_page_id}"
+    item = json_object(
+        value=serialize_block_with_children(
+            block=BulletedItem(text=text(text="Item with HTML"))
+        )
     )
-    decoded: object = original_page.json()
-    page = json_object(value=decoded)
-    page["id"] = page_id
-    page_url = f"{mock_api_base_url}/v1/pages/{page_id}"
-    _ = respx_mock.get(url=page_url).respond(json=page)
-    _ = respx_mock.patch(
-        url=f"{mock_api_base_url}/v1/pages/{page_id.replace('-', '')}"
-    ).respond(json=page)
-    children_url = f"{mock_api_base_url}/v1/blocks/{page_id}/children"
-    root_children = respx_mock.get(url=children_url).respond(
-        json=_block_list(blocks=[])
+    item.update(id=item_id, has_children=True)
+    iframe = _embed_block(
+        block_id="11440000-0000-0000-0000-000000000003", url=iframe_url
     )
-    nested_url = f"{mock_api_base_url}/v1/blocks/{item_id}/children"
-    remote_url = "https://example.com/frame"
-    remote = {
-        "object": "block",
-        "type": "embed",
-        "id": "11440000-0000-0000-0000-000000000003",
-        "embed": {"url": remote_url},
-    }
     signed_url = (
         "https://prod-files-secure.s3.us-west-2.amazonaws.com/chart%20file.htm"
         "?X-Amz-Signature="
     )
-    artifact = {
-        "object": "block",
-        "type": "embed",
-        "id": "11440000-0000-0000-0000-000000000004",
-        "embed": {"url": f"{signed_url}original"},
-    }
-    nested_children = respx_mock.get(url=nested_url).respond(
-        json=_block_list(blocks=[artifact])
+    html_block_id = "11440000-0000-0000-0000-000000000004"
+    uploaded_html = _embed_block(
+        block_id=html_block_id, url=f"{signed_url}original"
     )
-    nested_append = respx_mock.patch(url=nested_url).respond(
-        json=_block_list(blocks=[artifact])
+    blocks_url = f"{mock_api_base_url}/v1/blocks"
+    page_children = f"{blocks_url}/{html_publish_page_id}/children"
+    item_children = f"{blocks_url}/{item_id}/children"
+    root_listing = respx_mock.get(url=page_children).respond(
+        json=_block_list()
     )
-
-    item = json_object(
-        value=BulletedItem(
-            text=text(text="Item with HTML")
-        ).obj_ref.serialize_for_api()
+    root_append = respx_mock.patch(url=page_children).respond(
+        json=_block_list(item, iframe)
     )
-    item.update(id=item_id, has_children=True)
-    root_append = respx_mock.patch(url=children_url).respond(
-        json=_block_list(blocks=[item, remote])
+    nested_append = respx_mock.patch(url=item_children).respond(
+        json=_block_list(uploaded_html)
+    )
+    uploads_before = count_mock_requests(
+        mock=respx_mock, method="POST", url_path="/v1/file_uploads"
     )
     app = make_app(
-        srcdir=srcdir,
+        srcdir=tmp_path,
         buildername="notion",
         confoverrides={
             "extensions": ["sphinx_notion", "sphinx_iframes"],
             "root_doc": "guide/index",
             "notion_publish": True,
-            "notion_page_id": page_id,
+            "notion_page_id": html_publish_page_id,
             "notion_page_title": "Upload Title",
             "notion_api_base_url": mock_api_base_url,
         },
     )
-    upload_count = count_mock_requests(
-        mock=respx_mock, method="POST", url_path="/v1/file_uploads"
-    )
+
     app.build()
+
     assert app.statuscode == 0
-    assert _appended_block(route=root_append, index=1)["embed"] == {
-        "url": remote_url,
-        "caption": [],
-    }
-    assert _appended_block(route=nested_append, index=0)["embed"] == {
+    appended_item, appended_iframe = _appended_blocks(route=root_append)
+    assert appended_item["type"] == "bulleted_list_item"
+    assert appended_iframe["embed"] == {"url": iframe_url, "caption": []}
+    (appended_html,) = _appended_blocks(route=nested_append)
+    assert appended_html["embed"] == {
         "type": "file_upload",
         "file_upload": {"id": "ff000000-0000-0000-0000-000000000001"},
         "caption": [],
     }
-    _ = root_children.respond(json=_block_list(blocks=[item, remote]))
-    fresh_url = f"{signed_url}refreshed"
-    fresh_artifact = {**artifact, "embed": {"url": fresh_url}}
-    _ = nested_children.respond(json=_block_list(blocks=[fresh_artifact]))
-    response = MagicMock(iter_content=MagicMock(return_value=[html]))
-    response.configure_mock(**{"__enter__.return_value": response})
+
+    refreshed_url = f"{signed_url}refreshed"
+    _ = root_listing.respond(json=_block_list(item, iframe))
+    _ = respx_mock.get(url=item_children).respond(
+        json=_block_list(
+            _embed_block(block_id=html_block_id, url=refreshed_url)
+        )
+    )
+    response = requests.Response()
+    response.status_code = HTTPStatus.OK
+    response.raw = BytesIO(initial_bytes=html)
     with patch.object(
         target=requests, attribute="get", return_value=response
     ) as download:
         app.build(force_all=True)
-        download.assert_called_once_with(
-            url=fresh_url, stream=True, timeout=10
-        )
 
     assert app.statuscode == 0
+    download.assert_called_once_with(
+        url=refreshed_url, stream=True, timeout=10
+    )
     assert root_append.call_count == 1
     assert nested_append.call_count == 1
     assert (
         count_mock_requests(
             mock=respx_mock, method="POST", url_path="/v1/file_uploads"
         )
-        == upload_count + 1
+        == uploads_before + 1
     )
 
 

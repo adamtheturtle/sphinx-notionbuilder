@@ -5458,11 +5458,11 @@ def test_embed_block(
 @pytest.mark.parametrize(
     argnames=("filename", "message"),
     argvalues=[
-        ("missing.htm", r"notion-html file not found: .*missing\.htm"),
-        ("chart.svg", r"notion-html requires a local \.html or \.htm file"),
+        ("missing.htm", "notion-html file not found"),
+        ("chart.svg", "notion-html requires a local .html or .htm file"),
         (
             "https://example.com/chart.html",
-            r"notion-html requires a local \.html or \.htm file",
+            "notion-html requires a local .html or .htm file",
         ),
     ],
 )
@@ -5486,7 +5486,11 @@ def test_notion_html_rejects_invalid_file(
         confoverrides={"extensions": ["sphinx_notion"]},
     )
     with pytest.raises(
-        expected_exception=SphinxError, match=rf"index\.rst:1 {message}"
+        expected_exception=SphinxError,
+        match=(
+            rf"index\.rst:1 {re.escape(pattern=message)}"
+            rf".*{re.escape(pattern=filename)}"
+        ),
     ):
         app.build()
 
