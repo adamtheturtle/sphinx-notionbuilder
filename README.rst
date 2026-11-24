@@ -185,10 +185,10 @@ The path is relative to the source document.
 
 Notion renders the file in a sandboxed iframe.
 Bundle the CSS, JavaScript, and other assets into the HTML file so it works on its own.
-The directive uploads a single file, so relative links to other local assets will not travel with it.
+The directive uploads the HTML file. Relative links to other local assets will break in Notion.
 The Sphinx HTML builder copies the file and renders a download link.
 
-See the `Notion HTML block reference <https://developers.notion.com/reference/block#html-blocks>`_.
+See the `Notion API reference for HTML blocks <https://developers.notion.com/reference/block#html-blocks>`_.
 
 Roles
 -----

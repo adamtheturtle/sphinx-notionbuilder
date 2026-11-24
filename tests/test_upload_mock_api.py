@@ -1055,16 +1055,15 @@ def test_upload_local_file_uses_filename_when_name_is_missing(
         "test.png",
     ],
 )
-def test_upload_matching_local_file_is_unchanged(
+def test_upload_detects_local_file_changes(
     *,
     local_name: str | None,
     notion_session: Session,
     respx_mock: respx.MockRouter,
     tmp_path: Path,
 ) -> None:
-    """A matching local file is not uploaded again."""
+    """Upload a local file only when its contents differ from Notion."""
     local_file = tmp_path / "test.png"
-    _ = local_file.write_bytes(data=b"image-data")
     if local_name is None:
         local_block = UnoFile(file=ExternalFile(url=local_file.as_uri()))
     else:
@@ -1083,22 +1082,25 @@ def test_upload_matching_local_file_is_unchanged(
         attribute="get",
         return_value=response,
     ):
-        _ = notion_upload.upload_to_notion(
-            session=notion_session,
-            blocks=[local_block],
-            page_id=None,
-            parent_page_id="eeee0000-0000-0000-0000-000000000001",
-            parent_database_id=None,
-            title="Upload Title",
-            icon=None,
-            cover_path=None,
-            cover_url=None,
-            cancel_on_discussion=False,
-            strategy=UploadStrategy.DIFF,
-            allow_subpages=False,
-        )
-
-    assert _file_upload_create_count(mock=respx_mock) == uploads_before
+        for content, uploads in ((b"image-data", 0), (b"image-new!", 1)):
+            _ = local_file.write_bytes(data=content)
+            _ = notion_upload.upload_to_notion(
+                session=notion_session,
+                blocks=[local_block],
+                page_id=None,
+                parent_page_id="eeee0000-0000-0000-0000-000000000001",
+                parent_database_id=None,
+                title="Upload Title",
+                icon=None,
+                cover_path=None,
+                cover_url=None,
+                cancel_on_discussion=False,
+                strategy=UploadStrategy.DIFF,
+                allow_subpages=False,
+            )
+            assert _file_upload_create_count(mock=respx_mock) == (
+                uploads_before + uploads
+            )
 
 
 def test_upload_with_nested_file_block(

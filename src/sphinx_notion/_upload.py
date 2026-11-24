@@ -269,7 +269,6 @@ def _block_with_replaced_children(
 
 
 @beartype
-@cache
 def _calculate_file_sha(
     *,
     file_path: Path,
