@@ -23,7 +23,6 @@ from urllib.parse import urlparse
 import requests
 import ultimate_notion.blocks as uno_blocks
 from beartype import beartype
-from beartype.door import TypeHint
 from notion_client.errors import HTTPResponseError
 from ultimate_notion import Emoji, ExternalFile, NotionFile, Session
 from ultimate_notion.blocks import Audio as UnoAudio
@@ -213,11 +212,6 @@ def is_json_array(value: object, /) -> TypeGuard[list[object]]:
     return isinstance(value, list)
 
 
-def _is_block_object(value: object, /) -> TypeGuard[dict[str, object]]:
-    """Check that the serialized block fields are a JSON object."""
-    return TypeHint(hint=dict[str, object]).is_bearable(obj=value)
-
-
 @beartype
 def _block_without_children(
     *,
@@ -226,12 +220,11 @@ def _block_without_children(
     """Return a copy of a block without children."""
     serialized_block = block.obj_ref.serialize_for_api()
     if block.has_children:
-        block_type: object = serialized_block["type"]
+        block_type = serialized_block["type"]
         assert isinstance(block_type, str)
-        fields: object = serialized_block[block_type]
-        assert _is_block_object(fields)
-        empty_children: list[object] = []
-        fields["children"] = empty_children
+        block_fields = serialized_block[block_type]
+        assert isinstance(block_fields, dict)
+        _ = block_fields.pop("children", None)
 
     # Delete the ID, else the block will have the children from Notion.
     if "id" in serialized_block:
