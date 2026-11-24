@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -101,7 +102,7 @@ def test_count_page_metadata_clear_requests(
             url=f"https://mock.notion.test/v1/pages/{parent_page_id}",
             json=payload,
         )
-        assert response.status_code == httpx.codes.OK
+        assert response.status_code == HTTPStatus.OK
 
     assert (
         count_page_metadata_clear_requests(
@@ -1488,7 +1489,9 @@ def test_cloudflare_waf_block(
         patch.object(
             target=ChildrenMixin,
             attribute="append",
-            side_effect=_make_html_http_error(status_code=403),
+            side_effect=_make_html_http_error(
+                status_code=HTTPStatus.FORBIDDEN
+            ),
         ),
         pytest.raises(
             expected_exception=CloudflareWAFBlockError,
@@ -1519,7 +1522,7 @@ def test_non_html_403_not_wrapped(
     """HTTPResponseError with non-HTML body is re-raised unchanged."""
     json_error = HTTPResponseError(
         code="restricted_resource",
-        status=403,
+        status=HTTPStatus.FORBIDDEN,
         message="Restricted resource",
         headers=httpx.Headers(headers={"content-type": "application/json"}),
         raw_body_text='{"code": "restricted_resource"}',
@@ -1560,7 +1563,9 @@ def test_non_403_html_not_wrapped(
         patch.object(
             target=ChildrenMixin,
             attribute="append",
-            side_effect=_make_html_http_error(status_code=502),
+            side_effect=_make_html_http_error(
+                status_code=HTTPStatus.BAD_GATEWAY
+            ),
         ),
         pytest.raises(expected_exception=HTTPResponseError),
     ):
@@ -1598,7 +1603,7 @@ def test_file_upload_waf_block_logs_body(
     waf_body = "<!DOCTYPE html><html>Sorry, you have been blocked</html>"
     waf_error = HTTPResponseError(
         code="cloudflare_waf_block",
-        status=403,
+        status=HTTPStatus.FORBIDDEN,
         message="Blocked",
         headers=httpx.Headers(
             headers={"content-type": "text/html", "cf-ray": "abc123-LHR"}
@@ -1655,7 +1660,7 @@ def test_file_upload_other_http_error_logs_body(
     body = '{"code": "validation_error", "message": "too large"}'
     http_error = HTTPResponseError(
         code="validation_error",
-        status=400,
+        status=HTTPStatus.BAD_REQUEST,
         message="too large",
         headers=httpx.Headers(headers={"content-type": "application/json"}),
         raw_body_text=body,

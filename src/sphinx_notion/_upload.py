@@ -16,6 +16,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import cache
+from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, TypeGuard
 from urllib.parse import urlparse
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(name=__name__)
 
 _FILE_BLOCK_TYPES = (UnoImage, UnoVideo, UnoAudio, uno_blocks.PDF, UnoFile)
-_HTTP_FORBIDDEN = 403
 # How much of the response body to surface in logs. WAF block pages are
 # large HTML documents, so we cap the output to keep logs readable while
 # still including the diagnostic content (e.g. the Cloudflare Ray ID).
@@ -151,7 +151,7 @@ def _is_waf_block(*, exc: HTTPResponseError) -> bool:
     """
     content_type: object = exc.headers.get(key="content-type", default="")
     return (
-        exc.status == _HTTP_FORBIDDEN
+        exc.status == HTTPStatus.FORBIDDEN
         and isinstance(content_type, str)
         and content_type.startswith("text/html")
     )
